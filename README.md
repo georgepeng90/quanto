@@ -51,3 +51,4 @@ pip install backtrader pandas numpy akshare torch scikit-learn
 python src/data_fetcher.py          # 拉取行业与基准数据
 python src/multi_factor_strategy.py # 运行传统多因子回测
 python src/gru_model.py             # 训练GRU模型（可选）
+```

@@ -49,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--max-retries", type=int, default=3)
     fetch.add_argument("--retry-delay", type=float, default=2.0)
     fetch.add_argument("--stop-on-error", action="store_true")
+    fetch.add_argument("--quiet", action="store_true")
     fetch.set_defaults(func=fetch_data_command)
 
     bt = sub.add_parser("run-backtest", help="Run pandas weekly rotation backtest")
@@ -82,6 +83,7 @@ def fetch_data_command(args: argparse.Namespace) -> int:
         max_retries=args.max_retries,
         retry_delay_seconds=args.retry_delay,
         continue_on_error=not args.stop_on_error,
+        log=not args.quiet,
     )
     print(f"Prices written: {result.prices_path} ({result.price_rows} rows)")
     print(f"Benchmark written: {result.benchmark_path} ({result.benchmark_rows} rows)")

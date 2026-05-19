@@ -118,25 +118,36 @@ def fetch_cached_etf(
     force_refresh: bool = False,
     max_retries: int = 3,
     retry_delay_seconds: float = 2.0,
+    log: bool = False,
 ) -> pd.DataFrame:
     cache_path = _csv_cache_path(raw_dir, "etf", symbol)
     cached = _read_cached_csv(cache_path)
     if cached is not None and not force_refresh and _cache_covers(cached, start_date, end_date):
+        if log:
+            print(f"[cache] ETF {symbol}: {cache_path}")
         return normalize_prices(cached)
     last_error: Exception | None = None
     for attempt in range(max_retries + 1):
         try:
+            if log:
+                print(f"[fetch] ETF {symbol}: attempt {attempt + 1}/{max_retries + 1}")
             df = provider.fetch_etf_daily(symbol, start_date, end_date)
             break
         except Exception as exc:
             last_error = exc
+            if log:
+                print(f"[retry] ETF {symbol}: {exc}")
             if attempt < max_retries:
                 time.sleep(retry_delay_seconds)
     else:
         if cached is not None and not force_refresh:
+            if log:
+                print(f"[fallback] ETF {symbol}: using partial cache after fetch failure")
             return normalize_prices(cached)
         raise last_error or RuntimeError(f"Failed to fetch ETF {symbol}")
     _write_raw_csv(cache_path, df)
+    if log:
+        print(f"[write] ETF {symbol}: {len(df)} rows -> {cache_path}")
     return df
 
 
@@ -149,25 +160,36 @@ def fetch_cached_benchmark(
     force_refresh: bool = False,
     max_retries: int = 3,
     retry_delay_seconds: float = 2.0,
+    log: bool = False,
 ) -> pd.DataFrame:
     cache_path = _csv_cache_path(raw_dir, "benchmark", symbol)
     cached = _read_cached_csv(cache_path)
     if cached is not None and not force_refresh and _cache_covers(cached, start_date, end_date):
+        if log:
+            print(f"[cache] benchmark {symbol}: {cache_path}")
         return normalize_benchmark(cached)
     last_error: Exception | None = None
     for attempt in range(max_retries + 1):
         try:
+            if log:
+                print(f"[fetch] benchmark {symbol}: attempt {attempt + 1}/{max_retries + 1}")
             df = provider.fetch_benchmark_daily(symbol, start_date, end_date)
             break
         except Exception as exc:
             last_error = exc
+            if log:
+                print(f"[retry] benchmark {symbol}: {exc}")
             if attempt < max_retries:
                 time.sleep(retry_delay_seconds)
     else:
         if cached is not None and not force_refresh:
+            if log:
+                print(f"[fallback] benchmark {symbol}: using partial cache after fetch failure")
             return normalize_benchmark(cached)
         raise last_error or RuntimeError(f"Failed to fetch benchmark {symbol}")
     _write_raw_csv(cache_path, df)
+    if log:
+        print(f"[write] benchmark {symbol}: {len(df)} rows -> {cache_path}")
     return df
 
 
@@ -184,11 +206,14 @@ def build_processed_dataset(
     max_retries: int = 3,
     retry_delay_seconds: float = 2.0,
     continue_on_error: bool = True,
+    log: bool = False,
 ) -> FetchResult:
     provider = provider or AKShareDataProvider()
     price_frames: list[pd.DataFrame] = []
     failed_symbols: list[str] = []
     for index, symbol in enumerate(symbols):
+        if log:
+            print(f"[{index + 1}/{len(symbols)}] ETF {symbol}")
         if index > 0 and request_delay_seconds > 0:
             time.sleep(request_delay_seconds)
         try:
@@ -202,12 +227,15 @@ def build_processed_dataset(
                     force_refresh,
                     max_retries=max_retries,
                     retry_delay_seconds=retry_delay_seconds,
+                    log=log,
                 )
             )
         except Exception:
             if not continue_on_error:
                 raise
             failed_symbols.append(symbol)
+            if log:
+                print(f"[skip] ETF {symbol}: failed after retries and no usable cache")
     if not price_frames:
         raise RuntimeError("No ETF data fetched or loaded from cache.")
     prices = normalize_prices(pd.concat(price_frames, ignore_index=True))
@@ -220,10 +248,14 @@ def build_processed_dataset(
         force_refresh,
         max_retries=max_retries,
         retry_delay_seconds=retry_delay_seconds,
+        log=log,
     )
 
     prices_path = write_processed_prices(prices, processed_dir)
     benchmark_path = write_processed_benchmark(benchmark, processed_dir)
+    if log:
+        print(f"[processed] prices: {len(prices)} rows -> {prices_path}")
+        print(f"[processed] benchmark: {len(benchmark)} rows -> {benchmark_path}")
     fetch_log_path = append_fetch_log(
         processed_dir,
         [

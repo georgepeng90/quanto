@@ -6,6 +6,7 @@ from datetime import datetime
 
 from quanto.config import load_config
 from quanto.data.cache import load_processed_benchmark, load_processed_prices
+from quanto.data.fetcher import build_processed_dataset
 from quanto.sample_data import generate_sample_data
 from quanto.universe import apply_universe_filters, load_universe
 from quanto.backtest.engine import run_backtest
@@ -36,6 +37,16 @@ def build_parser() -> argparse.ArgumentParser:
     sample.add_argument("--seed", type=int, default=7)
     sample.set_defaults(func=generate_sample_data_command)
 
+    fetch = sub.add_parser("fetch-data", help="Fetch real ETF and benchmark data through AKShare with local cache")
+    fetch.add_argument("--universe", default="configs/universe.yaml")
+    fetch.add_argument("--start-date", default="2018-01-01")
+    fetch.add_argument("--end-date", default=datetime.now().strftime("%Y-%m-%d"))
+    fetch.add_argument("--data-dir", default="data/processed")
+    fetch.add_argument("--raw-dir", default="data/raw")
+    fetch.add_argument("--benchmark-symbol", default="sh000300")
+    fetch.add_argument("--force-refresh", action="store_true")
+    fetch.set_defaults(func=fetch_data_command)
+
     bt = sub.add_parser("run-backtest", help="Run pandas weekly rotation backtest")
     bt.add_argument("--config", default="configs/strategy.yaml")
     bt.add_argument("--universe", default="configs/universe.yaml")
@@ -50,6 +61,23 @@ def generate_sample_data_command(args: argparse.Namespace) -> int:
     prices, benchmark = generate_sample_data(args.output_dir, years=args.years, seed=args.seed)
     print(f"Sample prices written: {prices}")
     print(f"Sample benchmark written: {benchmark}")
+    return 0
+
+
+def fetch_data_command(args: argparse.Namespace) -> int:
+    universe = load_universe(args.universe)
+    result = build_processed_dataset(
+        symbols=universe.symbols,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        processed_dir=args.data_dir,
+        raw_dir=args.raw_dir,
+        benchmark_symbol=args.benchmark_symbol,
+        force_refresh=args.force_refresh,
+    )
+    print(f"Prices written: {result.prices_path} ({result.price_rows} rows)")
+    print(f"Benchmark written: {result.benchmark_path} ({result.benchmark_rows} rows)")
+    print(f"Fetch log written: {result.fetch_log_path}")
     return 0
 
 

@@ -53,6 +53,20 @@
 pip install -e ".[dev]"
 ```
 
+如需通过 AKShare 拉取真实数据，安装数据源依赖：
+
+```bash
+pip install -e ".[dev,data]"
+```
+
+拉取并缓存真实 ETF 与基准数据：
+
+```bash
+python -m quanto.cli fetch-data --start-date 2018-01-01 --end-date 2026-05-19
+```
+
+该命令会优先复用 `data/raw` 下的本地缓存；只有缺失覆盖区间或使用 `--force-refresh` 时才重新走网络。标准化后的回测输入会写到 `data/processed/prices.csv` 和 `data/processed/benchmark.csv`。
+
 生成离线样例数据并运行 Phase 1 多因子回测：
 
 ```bash

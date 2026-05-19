@@ -85,5 +85,5 @@ $RECYCLE.BIN/
 *.vsix
 
 ### Quanto generated artifacts
-data/
-outputs/
+/data/
+/outputs/

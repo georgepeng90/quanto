@@ -9,14 +9,134 @@ symbols:
     category: semiconductor
     signal_index: null
     enabled: true
-  - etf: "515030"
-    name: new_energy_vehicle_etf
-    category: new_energy_vehicle
+  - etf: "159995"
+    name: chip_etf_huaxia
+    category: semiconductor
     signal_index: null
     enabled: true
-  - etf: "512690"
-    name: liquor_etf
-    category: consumer
+  - etf: "512760"
+    name: chip_etf_guotai
+    category: semiconductor
+    signal_index: null
+    enabled: true
+  - etf: "159819"
+    name: artificial_intelligence_etf
+    category: technology
+    signal_index: null
+    enabled: true
+  - etf: "512720"
+    name: computer_etf_guotai
+    category: technology
+    signal_index: null
+    enabled: true
+  - etf: "159998"
+    name: computer_etf_tianhong
+    category: technology
+    signal_index: null
+    enabled: true
+  - etf: "516510"
+    name: cloud_computing_etf
+    category: technology
+    signal_index: null
+    enabled: true
+  - etf: "515050"
+    name: communication_etf_huaxia
+    category: communication
+    signal_index: null
+    enabled: true
+  - etf: "515880"
+    name: communication_etf_guotai
+    category: communication
+    signal_index: null
+    enabled: true
+  - etf: "512980"
+    name: media_etf
+    category: media
+    signal_index: null
+    enabled: true
+  - etf: "159869"
+    name: game_etf_huaxia
+    category: media
+    signal_index: null
+    enabled: true
+  - etf: "516010"
+    name: game_etf_guotai
+    category: media
+    signal_index: null
+    enabled: true
+  - etf: "562500"
+    name: robot_etf_huaxia
+    category: advanced_manufacturing
+    signal_index: null
+    enabled: true
+  - etf: "159770"
+    name: robot_etf_tianhong
+    category: advanced_manufacturing
+    signal_index: null
+    enabled: true
+  - etf: "159667"
+    name: industrial_machine_etf
+    category: advanced_manufacturing
+    signal_index: null
+    enabled: true
+  - etf: "516960"
+    name: machinery_etf
+    category: advanced_manufacturing
+    signal_index: null
+    enabled: true
+  - etf: "515030"
+    name: new_energy_vehicle_etf
+    category: new_energy
+    signal_index: null
+    enabled: true
+  - etf: "516160"
+    name: new_energy_etf
+    category: new_energy
+    signal_index: null
+    enabled: true
+  - etf: "159755"
+    name: battery_etf
+    category: new_energy
+    signal_index: null
+    enabled: true
+  - etf: "515790"
+    name: photovoltaic_etf_huatai
+    category: new_energy
+    signal_index: null
+    enabled: true
+  - etf: "516880"
+    name: photovoltaic_etf_yinhua
+    category: new_energy
+    signal_index: null
+    enabled: true
+  - etf: "512660"
+    name: defense_etf_guotai
+    category: defense
+    signal_index: null
+    enabled: true
+  - etf: "512710"
+    name: defense_leader_etf
+    category: defense
+    signal_index: null
+    enabled: true
+  - etf: "512880"
+    name: securities_etf
+    category: financials
+    signal_index: null
+    enabled: true
+  - etf: "512000"
+    name: brokerage_etf
+    category: financials
+    signal_index: null
+    enabled: true
+  - etf: "512800"
+    name: banking_etf
+    category: financials
+    signal_index: null
+    enabled: true
+  - etf: "512200"
+    name: real_estate_etf
+    category: real_estate
     signal_index: null
     enabled: true
   - etf: "512170"
@@ -24,8 +144,113 @@ symbols:
     category: healthcare
     signal_index: null
     enabled: true
-  - etf: "512800"
-    name: banking_etf
-    category: financials
+  - etf: "512010"
+    name: medicine_etf
+    category: healthcare
+    signal_index: null
+    enabled: true
+  - etf: "159992"
+    name: innovative_drug_etf
+    category: healthcare
+    signal_index: null
+    enabled: true
+  - etf: "512290"
+    name: biomedicine_etf
+    category: healthcare
+    signal_index: null
+    enabled: true
+  - etf: "512690"
+    name: liquor_etf
+    category: consumer
+    signal_index: null
+    enabled: true
+  - etf: "159928"
+    name: consumer_etf
+    category: consumer
+    signal_index: null
+    enabled: true
+  - etf: "515170"
+    name: food_beverage_etf
+    category: consumer
+    signal_index: null
+    enabled: true
+  - etf: "159996"
+    name: home_appliance_etf
+    category: consumer
+    signal_index: null
+    enabled: true
+  - etf: "159825"
+    name: agriculture_etf
+    category: agriculture
+    signal_index: null
+    enabled: true
+  - etf: "159865"
+    name: breeding_etf
+    category: agriculture
+    signal_index: null
+    enabled: true
+  - etf: "512400"
+    name: nonferrous_metals_etf
+    category: cyclical
+    signal_index: null
+    enabled: true
+  - etf: "516780"
+    name: rare_earth_etf
+    category: cyclical
+    signal_index: null
+    enabled: true
+  - etf: "515220"
+    name: coal_etf
+    category: cyclical
+    signal_index: null
+    enabled: true
+  - etf: "515210"
+    name: steel_etf
+    category: cyclical
+    signal_index: null
+    enabled: true
+  - etf: "516020"
+    name: chemical_etf_huabao
+    category: cyclical
+    signal_index: null
+    enabled: true
+  - etf: "516120"
+    name: chemical_etf_fuguo
+    category: cyclical
+    signal_index: null
+    enabled: true
+  - etf: "561560"
+    name: power_etf_huatai
+    category: utilities
+    signal_index: null
+    enabled: true
+  - etf: "159611"
+    name: power_etf_guangfa
+    category: utilities
+    signal_index: null
+    enabled: true
+  - etf: "562550"
+    name: green_power_etf
+    category: utilities
+    signal_index: null
+    enabled: true
+  - etf: "512580"
+    name: environmental_protection_etf
+    category: utilities
+    signal_index: null
+    enabled: true
+  - etf: "516950"
+    name: infrastructure_etf
+    category: infrastructure
+    signal_index: null
+    enabled: true
+  - etf: "159745"
+    name: building_materials_etf
+    category: infrastructure
+    signal_index: null
+    enabled: true
+  - etf: "159766"
+    name: tourism_etf
+    category: services
     signal_index: null
     enabled: true

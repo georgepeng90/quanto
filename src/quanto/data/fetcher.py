@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+import time
 
 import pandas as pd
 
@@ -26,6 +27,7 @@ class FetchResult:
     fetch_log_path: Path
     price_rows: int
     benchmark_rows: int
+    failed_symbols: tuple[str, ...] = ()
 
 
 def _ak_date(value: str) -> str:
@@ -114,17 +116,26 @@ def fetch_cached_etf(
     end_date: str,
     raw_dir: str | Path,
     force_refresh: bool = False,
+    max_retries: int = 3,
+    retry_delay_seconds: float = 2.0,
 ) -> pd.DataFrame:
     cache_path = _csv_cache_path(raw_dir, "etf", symbol)
     cached = _read_cached_csv(cache_path)
     if cached is not None and not force_refresh and _cache_covers(cached, start_date, end_date):
         return normalize_prices(cached)
-    try:
-        df = provider.fetch_etf_daily(symbol, start_date, end_date)
-    except Exception:
+    last_error: Exception | None = None
+    for attempt in range(max_retries + 1):
+        try:
+            df = provider.fetch_etf_daily(symbol, start_date, end_date)
+            break
+        except Exception as exc:
+            last_error = exc
+            if attempt < max_retries:
+                time.sleep(retry_delay_seconds)
+    else:
         if cached is not None and not force_refresh:
             return normalize_prices(cached)
-        raise
+        raise last_error or RuntimeError(f"Failed to fetch ETF {symbol}")
     _write_raw_csv(cache_path, df)
     return df
 
@@ -136,17 +147,26 @@ def fetch_cached_benchmark(
     end_date: str,
     raw_dir: str | Path,
     force_refresh: bool = False,
+    max_retries: int = 3,
+    retry_delay_seconds: float = 2.0,
 ) -> pd.DataFrame:
     cache_path = _csv_cache_path(raw_dir, "benchmark", symbol)
     cached = _read_cached_csv(cache_path)
     if cached is not None and not force_refresh and _cache_covers(cached, start_date, end_date):
         return normalize_benchmark(cached)
-    try:
-        df = provider.fetch_benchmark_daily(symbol, start_date, end_date)
-    except Exception:
+    last_error: Exception | None = None
+    for attempt in range(max_retries + 1):
+        try:
+            df = provider.fetch_benchmark_daily(symbol, start_date, end_date)
+            break
+        except Exception as exc:
+            last_error = exc
+            if attempt < max_retries:
+                time.sleep(retry_delay_seconds)
+    else:
         if cached is not None and not force_refresh:
             return normalize_benchmark(cached)
-        raise
+        raise last_error or RuntimeError(f"Failed to fetch benchmark {symbol}")
     _write_raw_csv(cache_path, df)
     return df
 
@@ -160,14 +180,47 @@ def build_processed_dataset(
     benchmark_symbol: str = "sh000300",
     force_refresh: bool = False,
     provider: AKShareDataProvider | None = None,
+    request_delay_seconds: float = 1.0,
+    max_retries: int = 3,
+    retry_delay_seconds: float = 2.0,
+    continue_on_error: bool = True,
 ) -> FetchResult:
     provider = provider or AKShareDataProvider()
-    price_frames = [
-        fetch_cached_etf(provider, symbol, start_date, end_date, raw_dir, force_refresh)
-        for symbol in symbols
-    ]
+    price_frames: list[pd.DataFrame] = []
+    failed_symbols: list[str] = []
+    for index, symbol in enumerate(symbols):
+        if index > 0 and request_delay_seconds > 0:
+            time.sleep(request_delay_seconds)
+        try:
+            price_frames.append(
+                fetch_cached_etf(
+                    provider,
+                    symbol,
+                    start_date,
+                    end_date,
+                    raw_dir,
+                    force_refresh,
+                    max_retries=max_retries,
+                    retry_delay_seconds=retry_delay_seconds,
+                )
+            )
+        except Exception:
+            if not continue_on_error:
+                raise
+            failed_symbols.append(symbol)
+    if not price_frames:
+        raise RuntimeError("No ETF data fetched or loaded from cache.")
     prices = normalize_prices(pd.concat(price_frames, ignore_index=True))
-    benchmark = fetch_cached_benchmark(provider, benchmark_symbol, start_date, end_date, raw_dir, force_refresh)
+    benchmark = fetch_cached_benchmark(
+        provider,
+        benchmark_symbol,
+        start_date,
+        end_date,
+        raw_dir,
+        force_refresh,
+        max_retries=max_retries,
+        retry_delay_seconds=retry_delay_seconds,
+    )
 
     prices_path = write_processed_prices(prices, processed_dir)
     benchmark_path = write_processed_benchmark(benchmark, processed_dir)
@@ -183,6 +236,7 @@ def build_processed_dataset(
                 "end_date": end_date,
                 "rows": len(prices),
                 "force_refresh": force_refresh,
+                "failed_symbols": ",".join(failed_symbols),
             },
             {
                 "fetched_at": datetime.now().isoformat(timespec="seconds"),
@@ -196,7 +250,7 @@ def build_processed_dataset(
             },
         ],
     )
-    return FetchResult(prices_path, benchmark_path, fetch_log_path, len(prices), len(benchmark))
+    return FetchResult(prices_path, benchmark_path, fetch_log_path, len(prices), len(benchmark), tuple(failed_symbols))
 
 
 def fetch_etf_daily(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:

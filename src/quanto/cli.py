@@ -45,6 +45,10 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--raw-dir", default="data/raw")
     fetch.add_argument("--benchmark-symbol", default="sh000300")
     fetch.add_argument("--force-refresh", action="store_true")
+    fetch.add_argument("--request-delay", type=float, default=1.0, help="Seconds to wait between ETF requests")
+    fetch.add_argument("--max-retries", type=int, default=3)
+    fetch.add_argument("--retry-delay", type=float, default=2.0)
+    fetch.add_argument("--stop-on-error", action="store_true")
     fetch.set_defaults(func=fetch_data_command)
 
     bt = sub.add_parser("run-backtest", help="Run pandas weekly rotation backtest")
@@ -74,10 +78,16 @@ def fetch_data_command(args: argparse.Namespace) -> int:
         raw_dir=args.raw_dir,
         benchmark_symbol=args.benchmark_symbol,
         force_refresh=args.force_refresh,
+        request_delay_seconds=args.request_delay,
+        max_retries=args.max_retries,
+        retry_delay_seconds=args.retry_delay,
+        continue_on_error=not args.stop_on_error,
     )
     print(f"Prices written: {result.prices_path} ({result.price_rows} rows)")
     print(f"Benchmark written: {result.benchmark_path} ({result.benchmark_rows} rows)")
     print(f"Fetch log written: {result.fetch_log_path}")
+    if result.failed_symbols:
+        print(f"Failed symbols skipped: {', '.join(result.failed_symbols)}")
     return 0
 
 

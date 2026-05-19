@@ -40,14 +40,42 @@
 - [ ] 小资金实盘（传统策略优先）
 
 ## 技术栈
-- 数据：AKShare (免费A股数据)
-- 回测：BackTrader
+- 数据：AKShare (免费A股数据)，Phase 1 回测以本地缓存文件为事实源
+- 回测：pandas 周频事件循环（BackTrader 作为后续增强）
 - 深度学习：PyTorch + scikit-learn
 - 部署：本地或云服务器，信号推送（邮件/微信）
 
 ## 快速启动
+
+安装开发环境：
+
 ```bash
-pip install backtrader pandas numpy akshare torch scikit-learn
-python src/data_fetcher.py          # 拉取行业与基准数据
-python src/multi_factor_strategy.py # 运行传统多因子回测
-python src/gru_model.py             # 训练GRU模型（可选）
+pip install -e ".[dev]"
+```
+
+生成离线样例数据并运行 Phase 1 多因子回测：
+
+```bash
+python -m quanto.cli generate-sample-data --output-dir data/processed
+python -m quanto.cli run-backtest --config configs/strategy.yaml --universe configs/universe.yaml
+```
+
+默认读取 `data/processed` 下的本地缓存数据：
+
+- `prices.parquet` or `prices.csv` with columns: `date,symbol,open,high,low,close,volume,amount`
+- `benchmark.parquet` or `benchmark.csv` with columns: `date,close,turnover`
+
+回测输出写入 `outputs/backtests/{run_id}`：
+
+- `equity_curve.csv`
+- `trades.csv`
+- `positions.csv`
+- `signals.csv`
+- `metrics.json`
+- `report.md`
+
+运行测试：
+
+```bash
+pytest -q
+```

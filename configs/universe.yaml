@@ -1,0 +1,31 @@
+universe:
+  min_history_days: 120
+  min_avg_turnover_20d: 50000000
+  max_symbols: null
+
+symbols:
+  - etf: "512480"
+    name: semiconductor_etf
+    category: semiconductor
+    signal_index: null
+    enabled: true
+  - etf: "515030"
+    name: new_energy_vehicle_etf
+    category: new_energy_vehicle
+    signal_index: null
+    enabled: true
+  - etf: "512690"
+    name: liquor_etf
+    category: consumer
+    signal_index: null
+    enabled: true
+  - etf: "512170"
+    name: healthcare_etf
+    category: healthcare
+    signal_index: null
+    enabled: true
+  - etf: "512800"
+    name: banking_etf
+    category: financials
+    signal_index: null
+    enabled: true

@@ -83,3 +83,7 @@ $RECYCLE.BIN/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+### Quanto generated artifacts
+data/
+outputs/

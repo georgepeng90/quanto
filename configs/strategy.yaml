@@ -1,0 +1,46 @@
+strategy:
+  rebalance_frequency: weekly
+  signal_weekday: friday
+  execution_timing: next_open
+  top_n: 3
+  exit_rank_threshold: 10
+  ma_break_window: 20
+
+factors:
+  normalize_active_weights: true
+  momentum:
+    weight: 0.40
+    enabled: true
+    windows: [20, 60]
+  low_volatility:
+    weight: 0.25
+    enabled: true
+    window: 20
+  volume_confirmation:
+    weight: 0.20
+    enabled: true
+    short_window: 5
+    long_window: 20
+  prosperity_delta:
+    weight: 0.15
+    enabled: false
+
+risk:
+  portfolio_var_limit: 0.02
+  single_symbol_risk_limit: 0.005
+  max_symbol_weight: 0.15
+  drawdown_circuit_breaker: 0.15
+  cautious_total_weight: 0.30
+  var_confidence_multiplier: 2.33
+
+market_regime:
+  ma_window: 200
+  tradable_turnover: 850000000000
+  danger_turnover: 700000000000
+
+backtest:
+  initial_cash: 100000
+  commission_rate: 0.0005
+  slippage_rate: 0.0005
+  data_dir: data/processed
+  output_dir: outputs/backtests

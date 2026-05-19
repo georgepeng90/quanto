@@ -119,7 +119,12 @@ def fetch_cached_etf(
     cached = _read_cached_csv(cache_path)
     if cached is not None and not force_refresh and _cache_covers(cached, start_date, end_date):
         return normalize_prices(cached)
-    df = provider.fetch_etf_daily(symbol, start_date, end_date)
+    try:
+        df = provider.fetch_etf_daily(symbol, start_date, end_date)
+    except Exception:
+        if cached is not None and not force_refresh:
+            return normalize_prices(cached)
+        raise
     _write_raw_csv(cache_path, df)
     return df
 
@@ -136,7 +141,12 @@ def fetch_cached_benchmark(
     cached = _read_cached_csv(cache_path)
     if cached is not None and not force_refresh and _cache_covers(cached, start_date, end_date):
         return normalize_benchmark(cached)
-    df = provider.fetch_benchmark_daily(symbol, start_date, end_date)
+    try:
+        df = provider.fetch_benchmark_daily(symbol, start_date, end_date)
+    except Exception:
+        if cached is not None and not force_refresh:
+            return normalize_benchmark(cached)
+        raise
     _write_raw_csv(cache_path, df)
     return df
 

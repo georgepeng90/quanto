@@ -57,3 +57,33 @@ def test_build_processed_dataset_reuses_raw_cache(tmp_path):
     assert second.fetch_log_path.exists()
     assert provider.etf_calls == 1
     assert provider.benchmark_calls == 1
+
+
+def test_build_processed_dataset_falls_back_to_existing_cache_when_network_fails(tmp_path):
+    provider = FakeProvider()
+    kwargs = {
+        "symbols": ["512480"],
+        "start_date": "2024-01-01",
+        "end_date": "2024-01-05",
+        "processed_dir": tmp_path / "processed",
+        "raw_dir": tmp_path / "raw",
+        "provider": provider,
+    }
+    build_processed_dataset(**kwargs)
+
+    class BrokenProvider(FakeProvider):
+        source = "broken"
+
+        def fetch_etf_daily(self, symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+            raise RuntimeError("network down")
+
+        def fetch_benchmark_daily(self, symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+            raise RuntimeError("network down")
+
+    kwargs["provider"] = BrokenProvider()
+    kwargs["end_date"] = "2024-01-08"
+
+    result = build_processed_dataset(**kwargs)
+
+    assert result.price_rows > 0
+    assert result.benchmark_rows > 0

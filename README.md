@@ -2,7 +2,7 @@
 
 本项目研究场内行业 ETF 的中期多头趋势策略。目标交易设计见[策略设计](docs/02_策略设计.md)，研究需求见[需求分析](docs/01_需求分析.md)。这些文档描述的是待验证的规则，不表示当前代码已实现该设计，也不表示策略已达到实盘条件。
 
-本机网页回测工作台已实现：用户和 Agent 共用数据版本、策略修订、实验、队列、结果与导出服务。首版验证平台为 Windows，采用本机单用户、ETF 日线研究。操作步骤见[使用指南](docs/05_回测工作台使用指南.md)，设计见[工作台架构](docs/planning-artifacts/architecture.md)，逐阶段验证与取舍见[实施计划](docs/superpowers/plans/2026-09-29-web-backtest-workbench.md)。
+本机网页回测工作台已实现：用户和 Agent 共用数据版本、策略修订、实验、队列、结果与导出服务。首版验证平台为 Windows，采用本机单用户、ETF 日线研究。第一次了解项目，先看[工作台入门与完整讲解](docs/00_工作台入门与完整讲解.md)，其中说明页面用途、一次回测的过程、结果解读和研究边界。具体操作见[使用指南](docs/05_回测工作台使用指南.md)，设计见[工作台架构](docs/planning-artifacts/architecture.md)，逐阶段验证与取舍见[实施计划](docs/superpowers/plans/2026-09-29-web-backtest-workbench.md)。
 
 ## 目标交易设计
 
@@ -21,7 +21,7 @@
 
 ## 快速启动
 
-在交付 checkout `C:\Users\georg\.codex\worktrees\web-backtest-workbench\quanto` 执行（Python 3.13、Node.js 24、uv）：
+代码已合入 `v2`。在仓库根目录 `D:\Projects\quanto` 执行（Python 3.13、Node.js 24、uv）：
 
 ```powershell
 uv sync --locked --extra dev --extra web --extra data
@@ -31,6 +31,8 @@ npm.cmd --prefix web run build
 ```
 
 打开 [本地工作台](http://127.0.0.1:8765)。一键脚本检查依赖，CLI 检查构建源码/产物哈希并明确拒绝缺失、过期构建或占用端口；不另开前端端口。直接启动等价命令为 `uv run --no-sync quanto serve --host 127.0.0.1 --port 8765 --workspace data/workbench`，须从当前 checkout 根目录执行。默认数据位于 `data/workbench`，产物位于 `outputs/workbench`，路径保存在工作区的 `workspace.json`。
+
+若 `8765` 被已有服务占用，可明确使用 `.\scripts\start-workbench.ps1 -Port 8767`，然后访问 [8767 工作台](http://127.0.0.1:8767)。Git 合并不会迁移被忽略的本地数据库和运行产物；主目录默认工作区与此前 worktree 的工作区各自独立。已有服务、历史演示数据仍在旧 worktree，处理完之前应保留该目录。
 
 首次启动自动登记两套策略模板。在“数据版本”点击“生成演示”，登记成功后进入“策略与实验”，选择数据和模板、填写有效范围/资金/用途并保存；随后在“回测任务”运行，查看订单、图表、克隆实验、比较和下载。可用演示区间为 `2018-01-02` 至 `2018-01-31`，代码 `512480`；示例金额和参数只用于流程演示。
 

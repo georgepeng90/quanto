@@ -96,10 +96,20 @@ def compute_metrics(result: BacktestResult, spec: BacktestSpec) -> dict[str, flo
     weighted_days = (matched.holding_sessions * matched.quantity).sum() / matched.quantity.sum() if not matched.empty else None
     events = result.account_events
     income = lambda kind: float(events.loc[events.event_type == kind, "amount"].astype(float).sum()) if not events.empty else 0.0
+    fills = result.fills
+    traded_notional = float((fills.quantity.astype(float) * fills.price.astype(float)).sum()) if not fills.empty else 0.0
+    commission_paid = float(fills.commission.astype(float).sum()) if not fills.empty else 0.0
+    slippage_cost = float(fills.slippage_cost.astype(float).sum()) if not fills.empty else 0.0
+    final_positions = result.positions.loc[pd.to_datetime(result.positions.date) == pd.Timestamp(result.equity.date.iloc[-1])]
     metrics = dict(total_return=total_return, annual_return=annual_return, volatility=volatility,
         sharpe=sharpe, max_drawdown=drawdown, calmar=calmar, final_equity=float(equity.iloc[-1]),
         fill_count=int(len(result.fills)), round_trip_count=rounds, open_lot_count=int(len(open_lots)),
         realized_pnl=float(matched.realized_pnl.sum()),
+        unrealized_pnl=float(final_positions.unrealized_pnl.astype(float).sum()),
+        turnover=traded_notional / float(equity.mean()),
+        commission_paid=commission_paid, slippage_cost=slippage_cost,
+        execution_cost=commission_paid + slippage_cost,
+        average_invested_ratio=float((result.equity.market_value.astype(float).reset_index(drop=True) / equity).mean()),
         average_holding_sessions=float(weighted_days) if weighted_days is not None else None,
         dividend_income=income("dividend_payment"), interest_income=income("interest"))
     if any(isinstance(value, float) and not math.isfinite(value) for value in metrics.values()):

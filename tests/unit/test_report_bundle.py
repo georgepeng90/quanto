@@ -47,8 +47,18 @@ def test_benchmark_is_normalized_and_period_returns_compound():
     assert report.curves["benchmark_equity"].iloc[-1] == pytest.approx(1100)
     assert report.metric_definitions["benchmark_equity"]["kind"] == "price_index"
     assert report.metric_definitions["benchmark_equity"]["period"] == "spec trading sessions"
+    assert report.metrics["benchmark_return"] == pytest.approx(0.1)
+    assert report.metrics["relative_return_difference"] == pytest.approx(report.metrics["total_return"] - 0.1)
+    assert "difference" in report.metric_definitions["relative_return_difference"]["formula"]
     assert (1 + report.monthly_returns["return"]).prod() - 1 == pytest.approx(report.metrics["total_return"])
     assert (1 + report.annual_returns["return"]).prod() - 1 == pytest.approx(report.metrics["total_return"])
+
+
+def test_overflowed_benchmark_return_is_rejected_before_export():
+    result, bundle, spec = _case(days=2)
+    bundle.benchmark["close"] = [1e-320, 1e308]
+    with pytest.raises(ValueError, match="INVALID_BENCHMARK"):
+        build_report(result, bundle, spec)
 
 
 def test_split_adjusts_fifo_matching_and_round_trip_counts_episodes():
@@ -84,6 +94,17 @@ def test_html_escapes_embedded_script_closer_and_outputs_are_deterministic(tmp_p
     assert "<h2>指标定义</h2>" in html
     assert "https://" not in html
     assert json.loads((tmp_path / "a" / "metrics.json").read_text(encoding="utf-8"))["schema_version"] == "1"
+
+
+def test_cash_only_html_displays_unavailable_ratios_without_changing_json(tmp_path):
+    result, bundle, spec = _case()
+    report = build_report(result, bundle, spec)
+    write_backtest_outputs(tmp_path / "run", result, report)
+    html = (tmp_path / "run" / "report.html").read_text(encoding="utf-8")
+    metrics = json.loads((tmp_path / "run" / "metrics.json").read_text(encoding="utf-8"))["metrics"]
+    assert html.count("<td>不可用</td>") >= 2
+    assert metrics["sharpe"] is None
+    assert metrics["calmar"] is None
 
 
 def test_canonical_csv_hash_ignores_order_table_row_and_column_order(tmp_path):

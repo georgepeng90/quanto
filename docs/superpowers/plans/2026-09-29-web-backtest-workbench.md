@@ -354,3 +354,14 @@ I1–I6 修正完整配置比较、原始/批准信号分离、权威演示披�
 - `$env:PLAYWRIGHT_CHANNEL='chrome'; npm.cmd --prefix web run test:e2e`：1 passed，16.9 秒，exit 0；真实创建/执行两次运行，修改原草稿后再从历史运行分支仍得到旧权重，验证来源、演示披露、信号与批准目标、比较和 HTML。首次图表 208 ms；Node 颜色环境警告仍为非阻塞。作者查看最终桌面截图。
 - 原预览两份 schema 1 报告实际通过新服务结果/表/CSV/JSON/HTML 读取；154 个既有冻结输入/最终产物文件在预览重启前记录哈希，禁止改写。原工作区 PRD SHA-256 仍为 `85f6eade5d6f75a844e847bf6636d1311d172e92450b207d3b102258b54d48e1`。
 Ruling: The first release does not add a generic StrategyContext query API for arbitrary auxiliary research tables. Declared research-file freezing remains a reproducibility boundary, not a promise of general point-in-time data access; the approved context and explicit later breadth-data extension support this scope. Cost if wrong is that strategies needing those extra research tables require a later context/data-access extension before their research can run reliably.
+
+
+### 最终局部保护修正
+
+独立复审确认 I1–I6/M1/M2 修正，另复现当前草稿克隆重新挂载源码编辑器导致未保存源码丢失。现在源码未保存时禁用该克隆操作，显示先保存新修订或切换草稿并确认放弃修改的指引；仅实验配置未保存时仍可克隆。历史运行克隆继续使用冻结源码。
+
+Ruling: Block current-draft cloning while strategy source has unsaved edits, with explicit save/discard guidance, rather than remounting and silently losing the source buffer. Historical-run cloning still uses frozen source. Cost if wrong is one extra save/discard step before cloning a locally edited strategy, preferable to losing work.
+
+持久预览替换被 automatic approval 以 `blocked by policy` 拒绝，未执行停止或启动，也未创建两次新预览运行。原 PID 4020 仍使用旧后端；旧日志/控制仍在 SDD scratch，不能清理。已通过的隔离 Chrome 验收不替代持久预览重启。此保护修正不重试这些操作。
+
+局部修正验证：真实 ExperimentsPage + CodeMirror 回归先 RED（克隆后源码注释丢失），再 GREEN；`npm.cmd --prefix web run test -- --run tests/editor.test.tsx` 为 22 passed / exit 0。`npm.cmd --prefix web run typecheck`、`npm.cmd --prefix web run build` 均 exit 0；新实验编辑块 500.39 kB / gzip 168.63 kB，ECharts 623.28 kB / gzip 211.37 kB，保留警告。本次仅前端与文档，按控制器要求不重复 Python 220 或预览操作。

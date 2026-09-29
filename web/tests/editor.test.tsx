@@ -353,3 +353,40 @@ test('switching source files during the typing latch binds the buffer to its fil
   await userEvent.click(screen.getByRole('button', { name: 'strategy.py' }))
   expect(EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!.state.doc.toString()).toBe('from quanto import something')
 })
+
+
+test('current draft cloning preserves dirty source until saved and still clones unsaved configuration', async () => {
+  const previous = globalThis.fetch
+  let savedFiles: Record<string, string> | undefined
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/strategies' && init?.method === 'POST') {
+      savedFiles = JSON.parse(String(init.body)).files
+      return Response.json({ ...strategy, id: 's2', files: savedFiles })
+    }
+    if (String(input) === '/api/strategies/s2') return Response.json({ ...strategy, id: 's2', files: savedFiles })
+    return previous(input, init)
+  }))
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  await screen.findByRole('option', { name: /e1/ })
+  await userEvent.selectOptions(screen.getByLabelText('实验草稿'), 'e1')
+  await screen.findByText(/当前修订 s1/)
+  const edited = '# unsaved source changes\n' + strategy.files['strategy.py']
+  const source = () => EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!
+  act(() => source().dispatch({ changes: { from: 0, to: source().state.doc.length, insert: edited } }))
+  const clone = screen.getByRole('button', { name: '克隆为新实验' })
+  await userEvent.click(clone)
+  expect(source().state.doc.toString()).toBe(edited)
+  expect(clone).toBeDisabled()
+  expect(screen.getByText('未保存', { exact: true })).toBeVisible()
+  expect(screen.getByText(/请先保存策略新修订，或切换草稿并确认放弃源码修改，再克隆/)).toBeVisible()
+  expect(screen.getByLabelText('实验草稿')).toHaveValue('e1')
+  await userEvent.click(screen.getByRole('button', { name: '保存新修订' }))
+  await waitFor(() => expect(savedFiles?.['strategy.py']).toBe(edited))
+  await waitFor(() => expect(clone).toBeEnabled())
+  fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: 'unsaved configuration to clone' } })
+  await userEvent.click(clone)
+  expect(screen.getByLabelText('实验草稿')).toHaveValue('')
+  expect(screen.getByLabelText('样本用途')).toHaveValue('unsaved configuration to clone')
+  expect(source().state.doc.toString()).toBe(edited)
+})

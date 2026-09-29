@@ -264,6 +264,11 @@ class WorkbenchService:
         suffix = Path(filename).suffix.lower()
         if suffix != ".zip":
             raise ValueError("unsupported upload type")
+        try:
+            with zipfile.ZipFile(io.BytesIO(content)) as archive:
+                archive.namelist()
+        except zipfile.BadZipFile as exc:
+            raise ValueError("invalid ZIP archive") from exc
         identity = str(uuid4())
         path = self.store.root / "uploads" / f"{identity}{suffix}"
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -276,13 +281,16 @@ class WorkbenchService:
         candidates = list((self.store.root / "uploads").glob(f"{upload_id}.*"))
         if len(candidates) != 1 or candidates[0].suffix != ".zip":
             raise KeyError(upload_id)
-        with zipfile.ZipFile(candidates[0]) as archive:
-            if "manifest.json" not in archive.namelist() or archive.getinfo("manifest.json").file_size > 1_000_000:
-                raise ValueError("invalid dataset manifest")
-            required = {"prices", "benchmark", "calendar", "instruments", "status", "events"}
-            missing = sorted(name for name in required if not any(f"{name}.{suffix}" in archive.namelist()
-                                                                   for suffix in ("csv", "parquet")))
-            manifest = DatasetManifest.model_validate(json.loads(archive.read("manifest.json")))
+        try:
+            with zipfile.ZipFile(candidates[0]) as archive:
+                if "manifest.json" not in archive.namelist() or archive.getinfo("manifest.json").file_size > 1_000_000:
+                    raise ValueError("invalid dataset manifest")
+                required = {"prices", "benchmark", "calendar", "instruments", "status", "events"}
+                missing = sorted(name for name in required if not any(f"{name}.{suffix}" in archive.namelist()
+                                                                       for suffix in ("csv", "parquet")))
+                manifest = DatasetManifest.model_validate(json.loads(archive.read("manifest.json")))
+        except zipfile.BadZipFile as exc:
+            raise ValueError("invalid ZIP archive") from exc
         return {"price_mode": manifest.price_mode, "is_demo": manifest.is_demo,
                 "event_coverage": manifest.event_coverage, "calendar_start": manifest.calendar_start.isoformat(),
                 "calendar_end": manifest.calendar_end.isoformat(), "data_start": manifest.data_start.isoformat(),

@@ -4,6 +4,7 @@ import ast
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 import sys
 import tempfile
 import zipfile
@@ -111,7 +112,9 @@ def execute_data_job(kind: str, payload: dict, emit, cancelled) -> dict:
         provider = AKShareDataProvider()
         try:
             calendar = payload["calendar"] if "calendar" in payload else provider.fetch_calendar(start, end)
-        except (OSError, ValueError) as exc:
+        except Exception as exc:
+            if cancelled():
+                raise RuntimeError("CANCELLED: 数据任务已取消") from exc
             _emit(emit, "CALENDAR_INCOMPLETE", "交易日历覆盖不足")
             return {"state": "incomplete", "dataset_version_id": None, "coverage": {},
                     "reason": "CALENDAR_INCOMPLETE", "error": type(exc).__name__}
@@ -120,17 +123,22 @@ def execute_data_job(kind: str, payload: dict, emit, cancelled) -> dict:
         if not sessions or not any(day > end for day in calendar):
             _emit(emit, "CALENDAR_INCOMPLETE", "交易日历缺少后续交易日")
             return {"state": "incomplete", "dataset_version_id": None, "coverage": {}, "reason": "CALENDAR_INCOMPLETE"}
-        result = build_processed_dataset(symbols, start, end, destination / "processed", workspace / "raw-cache",
-            provider=provider, expected_sessions=sessions, cache_version=payload.get("cache_version"),
-            request_delay_seconds=payload.get("request_delay_seconds", 1.0), max_retries=payload.get("max_retries", 3),
-            cancelled=cancelled)
-        if not result.complete:
-            _emit(emit, "COVERAGE_INCOMPLETE", "行情或基准覆盖不足",
-                  {"missing_sessions": {name: len(item["missing"]) for name, item in result.coverage.items()},
-                   "failed_symbols": list(result.failed_symbols)})
-            return {"state": "incomplete", "dataset_version_id": None, "coverage": result.coverage,
-                    "failed_symbols": list(result.failed_symbols), "reason": "COVERAGE_INCOMPLETE"}
-        _publish_research(result, calendar, sessions, symbols, payload, destination)
+        processed = destination / "processed"
+        try:
+            result = build_processed_dataset(symbols, start, end, processed, workspace / "raw-cache",
+                provider=provider, expected_sessions=sessions, cache_version=payload.get("cache_version"),
+                request_delay_seconds=payload.get("request_delay_seconds", 1.0), max_retries=payload.get("max_retries", 3),
+                cancelled=cancelled)
+            if not result.complete:
+                _emit(emit, "COVERAGE_INCOMPLETE", "行情或基准覆盖不足",
+                      {"missing_sessions": {name: len(item["missing"]) for name, item in result.coverage.items()},
+                       "failed_symbols": list(result.failed_symbols)})
+                return {"state": "incomplete", "dataset_version_id": None, "coverage": result.coverage,
+                        "failed_symbols": list(result.failed_symbols), "reason": "COVERAGE_INCOMPLETE"}
+            _publish_research(result, calendar, sessions, symbols, payload, destination)
+        finally:
+            if processed.exists():
+                shutil.rmtree(processed)
     else:
         raise ValueError("UNSUPPORTED_JOB: 未注册的数据任务")
     if cancelled():

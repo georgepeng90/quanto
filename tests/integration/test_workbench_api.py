@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from uuid import uuid4
 
 from quanto.api.app import create_app
 from tests.integration.test_snapshot_submission import _ready
@@ -17,6 +18,22 @@ def test_api_rejects_conflicts_and_invalid_parameters(tmp_path):
         assert client.post("/api/experiments", json={"payload": {}}, headers={"Origin": "null", **headers}).status_code == 403
         assert client.get("/api/missing", headers=headers).json()["code"] == "NOT_FOUND"
         assert client.post("/api/uploads", headers=headers).json()["code"] == "INVALID_ARGUMENT"
+        for path, payload in (("/api/runs/batch", {"items": [None], "idempotency_key": "x"}),
+                              ("/api/comparisons", {"run_ids": None}),
+                              ("/api/comparisons", {"run_ids": [None, None]})):
+            response = client.post(path, json=payload, headers=headers)
+            assert response.status_code == 422
+            assert response.json()["code"] == "INVALID_ARGUMENT"
+        corrupt = client.post("/api/uploads", files={"file": ("broken.zip", b"not a ZIP")}, headers=headers)
+        assert corrupt.status_code == 422
+        assert corrupt.json()["code"] == "INVALID_ARGUMENT"
+        upload_id = str(uuid4())
+        upload_path = tmp_path / "uploads" / f"{upload_id}.zip"
+        upload_path.parent.mkdir(parents=True, exist_ok=True)
+        upload_path.write_bytes(b"not a ZIP")
+        preflight = client.post("/api/datasets/preflight", json={"upload_id": upload_id}, headers=headers)
+        assert preflight.status_code == 422
+        assert preflight.json()["code"] == "INVALID_ARGUMENT"
 
 
 def test_list_resources_and_experiment_revision_conflict(tmp_path):

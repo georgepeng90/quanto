@@ -249,6 +249,7 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
 
 def run_data_job(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:
     from quanto.workbench.data_jobs import execute_data_job, execute_strategy_validation
+    from quanto.workbench.revisions import source_files
     stage = control_dir.parent / "staging"
     stage.mkdir()
     payload = dict(descriptor["input"])
@@ -259,7 +260,7 @@ def run_data_job(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:
     else:
         result = execute_data_job(descriptor["kind"], payload, emit, cancelled)
     atomic_json(stage / "result.json", result)
-    hashes = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in stage.iterdir() if path.is_file()}
+    hashes = {name: hashlib.sha256(content).hexdigest() for name, content in source_files(stage).items()}
     if cancelled():
         raise RuntimeError("CANCELLED: 任务已取消")
     stage.rename(control_dir.parent / "final")
@@ -277,11 +278,13 @@ def validate_job_output(kind: str, root: Path, receipt: dict) -> None:
     else:
         if kind not in JOB_HANDLERS:
             raise ValueError("UNSUPPORTED_JOB: 未注册的任务类型")
+        from quanto.workbench.revisions import safe_name, source_files
         final = root / "final"
         hashes = receipt["result"]["hashes"]
-        if not final.is_dir() or {path.name for path in final.iterdir()} != set(hashes):
+        if not final.is_dir() or set(source_files(final)) != set(hashes):
             raise ValueError("INVALID_OUTPUT: 数据任务文件集合无效")
         for name, expected in hashes.items():
+            safe_name(name)
             if not (final / name).is_file() or hashlib.sha256((final / name).read_bytes()).hexdigest() != expected:
                 raise ValueError("INVALID_OUTPUT: 数据任务哈希无效")
         result = read_json(final / "result.json")

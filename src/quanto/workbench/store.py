@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ast
 from contextlib import contextmanager
-import hashlib
 import json
 from pathlib import Path
 import sqlite3
@@ -261,8 +260,7 @@ class WorkbenchStore:
     def finish_data_job(self, identity: str, bundle_path: Path, result: dict) -> bool:
         """Publish a verified data version and success in one conditional commit."""
         manifest = json.loads((bundle_path / "manifest.json").read_text(encoding="utf-8")) if result.get("state") == "complete" else None
-        hashes = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
-                  for path in bundle_path.iterdir() if path.is_file()} if manifest else None
+        hashes = {name: digest(content) for name, content in source_files(bundle_path).items()} if manifest else None
         with self.transaction() as db:
             row = db.execute("SELECT state FROM jobs WHERE id=?", (identity,)).fetchone()
             if row is None or row["state"] != "running":

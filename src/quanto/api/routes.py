@@ -81,7 +81,9 @@ def submit_run(request: Request, body: dict):
 def submit_batch(request: Request, body: dict):
     if not isinstance(body.get("items"), list) or not 1 <= len(body["items"]) <= 100:
         raise ValueError("batch size must be between 1 and 100")
-    if any(set(item) != {"experiment_id", "expected_revision"} or type(item["expected_revision"]) is not int for item in body["items"]):
+    if any(not isinstance(item, dict) or set(item) != {"experiment_id", "expected_revision"}
+           or not isinstance(item["experiment_id"], str) or type(item["expected_revision"]) is not int
+           for item in body["items"]):
         raise ValueError("invalid batch item")
     return {"items": service(request).submit_batch(body["items"], body.get("idempotency_key", ""), body.get("source", "web"))}
 
@@ -122,7 +124,12 @@ def export(request: Request, identity: str, format: str):
 
 @router.post("/comparisons")
 def comparison(request: Request, body: dict):
-    return service(request).comparison(body.get("run_ids", []))
+    run_ids = body.get("run_ids")
+    if not isinstance(run_ids, list) or not 2 <= len(run_ids) <= 20 or not all(
+        isinstance(run_id, str) and run_id for run_id in run_ids
+    ):
+        raise ValueError("run_ids must contain 2 to 20 run IDs")
+    return service(request).comparison(run_ids)
 
 
 @router.post("/uploads")

@@ -1,10 +1,11 @@
 strategy:
-  rebalance_frequency: weekly
-  signal_weekday: friday
-  execution_timing: next_open
-  top_n: 3
-  exit_rank_threshold: 10
-  ma_break_window: 20
+  template: trend_rotation
+  parameters:
+    trend_window: 20
+    momentum_window: 20
+    entry_rank: 3
+    retain_rank: 5
+    evaluation: weekly
 
 factors:
   normalize_active_weights: true

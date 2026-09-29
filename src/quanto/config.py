@@ -230,7 +230,7 @@ class BacktestSpec(StrictSpec):
         return self
 
 
-def resolve_strategy_params(schema: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+def validate_parameters(schema: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
     checked_schema = copy.deepcopy(schema)
     if checked_schema.get("type") != "object":
         raise ValueError("Strategy parameter schema must have an object root")

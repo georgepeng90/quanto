@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from tests.fixtures.backtest_cases import dataset_case
-from quanto.config import BacktestSpec, resolve_strategy_params
+from quanto.config import BacktestSpec, validate_parameters
 from quanto.data.loaders import load_dataset, validate_dataset
 from quanto.sample_data import generate_sample_data
 
@@ -112,11 +112,11 @@ def test_strategy_params_apply_schema_defaults_and_reject_unknown_keys():
             "method": {"type": "string", "enum": ["momentum", "value"], "default": "momentum"},
         },
     }
-    assert resolve_strategy_params(schema, {"lookback": 5}) == {"lookback": 5, "method": "momentum"}
+    assert validate_parameters(schema, {"lookback": 5}) == {"lookback": 5, "method": "momentum"}
     with pytest.raises(ValueError):
-        resolve_strategy_params(schema, {"lookback": 5, "extra": True})
+        validate_parameters(schema, {"lookback": 5, "extra": True})
     with pytest.raises(ValueError):
-        resolve_strategy_params(schema, {"lookback": 0})
+        validate_parameters(schema, {"lookback": 0})
 
 
 @pytest.mark.parametrize("schema", [
@@ -127,29 +127,29 @@ def test_strategy_params_apply_schema_defaults_and_reject_unknown_keys():
 ])
 def test_unsupported_strategy_schema_composition_is_rejected(schema):
     with pytest.raises(ValueError):
-        resolve_strategy_params(schema, {"settings": {"surprise": True}})
+        validate_parameters(schema, {"settings": {"surprise": True}})
 
 
 def test_typeless_nested_object_schema_is_rejected_before_defaults_are_skipped():
     schema = {"type": "object", "properties": {"settings": {"properties": {"lookback": {"type": "integer", "default": 20}}}}}
     with pytest.raises(ValueError):
-        resolve_strategy_params(schema, {"settings": {"surprise": True}})
+        validate_parameters(schema, {"settings": {"surprise": True}})
     with pytest.raises(ValueError):
-        resolve_strategy_params(schema, {"settings": {}})
+        validate_parameters(schema, {"settings": {}})
 
 
 def test_parameter_named_allof_is_not_treated_as_schema_composition():
     schema = {"type": "object", "properties": {"allOf": {"type": "integer", "default": 7}}}
-    assert resolve_strategy_params(schema, {}) == {"allOf": 7}
+    assert validate_parameters(schema, {}) == {"allOf": 7}
 
 
 @pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
 def test_strategy_parameters_must_be_finite_json_numbers(bad):
     schema = {"type": "object", "properties": {"weight": {"type": "number"}}}
     with pytest.raises(ValueError):
-        resolve_strategy_params(schema, {"weight": bad})
+        validate_parameters(schema, {"weight": bad})
     with pytest.raises(ValueError):
-        resolve_strategy_params({"type": "object", "properties": {"weight": {"type": "number", "default": bad}}}, {})
+        validate_parameters({"type": "object", "properties": {"weight": {"type": "number", "default": bad}}}, {})
 
 
 def test_manifest_rejects_unknown_fields(tmp_path):

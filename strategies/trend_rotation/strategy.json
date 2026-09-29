@@ -1,0 +1,18 @@
+{
+  "name": "trend_rotation",
+  "entrypoint": "strategy.py:create_strategy",
+  "parameter_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "trend_window": {"type": "integer", "minimum": 1, "default": 20},
+      "momentum_window": {"type": "integer", "minimum": 1, "default": 20},
+      "entry_rank": {"type": "integer", "minimum": 1, "default": 3},
+      "retain_rank": {"type": "integer", "minimum": 1, "default": 5},
+      "evaluation": {"type": "string", "enum": ["daily", "weekly"], "default": "weekly"}
+    }
+  },
+  "required_data_columns": ["date", "symbol", "close"],
+  "auxiliary_sources": [],
+  "research_data": []
+}

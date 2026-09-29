@@ -1,0 +1,8 @@
+{
+  "name": "buy_hold",
+  "entrypoint": "strategy.py:create_strategy",
+  "parameter_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+  "required_data_columns": ["date", "symbol", "close"],
+  "auxiliary_sources": [],
+  "research_data": []
+}

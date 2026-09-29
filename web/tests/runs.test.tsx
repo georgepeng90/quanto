@@ -229,3 +229,163 @@ test('loads later run pages and refreshes a visible active run by ID', async () 
   await userEvent.click(screen.getByRole('button', { name: '刷新' }))
   await waitFor(() => expect(paths).toContain('/api/runs/later'))
 })
+
+test('editing the selected experiment while strategy validation waits cannot submit the old draft', async () => {
+  let releaseStrategy: ((response: Response) => void) | undefined
+  let strategyReads = 0
+  const submitted: string[] = []
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/strategies/s1') {
+      if (++strategyReads === 1) return new Promise<Response>(resolve => { releaseStrategy = resolve })
+      return Response.json({ manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer' } } } } })
+    }
+    if (path === '/api/experiments' && init?.method === 'POST') return Response.json({ id: 'variant', revision: 1 })
+    if (path === '/api/runs/batch') { submitted.push(String(init?.body)); return Response.json({ items: [{ ...queued, run_id: 'new' }] }) }
+    return prior(input, init)
+  }))
+  app('/runs')
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":4}]' } })
+  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
+  await waitFor(() => expect(releaseStrategy).toBeDefined())
+  await userEvent.selectOptions(screen.getByLabelText('实验草稿'), '')
+  releaseStrategy!(Response.json({ manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer' } } } } }))
+  await waitFor(() => expect(screen.getByRole('button', { name: '运行参数列表' })).toBeEnabled())
+  expect(submitted).toHaveLength(0)
+  await userEvent.selectOptions(screen.getByLabelText('实验草稿'), 'e1')
+  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
+  await waitFor(() => expect(submitted).toHaveLength(1))
+})
+
+test('editing parameters during variant creation releases the lock without submitting stale items', async () => {
+  let releaseVariant: ((response: Response) => void) | undefined
+  let variants = 0
+  const submitted: string[] = []
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/strategies/s1') return Response.json({ manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer' } } } } })
+    if (path === '/api/experiments' && init?.method === 'POST') {
+      if (++variants === 1) return new Promise<Response>(resolve => { releaseVariant = resolve })
+      return Response.json({ id: `variant-${variants}`, revision: 1 })
+    }
+    if (path === '/api/runs/batch') { submitted.push(String(init?.body)); return Response.json({ items: [{ ...queued, run_id: 'new' }] }) }
+    return prior(input, init)
+  }))
+  app('/runs')
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":4}]' } })
+  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
+  await waitFor(() => expect(releaseVariant).toBeDefined())
+  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":8}]' } })
+  releaseVariant!(Response.json({ id: 'stale-variant', revision: 1 }))
+  await waitFor(() => expect(screen.getByRole('button', { name: '运行参数列表' })).toBeEnabled())
+  expect(submitted).toHaveLength(0)
+  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
+  await waitFor(() => expect(submitted).toHaveLength(1))
+  expect(JSON.parse(submitted[0]).items).toEqual([{ experiment_id: 'variant-2', expected_revision: 1 }])
+})
+
+test('refresh and load more do not skip a second append after exactly 50 runs', async () => {
+  const records = Array.from({ length: 50 }, (_, index) => ({ ...queued, run_id: `old-${index}`, state: 'succeeded', detail_url: `/runs/old-${index}` }))
+  const paths: string[] = []
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    paths.push(path)
+    if (path === '/api/runs' || path.startsWith('/api/runs?cursor=')) {
+      const offset = Number(new URL(path, 'http://local').searchParams.get('cursor') || 0)
+      return Response.json({ items: records.slice(offset, offset + 50), next_cursor: records.length > offset + 50 ? String(offset + 50) : null })
+    }
+    return prior(input, init)
+  }))
+  app('/runs')
+  expect(await screen.findByRole('link', { name: 'old-49' })).toBeInTheDocument()
+  records.push({ ...queued, run_id: 'new-51', state: 'succeeded', detail_url: '/runs/new-51' })
+  await userEvent.click(screen.getByRole('button', { name: '刷新' }))
+  expect(await screen.findByRole('link', { name: 'new-51' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '加载更多运行' }))
+  records.push({ ...queued, run_id: 'new-52', state: 'succeeded', detail_url: '/runs/new-52' })
+  await userEvent.click(screen.getByRole('button', { name: '刷新' }))
+  expect(await screen.findByRole('link', { name: 'new-52' })).toBeInTheDocument()
+  expect(paths).toContain('/api/runs?cursor=51')
+})
+
+test('drains more than 100 terminal log events from the server cursor', async () => {
+  const prior = globalThis.fetch
+  const paths: string[] = []
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs/r1') return Response.json({ ...running, state: 'succeeded', finished_at: '2024-01-01T00:02:00+00:00' })
+    if (path.startsWith('/api/runs/r1/logs')) {
+      paths.push(path)
+      const cursor = Number(new URL(path, 'http://local').searchParams.get('cursor') || 0)
+      const items = Array.from({ length: Math.min(100, 205 - cursor) }, (_, index) => ({ ...event, seq: cursor + index + 1, message: `事件 ${cursor + index + 1}` }))
+      return Response.json({ items, next_cursor: String(cursor + items.length), state: 'succeeded', completed_through: '2024-01-03' })
+    }
+    return prior(input, init)
+  }))
+  app('/runs/r1')
+  expect(await screen.findByText('事件 205')).toBeVisible()
+  expect(paths).toEqual(['/api/runs/r1/logs', '/api/runs/r1/logs?cursor=100', '/api/runs/r1/logs?cursor=200'])
+})
+
+test('worker completion keeps the last known day count and completion phase', async () => {
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs/r1') return Response.json({ ...running, state: 'succeeded', finished_at: '2024-01-01T00:02:00+00:00' })
+    if (path === '/api/runs/r1/logs') return Response.json({ items: [
+      { ...event, seq: 1, phase: 'worker', asof: null, completed_days: 0, total_days: 0, code: 'WORKER_STARTED', message: '工作进程已启动' },
+      { ...event, seq: 2, phase: 'backtest', code: 'DAY_COMPLETED', message: '交易日计算完成' },
+      { ...event, seq: 3, phase: 'worker', asof: null, completed_days: 0, total_days: 0, code: 'WORKER_COMPLETED', message: '任务计算和产物校验已完成' }
+    ], next_cursor: '3', state: 'succeeded', completed_through: '2024-01-03' })
+    return prior(input, init)
+  }))
+  app('/runs/r1')
+  expect(await screen.findByText(/已完成交易日 3 \/ 10/)).toBeVisible()
+  expect(screen.getByText(/阶段：任务完成/)).toBeVisible()
+  expect(screen.getByRole('progressbar', { name: '交易日进度' })).toHaveAttribute('value', '3')
+})
+
+test('aborts a pending manual refresh on navigation', async () => {
+  let detailReads = 0
+  let pendingSignal: AbortSignal | undefined
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/runs/r1' && ++detailReads === 2) {
+      pendingSignal = init?.signal as AbortSignal
+      return new Promise<Response>(() => {})
+    }
+    return prior(input, init)
+  }))
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/runs/r1'] })
+  render(<RouterProvider router={router} />)
+  await userEvent.click(await screen.findByRole('button', { name: '刷新状态' }))
+  await waitFor(() => expect(pendingSignal).toBeDefined())
+  await act(async () => { await router.navigate('/runs') })
+  expect(pendingSignal?.aborted).toBe(true)
+})
+
+test('aborts cancellation follow-up GET on navigation while preserving the POST outcome', async () => {
+  let detailReads = 0
+  let pendingSignal: AbortSignal | undefined
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs/r1/cancel') return Response.json({ ...running, state: 'cancel_requested' })
+    if (path === '/api/runs/r1' && ++detailReads === 2) {
+      pendingSignal = init?.signal as AbortSignal
+      return new Promise<Response>(() => {})
+    }
+    return prior(input, init)
+  }))
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/runs/r1'] })
+  render(<RouterProvider router={router} />)
+  await userEvent.click(await screen.findByRole('button', { name: '取消任务' }))
+  await waitFor(() => expect(pendingSignal).toBeDefined())
+  await act(async () => { await router.navigate('/runs') })
+  expect(pendingSignal?.aborted).toBe(true)
+})

@@ -23,12 +23,23 @@ export function RunDetailPage() {
   const tableCursors = useRef<Record<TableName, string | undefined>>({ equity: undefined, orders: undefined, fills: undefined, signals: undefined, risk_events: undefined, account_events: undefined })
   const inFlight = useRef(false)
   const runRef = useRef<RunRecord | null>(null)
+  const mountController = useRef<AbortController | null>(null)
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     if (inFlight.current || !id) return
     inFlight.current = true
     try {
-      const [current, logs] = await Promise.all([api.run(id, signal), api.runLogs(id, logCursor.current, signal)])
+      const readLogs = async () => {
+        const items: RunEvent[] = []
+        let cursor = logCursor.current
+        for (;;) {
+          const page = await api.runLogs(id, cursor, signal)
+          items.push(...page.items)
+          if (page.items.length < 100 || !page.next_cursor || page.next_cursor === cursor) return { items, cursor: page.next_cursor || cursor }
+          cursor = page.next_cursor
+        }
+      }
+      const [current, logs] = await Promise.all([api.run(id, signal), readLogs()])
       if (signal?.aborted) return
       const previous = runRef.current
       const completed_through = previous?.completed_through && (!current.completed_through || previous.completed_through > current.completed_through) ? previous.completed_through : current.completed_through
@@ -40,7 +51,7 @@ export function RunDetailPage() {
         for (const item of logs.items) bySeq.set(item.seq, item)
         return [...bySeq.values()].sort((a, b) => a.seq - b.seq)
       })
-      logCursor.current = logs.next_cursor || logCursor.current
+      logCursor.current = logs.cursor
       const loaded = await Promise.all(tableNames.map(async name => {
         const rows: TableRow[] = []
         let cursor = name === 'orders' || terminalStates.has(current.state) ? undefined : tableCursors.current[name]
@@ -73,21 +84,25 @@ export function RunDetailPage() {
 
   useEffect(() => {
     const controller = new AbortController()
+    mountController.current = controller
     void refresh(controller.signal)
     const timer = window.setInterval(() => { if (!terminalStates.has(runRef.current?.state || 'queued')) void refresh(controller.signal) }, 1000)
-    return () => { clearInterval(timer); controller.abort() }
+    return () => { clearInterval(timer); controller.abort(); mountController.current = null }
   }, [refresh])
 
   const cancel = async () => {
     if (!run || terminalStates.has(run.state)) return
+    const signal = mountController.current?.signal
     try {
       const current = await api.cancelRun(id)
+      if (signal?.aborted) return
       runRef.current = current
       setRun(current)
-      await refresh()
-    } catch (value) { setError(describeError(value)); await refresh() }
+      await refresh(signal)
+    } catch (value) { if (!signal?.aborted) { setError(describeError(value)); await refresh(signal) } }
   }
   const latest = events.at(-1)
+  const progress = events.filter(event => event.total_days > 0).at(-1)
   const orderById = new Map(tables.orders.map(row => [String(row.id), row]))
   const matchesDate = (name: TableName, row: TableRow) => !date || rowDate(row) === date || (name === 'orders' && row.execution_date === date) || (name === 'fills' && orderById.get(String(row.order_id))?.signal_date === date)
   const filtered = (name: TableName) => tables[name].filter(row => matchesDate(name, row) && (!symbol || name === 'signals' || name === 'risk_events' || String(row.symbol || '') === symbol))
@@ -100,7 +115,7 @@ export function RunDetailPage() {
   return <div className="page-stack"><header className="page-heading"><h1>回测详情</h1><p><Link to="/runs">返回运行列表</Link> · {id}</p></header>
     {error && <p role="alert" className="error callout">{error}</p>}
     {loading && !run ? <p>读取运行状态…</p> : !run ? <p className="empty">尚无法读取运行详情。可刷新重试。</p> : <>
-      <section className="panel"><div className="section-heading"><div><h2>运行进度</h2><p>任务和时间以服务端记录为准。</p></div><div className="inline-actions"><button type="button" onClick={() => void refresh()}>刷新状态</button><button type="button" disabled={terminalStates.has(run.state) || run.state === 'cancel_requested'} onClick={cancel}>{run.state === 'cancel_requested' ? '正在取消' : '取消任务'}</button></div></div><RunProgress run={run} latest={latest} />{run.error && <p className="error callout">{run.error}</p>}</section>
+      <section className="panel"><div className="section-heading"><div><h2>运行进度</h2><p>任务和时间以服务端记录为准。</p></div><div className="inline-actions"><button type="button" onClick={() => void refresh(mountController.current?.signal)}>刷新状态</button><button type="button" disabled={terminalStates.has(run.state) || run.state === 'cancel_requested'} onClick={cancel}>{run.state === 'cancel_requested' ? '正在取消' : '取消任务'}</button></div></div><RunProgress run={run} latest={latest} progress={progress} />{run.error && <p className="error callout">{run.error}</p>}</section>
       <section className="panel"><h2>输入快照</h2><p>实验 {run.experiment_id} · 修订 {run.experiment_revision} · 清单哈希 {run.manifest_hash}</p><details><summary>查看冻结输入与来源</summary><pre>{JSON.stringify(run.provenance || {}, null, 2)}</pre></details></section>
       <section className="panel"><h2>任务日志</h2>{events.length ? <EventTimeline events={events} /> : <p className="empty">尚无日志事件。</p>}</section>
       <section className="panel"><h2>账户净值 · {run.state === 'succeeded' ? '已完成' : `${run.state === 'running' ? '运行中' : '部分结果'}`}</h2><p className="muted">下列数值为已完成交易日的服务端产物；不据此显示最终绩效排名。</p>{tables.equity.length ? <div className="table-wrap"><table><thead><tr><th>日期</th><th>现金</th><th>应收</th><th>市值</th><th>净值</th><th>陈旧估值</th></tr></thead><tbody>{tables.equity.map((row, index) => <tr key={`${row.date}-${index}`}><td>{text(row.date)}</td><td>{text(row.cash)}</td><td>{text(row.receivables)}</td><td>{text(row.market_value)}</td><td>{text(row.equity)}</td><td>{text(row.stale_value)}</td></tr>)}</tbody></table></div> : <p className="empty">尚无已完成日净值。</p>}</section>

@@ -25,19 +25,19 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 const json = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-const list = <T>(name: string) => request<Page<T>>(`/${name}`)
+const list = <T>(name: string, cursor?: string) => request<Page<T>>(`/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)
 
 export const api = {
-  datasets: () => list<DatasetVersion>('datasets'),
+  datasets: (cursor?: string) => list<DatasetVersion>('datasets', cursor),
   dataset: (id: string) => request<DatasetVersion>(`/datasets/${encodeURIComponent(id)}`),
-  strategies: () => list<StrategyRevision>('strategies'),
+  strategies: (cursor?: string) => list<StrategyRevision>('strategies', cursor),
   strategy: (id: string) => request<StrategyRevision>(`/strategies/${encodeURIComponent(id)}`),
   registerStrategy: (manifest: StrategyManifest, files: Record<string, string>) => request<StrategyRevision>('/strategies', json({ manifest, files })),
-  experiments: () => list<ExperimentDraft>('experiments'),
+  experiments: (cursor?: string) => list<ExperimentDraft>('experiments', cursor),
   experiment: (id: string) => request<ExperimentDraft>(`/experiments/${encodeURIComponent(id)}`),
   createExperiment: (payload: ExperimentPayload) => request<ExperimentDraft>('/experiments', json({ payload })),
   saveExperiment: (id: string, expected_revision: number, payload: ExperimentPayload) => request<ExperimentDraft>(`/experiments/${encodeURIComponent(id)}`, { ...json({ expected_revision, payload }), method: 'PUT' }),
-  jobs: () => list<JobRecord>('jobs'),
+  jobs: (cursor?: string) => list<JobRecord>('jobs', cursor),
   job: (id: string) => request<JobRecord>(`/jobs/${encodeURIComponent(id)}`),
   dataJob: (kind: 'demo' | 'fetch', payload: Record<string, unknown>) => request<JobRecord>('/jobs/data', json({ kind, payload })),
   validateStrategy: (strategy_revision_id: string, params: Record<string, unknown>) => request<JobRecord>('/jobs/strategy-validation', json({ strategy_revision_id, params })),

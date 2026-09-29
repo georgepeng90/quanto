@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { App } from '../src/App'
+const renderApp = () => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/datasets'] })} />)
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -16,7 +17,7 @@ beforeEach(() => {
 })
 
 test('shows demo, research mode, coverage and acquisition errors', async () => {
-  render(<MemoryRouter initialEntries={['/datasets']}><App /></MemoryRouter>)
+  renderApp()
   expect(await screen.findByText('演示数据')).toBeInTheDocument()
   expect(screen.getByText('复权研究价')).toBeInTheDocument()
   expect(screen.getByText(/2024-02-01.*2024-11-30/)).toBeInTheDocument()
@@ -33,7 +34,7 @@ test('never presents an incomplete finished fetch as a usable data version', asy
     if (path === '/api/jobs/j1') return Response.json({ id: 'j1', kind: 'fetch', state: 'succeeded', run_id: null, enqueue_seq: 1, heartbeat: null, completed_through: null, error: null, result: { state: 'incomplete', dataset_version_id: null, reason: 'COVERAGE_INCOMPLETE', coverage: { '000001': { observed: ['2024-01-02'], missing: ['2024-01-03'] } }, failed_symbols: ['000001'] } })
     throw new Error(`unexpected ${path}`)
   }))
-  render(<MemoryRouter initialEntries={['/datasets']}><App /></MemoryRouter>)
+  renderApp()
   expect(await screen.findByText(/尚无已验证数据版本/)).toBeInTheDocument()
   expect(screen.getByText(/覆盖不完整/)).toBeInTheDocument()
   expect(screen.getByText(/2024-01-03/)).toBeInTheDocument()
@@ -51,7 +52,7 @@ test('labels ZIP preflight as metadata-only before queuing import', async () => 
     if (path === '/api/datasets' && init?.method === 'POST') return Response.json({ id: 'j1', kind: 'import', state: 'queued', run_id: null, enqueue_seq: 1, heartbeat: null, completed_through: null, error: null })
     throw new Error(`unexpected ${path}`)
   }))
-  render(<MemoryRouter initialEntries={['/datasets']}><App /></MemoryRouter>)
+  renderApp()
   await screen.findByText(/尚无已验证数据版本/)
   await userEvent.upload(screen.getByLabelText('ZIP 文件'), new File(['zip'], 'bundle.zip', { type: 'application/zip' }))
   await userEvent.click(screen.getByRole('button', { name: '上传并预检' }))
@@ -59,4 +60,22 @@ test('labels ZIP preflight as metadata-only before queuing import', async () => 
   expect(screen.queryByText(/已验证并登记数据版本/)).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '提交导入验证' }))
   expect(await screen.findByText('排队中')).toBeInTheDocument()
+})
+
+test('loads later dataset and job pages with terminal job details', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets') return Response.json({ items: [], next_cursor: '50' })
+    if (path === '/api/jobs') return Response.json({ items: [], next_cursor: '50' })
+    if (path === '/api/datasets?cursor=50') return Response.json({ items: [{ id: 'd2', content_hash: 'h2', manifest: { source: 'later-dataset', is_demo: false, price_mode: 'raw_cash', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'complete', limitations: [] } }], next_cursor: null })
+    if (path === '/api/jobs?cursor=50') return Response.json({ items: [{ id: 'j2', kind: 'fetch', state: 'succeeded', run_id: null, enqueue_seq: 51, heartbeat: null, completed_through: null, error: null }], next_cursor: null })
+    if (path === '/api/jobs/j2') return Response.json({ id: 'j2', kind: 'fetch', state: 'succeeded', run_id: null, enqueue_seq: 51, heartbeat: null, completed_through: null, error: null, result: { state: 'incomplete', dataset_version_id: null, reason: 'COVERAGE_INCOMPLETE', coverage: { '000001': { observed: [], missing: ['2024-01-03'] } } } })
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '加载更多数据版本' }))
+  await userEvent.click(screen.getByRole('button', { name: '加载更多数据任务' }))
+  expect(await screen.findByText('later-dataset')).toBeInTheDocument()
+  expect(screen.getByText(/2024-01-03/)).toBeInTheDocument()
 })

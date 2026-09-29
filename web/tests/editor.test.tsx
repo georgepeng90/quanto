@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { useState } from 'react'
 import { App } from '../src/App'
@@ -14,6 +14,7 @@ const strategy = { id: 's1', content_hash: 'hash', manifest, files: { 'strategy.
 const dataset = { id: 'd1', content_hash: 'hash', manifest: { source: 'sample', is_demo: true, price_mode: 'adjusted_research', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'unknown', limitations: ['示例'] } }
 const spec = { start: '2024-02-01', end: '2024-03-01', symbols: ['000001'], initial_cash: 1000, seed: 7, execution: { commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0, model: 'next_open' }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: 'v1' } }
 const experiment = { id: 'e1', revision: 1, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: spec, sample_purpose: 'exploration' } }
+const renderApp = () => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments'] })} />)
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -42,7 +43,7 @@ test('renders a newly declared parameter and edits the shared value', async () =
 })
 
 test('preserves unsaved experiment edits on revision conflict and shows server revision', async () => {
-  render(<MemoryRouter initialEntries={['/experiments']}><App /></MemoryRouter>)
+  renderApp()
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   await userEvent.clear(await screen.findByLabelText('初始资金'))
   await userEvent.type(screen.getByLabelText('初始资金'), '2000')
@@ -99,7 +100,7 @@ test('declares a newly added Python source in the registered manifest', async ()
 
 test('asks before leaving a dirty experiment form', async () => {
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
-  render(<MemoryRouter initialEntries={['/experiments']}><App /></MemoryRouter>)
+  renderApp()
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   await userEvent.clear(screen.getByLabelText('初始资金'))
   await userEvent.type(screen.getByLabelText('初始资金'), '2000')
@@ -109,8 +110,28 @@ test('asks before leaving a dirty experiment form', async () => {
   confirm.mockRestore()
 })
 
+test('blocks browser back and forward until dirty edits are explicitly discarded', async () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/datasets', '/experiments', '/runs'], initialIndex: 1 })
+  render(<RouterProvider router={router} />)
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  await userEvent.clear(screen.getByLabelText('初始资金'))
+  await userEvent.type(screen.getByLabelText('初始资金'), '2000')
+  await act(async () => { await router.navigate(-1) })
+  await waitFor(() => expect(confirm).toHaveBeenCalled())
+  expect(router.state.location.pathname).toBe('/experiments')
+  expect(screen.getByLabelText('初始资金')).toHaveValue(2000)
+  await act(async () => { await router.navigate(1) })
+  await waitFor(() => expect(confirm).toHaveBeenCalledTimes(2))
+  expect(router.state.location.pathname).toBe('/experiments')
+  confirm.mockReturnValue(true)
+  await act(async () => { await router.navigate(-1) })
+  await waitFor(() => expect(router.state.location.pathname).toBe('/datasets'))
+  confirm.mockRestore()
+})
+
 test('does not save stale parameters while their JSON editor is invalid', async () => {
-  render(<MemoryRouter initialEntries={['/experiments']}><App /></MemoryRouter>)
+  renderApp()
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   const editor = await screen.findByLabelText('参数 JSON（与表单共享状态）')
   await userEvent.clear(editor)
@@ -120,7 +141,7 @@ test('does not save stale parameters while their JSON editor is invalid', async 
 })
 
 test('blocks dates outside the selected dataset price coverage', async () => {
-  render(<MemoryRouter initialEntries={['/experiments']}><App /></MemoryRouter>)
+  renderApp()
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   fireEvent.change(await screen.findByLabelText('结束日'), { target: { value: '2025-01-01' } })
   await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
@@ -128,7 +149,7 @@ test('blocks dates outside the selected dataset price coverage', async () => {
 })
 
 test('rejects a risk cap above the engine-supported range before save', async () => {
-  render(<MemoryRouter initialEntries={['/experiments']}><App /></MemoryRouter>)
+  renderApp()
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   fireEvent.change(await screen.findByLabelText('总仓位上限'), { target: { value: '1.5' } })
   await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
@@ -149,7 +170,7 @@ test('saves a new draft revision with edited schema parameters and complete spec
     if (path === '/api/experiments/e1') return Response.json(experiment)
     throw new Error(`unexpected ${path}`)
   }))
-  render(<MemoryRouter initialEntries={['/experiments']}><App /></MemoryRouter>)
+  renderApp()
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   const field = await screen.findByRole('spinbutton', { name: '窗口' })
   await userEvent.clear(field)
@@ -160,4 +181,28 @@ test('saves a new draft revision with edited schema parameters and complete spec
   expect(submitted!.payload.strategy_params).toEqual({ window: 6 })
   expect(submitted!.payload.backtest_spec.risk.pause_action).toBe('block_new')
   expect(submitted!.payload.backtest_spec.execution.model).toBe('next_open')
+})
+
+test('loads later dataset, strategy, and experiment pages into their selectors', async () => {
+  const laterDataset = { ...dataset, id: 'd2', manifest: { ...dataset.manifest, source: 'later-dataset' } }
+  const laterStrategy = { ...strategy, id: 's2', manifest: { ...manifest, name: 'later-strategy' } }
+  const laterExperiment = { ...experiment, id: 'e2' }
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets') return Response.json({ items: [dataset], next_cursor: '50' })
+    if (path === '/api/strategies') return Response.json({ items: [strategy], next_cursor: '50' })
+    if (path === '/api/experiments') return Response.json({ items: [experiment], next_cursor: '50' })
+    if (path === '/api/datasets?cursor=50') return Response.json({ items: [laterDataset], next_cursor: null })
+    if (path === '/api/strategies?cursor=50') return Response.json({ items: [laterStrategy], next_cursor: null })
+    if (path === '/api/experiments?cursor=50') return Response.json({ items: [laterExperiment], next_cursor: null })
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '加载更多数据版本' }))
+  await userEvent.click(screen.getByRole('button', { name: '加载更多策略修订' }))
+  await userEvent.click(screen.getByRole('button', { name: '加载更多实验草稿' }))
+  expect(await screen.findByRole('option', { name: /later-dataset/ })).toBeInTheDocument()
+  expect(screen.getByRole('option', { name: /later-strategy/ })).toBeInTheDocument()
+  expect(screen.getByRole('option', { name: /e2/ })).toBeInTheDocument()
 })

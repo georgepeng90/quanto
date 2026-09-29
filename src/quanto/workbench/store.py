@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from contextlib import contextmanager
 import json
 from pathlib import Path
@@ -10,6 +11,35 @@ from quanto.config import validate_parameters
 from quanto.data.loaders import load_dataset
 from quanto.workbench.models import DatasetVersion, ExperimentDraft, JobRecord, RunRecord, StrategyRevision
 from quanto.workbench.revisions import digest, json_bytes, publish_files, safe_name, source_files
+
+
+def _module_name(filename: str) -> str:
+    parts = list(Path(filename).with_suffix("").parts)
+    if parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
+
+
+def _local_imports(tree: ast.AST, filename: str) -> set[str]:
+    module = _module_name(filename)
+    package = module if filename.endswith("/__init__.py") else module.rpartition(".")[0]
+    found = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            found.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                parts = package.split(".") if package else []
+                if node.level > len(parts):
+                    raise ValueError("relative import escapes strategy package")
+                prefix = parts[:len(parts) - node.level + 1]
+                base = ".".join([*prefix, *node.module.split(".")] if node.module else prefix)
+            else:
+                base = node.module or ""
+            if base:
+                found.add(base)
+            found.update(f"{base}.{alias.name}" if base else alias.name for alias in node.names if alias.name != "*")
+    return found
 
 
 class WorkbenchStore:
@@ -84,7 +114,6 @@ class WorkbenchStore:
         return DatasetVersion(identity, target, content_hash, manifest)
 
     def register_strategy(self, files: dict[str, bytes], manifest: dict) -> StrategyRevision:
-        import ast
         if "strategy.json" not in files or json.loads(files["strategy.json"]) != manifest:
             raise ValueError("strategy.json must match the declaration")
         entrypoint = manifest.get("entrypoint", "")
@@ -106,14 +135,13 @@ class WorkbenchStore:
         for name in declared:
             if name.endswith(".py"):
                 ast.parse(files[name], filename=name)
-        local_modules = {Path(name).stem for name in files if name.endswith(".py")}
-        declared_modules = {Path(name).stem for name in declared if name.endswith(".py")}
+        local_modules = {_module_name(name) for name in files if name.endswith(".py")}
+        declared_modules = {_module_name(name) for name in declared if name.endswith(".py")}
         for name in declared:
             if not name.endswith(".py"):
                 continue
             tree = ast.parse(files[name], filename=name)
-            imported = {alias.name.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
-            imported.update(node.module.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module)
+            imported = _local_imports(tree, name)
             if (imported & local_modules) - declared_modules:
                 raise ValueError("undeclared local strategy source")
         identity = str(uuid4())

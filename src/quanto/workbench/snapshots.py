@@ -6,6 +6,7 @@ import importlib.metadata
 import json
 from pathlib import Path
 import platform
+import re
 import subprocess
 import sys
 import tomllib
@@ -24,19 +25,47 @@ def _git(args: list[str], root: Path) -> str | None:
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def _environment(project_root: Path) -> dict:
-    project = tomllib.loads((project_root / "pyproject.toml").read_text(encoding="utf-8"))
-    requirements = project["project"]["dependencies"]
-    versions = {}
-    for requirement in requirements:
-        name = requirement.split("[", 1)[0].split(">", 1)[0].split("<", 1)[0].split("=", 1)[0].strip()
-        versions[name] = importlib.metadata.version(name)
-    locks = {}
-    for name in ("uv.lock", "requirements.lock", "poetry.lock"):
+_METADATA_NAMES = ("pyproject.toml", "uv.lock", "requirements.lock", "poetry.lock")
+
+
+def _metadata_files(project_root: Path) -> dict[str, bytes]:
+    result = {}
+    for name in _METADATA_NAMES:
         path = project_root / name
+        if path.is_symlink():
+            raise ValueError("symbolic links are not snapshot inputs")
         if path.is_file():
-            locks[name] = digest(path.read_bytes())
-    return {"python": sys.version, "executable": sys.executable, "platform": platform.platform(), "dependencies": versions, "lock_hashes": locks}
+            result[name] = path.read_bytes()
+    if "pyproject.toml" not in result:
+        raise FileNotFoundError(project_root / "pyproject.toml")
+    return result
+
+
+def _execution_files(project_root: Path) -> dict[str, bytes]:
+    package_root = project_root / "src" / "quanto"
+    if any(path.is_symlink() for path in package_root.rglob("*")):
+        raise ValueError("symbolic links are not snapshot inputs")
+    files = {path.relative_to(project_root).as_posix(): path.read_bytes() for path in package_root.rglob("*.py")}
+    files.update(_metadata_files(project_root))
+    return files
+
+
+def _environment(project_root: Path, metadata_files: dict[str, bytes]) -> dict:
+    project = tomllib.loads(metadata_files["pyproject.toml"].decode("utf-8"))
+    installed = sorted(
+        [re.sub(r"[-_.]+", "-", dist.metadata["Name"]).lower(), dist.version]
+        for dist in importlib.metadata.distributions()
+    )
+    locks = {name: digest(content) for name, content in metadata_files.items() if name in _METADATA_NAMES and name != "pyproject.toml"}
+    return {
+        "python": sys.version,
+        "executable": sys.executable,
+        "platform": platform.platform(),
+        "declared_requirements": project["project"].get("dependencies", []),
+        "declared_optional_requirements": project["project"].get("optional-dependencies", {}),
+        "installed_distributions": installed,
+        "lock_hashes": locks,
+    }
 
 
 class SnapshotBuilder:
@@ -74,23 +103,19 @@ class SnapshotBuilder:
                 if call_name in {"__import__", "import_module", "open", "read_text", "read_bytes"}:
                     non_exact_reasons.append(f"dynamic import or external read in {name}")
         project_root = Path(__file__).resolve().parents[3]
-        package_root = project_root / "src" / "quanto"
-        package_files = {path.relative_to(project_root).as_posix(): path.read_bytes() for path in package_root.rglob("*.py")}
-        if any(path.is_symlink() for path in package_root.rglob("*")):
-            raise ValueError("symbolic links are not snapshot inputs")
+        execution_files = _execution_files(project_root)
         files = {f"dataset/{name}": data for name, data in dataset_files.items()}
         files.update({f"strategy/{name}": data for name, data in strategy_files.items()})
-        files.update(package_files)
-        for name in ("pyproject.toml", "uv.lock"):
-            path = project_root / name
-            if path.is_file():
-                files[name] = path.read_bytes()
-        if {name: path.read_bytes() for name, path in ((key, project_root / key) for key in package_files)} != package_files:
-            raise ValueError("engine changed during freeze")
+        files.update(execution_files)
+        environment = _environment(project_root, execution_files)
+        if _execution_files(project_root) != execution_files:
+            raise ValueError("engine or environment files changed during freeze")
         if source_files(dataset.path) != dataset_files or source_files(strategy.path) != strategy_files:
             raise ValueError("registered input changed during freeze")
         run_id = str(uuid4())
         file_hashes = {name: digest(data) for name, data in files.items()}
+        if any(file_hashes[name] != expected for name, expected in environment["lock_hashes"].items()):
+            raise ValueError("lock hash differs from frozen input")
         manifest = {
             "schema_version": 1,
             "run_id": run_id,
@@ -118,13 +143,17 @@ class SnapshotBuilder:
             "risk_definition_version": 1,
             "git_commit": _git(["rev-parse", "HEAD"], project_root),
             "git_status": _git(["status", "--porcelain=v1", "--untracked-files=no"], project_root),
-            "environment": _environment(project_root),
+            "environment": environment,
             "files": file_hashes,
             "reproducibility": {"mode": "non_exact" if non_exact_reasons else "exact_inputs", "reasons": sorted(set(non_exact_reasons))},
         }
         files["manifest.json"] = json_bytes(manifest)
         target, written_hashes = publish_files(self.store.root / "snapshots", run_id, files)
         verify_files(target, written_hashes)
+        if _execution_files(project_root) != execution_files:
+            raise ValueError("engine or environment files changed during freeze")
+        if source_files(dataset.path) != dataset_files or source_files(strategy.path) != strategy_files:
+            raise ValueError("registered input changed during freeze")
         return FrozenRun(run_id, target / "manifest.json", digest(files["manifest.json"]))
 
     def verify(self, frozen: FrozenRun, exact: bool = True) -> dict:
@@ -134,10 +163,12 @@ class SnapshotBuilder:
         if set(source_files(frozen.manifest_path.parent)) != set(manifest["files"]) | {"manifest.json"}:
             raise ValueError("snapshot file set mismatch")
         verify_files(frozen.manifest_path.parent, manifest["files"])
+        if any(manifest["files"].get(name) != expected for name, expected in manifest["environment"]["lock_hashes"].items()):
+            raise ValueError("lock hash differs from frozen input")
         if exact:
             if manifest["reproducibility"]["mode"] != "exact_inputs":
                 raise ValueError("snapshot is not exact-reproducible")
             project_root = Path(__file__).resolve().parents[3]
-            if _environment(project_root) != manifest["environment"]:
+            if _environment(project_root, _metadata_files(project_root)) != manifest["environment"]:
                 raise ValueError("execution environment changed")
         return manifest

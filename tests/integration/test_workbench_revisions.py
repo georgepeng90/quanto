@@ -63,3 +63,20 @@ def test_strategy_registration_does_not_execute_source(tmp_path):
     declaration = {"entrypoint": "strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}, "auxiliary_sources": [], "research_data": []}
     version = store.register_strategy({"strategy.json": json.dumps(declaration).encode(), "strategy.py": b"raise RuntimeError('must not execute')\n"}, declaration)
     assert (version.path / "strategy.py").read_bytes().startswith(b"raise RuntimeError")
+
+
+@pytest.mark.parametrize("source", ["import lib.helper\n", "from lib import helper\n", "from . import helper\n"])
+def test_nested_undeclared_local_import_is_rejected(tmp_path, source):
+    store = WorkbenchStore(tmp_path / "workbench")
+    declaration = {"entrypoint": "lib/strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}, "auxiliary_sources": [], "research_data": []}
+    files = {"strategy.json": json.dumps(declaration).encode(), "lib/strategy.py": source.encode(), "lib/helper.py": b"value = 1\n"}
+    with pytest.raises(ValueError, match="undeclared local"):
+        store.register_strategy(files, declaration)
+
+
+def test_declared_nested_local_import_is_registered(tmp_path):
+    store = WorkbenchStore(tmp_path / "workbench")
+    declaration = {"entrypoint": "lib/strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}, "auxiliary_sources": ["lib/helper.py"], "research_data": []}
+    files = {"strategy.json": json.dumps(declaration).encode(), "lib/strategy.py": b"from . import helper\ndef create_strategy(params): return helper.value\n", "lib/helper.py": b"value = 1\n"}
+    version = store.register_strategy(files, declaration)
+    assert (version.path / "lib" / "helper.py").read_bytes() == b"value = 1\n"

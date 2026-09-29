@@ -1,11 +1,14 @@
 import hashlib
+import importlib.metadata
 import json
+from types import SimpleNamespace
 
 import pytest
 
 from quanto.workbench.models import BatchItem, FrozenRun
 from quanto.workbench.runs import RunService
 from quanto.workbench.snapshots import SnapshotBuilder
+import quanto.workbench.snapshots as snapshots
 from quanto.workbench.store import WorkbenchStore
 from tests.fixtures.backtest_cases import dataset_case
 
@@ -120,3 +123,58 @@ def test_snapshot_verification_rejects_added_execution_file(tmp_path):
     extra.write_text("value = 1\n")
     with pytest.raises(ValueError, match="file set mismatch"):
         SnapshotBuilder(store).verify(FrozenRun(run.run_id, run.manifest_path, run.manifest_hash))
+
+
+def test_exact_verification_detects_installed_distribution_drift(tmp_path, monkeypatch):
+    store, draft, _, _ = _ready(tmp_path)
+    run = RunService(store).submit(draft.id, draft.revision, "dist", "web")
+    frozen = FrozenRun(run.run_id, run.manifest_path, run.manifest_hash)
+    environment = json.loads(run.manifest_path.read_text())["environment"]
+    assert environment["installed_distributions"]
+    original = importlib.metadata.distributions
+    monkeypatch.setattr(importlib.metadata, "distributions", lambda: [*original(), SimpleNamespace(metadata={"Name": "unexpected-package"}, version="1.0")])
+    with pytest.raises(ValueError, match="environment changed"):
+        SnapshotBuilder(store).verify(frozen)
+
+
+@pytest.mark.parametrize("changed_name", ["src/quanto/backtest/new_module.py", "uv.lock"])
+def test_freeze_rejects_execution_file_set_or_lock_drift(tmp_path, monkeypatch, changed_name):
+    store, draft, _, _ = _ready(tmp_path)
+    original = snapshots._execution_files
+    calls = 0
+    def changing_files(project_root):
+        nonlocal calls
+        calls += 1
+        files = original(project_root)
+        if calls == 2:
+            files[changed_name] = b"changed during freeze"
+        return files
+    monkeypatch.setattr(snapshots, "_execution_files", changing_files)
+    with pytest.raises(ValueError, match="engine or environment files changed"):
+        RunService(store).submit(draft.id, draft.revision, "drift", "web")
+    assert store.list_jobs() == []
+
+
+def test_recorded_lock_hash_matches_frozen_bytes(tmp_path):
+    store, draft, _, _ = _ready(tmp_path)
+    run = RunService(store).submit(draft.id, draft.revision, "lock", "web")
+    manifest = json.loads(run.manifest_path.read_text())
+    lock_hash = hashlib.sha256((run.manifest_path.parent / "uv.lock").read_bytes()).hexdigest()
+    assert manifest["environment"]["lock_hashes"]["uv.lock"] == manifest["files"]["uv.lock"] == lock_hash
+
+
+def test_freeze_rejects_post_publication_source_drift(tmp_path, monkeypatch):
+    store, draft, _, _ = _ready(tmp_path)
+    original = snapshots._execution_files
+    calls = 0
+    def changed_after_publication(project_root):
+        nonlocal calls
+        calls += 1
+        files = original(project_root)
+        if calls == 3:
+            files["src/quanto/backtest/new_module.py"] = b"late edit"
+        return files
+    monkeypatch.setattr(snapshots, "_execution_files", changed_after_publication)
+    with pytest.raises(ValueError, match="engine or environment files changed"):
+        RunService(store).submit(draft.id, draft.revision, "late-drift", "web")
+    assert store.list_jobs() == []

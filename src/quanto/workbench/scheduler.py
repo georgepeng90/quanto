@@ -12,6 +12,7 @@ import time
 import psutil
 
 from quanto.workbench.models import JobRecord
+from quanto.workbench.processes import WindowsJob
 from quanto.workbench.store import WorkbenchStore
 from quanto.workbench.worker import atomic_json, process_identity, read_json, read_completed_through, same_process, validate_job_output, verify_bootstrap
 
@@ -24,6 +25,7 @@ class _Child:
     acknowledged: bool = False
     worker: psutil.Process | None = None
     launcher_start: str | None = None
+    job: WindowsJob | None = None
 
 
 class Scheduler:
@@ -194,6 +196,8 @@ class Scheduler:
 
     @staticmethod
     def _kill(child: _Child):
+        if child.job is not None:
+            child.job.close()
         # Windows venv python.exe may be a redirector owning the real worker.
         # Capture verified descendants before terminating that retained launcher.
         if child.launcher_start is not None and same_process(child.process.pid, child.launcher_start):
@@ -267,6 +271,13 @@ class Scheduler:
                     self._kill(child)
                     continue
                 child.worker = candidate
+                if os.name == "nt" and child.job is None:
+                    try:
+                        child.job = WindowsJob(registration["pid"], registration["process_start"])
+                    except (OSError, ValueError):
+                        # No ACK may escape if kernel ownership cannot be established.
+                        self._kill(child)
+                        continue
                 if self.store.register_process(identity, registration["pid"], registration["process_start"]):
                     atomic_json(control / "ack.json", {"job_id": identity})
                     child.acknowledged = True

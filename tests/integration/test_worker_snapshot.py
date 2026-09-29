@@ -290,3 +290,92 @@ def test_changed_frozen_dataset_fails_before_strategy_entry(tmp_path, name):
     traceback = (store.artifact_root / run.job_id / "control" / "traceback.txt").read_text(encoding="utf-8")
     assert "SNAPSHOT_INVALID" in traceback
     assert not (store.artifact_root / run.job_id / "control" / "runtime.json").exists()
+
+
+def _identity_alive(identity):
+    from quanto.workbench.worker import same_process
+    return same_process(identity["pid"], identity["process_start"])
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process-lifetime ownership")
+@pytest.mark.parametrize("failure", ["service_death", "worker_exit"])
+def test_owned_helpers_exit_when_service_or_worker_dies_after_ack(tmp_path, failure):
+    # The helper writes its own actual PID (not the Windows venv redirector PID).
+    helper_code = """import json, os, sys, time
+from pathlib import Path
+import psutil
+path = Path(sys.argv[1])
+temporary = path.with_suffix('.tmp')
+temporary.write_text(json.dumps({'pid': os.getpid(), 'process_start': str(psutil.Process().create_time())}))
+temporary.replace(path)
+time.sleep(30)
+"""
+    addition = f'''
+import os, subprocess, sys, time
+from pathlib import Path
+helper = subprocess.Popen([sys.executable, "-c", {helper_code!r}, str(Path.cwd() / "helper.json")], creationflags=subprocess.CREATE_NO_WINDOW)
+deadline = time.monotonic() + 10
+while not (Path.cwd() / "helper.json").exists() and time.monotonic() < deadline:
+    time.sleep(0.01)
+if {failure!r} == "worker_exit":
+    os._exit(77)
+time.sleep(30)
+'''
+    store, run, _ = ready_run(tmp_path, STRATEGY + addition)
+    script = '''import os, sys, time
+from pathlib import Path
+from quanto.workbench.store import WorkbenchStore
+from quanto.workbench.scheduler import Scheduler
+store = WorkbenchStore(Path(sys.argv[1]))
+scheduler = Scheduler(store)
+scheduler.start(background=False)
+control = store.artifact_root / sys.argv[2] / 'control'
+deadline = time.monotonic() + 12
+while time.monotonic() < deadline:
+    scheduler.tick()
+    if sys.argv[3] == 'service_death' and (control / 'helper.json').exists():
+        os._exit(99)
+    if store.get_job(sys.argv[2]).state == 'failed':
+        (control / 'failure-observed').touch()
+        while not (control / 'release-parent').exists() and time.monotonic() < deadline:
+            time.sleep(0.01)
+        scheduler.stop()
+        sys.exit(0)
+    time.sleep(0.01)
+scheduler.stop()
+sys.exit(3)
+'''
+    parent = subprocess.Popen([sys.executable, "-c", script, str(store.root), run.job_id, failure], creationflags=subprocess.CREATE_NO_WINDOW)
+    parent_identity = {"pid": parent.pid, "process_start": str(psutil.Process(parent.pid).create_time())}
+    control = store.artifact_root / run.job_id / "control"
+    identities = []
+    try:
+        if failure == "service_death":
+            assert parent.wait(timeout=15) == 99
+        else:
+            deadline = time.monotonic() + 10
+            while not (control / "failure-observed").exists() and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert (control / "failure-observed").exists()
+            assert parent.poll() is None
+        assert (control / "ack.json").exists()
+        identities = [json.loads((control / name).read_text()) for name in ("identity.json", "helper.json")]
+        deadline = time.monotonic() + 3
+        while any(_identity_alive(identity) for identity in identities) and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert not any(_identity_alive(identity) for identity in identities), "owned worker/helper survived root exit"
+        if failure == "worker_exit":
+            (control / "release-parent").touch()
+            assert parent.wait(timeout=5) == 0
+        Scheduler(store).recover()
+        assert store.get_job(run.job_id).state == ("interrupted" if failure == "service_death" else "failed")
+        assert not any(_identity_alive(identity) for identity in identities)
+    finally:
+        if control.exists():
+            (control / "release-parent").touch()
+        if parent.poll() is None:
+            Scheduler._terminate_registered(parent_identity)
+            parent.wait(timeout=5)
+        for name in ("identity.json", "helper.json", "launcher.json"):
+            if (control / name).exists():
+                Scheduler._terminate_registered(json.loads((control / name).read_text()))

@@ -266,3 +266,37 @@ def test_scheduler_leaves_full_input_scan_to_heartbeat_worker(tmp_path, monkeypa
         assert store.get_job(run.job_id).state == "running"
     finally:
         scheduler.stop()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows process-lifetime ownership")
+def test_kernel_ownership_failure_never_acknowledges_strategy(tmp_path, monkeypatch):
+    import quanto.workbench.scheduler as scheduler_module
+    from quanto.workbench.worker import read_json, same_process
+    from tests.integration.test_worker_snapshot import ready_run, run_until_finished
+    store, run, _ = ready_run(tmp_path)
+    def failed_assignment(*args):
+        raise OSError("job assignment denied")
+    monkeypatch.setattr(scheduler_module, "WindowsJob", failed_assignment)
+    assert run_until_finished(store, run.job_id).state == "failed"
+    control = store.artifact_root / run.job_id / "control"
+    assert not (control / "ack.json").exists()
+    assert not (control / "runtime.json").exists()
+    worker = read_json(control / "identity.json")
+    assert not same_process(worker["pid"], worker["process_start"])
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows process-lifetime ownership")
+def test_kernel_ownership_rejects_wrong_creation_identity():
+    import subprocess
+    import sys
+    from quanto.workbench.processes import WindowsJob
+    process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"], creationflags=subprocess.CREATE_NO_WINDOW)
+    try:
+        with pytest.raises(ValueError, match="PROCESS_IDENTITY_CHANGED"):
+            WindowsJob(process.pid, "wrong-start-identity")
+        assert process.poll() is None
+    finally:
+        # The retained handle owns this test's launcher, not an arbitrary PID.
+        from quanto.workbench.worker import process_identity
+        Scheduler._terminate_registered({"pid": process.pid, "process_start": process_identity(process.pid)})
+        process.wait(timeout=5)

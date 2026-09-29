@@ -4,11 +4,13 @@ from dataclasses import replace
 import json
 
 import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
 
 from quanto.backtest.engine import run_backtest
 from quanto.data.loaders import load_dataset, validate_dataset
 from quanto.strategies.base import Hold, TargetPortfolio
+from quanto.strategies.buy_hold import BuyHold
 from tests.fixtures.backtest_cases import dataset_case
 from tests.fixtures.engine_cases import bundle_case, spec_case
 
@@ -106,3 +108,59 @@ def test_selective_load_accepts_legacy_csv_dataset(tmp_path):
     assert_frame_equal(selected.eligibility, full.eligibility)
     assert_frame_equal(selected.calendar, full.calendar)
     assert selected.events.empty
+
+
+@pytest.mark.parametrize("legacy_column", ["string_dates", "numeric_symbols"])
+def test_selective_load_accepts_legacy_parquet_physical_types(tmp_path, legacy_column):
+    from quanto.data.loaders import load_dataset_for_run
+
+    source = dataset_case(tmp_path / "source")
+    legacy = tmp_path / "legacy"
+    legacy.mkdir()
+    (legacy / "manifest.json").write_bytes((source / "manifest.json").read_bytes())
+    for name in ("prices", "benchmark", "calendar", "instruments", "status", "events"):
+        table = pd.read_csv(source / f"{name}.csv", dtype={"symbol": str})
+        if name == "events":
+            table = pd.DataFrame([dict(symbol="000001", event_type="dividend", record_date="2024-01-01",
+                ex_date="2024-01-02", pay_date="2024-01-03", cash_per_share=0.1, split_ratio=1)])
+        if legacy_column == "numeric_symbols" and "symbol" in table:
+            table["symbol"] = table["symbol"].astype(int)
+        if legacy_column == "numeric_symbols":
+            for column in ("date", "listing_date", "record_date", "ex_date", "pay_date"):
+                if column in table:
+                    table[column] = pd.to_datetime(table[column])
+        table.to_parquet(legacy / f"{name}.parquet", index=False)
+
+    full = load_dataset(legacy)
+    spec = spec_case(full, start="2024-01-02", end="2024-01-02")
+    selected = load_dataset_for_run(legacy, spec)
+
+    assert_frame_equal(selected.prices, full.prices.loc[full.prices.date <= pd.Timestamp(spec.end)].reset_index(drop=True))
+    assert_frame_equal(selected.benchmark, full.benchmark.loc[full.benchmark.date <= pd.Timestamp(spec.end)].reset_index(drop=True))
+    assert_frame_equal(selected.status, full.status.loc[full.status.date <= pd.Timestamp(spec.end)].reset_index(drop=True))
+    assert_frame_equal(selected.events, full.events, check_dtype=False)
+    assert_frame_equal(selected.calendar, full.calendar)
+
+
+def test_selective_load_normalizes_legacy_instrument_numbers_before_backtest(tmp_path):
+    from quanto.data.loaders import load_dataset_for_run
+
+    source = dataset_case(tmp_path / "source")
+    legacy = tmp_path / "legacy"
+    legacy.mkdir()
+    (legacy / "manifest.json").write_bytes((source / "manifest.json").read_bytes())
+    for name in ("prices", "benchmark", "calendar", "instruments", "status", "events"):
+        table = pd.read_csv(source / f"{name}.csv", dtype={"symbol": str})
+        if name == "instruments":
+            table["lot_size"] = "100.0"
+            table["settlement_sessions"] = "1.0"
+        table.to_parquet(legacy / f"{name}.parquet", index=False)
+
+    full = load_dataset(legacy)
+    spec = spec_case(full, start="2024-01-03", end="2024-01-03")
+    selected = load_dataset_for_run(legacy, spec)
+    expected = run_backtest(full, BuyHold(), spec, lambda event: None, lambda: False)
+    actual = run_backtest(selected, BuyHold(), spec, lambda event: None, lambda: False)
+
+    assert_frame_equal(selected.instruments, full.instruments)
+    assert_frame_equal(actual.orders, expected.orders)

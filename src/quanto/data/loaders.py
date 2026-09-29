@@ -5,6 +5,8 @@ import json
 
 import pandas as pd
 import numpy as np
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from quanto.config import BacktestSpec
 from quanto.data.schemas import BENCHMARK_COLUMNS, INSTRUMENT_COLUMNS, PRICE_COLUMNS, DatasetBundle, DatasetManifest
@@ -107,17 +109,23 @@ def _run_table(root: Path, name: str, *, symbols: list[str] | None = None,
                end: pd.Timestamp | None = None) -> pd.DataFrame:
     path = root / f"{name}.parquet"
     if path.exists():
-        filters = []
-        if symbols is not None:
-            filters.append(("symbol", "in", symbols))
-        if end is not None:
-            filters.append(("date", "<=", end))
-        return pd.read_parquet(path, filters=filters or None)
+        schema = pq.read_schema(path)
+        can_filter_symbols = symbols is None or pa.types.is_string(schema.field("symbol").type) or pa.types.is_large_string(schema.field("symbol").type)
+        can_filter_date = end is None or pa.types.is_timestamp(schema.field("date").type)
+        if can_filter_symbols and can_filter_date:
+            filters = []
+            if symbols is not None:
+                filters.append(("symbol", "in", symbols))
+            if end is not None:
+                filters.append(("date", "<=", end))
+            return pd.read_parquet(path, filters=filters or None)
     table = _dataset_table(root, name)
     if symbols is not None:
+        table["symbol"] = table["symbol"].astype(str)
         table = table.loc[table["symbol"].isin(symbols)]
     if end is not None:
-        table = table.loc[pd.to_datetime(table["date"]) <= end]
+        table = _dates(table, name)
+        table = table.loc[table["date"] <= end]
     return table.reset_index(drop=True)
 
 
@@ -132,11 +140,12 @@ def load_dataset_for_run(path: Path, spec: BacktestSpec) -> DatasetBundle:
     instruments = _dataset_table(root, "instruments")
     instruments["symbol"] = instruments["symbol"].astype(str)
     instruments["listing_date"] = pd.to_datetime(instruments["listing_date"])
+    _numbers(instruments, ["lot_size", "settlement_sessions"], "instruments")
     status = _dates(_run_table(root, "status", symbols=spec.symbols, end=end), "status")
     status["symbol"] = status["symbol"].astype(str)
     events = _dataset_table(root, "events")
-    events = events.loc[events["symbol"].isin(spec.symbols)].copy()
     events["symbol"] = events["symbol"].astype(str)
+    events = events.loc[events["symbol"].isin(spec.symbols)].copy()
     for column in ("record_date", "ex_date", "pay_date"):
         events[column] = pd.to_datetime(events[column])
     auxiliary = {name: _read_table(root / filename) for name, filename in manifest.auxiliary_tables.items()}

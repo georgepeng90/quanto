@@ -4,6 +4,7 @@ import json
 from uuid import uuid4
 
 from quanto.workbench.models import BatchItem, FrozenRun, RunRecord
+from quanto.workbench.dataset_objects import verify_dataset_object
 from quanto.workbench.revisions import digest, json_bytes
 from quanto.workbench.snapshots import SnapshotBuilder
 from quanto.workbench.store import WorkbenchStore, utc_now
@@ -78,7 +79,15 @@ class RunService:
         for parent in parents:
             if parent is not None:
                 self.store.get_run(parent)
-        frozen = [self.snapshots.freeze(draft, source, parent) for draft, parent in zip(experiments, parents, strict=True)]
+        with self.snapshots.batch():
+            frozen = [self.snapshots.freeze(draft, source, parent) for draft, parent in zip(experiments, parents, strict=True)]
+        checked = set()
+        for snapshot in frozen:
+            manifest = json.loads(snapshot.manifest_path.read_text(encoding="utf-8"))
+            ref = manifest["dataset_ref"]
+            if ref["content_hash"] not in checked:
+                verify_dataset_object(self.store.root, ref)
+                checked.add(ref["content_hash"])
         with self.store.transaction() as db:
             existing = self._existing(db, key, fingerprint)
             if existing is not None:

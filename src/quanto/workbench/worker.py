@@ -144,6 +144,8 @@ def verify_bootstrap(descriptor: dict) -> dict:
 
 def _verify_inputs(descriptor: dict) -> dict:
     manifest = verify_bootstrap(descriptor)
+    if manifest.get("schema_version") not in (1, 2):
+        raise ValueError("SNAPSHOT_INVALID: unsupported snapshot schema version")
     root = Path(descriptor["manifest_path"]).parent
     paths = list(root.rglob("*"))
     if any(path.is_symlink() for path in paths) or {path.relative_to(root).as_posix() for path in paths if path.is_file()} != set(manifest["files"]) | {"manifest.json"}:
@@ -151,6 +153,15 @@ def _verify_inputs(descriptor: dict) -> dict:
     for name, expected in manifest["files"].items():
         if hashlib.sha256((root / name).read_bytes()).hexdigest() != expected:
             raise ValueError("SNAPSHOT_INVALID: 冻结文件哈希无效")
+    if manifest["schema_version"] == 2:
+        from quanto.workbench.dataset_objects import verify_dataset_object
+        ref = manifest["dataset_ref"]
+        if ref["version_id"] != manifest["dataset_version_id"] or ref["content_hash"] != manifest["dataset_content_hash"]:
+            raise ValueError("SNAPSHOT_INVALID: dataset reference mismatch")
+        try:
+            verify_dataset_object(root.parent.parent, ref)
+        except ValueError as exc:
+            raise ValueError(f"SNAPSHOT_INVALID: {exc}") from exc
     return manifest
 
 
@@ -208,7 +219,7 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
     import numpy as np
     from quanto.backtest import engine
     from quanto.config import BacktestSpec
-    from quanto.data.loaders import load_dataset
+    from quanto.data.loaders import load_dataset, load_dataset_for_run
     from quanto.reports.backtest_report import build_report, write_backtest_outputs
     from quanto.strategies.base import validate_warmup_window
     from quanto.workbench.snapshots import _environment, _metadata_files
@@ -231,7 +242,11 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
     if type(getattr(strategy, "warmup_bars", None)) is not int or strategy.warmup_bars < 0 or not all(callable(getattr(strategy, name, None)) for name in ("should_evaluate", "on_close")):
         raise ValueError("INVALID_STRATEGY: 策略协议无效")
     spec = BacktestSpec.model_validate(manifest["backtest_spec"])
-    bundle = load_dataset(source_root / "dataset")
+    if manifest["schema_version"] == 1:
+        bundle = load_dataset(source_root / "dataset")
+    else:
+        dataset_path = source_root.parent.parent / "dataset_objects" / manifest["dataset_ref"]["content_hash"]
+        bundle = load_dataset_for_run(dataset_path, spec)
     spec.validate_for_dataset(bundle)
     missing = set(manifest["strategy_manifest"].get("required_data_columns", [])) - set(bundle.prices.columns)
     if missing:

@@ -50,10 +50,10 @@ Files: src/quanto/workbench/dataset_objects.py, snapshots.py, worker.py, runs.py
 
 Interfaces: schema v2 adds dataset_ref; fixed object root derived from workspace; v1 continues embedded dataset. freeze retains current call signature; batch-scoped preparation may be added without persistent caches.
 
-- [ ] Write sharing, batch and tamper tests, observe failure before implementation.
-- [ ] Implement atomic stream-copy/hash verified shared objects and v2 references; no symlinks or arbitrary path references.
-- [ ] Worker resolves and verifies v2 data then calls Task 2 selective loader; v1 uses original full path. Submission reuses preparation within one batch.
-- [ ] Exercise actual worker, exact rerun, historical clone/v1, publication failure and concurrent same-object creation; commit Task 3 files.
+- [x] Write sharing, batch and tamper tests, observe failure before implementation.
+- [x] Implement atomic stream-copy/hash verified shared objects and v2 references; no symlinks or arbitrary path references.
+- [x] Worker resolves and verifies v2 data then calls Task 2 selective loader; v1 uses original full path. Submission reuses preparation within one batch.
+- [x] Exercise actual worker, exact rerun, historical clone/v1, publication failure and concurrent same-object creation; commit Task 3 files. Primary verification: 49 loading/shared-object/submission/worker tests passed, including embedded-CSV v1 execution, replay and clone into v2. Review also found and fixed legacy Parquet date/symbol/instrument numeric normalization gaps; related 48 tests passed.
 
 ## Task 4: Integration, measurements and handoff
 

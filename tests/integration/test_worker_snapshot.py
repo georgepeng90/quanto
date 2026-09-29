@@ -116,6 +116,45 @@ def test_exact_rerun_uses_original_inputs_and_same_canonical_hashes(tmp_path):
     assert first == second
 
 
+def test_v1_embedded_csv_snapshot_executes_clones_and_replays(tmp_path):
+    import shutil
+    from quanto.workbench.revisions import digest, json_bytes, source_files
+    from quanto.workbench.service import WorkbenchService
+
+    store, run, _ = ready_run(tmp_path)
+    snapshot = run.manifest_path.parent
+    manifest = json.loads(run.manifest_path.read_text(encoding="utf-8"))
+    # Historical v1 embeds its original CSV files rather than a shared reference.
+    shutil.copytree(tmp_path / "source", snapshot / "dataset")
+    embedded = source_files(snapshot / "dataset")
+    hashes = {name: digest(data) for name, data in embedded.items()}
+    manifest["files"].update({f"dataset/{name}": value for name, value in hashes.items()})
+    manifest["dataset_content_hash"] = digest(json_bytes(hashes))
+    manifest["schema_version"] = 1
+    del manifest["dataset_ref"]
+    original = json_bytes(manifest)
+    run.manifest_path.write_bytes(original)
+    with store.transaction() as db:
+        db.execute("UPDATE runs SET manifest_hash=? WHERE run_id=?", (digest(original), run.run_id))
+
+    job = run_until_finished(store, run.job_id)
+    assert job.state == "succeeded", job.error
+    replay = RunService(store).rerun(run.run_id, "legacy-replay", "web")
+    assert replay.manifest_path == run.manifest_path
+    job = run_until_finished(store, replay.job_id)
+    assert job.state == "succeeded", job.error
+    first = (store.artifact_root / run.job_id / "final" / "manifest.json").read_bytes()
+    assert (store.artifact_root / replay.job_id / "final" / "manifest.json").read_bytes() == first
+
+    clone = WorkbenchService(store.root).clone_run(run.run_id)
+    child = RunService(store).submit(clone["id"], clone["revision"], "legacy-clone", "web")
+    assert child.parent_run_id == run.run_id
+    assert json.loads(child.manifest_path.read_text())["schema_version"] == 2
+    job = run_until_finished(store, child.job_id)
+    assert job.state == "succeeded", job.error
+    assert run.manifest_path.read_bytes() == original
+
+
 def test_hash_seed_is_effective_in_actual_worker(tmp_path):
     source = STRATEGY.replace("assert value == 1", "assert hash('quanto-frozen-worker') == -5756503118753072803")
     store, run, _ = ready_run(tmp_path, source)
@@ -280,10 +319,16 @@ def test_output_schema_and_hashes_must_both_validate(tmp_path):
         validate_backtest_output(root, hashes)
 
 
-@pytest.mark.parametrize("name", ["dataset/prices.csv", "src/quanto/__init__.py"])
-def test_changed_frozen_dataset_fails_before_strategy_entry(tmp_path, name):
+@pytest.mark.parametrize("target", ["dataset", "engine"])
+def test_changed_frozen_dataset_fails_before_strategy_entry(tmp_path, target):
     store, run, _ = ready_run(tmp_path)
-    (run.manifest_path.parent / name).write_text("raise RuntimeError('unverified source executed')")
+    if target == "dataset":
+        manifest = json.loads(run.manifest_path.read_text(encoding="utf-8"))
+        name = next(name for name in manifest["dataset_ref"]["files"] if name.startswith("prices."))
+        path = store.root / "dataset_objects" / manifest["dataset_ref"]["content_hash"] / name
+    else:
+        path = run.manifest_path.parent / "src/quanto/__init__.py"
+    path.write_text("raise RuntimeError('unverified source executed')")
     job = run_until_finished(store, run.job_id)
     assert job.state == "failed"
     assert job.pid is not None

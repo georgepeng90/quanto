@@ -14,6 +14,7 @@ import shutil
 from uuid import uuid4
 
 from quanto.data.schemas import DatasetManifest
+from quanto.data.loaders import load_dataset
 from quanto.workbench.models import BatchItem
 from quanto.workbench.results import LogPage, Page, compare_runs
 from quanto.workbench.revisions import json_bytes
@@ -117,6 +118,19 @@ class WorkbenchService:
                     if result["kind"] in {"demo", "fetch", "import"} and job_result.get("state") == "complete" and result["state"] == "succeeded":
                         result["result"]["dataset_version_id"] = identity
         return result
+
+    def dataset_detail(self, identity: str) -> dict:
+        dataset = self.store.get_dataset(identity)
+        detail = self._record(dataset)
+        instruments = load_dataset(dataset.path).instruments
+        detail["instruments"] = [
+            {"symbol": str(row.symbol), "lot_size": int(row.lot_size),
+             "settlement_sessions": int(row.settlement_sessions),
+             "listing_date": row.listing_date.date().isoformat() if hasattr(row.listing_date, "date") else str(row.listing_date),
+             "group": str(row.group)}
+            for row in instruments.itertuples(index=False)
+        ]
+        return detail
 
     @staticmethod
     def _run_provenance(run) -> dict:

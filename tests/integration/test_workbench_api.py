@@ -47,6 +47,19 @@ def test_list_resources_and_experiment_revision_conflict(tmp_path):
         assert response.status_code == 409
 
 
+def test_dataset_detail_exposes_registered_instruments_for_browser_selection(tmp_path):
+    store, _, dataset, _ = _ready(tmp_path)
+    app = create_app(store.root)
+    with TestClient(app, base_url="http://127.0.0.1:8765") as client:
+        token = client.get("/api/session").json()["token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        detail = client.get(f"/api/datasets/{dataset.id}", headers=headers).json()
+        assert detail["instruments"] == [{"symbol": "000001", "lot_size": 100,
+                                          "settlement_sessions": 1, "listing_date": "2024-01-01",
+                                          "group": "industry"}]
+        assert "instruments" not in client.get("/api/datasets", headers=headers).json()["items"][0]
+
+
 def test_idempotency_conflict_and_100_item_boundary(tmp_path):
     store, draft, _, _ = _ready(tmp_path)
     app = create_app(store.root)

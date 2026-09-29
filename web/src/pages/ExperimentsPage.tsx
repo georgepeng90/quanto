@@ -1,0 +1,106 @@
+import { useEffect, useState } from 'react'
+import { api, ApiError, describeError } from '../api'
+import { ParameterForm } from '../components/ParameterForm'
+import { StrategyEditor } from '../components/StrategyEditor'
+import type { BacktestSpec, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, StrategyRevision } from '../types'
+
+// Explicit input scaffold. These numbers are visible starting points, not recommended account settings.
+const inputSpec: BacktestSpec = { start: '', end: '', symbols: [], initial_cash: 0, seed: 0, execution: { model: 'next_open', commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0 }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
+const emptyPayload = (): ExperimentPayload => ({ strategy_revision_id: '', dataset_version_id: '', strategy_params: {}, backtest_spec: structuredClone(inputSpec), sample_purpose: '' })
+const terminal = new Set(['succeeded', 'failed', 'cancelled', 'interrupted'])
+const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+const unit = (value: unknown) => finite(value) && value >= 0 && value <= 1
+const nonnegative = (value: unknown) => finite(value) && value >= 0
+function specError(spec: BacktestSpec): string {
+  if (!Number.isInteger(spec.seed)) return '随机种子必须是整数。'
+  if (!Number.isInteger(spec.execution.max_stale_sessions) || spec.execution.max_stale_sessions < 0) return '最大陈旧交易日必须是非负整数。'
+  for (const [label, value] of [['佣金率', spec.execution.commission_rate], ['最低佣金', spec.execution.minimum_commission], ['滑点率', spec.execution.slippage_rate]] as const) if (!nonnegative(value)) return `${label}必须是非负数。`
+  for (const [label, value] of [['总仓位上限', spec.risk.max_total_weight], ['单证券仓位上限', spec.risk.max_symbol_weight]] as const) if (!unit(value)) return `${label}必须在 0 到 1 之间。`
+  if (!spec.risk.group_caps || Array.isArray(spec.risk.group_caps) || typeof spec.risk.group_caps !== 'object' || Object.values(spec.risk.group_caps).some(value => !unit(value))) return '分组仓位上限必须是 0 到 1 的数值映射。'
+  if (!Array.isArray(spec.risk.stress_scenarios) || spec.risk.stress_scenarios.some(item => !item || !item.name || !nonnegative(item.execution_cost_rate) || !item.symbol_shocks || typeof item.symbol_shocks !== 'object' || Array.isArray(item.symbol_shocks) || Object.values(item.symbol_shocks).some(value => !finite(value)))) return '压力情景的名称、冲击值或执行费用无效。'
+  if (spec.risk.max_stress_loss != null && (!nonnegative(spec.risk.max_stress_loss) || !spec.risk.stress_scenarios.length)) return '最大压力损失需要非负值和至少一个压力情景。'
+  if (spec.risk.drawdown_pause != null && !unit(spec.risk.drawdown_pause)) return '回撤暂停阈值必须在 0 到 1 之间。'
+  if (spec.risk.pause_action === 'reduce' ? !unit(spec.risk.pause_target_weight) : spec.risk.pause_target_weight != null) return '暂停目标权重只在降仓动作中使用，且须在 0 到 1 之间。'
+  if (!Number.isInteger(spec.metrics.annual_sessions) || spec.metrics.annual_sessions <= 0) return '年化交易日数必须是正整数。'
+  if (!finite(spec.metrics.risk_free_rate) || !finite(spec.metrics.cash_rate) || !spec.metrics.definition_version.trim()) return '指标利率须为有限数值，定义版本不能为空。'
+  return ''
+}
+
+function JsonField({ label, value, onChange, onValidityChange }: { label: string; value: unknown; onChange: (next: unknown) => void; onValidityChange: (valid: boolean) => void }) {
+  const [text, setText] = useState(JSON.stringify(value, null, 2))
+  const [error, setError] = useState('')
+  useEffect(() => { setText(JSON.stringify(value, null, 2)); setError(''); onValidityChange(true) }, [value])
+  return <label className="wide">{label}<textarea spellCheck={false} value={text} onChange={event => { setText(event.target.value); try { onChange(JSON.parse(event.target.value)); setError(''); onValidityChange(true) } catch { setError('JSON 格式未完成，不能保存'); onValidityChange(false) } }} />{error && <small className="error">{error}</small>}</label>
+}
+
+export function ExperimentsPage({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
+  const [datasets, setDatasets] = useState<DatasetVersion[]>([])
+  const [strategies, setStrategies] = useState<StrategyRevision[]>([])
+  const [experiments, setExperiments] = useState<ExperimentDraft[]>([])
+  const [draft, setDraft] = useState<ExperimentDraft | null>(null)
+  const [payload, setPayload] = useState<ExperimentPayload>(emptyPayload)
+  const [dataset, setDataset] = useState<DatasetVersion | null>(null)
+  const [strategy, setStrategy] = useState<StrategyRevision | null>(null)
+  const [validation, setValidation] = useState<JobRecord | null>(null)
+  const [dirtyDraft, setDirtyDraft] = useState(false)
+  const [dirtySource, setDirtySource] = useState(false)
+  const [message, setMessage] = useState('')
+  const [conflictRevision, setConflictRevision] = useState<number | null>(null)
+  const [paramsValid, setParamsValid] = useState(true)
+  const [structuredValid, setStructuredValid] = useState<Record<string, boolean>>({})
+  const dirty = dirtyDraft || dirtySource
+  useEffect(() => { onDirtyChange(dirty); const before = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = '' } }; window.addEventListener('beforeunload', before); return () => { window.removeEventListener('beforeunload', before); onDirtyChange(false) } }, [dirty])
+  useEffect(() => { Promise.all([api.datasets(), api.strategies(), api.experiments()]).then(([data, source, saved]) => { setDatasets(data.items); setStrategies(source.items); setExperiments(saved.items) }).catch(error => setMessage(describeError(error))) }, [])
+  useEffect(() => { if (!payload.dataset_version_id) { setDataset(null); return }; let active = true; api.dataset(payload.dataset_version_id).then(value => { if (active) setDataset(value) }).catch(error => setMessage(describeError(error))); return () => { active = false } }, [payload.dataset_version_id])
+  useEffect(() => { if (!payload.strategy_revision_id) { setStrategy(null); return }; let active = true; api.strategy(payload.strategy_revision_id).then(value => { if (active) setStrategy(value) }).catch(error => setMessage(describeError(error))); return () => { active = false } }, [payload.strategy_revision_id])
+  useEffect(() => { if (!validation || terminal.has(validation.state)) return; const timer = setInterval(() => { api.job(validation.id).then(setValidation).catch(error => setMessage(describeError(error))) }, 1500); return () => clearInterval(timer) }, [validation?.id, validation?.state])
+  const update = (next: ExperimentPayload) => { setPayload(next); setDirtyDraft(true); setConflictRevision(null); setMessage('') }
+  const spec = payload.backtest_spec
+  const setSpec = (next: BacktestSpec) => update({ ...payload, backtest_spec: next })
+  const setExecution = (next: BacktestSpec['execution']) => setSpec({ ...spec, execution: next })
+  const setRisk = (next: BacktestSpec['risk']) => setSpec({ ...spec, risk: next })
+  const setMetrics = (next: BacktestSpec['metrics']) => setSpec({ ...spec, metrics: next })
+  const selectDraft = async (id: string) => {
+    if (dirty && !window.confirm('当前修改尚未保存。确定切换草稿并丢弃修改吗？')) return
+    setMessage(''); setConflictRevision(null); setValidation(null)
+    if (!id) { setDraft(null); setPayload(emptyPayload()); setDirtyDraft(false); setDirtySource(false); return }
+    try { const selected = await api.experiment(id); setDraft(selected); setPayload(structuredClone(selected.payload)); setDirtyDraft(false); setDirtySource(false) } catch (error) { setMessage(describeError(error)) }
+  }
+  const save = async () => {
+    setMessage('')
+    if (!paramsValid || Object.values(structuredValid).some(value => !value)) { setMessage('请先修正参数或风险配置中的 JSON。'); return }
+    if (!payload.dataset_version_id || !payload.strategy_revision_id || !spec.start || !spec.end || spec.start > spec.end || !spec.symbols.length || spec.initial_cash <= 0 || !payload.sample_purpose.trim()) { setMessage('请先选择数据和策略，填写有效日期、代码、初始资金与样本用途。'); return }
+    const invalidSpec = specError(spec)
+    if (invalidSpec) { setMessage(invalidSpec); return }
+    if (dataset && (spec.start < dataset.manifest.data_start || spec.end > dataset.manifest.data_end)) { setMessage('回测日期超出数据价格覆盖范围。'); return }
+    try {
+      const saved = draft ? await api.saveExperiment(draft.id, draft.revision, payload) : await api.createExperiment(payload)
+      setDraft(saved); setPayload(structuredClone(saved.payload)); setDirtyDraft(false); setConflictRevision(null); setMessage(`已保存实验修订 ${saved.revision}`)
+      setExperiments(old => [...old.filter(item => item.id !== saved.id), saved])
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409 && draft) {
+        try { const server = await api.experiment(draft.id); setConflictRevision(server.revision); setMessage(`保存冲突：服务端修订 ${server.revision}。本地修改已保留；请复制需要的内容后重新载入。`) } catch { setMessage('保存冲突：无法读取服务端修订，本地修改已保留。') }
+      } else setMessage(describeError(error))
+    }
+  }
+  const selectStrategy = (id: string) => { if (dirtySource && !window.confirm('策略源码有未保存修改，确定切换吗？')) return; update({ ...payload, strategy_revision_id: id, strategy_params: {} }); setValidation(null) }
+  const savedStrategy = async (saved: StrategyRevision) => { setStrategies(old => [...old, saved]); update({ ...payload, strategy_revision_id: saved.id, strategy_params: {} }); setStrategy(await api.strategy(saved.id)); setDirtySource(false); setValidation(null) }
+  const reloadServerDraft = async () => {
+    if (!draft || !window.confirm('重新载入将丢弃本地未保存修改。确定继续吗？')) return
+    try { const server = await api.experiment(draft.id); setDraft(server); setPayload(structuredClone(server.payload)); setDirtyDraft(false); setConflictRevision(null); setMessage(`已载入服务端修订 ${server.revision}`) } catch (error) { setMessage(describeError(error)) }
+  }
+  const validateStrategy = async () => { try { setValidation(await api.validateStrategy(payload.strategy_revision_id, payload.strategy_params)); setMessage('策略验证已排队；有效性以独立工作进程结果为准。') } catch (error) { setMessage(describeError(error)) } }
+  const number = (label: string, value: number | null | undefined, onChange: (value: number | null) => void, options?: { min?: number; step?: string; optional?: boolean }) => <label>{label}<input type="number" min={options?.min} step={options?.step || 'any'} value={value ?? ''} onChange={event => onChange(event.target.value === '' ? null : Number(event.target.value))} />{options?.optional && <small>留空表示不启用</small>}</label>
+  return <div className="page-stack"><header className="page-heading"><h1>策略与实验</h1><p>策略源码注册为不可变修订；实验草稿保存时记录策略、数据、参数和完整回测配置。</p></header>
+    {message && <p role={message.includes('冲突') || message.includes('错误') ? 'alert' : 'status'} className={message.startsWith('已') ? 'success callout' : 'error callout'}>{message}</p>}
+    <section className="panel"><div className="section-heading"><div><h2>实验草稿</h2><p>新建表单中的数值仅供输入起点，不构成账户政策建议。请逐项审核。</p></div><span className="badge">{draft ? `修订 ${draft.revision}` : '新建'}</span></div><div className="inline-actions"><label>实验草稿<select value={draft?.id || ''} onChange={event => selectDraft(event.target.value)}><option value="">新建实验</option>{experiments.map(item => <option value={item.id} key={item.id}>{item.id} · 修订 {item.revision}</option>)}</select></label><button type="button" onClick={() => { if (!dirty || window.confirm('当前修改尚未保存，仍要克隆吗？')) { setDraft(null); setDirtyDraft(true); setConflictRevision(null); setMessage('已克隆到未保存的新草稿，请保存以创建独立实验。') } }} disabled={!draft}>克隆为新实验</button><button type="button" onClick={save}>保存实验</button></div>{dirtyDraft && <p className="badge warn">实验配置未保存</p>}{conflictRevision !== null && <p>服务端修订 {conflictRevision}；本地输入保持原样。<button type="button" onClick={reloadServerDraft}>重新载入服务端</button></p>}</section>
+    <div className="two-column"><section className="panel"><h2>数据版本</h2><label>选择数据<select value={payload.dataset_version_id} onChange={event => update({ ...payload, dataset_version_id: event.target.value })}><option value="">请选择已验证版本</option>{datasets.map(item => <option value={item.id} key={item.id}>{item.manifest.source} · {item.id.slice(0, 8)}</option>)}</select></label>{dataset ? <div className="record compact"><p>{dataset.manifest.is_demo ? '演示数据' : '真实来源声明'} · {dataset.manifest.price_mode === 'raw_cash' ? '原始价格现金账户' : '复权研究价'}</p><p>价格 {dataset.manifest.data_start} — {dataset.manifest.data_end}</p><p>日历 {dataset.manifest.calendar_start} — {dataset.manifest.calendar_end} · 事件 {dataset.manifest.event_coverage}</p>{dataset.manifest.limitations?.length > 0 && <p>限制：{dataset.manifest.limitations.join('；')}</p>}</div> : <p className="empty">请选择数据版本。</p>}</section>
+      <section className="panel"><h2>策略修订</h2><label>选择策略<select value={payload.strategy_revision_id} onChange={event => selectStrategy(event.target.value)}><option value="">新建策略</option>{strategies.map(item => <option value={item.id} key={item.id}>{String(item.manifest.name || item.manifest.entrypoint)} · {item.id.slice(0, 8)}</option>)}</select></label>{strategy && <p className="muted">当前修订 {strategy.id} · {strategy.content_hash.slice(0, 12)}</p>}<button disabled={!payload.strategy_revision_id || dirtySource} onClick={validateStrategy}>验证当前策略与参数</button>{validation && <p>{validation.state === 'succeeded' && validation.result?.valid === true ? `策略协议有效 · 解析预热 ${validation.result.warmup_bars} 根` : validation.state === 'succeeded' ? '策略协议未通过验证' : `验证任务 ${validation.state}`}{validation.error ? ` · ${validation.error}` : ''}</p>}<p className="muted">预热由策略实现决定。{dataset && spec.start ? `数据价格覆盖从 ${dataset.manifest.data_start} 开始，绩效起始日为 ${spec.start}；` : ''}起始日前的历史日线根数需由运行时核验；页面不调整绩效起始日。</p></section></div>
+    <StrategyEditor revision={strategy} onSaved={savedStrategy} onDirtyChange={setDirtySource} />
+    <section className="panel"><h2>策略参数</h2>{strategy ? <><ParameterForm schema={strategy.manifest.parameter_schema} value={payload.strategy_params} onChange={value => update({ ...payload, strategy_params: value })} onValidityChange={setParamsValid} />{!dirtyDraft && payload.effective_strategy_params && <div className="callout"><strong>服务端有效参数</strong><pre>{JSON.stringify(payload.effective_strategy_params, null, 2)}</pre></div>}</> : <p className="empty">选择或保存策略后编辑参数。</p>}</section>
+    <section className="panel"><h2>样本与回测范围</h2><div className="form-grid"><label>样本用途<input value={payload.sample_purpose} onChange={event => update({ ...payload, sample_purpose: event.target.value })} placeholder="例如：探索 / 验证" /></label><label>绩效起始日<input type="date" value={spec.start} onChange={event => setSpec({ ...spec, start: event.target.value })} /></label><label>结束日<input type="date" value={spec.end} onChange={event => setSpec({ ...spec, end: event.target.value })} /></label>{number('初始资金', spec.initial_cash, value => setSpec({ ...spec, initial_cash: value || 0 }), { min: 0 })}{number('随机种子', spec.seed, value => setSpec({ ...spec, seed: value || 0 }), { step: '1' })}<label>证券代码（逗号分隔）<input value={spec.symbols.join(',')} onChange={event => setSpec({ ...spec, symbols: [...new Set(event.target.value.split(/[,，\s]+/).filter(Boolean))] })} placeholder="例如：000001,000002" /></label></div>{dataset?.instruments?.length ? <div><p>已登记证券（可点击加入）：</p><div className="symbol-list">{dataset.instruments.map(item => <label key={item.symbol}><input type="checkbox" checked={spec.symbols.includes(item.symbol)} onChange={event => setSpec({ ...spec, symbols: event.target.checked ? [...spec.symbols, item.symbol] : spec.symbols.filter(symbol => symbol !== item.symbol) })} />{item.symbol} · {item.group}</label>)}</div></div> : dataset && <p className="muted">此版本尚未提供证券明细；请按已登记代码输入，提交时服务端验证。</p>}</section>
+    <section className="panel"><h2>执行与费用</h2><p>执行模型固定为下一个交易日开盘撮合（next_open）。</p><div className="form-grid">{number('佣金率', spec.execution.commission_rate, value => setExecution({ ...spec.execution, commission_rate: value || 0 }), { min: 0 })}{number('最低佣金', spec.execution.minimum_commission, value => setExecution({ ...spec.execution, minimum_commission: value || 0 }), { min: 0 })}{number('滑点率', spec.execution.slippage_rate, value => setExecution({ ...spec.execution, slippage_rate: value || 0 }), { min: 0 })}{number('最大陈旧交易日', spec.execution.max_stale_sessions, value => setExecution({ ...spec.execution, max_stale_sessions: value || 0 }), { min: 0, step: '1' })}</div></section>
+    <section className="panel"><h2>风险假设</h2><div className="form-grid">{number('总仓位上限', spec.risk.max_total_weight, value => setRisk({ ...spec.risk, max_total_weight: value || 0 }), { min: 0 })}{number('单证券仓位上限', spec.risk.max_symbol_weight, value => setRisk({ ...spec.risk, max_symbol_weight: value || 0 }), { min: 0 })}{number('最大压力损失', spec.risk.max_stress_loss, value => setRisk({ ...spec.risk, max_stress_loss: value }), { min: 0, optional: true })}{number('回撤暂停阈值', spec.risk.drawdown_pause, value => setRisk({ ...spec.risk, drawdown_pause: value }), { min: 0, optional: true })}<label>暂停动作<select value={spec.risk.pause_action} onChange={event => setRisk({ ...spec.risk, pause_action: event.target.value as BacktestSpec['risk']['pause_action'], pause_target_weight: event.target.value === 'reduce' ? spec.risk.pause_target_weight ?? 0 : null })}><option value="block_new">阻止新买入</option><option value="reduce">降仓</option><option value="liquidate">清仓</option></select></label>{spec.risk.pause_action === 'reduce' && number('暂停目标权重', spec.risk.pause_target_weight, value => setRisk({ ...spec.risk, pause_target_weight: value }), { min: 0 })}<label>恢复方式<select value={spec.risk.recovery_mode} onChange={event => setRisk({ ...spec.risk, recovery_mode: event.target.value as BacktestSpec['risk']['recovery_mode'] })}><option value="never">不自动恢复</option><option value="recorded_approval">记录批准后恢复</option></select></label><JsonField label="分组仓位上限 · JSON" value={spec.risk.group_caps} onChange={value => setRisk({ ...spec.risk, group_caps: value as Record<string, number> })} onValidityChange={valid => setStructuredValid(old => old.caps === valid ? old : { ...old, caps: valid })} /><JsonField label="压力情景 · JSON" value={spec.risk.stress_scenarios} onChange={value => setRisk({ ...spec.risk, stress_scenarios: value as BacktestSpec['risk']['stress_scenarios'] })} onValidityChange={valid => setStructuredValid(old => old.scenarios === valid ? old : { ...old, scenarios: valid })} /></div></section>
+    <section className="panel"><h2>指标口径</h2><p className="muted">定义版本仅记录来源，不切换计算公式。</p><div className="form-grid">{number('年化交易日数', spec.metrics.annual_sessions, value => setMetrics({ ...spec.metrics, annual_sessions: value || 0 }), { min: 1, step: '1' })}{number('无风险利率', spec.metrics.risk_free_rate, value => setMetrics({ ...spec.metrics, risk_free_rate: value || 0 }) )}{number('现金利率', spec.metrics.cash_rate, value => setMetrics({ ...spec.metrics, cash_rate: value || 0 }) )}<label>指标定义版本<input value={spec.metrics.definition_version} onChange={event => setMetrics({ ...spec.metrics, definition_version: event.target.value })} /></label></div></section>
+  </div>
+}

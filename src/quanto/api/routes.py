@@ -30,6 +30,8 @@ def listing(request: Request, resource: str, cursor: str | None = None, limit: i
 def detail(request: Request, resource: str, identity: str):
     if resource not in {"datasets", "strategies", "experiments", "runs", "jobs"}:
         raise KeyError(resource)
+    if resource == "datasets":
+        return service(request).dataset_detail(identity)
     return service(request).get_resource(resource, identity)
 
 

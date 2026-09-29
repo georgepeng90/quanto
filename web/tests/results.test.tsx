@@ -55,6 +55,15 @@ test('links fills to their order and dated signal without treating risk as a dir
   expect(document.querySelector('script:not([src])')).toBeNull()
 })
 
+test('order enums have Chinese labels while raw codes remain available', async () => {
+  app('/runs/r1')
+  await userEvent.click(await screen.findByRole('tab', { name: '订单' }))
+  expect(await screen.findByRole('cell', { name: '买入' })).toHaveAttribute('title', 'buy')
+  expect(screen.getByRole('cell', { name: '已成交' })).toHaveAttribute('title', 'filled')
+  expect(screen.getByRole('cell', { name: '策略' })).toHaveAttribute('title', 'strategy')
+  expect(screen.getByRole('cell', { name: '000001' })).toBeVisible()
+})
+
 test('execution-day filter keeps the visible order signal-day context reachable', async () => {
   const prior = globalThis.fetch
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

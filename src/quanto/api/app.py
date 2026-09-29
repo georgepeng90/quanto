@@ -2,21 +2,46 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from pathlib import Path
+import json
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from quanto.api.routes import router
 from quanto.api.security import security_error, session_token
 from quanto.workbench.service import WorkbenchService
+from quanto.workbench.revisions import digest, json_bytes
 
 
-def create_app(root: Path, frontend_dir: Path | None = None) -> FastAPI:
+class FrontendFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        path = path.replace("\\", "/")
+        if path == "api" or path.startswith("api/"):
+            raise StarletteHTTPException(404)
+        # Only known client routes fall back; missing assets/private paths stay 404.
+        is_page = path in {".", "", "datasets", "experiments", "runs", "compare"} or (path.startswith("runs/") and len(path.split("/")) == 2)
+        if is_page and scope["method"] in {"GET", "HEAD"}:
+            return FileResponse(Path(self.directory) / "index.html", headers={"Cache-Control": "no-cache"})
+        return await super().get_response(path, scope)
+
+
+def create_app(root: Path, frontend_dir: Path | None = None, *, templates_dir: Path | None = None) -> FastAPI:
     service = WorkbenchService(root)
     token = session_token(service.store.root)
+    if templates_dir is not None:
+        with service.store.transaction() as db:
+            existing = {row[0] for row in db.execute("SELECT content_hash FROM strategies")}
+        for name in ("buy_hold", "trend_rotation"):
+            directory = templates_dir / name
+            manifest = json.loads((directory / "strategy.json").read_text(encoding="utf-8"))
+            names = ["strategy.json", manifest["entrypoint"].partition(":")[0], *manifest["auxiliary_sources"]]
+            files = {filename: (directory / filename).read_bytes() for filename in names}
+            content_hash = digest(json_bytes({filename: digest(data) for filename, data in files.items()}))
+            if content_hash not in existing:
+                service.store.register_strategy(files, manifest)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -65,6 +90,6 @@ def create_app(root: Path, frontend_dir: Path | None = None) -> FastAPI:
         return JSONResponse({"code": code, "message": message, "details": {}}, status_code=exc.status_code)
 
     app.include_router(router, prefix="/api")
-    if frontend_dir is not None and Path(frontend_dir).is_dir():
-        app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+    if frontend_dir is not None:
+        app.mount("/", FrontendFiles(directory=frontend_dir), name="frontend")
     return app

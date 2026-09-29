@@ -2,7 +2,7 @@
 
 本项目研究场内行业 ETF 的中期多头趋势策略。目标交易设计见[策略设计](docs/02_策略设计.md)，研究需求见[需求分析](docs/01_需求分析.md)。这些文档描述的是待验证的规则，不表示当前代码已实现该设计，也不表示策略已达到实盘条件。
 
-近期系统目标是建设网页回测工作台，让用户和 Agent 使用同一套能力编辑策略代码与参数、反复回测、查看过程并比较结果。已认可的设计见[工作台架构设计](docs/planning-artifacts/architecture.md)，开发任务见[实施计划](docs/superpowers/plans/2026-09-29-web-backtest-workbench.md)，概览见[系统架构](docs/03_量化系统架构.md)。首版采用本机单用户、ETF 日线研究；实验 API 已实现，网页仍在开发。
+本机网页回测工作台已实现：用户和 Agent 共用数据版本、策略修订、实验、队列、结果与导出服务。首版验证平台为 Windows，采用本机单用户、ETF 日线研究。操作步骤见[使用指南](docs/05_回测工作台使用指南.md)，设计见[工作台架构](docs/planning-artifacts/architecture.md)，逐阶段验证与取舍见[实施计划](docs/superpowers/plans/2026-09-29-web-backtest-workbench.md)。
 
 ## 目标交易设计
 
@@ -17,27 +17,22 @@
 
 ## 当前仓库状态
 
-仓库包含数据拉取、离线样例数据和旧版回测原型代码。现有 `configs/strategy.yaml` 与回测代码仍采用早期多因子参数和周频轮动逻辑，不能用于验证上面的新设计已落地。新规则的实现、参数校准、样本外验证和实盘可行性均尚待完成。
+工作台包含独立策略协议、买入持有与趋势轮动模板、按时间推进的账本、不可变快照、持久队列和中文网页。`configs/strategy.yaml` 不是工作台实验输入；实验使用 JSON 契约。模板可运行不表示目标交易设计的全部研究规则或盈利能力已经验证。参数校准、样本外验证和实盘可行性仍待研究。
 
 ## 快速启动
 
-安装开发环境与本机 API：
+在交付 checkout `C:\Users\georg\.codex\worktrees\web-backtest-workbench\quanto` 执行（Python 3.13、Node.js 24、uv）：
 
-```bash
-uv sync --extra dev --extra web
+```powershell
+uv sync --locked --extra dev --extra web --extra data
+npm.cmd --prefix web ci
+npm.cmd --prefix web run build
+.\scripts\start-workbench.ps1
 ```
 
-如需通过 AKShare 拉取真实数据，另安装数据源依赖：
+打开 [本地工作台](http://127.0.0.1:8765)。一键脚本检查依赖，CLI 检查构建源码/产物哈希并明确拒绝缺失、过期构建或占用端口；不另开前端端口。直接启动等价命令为 `uv run --no-sync quanto serve --host 127.0.0.1 --port 8765 --workspace data/workbench`，须从当前 checkout 根目录执行。默认数据位于 `data/workbench`，产物位于 `outputs/workbench`，路径保存在工作区的 `workspace.json`。
 
-```bash
-uv sync --extra dev --extra web --extra data
-```
-
-启动本机服务：
-
-```bash
-uv run --extra web quanto serve --workspace data/workbench
-```
+首次启动自动登记两套策略模板。在“数据版本”点击“生成演示”，登记成功后进入“策略与实验”，选择数据和模板、填写有效范围/资金/用途并保存；随后在“回测任务”运行，查看订单、图表、克隆实验、比较和下载。可用演示区间为 `2018-01-02` 至 `2018-01-31`，代码 `512480`；示例金额和参数只用于流程演示。
 
 同源 `GET /api/session` 返回本机令牌；浏览器后续请求和 Agent CLI 均以 `Authorization: Bearer <token>` 调用 `/api`。CLI 可通过 `QUANTO_TOKEN` 环境变量读取令牌，例如 `uv run --extra web quanto datasets list`。任务提交和结果查询共用这套 API；`quanto runs --help` 可查看运行命令。
 
@@ -45,6 +40,15 @@ uv run --extra web quanto serve --workspace data/workbench
 
 运行测试：
 
-```bash
-uv run --extra dev --extra web pytest -q
+```powershell
+uv run pytest -q
+npm.cmd --prefix web run test -- --run
+npm.cmd --prefix web run typecheck
+npm.cmd --prefix web run build
+npm.cmd --prefix web exec -- playwright install chromium
+npm.cmd --prefix web run test:e2e
 ```
+
+浏览器测试自行启动 `127.0.0.1:8766`，使用独立临时工作区和真实后端。已有 Chrome 可设置 `$env:PLAYWRIGHT_CHANNEL='chrome'`，不影响日常启动。
+
+真实数据的有限检查：2026-09-29 拉取 ETF `512480` 的 `2024-01-08..12` 五个交易日成功，但默认 `sh000300` 基准出现 `ConnectionError`；最终为 `incomplete / COVERAGE_INCOMPLETE`，未登记数据版本。演示/导入闭环不依赖此次联网成功，不能据此宣称真实数据整体就绪。策略以受信任本地 Python 执行，子进程不是恶意代码沙箱。复现边界、价格模式及 Windows/非 Windows 生命周期差异见使用指南。

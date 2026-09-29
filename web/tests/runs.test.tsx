@@ -165,11 +165,11 @@ test('upserts a partial order by ID when its fill status changes', async () => {
     return prior(input, init)
   }))
   app('/runs/r1')
-  expect(await screen.findByText(/pending/)).toBeVisible()
+  expect(await screen.findByTitle('pending')).toHaveTextContent('待成交')
   status = 'filled'
   await userEvent.click(screen.getByRole('button', { name: '刷新状态' }))
-  expect(await screen.findByText(/filled/)).toBeVisible()
-  expect(screen.queryByText(/pending/)).toBeNull()
+  expect(await screen.findByTitle('filled')).toHaveTextContent('已成交')
+  expect(screen.queryByTitle('pending')).toBeNull()
   expect(screen.getAllByText(/订单 o1/)).toHaveLength(1)
 })
 

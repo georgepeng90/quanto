@@ -13,8 +13,16 @@ const definitions: { name: TableName; label: string; columns: [string, string][]
   { name: 'open_lots', label: '未平仓批次', columns: [['symbol', '代码'], ['entry_date', '建仓日'], ['quantity', '数量'], ['cost_basis', '成本'], ['holding_sessions', '持有交易日']] }
 ]
 
-export function cell(value: unknown): string {
+const enumLabels: Record<string, Record<string, string>> = {
+  side: { buy: '买入', sell: '卖出' },
+  status: { pending: '待成交', filled: '已成交', partially_filled: '部分成交', expired: '已到期', cancelled: '已取消', unexecuted: '未执行', rejected: '已拒绝' },
+  source: { strategy: '策略', risk: '风控' },
+  intent: { hold: '保持', target: '目标组合' },
+}
+
+export function cell(value: unknown, field = ''): string {
   if (value == null) return '不可用'
+  if (typeof value === 'string' && enumLabels[field]?.[value]) return enumLabels[field][value]
   return typeof value === 'object' ? JSON.stringify(value) : String(value)
 }
 
@@ -24,6 +32,6 @@ export function ResultTables({ tables }: { tables: Partial<Record<TableName, Tab
   const rows = tables[selected] || []
   return <section className="panel"><h2>账户与交易明细</h2><p className="muted">数据按服务端原始字段显示；FIFO 匹配行是片段，完整往返次数以指标为准。市场日期按 Asia/Shanghai 解释。</p>
     <div className="result-tabs" role="tablist" aria-label="结果明细">{definitions.map(item => <button type="button" role="tab" aria-selected={selected === item.name} key={item.name} onClick={() => setSelected(item.name)}>{item.label}</button>)}</div>
-    {rows.length ? <div className="table-wrap"><table><thead><tr>{definition.columns.map(([key, label]) => <th key={key}>{label}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={index}>{definition.columns.map(([key]) => <td key={key}>{cell(row[key])}</td>)}</tr>)}</tbody></table></div> : <p className="empty">无{definition.label}记录。</p>}
+    {rows.length ? <div className="table-wrap"><table><thead><tr>{definition.columns.map(([key, label]) => <th key={key}>{label}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={index}>{definition.columns.map(([key]) => <td key={key} title={enumLabels[key] ? cell(row[key]) : undefined}>{cell(row[key], key)}</td>)}</tr>)}</tbody></table></div> : <p className="empty">无{definition.label}记录。</p>}
   </section>
 }

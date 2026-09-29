@@ -80,7 +80,7 @@ def test_run_and_job_api_expose_persisted_lifecycle_times(tmp_path):
         assert client.get("/api/runs", headers=headers).json()["items"][0]["created_at"] == run["created_at"]
 
 
-def test_idempotency_conflict_and_100_item_boundary(tmp_path):
+def test_idempotency_conflict(tmp_path):
     store, draft, _, _ = _ready(tmp_path)
     app = create_app(store.root)
     with TestClient(app, base_url="http://127.0.0.1:8765") as client:
@@ -89,11 +89,32 @@ def test_idempotency_conflict_and_100_item_boundary(tmp_path):
         first = {"experiment_id": draft.id, "expected_revision": draft.revision, "idempotency_key": "same"}
         assert client.post("/api/runs", json=first, headers=headers).status_code == 200
         assert client.post("/api/runs", json={**first, "source": "agent"}, headers=headers).status_code == 409
-        bad = {"items": [{"experiment_id": draft.id, "expected_revision": 1}] * 101, "idempotency_key": "batch"}
-        assert client.post("/api/runs/batch", json=bad, headers=headers).status_code == 422
-        accepted_size = {"items": [{"experiment_id": "missing", "expected_revision": 1}] * 100, "idempotency_key": "batch"}
-        assert client.post("/api/runs/batch", json=accepted_size, headers=headers).status_code == 404
         assert client.post("/api/runs", json={**first, "expected_revision": "1"}, headers=headers).status_code == 422
         source = client.get(f"/api/strategies/{draft.payload['strategy_revision_id']}", headers=headers).json()
         assert "strategy.py" in source["files"]
         assert "path" not in source
+
+
+def test_100_valid_batch_items_retry_and_101_rejection(tmp_path):
+    store, draft, _, _ = _ready(tmp_path)
+    # No lifespan: exercise real freeze/enqueue without executing 100 strategies.
+    client = TestClient(create_app(store.root), base_url="http://127.0.0.1:8765")
+    headers = {"Authorization": f"Bearer {client.get('/api/session').json()['token']}"}
+    item = {"experiment_id": draft.id, "expected_revision": draft.revision}
+    body = {"items": [item] * 100, "idempotency_key": "hundred"}
+    response = client.post("/api/runs/batch", json=body, headers=headers)
+    assert response.status_code == 200
+    runs = response.json()["items"]
+    assert len({run["run_id"] for run in runs}) == 100
+    assert len({run["job_id"] for run in runs}) == 100
+    assert len({run["group_id"] for run in runs}) == 1
+    assert runs[0]["group_id"] is not None
+    assert {run["state"] for run in runs} == {"queued"}
+    retry = client.post("/api/runs/batch", json=body, headers=headers)
+    assert retry.status_code == 200
+    assert [(run["run_id"], run["job_id"]) for run in retry.json()["items"]] == [(run["run_id"], run["job_id"]) for run in runs]
+    rejected = client.post("/api/runs/batch", json={"items": [item] * 101, "idempotency_key": "too-many"}, headers=headers)
+    assert rejected.status_code == 422
+    assert rejected.json()["code"] == "INVALID_ARGUMENT"
+    with store.transaction() as db:
+        assert tuple(db.execute(f"SELECT count(*) FROM {table}").fetchone()[0] for table in ("runs", "jobs", "idempotency")) == (100, 100, 1)

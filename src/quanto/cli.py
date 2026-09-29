@@ -5,8 +5,10 @@ import json
 import os
 from pathlib import Path
 import sys
+import socket
 
 import httpx
+from quanto.workbench.frontend import validate_frontend
 
 
 class WorkbenchClient:
@@ -78,7 +80,28 @@ def main(argv: list[str] | None = None) -> int:
         if not local_host(args.host):
             print("INVALID_HOST: 仅允许回环地址", file=sys.stderr)
             return 2
-        uvicorn.run(create_app(args.workspace, args.frontend_dir), host=args.host, port=args.port)
+        checkout = Path.cwd().resolve()
+        frontend = (args.frontend_dir or checkout / "web" / "dist").resolve()
+        try:
+            validate_frontend(checkout, frontend)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        # Bind before creating workspace/scheduler; pass this same socket to Uvicorn.
+        listener = socket.socket(socket.AF_INET6 if ":" in args.host else socket.AF_INET)
+        try:
+            listener.bind((args.host, args.port))
+            listener.listen(128)
+        except (OSError, OverflowError) as exc:
+            listener.close()
+            print(f"PORT_IN_USE: 无法绑定 {args.host}:{args.port}，请检查端口和地址：{exc}", file=sys.stderr)
+            return 2
+        try:
+            app = create_app(args.workspace, frontend, templates_dir=checkout / "strategies")
+            server = uvicorn.Server(uvicorn.Config(app, host=args.host, port=args.port))
+            server.run(sockets=[listener])
+        finally:
+            listener.close()
         return 0
     token = args.token or os.environ.get("QUANTO_TOKEN", "")
     if not token:

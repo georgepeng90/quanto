@@ -50,6 +50,8 @@ def security_error(request: Request, token: str):
             return JSONResponse({"code": "INVALID_ORIGIN", "message": "请求来源不匹配", "details": {}}, status_code=403)
     if request.url.path == "/api/session" and request.method == "GET":
         return None
+    if request.method in {"GET", "HEAD"} and not (request.url.path == "/api" or request.url.path.startswith("/api/")):
+        return None
     supplied = request.headers.get("authorization", "")
     if not hmac.compare_digest(supplied, f"Bearer {token}"):
         return JSONResponse({"code": "UNAUTHORIZED", "message": "访问令牌无效", "details": {}}, status_code=401)

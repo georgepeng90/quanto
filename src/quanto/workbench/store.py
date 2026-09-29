@@ -51,10 +51,17 @@ class WorkbenchStore:
     def __init__(self, root: Path, artifact_root: Path | None = None):
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
+        config_path = self.root / "workspace.json"
+        if artifact_root is None and config_path.exists():
+            artifact_root = Path(json.loads(config_path.read_text(encoding="utf-8"))["artifact_root"])
+            if not artifact_root.is_absolute():
+                artifact_root = self.root / artifact_root
         if artifact_root is None:
             artifact_root = self.root.parent.parent / "outputs" / "workbench" if self.root.parts[-2:] == ("data", "workbench") else self.root / "artifacts"
         self.artifact_root = Path(artifact_root).resolve()
         self.artifact_root.mkdir(parents=True, exist_ok=True)
+        if not config_path.exists():
+            config_path.write_text(json.dumps({"artifact_root": str(self.artifact_root)}, ensure_ascii=False), encoding="utf-8")
         self.db_path = self.root / "workbench.sqlite3"
         with self.transaction() as db:
             db.executescript("""

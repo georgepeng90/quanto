@@ -1,4 +1,4 @@
-import type { DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, StrategyManifest, StrategyRevision, TableName, TableRow } from './types'
+import type { ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TableRow } from './types'
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}, public status = 0) { super(message) }
@@ -22,6 +22,16 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError(body?.code || 'HTTP_ERROR', body?.message || '请求无法完成', body?.details || {}, response.status)
   }
   return response.json() as Promise<T>
+}
+
+async function download(path: string, signal?: AbortSignal): Promise<Blob> {
+  const current = await session()
+  const response = await fetch(`${current.api_base}${path}`, { headers: { Authorization: `Bearer ${current.token}` }, signal })
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { code?: string; message?: string; details?: Record<string, unknown> } | null
+    throw new ApiError(body?.code || 'HTTP_ERROR', body?.message || '下载无法完成', body?.details || {}, response.status)
+  }
+  return response.blob()
 }
 
 const json = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -50,7 +60,10 @@ export const api = {
   submitBatch: (items: { experiment_id: string; expected_revision: number }[], idempotency_key: string) => request<{ items: RunRecord[] }>('/runs/batch', json({ items, idempotency_key, source: 'web' })),
   cancelRun: (id: string) => request<RunRecord>(`/runs/${encodeURIComponent(id)}/cancel`, json({})),
   runLogs: (id: string, cursor?: string, signal?: AbortSignal) => request<LogPage>(`/runs/${encodeURIComponent(id)}/logs${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal }),
-  runTable: (id: string, name: TableName, cursor?: string, signal?: AbortSignal) => request<Page<TableRow>>(`/runs/${encodeURIComponent(id)}/tables/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal })
+  runTable: (id: string, name: TableName, cursor?: string, signal?: AbortSignal) => request<Page<TableRow>>(`/runs/${encodeURIComponent(id)}/tables/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal }),
+  runResult: (id: string, signal?: AbortSignal) => request<RunResult>(`/runs/${encodeURIComponent(id)}/results`, { signal }),
+  comparison: (run_ids: string[], signal?: AbortSignal) => request<ComparisonResult>('/comparisons', { ...json({ run_ids }), signal }),
+  exportRun: (id: string, format: 'csv' | 'json' | 'html', signal?: AbortSignal) => download(`/runs/${encodeURIComponent(id)}/exports/${format}`, signal)
 }
 
 export function describeError(error: unknown): string {

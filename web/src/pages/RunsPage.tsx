@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Ajv2020 from 'ajv/dist/2020.js'
 import { api, describeError } from '../api'
 import { stateLabel, terminalStates } from '../components/RunProgress'
-import type { ExperimentDraft, RunRecord, RunState } from '../types'
+import type { ExperimentDraft, RunRecord, RunResult, RunState } from '../types'
 
 type Item = { experiment_id: string; expected_revision: number }
 type Prepared = { items: Item[]; key: string; batch: boolean }
@@ -22,6 +22,8 @@ export function RunsPage() {
   const [runs, setRuns] = useState<RunRecord[]>([])
   const [runCursor, setRunCursor] = useState<string | null>(null)
   const [filter, setFilter] = useState<RunState | 'all'>('all')
+  const [groupFilter, setGroupFilter] = useState('all')
+  const [summaries, setSummaries] = useState<Record<string, { provenance?: Record<string, unknown>; result?: RunResult }>>({})
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [retry, setRetry] = useState(false)
@@ -30,9 +32,13 @@ export function RunsPage() {
   const preparing = useRef(false)
   const inputGeneration = useRef(0)
   const runOffset = useRef(0)
+  const summaryCache = useRef<Record<string, { provenance?: Record<string, unknown>; result?: RunResult }>>({})
+  const summaryLoading = useRef(new Set<string>())
+  const mountController = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
+    mountController.current = controller
     Promise.all([api.experiments(), api.runs(undefined, controller.signal)]).then(([drafts, page]) => {
       if (controller.signal.aborted) return
       setExperiments(drafts.items)
@@ -41,8 +47,28 @@ export function RunsPage() {
       setRunCursor(page.next_cursor)
       runOffset.current = page.items.length
     }).catch(value => { if (!controller.signal.aborted) setError(describeError(value)) })
-    return () => controller.abort()
+    return () => { controller.abort(); mountController.current = null }
   }, [])
+
+  useEffect(() => {
+    const signal = mountController.current?.signal
+    for (const run of runs) {
+      const cached = summaryCache.current[run.run_id]
+      if ((cached?.provenance && (run.state !== 'succeeded' || cached.result)) || summaryLoading.current.has(run.run_id)) continue
+      summaryLoading.current.add(run.run_id)
+      void (async () => {
+        try {
+          const provenance = cached?.provenance || (await api.run(run.run_id, signal)).provenance
+          const result = run.state === 'succeeded' ? await api.runResult(run.run_id, signal) : cached?.result
+          if (signal?.aborted) return
+          const summary = { provenance, result }
+          summaryCache.current[run.run_id] = summary
+          setSummaries(old => ({ ...old, [run.run_id]: summary }))
+        } catch (value) { if (!signal?.aborted) setError(describeError(value)) }
+        finally { summaryLoading.current.delete(run.run_id) }
+      })()
+    }
+  }, [runs])
 
   useEffect(() => {
     const active = runs.filter(run => !terminalStates.has(run.state))
@@ -64,23 +90,26 @@ export function RunsPage() {
   }
   const loadMoreRuns = async () => {
     if (!runCursor) return
-    try { const page = await api.runs(runCursor); setRuns(old => merge(old, page.items)); runOffset.current = Math.max(runOffset.current, Number(runCursor) + page.items.length); setRunCursor(page.next_cursor) }
-    catch (value) { setError(describeError(value)) }
+    const signal = mountController.current?.signal
+    try { const page = await api.runs(runCursor, signal); if (signal?.aborted) return; setRuns(old => merge(old, page.items)); runOffset.current = Math.max(runOffset.current, Number(runCursor) + page.items.length); setRunCursor(page.next_cursor) }
+    catch (value) { if (!signal?.aborted) setError(describeError(value)) }
   }
   const refresh = async () => {
+    const signal = mountController.current?.signal
     try {
       const edgeOffset = runOffset.current
       const [first, edge, tracked] = await Promise.all([
-        api.runs(),
-        runCursor === null && edgeOffset > 0 ? api.runs(String(edgeOffset)) : Promise.resolve(null),
-        Promise.all(runs.filter(run => !terminalStates.has(run.state)).map(run => api.run(run.run_id)))
+        api.runs(undefined, signal),
+        runCursor === null && edgeOffset > 0 ? api.runs(String(edgeOffset), signal) : Promise.resolve(null),
+        Promise.all(runs.filter(run => !terminalStates.has(run.state)).map(run => api.run(run.run_id, signal)))
       ])
+      if (signal?.aborted) return
       setRuns(old => merge(old, [...first.items, ...(edge?.items || []), ...tracked]))
       setRunCursor(old => old ?? first.next_cursor ?? edge?.next_cursor ?? null)
       if (edge) runOffset.current = Math.max(runOffset.current, edgeOffset + edge.items.length)
       else if (runCursor === null) runOffset.current = Math.max(runOffset.current, first.items.length)
       setError('')
-    } catch (value) { setError(describeError(value)) }
+    } catch (value) { if (!signal?.aborted) setError(describeError(value)) }
   }
 
   const sendPrepared = async (request: Prepared) => {
@@ -148,14 +177,15 @@ export function RunsPage() {
     try { await sendPrepared(request) }
     finally { preparing.current = false; setBusy(false) }
   }
-  const visible = runs.filter(run => filter === 'all' || run.state === filter)
+  const visible = runs.filter(run => (filter === 'all' || run.state === filter) && (groupFilter === 'all' || (run.group_id || 'single') === groupFilter))
+  const groupIds = [...new Set(runs.map(run => run.group_id || 'single'))]
   const groups = new Map<string, RunRecord[]>()
   for (const run of visible) { const key = run.group_id || run.run_id; groups.set(key, [...(groups.get(key) || []), run]) }
   return <div className="page-stack"><header className="page-heading"><h1>回测任务</h1><p>提交已保存实验的快照；同一参数列表按固定顺序组成一批任务。</p></header>
     {error && <p role="alert" className="error callout">{error}</p>}
     <section className="panel"><h2>发起运行</h2><div className="form-grid"><label>实验草稿<select value={selected} onChange={event => { inputGeneration.current++; setSelected(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }}><option value="">选择实验</option>{experiments.map(item => <option key={item.id} value={item.id}>{item.id} · 修订 {item.revision}</option>)}</select></label><label className="wide">参数列表 JSON<textarea value={parameters} onChange={event => { inputGeneration.current++; setParameters(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }} placeholder={'[{"window":4},{"window":8}]'} /></label></div>
       <div className="inline-actions"><button type="button" disabled={busy} onClick={() => submit(false)}>运行</button><button type="button" disabled={busy} onClick={() => submit(true)}>运行参数列表</button>{retry && <button type="button" disabled={busy} onClick={retryPrepared}>重试提交</button>}{experimentCursor && <button type="button" onClick={loadMoreExperiments}>加载更多实验草稿</button>}</div><p className="muted">参数列表最多 100 组。先逐组保存为独立实验草稿，再提交一个批次；重试沿用已准备的草稿和幂等键。</p></section>
-    <section className="panel"><div className="section-heading"><div><h2>运行记录</h2><p>运行列表和状态来自服务端；队列中的任务也可查看详情。</p></div><button type="button" onClick={refresh}>刷新</button></div><label>状态筛选<select value={filter} onChange={event => setFilter(event.target.value as RunState | 'all')}><option value="all">全部</option>{Object.entries(stateLabel).map(([state, label]) => <option key={state} value={state}>{label}</option>)}</select></label>
-      {visible.length === 0 ? <p className="empty">暂无匹配运行。</p> : [...groups].reverse().map(([group, items]) => <div key={group} className="run-group"><h3>{items[0].group_id ? `批次 ${group}` : '单次运行'}</h3><div className="record-list">{items.map(run => <article className="record" key={run.run_id}><div className="record-head"><Link to={run.detail_url}>{run.run_id}</Link><span className="badge">{stateLabel[run.state]}</span></div><p>实验 {run.experiment_id} · 修订 {run.experiment_revision} · 已完成至 {run.completed_through || '尚无完整交易日'}</p><small>提交 {run.created_at || '历史记录未知'}</small>{run.error && <p className="error">{run.error}</p>}</article>)}</div></div>)}{runCursor && <button type="button" onClick={loadMoreRuns}>加载更多运行</button>}</section>
+    <section className="panel"><div className="section-heading"><div><h2>运行记录</h2><p>运行列表和状态来自服务端；队列中的任务也可查看详情。</p></div><button type="button" onClick={refresh}>刷新</button></div><div className="form-grid"><label>状态筛选<select value={filter} onChange={event => setFilter(event.target.value as RunState | 'all')}><option value="all">全部</option>{Object.entries(stateLabel).map(([state, label]) => <option key={state} value={state}>{label}</option>)}</select></label><label>批次筛选<select value={groupFilter} onChange={event => setGroupFilter(event.target.value)}><option value="all">全部批次</option>{groupIds.map(group => <option key={group} value={group}>{group === 'single' ? '单次运行' : group}</option>)}</select></label></div>
+      {visible.length === 0 ? <p className="empty">暂无匹配运行。</p> : [...groups].reverse().map(([group, items]) => <div key={group} className="run-group"><h3>{items[0].group_id ? `批次 ${group}` : '单次运行'}</h3><div className="record-list">{items.map(run => { const summary = summaries[run.run_id]; const source = summary?.provenance || run.provenance; const metrics = run.state === 'succeeded' ? summary?.result?.metrics : null; return <article className="record" key={run.run_id}><div className="record-head"><Link to={run.detail_url}>{run.run_id}</Link><span className="badge">{stateLabel[run.state]}</span></div><p>实验 {run.experiment_id} · 修订 {run.experiment_revision} · 已完成至 {run.completed_through || '尚无完整交易日'}</p><p>策略修订 {String(source?.strategy_revision_id || '读取中')} · 数据版本 {String(source?.dataset_version_id || '读取中')} · 参数 {source?.effective_strategy_params ? JSON.stringify(source.effective_strategy_params) : '读取中'}</p><p>最终权益 {metrics?.final_equity ?? '不可用'} · 累计收益 {metrics?.total_return ?? '不可用'} · 最大回撤 {metrics?.max_drawdown ?? '不可用'}</p><small>提交 {run.created_at || '历史记录未知'} · 开始 {run.started_at || '未知'} · 结束 {run.finished_at || '未知'}</small>{run.error && <p className="error">{run.error}</p>}</article> } )}</div></div>)}{runCursor && <button type="button" onClick={loadMoreRuns}>加载更多运行</button>}</section>
   </div>
 }

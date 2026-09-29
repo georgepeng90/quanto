@@ -19,6 +19,7 @@ beforeEach(() => {
     if (path === '/api/experiments') return Response.json({ items: [experiment], next_cursor: null })
     if (path === '/api/runs') return Response.json({ items: [], next_cursor: null })
     if (path === '/api/runs/r1') return Response.json(running)
+    if (path === '/api/runs/r1/results') return Response.json({ run_id: 'r1', state: 'succeeded', completed_through: '2024-01-03', metrics: { final_equity: 100 }, metric_definitions: { final_equity: { description: '最终权益' } }, warnings: [], metadata: { dataset_version_id: 'd1', strategy_revision_id: 's1', price_mode: 'raw_cash' }, detail_url: '/runs/r1' })
     if (path === '/api/runs/r1/logs') return Response.json({ items: [event], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
     if (path === '/api/runs/r1/logs?cursor=1') return Response.json({ items: [], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
     if (path.startsWith('/api/runs/r1/tables/')) return Response.json(empty)

@@ -10,14 +10,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from quanto.backtest.metrics import compute_metrics, match_trades
+from quanto.backtest.metrics import MATCH_COLUMNS, OPEN_COLUMNS, compute_metrics, match_trades
 from quanto.backtest.models import BacktestResult, TABLE_COLUMNS
 from quanto.config import BacktestSpec
 from quanto.data.schemas import DatasetBundle
 
 
 SCHEMA_VERSION = "1"
-OUTPUT_TABLES = (*TABLE_COLUMNS, "curves", "monthly_returns", "annual_returns", "matched_trades", "open_lots")
+REPORT_TABLE_COLUMNS = {"curves": ["date", "equity", "return", "drawdown", "benchmark_equity", "benchmark_return"],
+    "monthly_returns": ["period", "return"], "annual_returns": ["period", "return"],
+    "matched_trades": MATCH_COLUMNS, "open_lots": OPEN_COLUMNS}
+OUTPUT_TABLES = (*TABLE_COLUMNS, *REPORT_TABLE_COLUMNS)
 OUTPUT_FILES = tuple(f"{name}.csv" for name in OUTPUT_TABLES) + ("metrics.json", "metadata.json", "report.html", "manifest.json")
 
 
@@ -173,7 +176,7 @@ def _svg(curves: pd.DataFrame) -> str:
 
 def _html(report: ReportBundle, result: BacktestResult) -> bytes:
     embedded = _json_bytes({"metrics": report.metrics, "metric_definitions": report.metric_definitions,
-        "curves": _records(report.curves), "signals": _records(result.signals), "warnings": report.warnings}).decode("utf-8")
+        "curves": _records(report.curves), "signals": _records(result.signals), "warnings": report.warnings, "metadata": report.metadata}).decode("utf-8")
     # A literal closing script tag would terminate application/json content in the HTML parser.
     embedded = embedded.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     rows = "".join(f"<tr><th>{escape(key)}</th><td>{'不可用' if value is None else escape(str(value))}</td></tr>"
@@ -181,12 +184,14 @@ def _html(report: ReportBundle, result: BacktestResult) -> bytes:
     definitions = "".join(f"<tr><th>{escape(key)}</th><td>{escape(str(value['description']))}</td></tr>"
         for key, value in report.metric_definitions.items() if "description" in value)
     warnings = "".join(f"<li>{escape(warning)}</li>" for warning in report.warnings)
+    provenance = "".join(f"<tr><th>{label}</th><td>{escape(str(report.metadata[key]))}</td></tr>"
+        for key, label in (("price_mode", "价格口径"), ("dataset_version_id", "数据版本"), ("strategy_revision_id", "策略修订")) if key in report.metadata)
     html = ("<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\"><title>回测报告</title>"
         "<style>body{font:16px system-ui,sans-serif;max-width:960px;margin:2rem auto;color:#18324a}"
         "table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:.5rem;text-align:left}"
         "svg{max-width:100%;height:auto}</style></head><body><h1>回测报告</h1>"
         "<p>策略权益（蓝）与基准权益（橙）；基准按首个绩效日归一化。</p>"
-        f"{_svg(report.curves)}<h2>指标</h2><table>{rows}</table>"
+        f"<h2>来源</h2><table>{provenance}</table>{_svg(report.curves)}<h2>指标</h2><table>{rows}</table>"
         f"<h2>指标定义</h2><table>{definitions}</table><h2>说明</h2><ul>{warnings}</ul>"
         f"<script type=\"application/json\" id=\"report-data\">{embedded}</script></body></html>\n")
     return html.encode("utf-8")
@@ -194,7 +199,7 @@ def _html(report: ReportBundle, result: BacktestResult) -> bytes:
 
 def write_backtest_outputs(target_dir: Path, result: BacktestResult, report: ReportBundle) -> dict[str, str]:
     target_dir = Path(target_dir)
-    frames = {name: getattr(result, name)[TABLE_COLUMNS[name]] if name in TABLE_COLUMNS else getattr(report, name)
+    frames = {name: getattr(result, name)[TABLE_COLUMNS[name]] if name in TABLE_COLUMNS else getattr(report, name)[REPORT_TABLE_COLUMNS[name]]
         for name in OUTPUT_TABLES}
     payloads = {f"{name}.csv": _csv_bytes(frame) for name, frame in frames.items()}
     payloads["metrics.json"] = _json_bytes({"schema_version": SCHEMA_VERSION, "metrics": report.metrics,

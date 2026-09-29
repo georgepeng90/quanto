@@ -46,7 +46,7 @@ def run_backtest(
     observed = pd.DatetimeIndex(prices.date.unique()).sort_values()
     validate_warmup_window(strategy, observed, spec.start, spec.end)
     random.seed(spec.seed)
-    np.random.seed(spec.seed)
+    np.random.seed(spec.seed % 2**32)
     ledger, risk = PortfolioLedger(spec.initial_cash), RiskPolicy(spec.risk, initial_equity=spec.initial_cash)
     ledger.calendar = calendar
     instruments = bundle.instruments[bundle.instruments.symbol.isin(spec.symbols)]

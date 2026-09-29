@@ -52,10 +52,10 @@ def _execution_files(project_root: Path) -> dict[str, bytes]:
 
 def _environment(project_root: Path, metadata_files: dict[str, bytes]) -> dict:
     project = tomllib.loads(metadata_files["pyproject.toml"].decode("utf-8"))
-    installed = sorted(
-        [re.sub(r"[-_.]+", "-", dist.metadata["Name"]).lower(), dist.version]
+    installed = [list(item) for item in sorted({
+        (re.sub(r"[-_.]+", "-", dist.metadata["Name"]).lower(), dist.version)
         for dist in importlib.metadata.distributions()
-    )
+    })]
     locks = {name: digest(content) for name, content in metadata_files.items() if name in _METADATA_NAMES and name != "pyproject.toml"}
     return {
         "python": sys.version,

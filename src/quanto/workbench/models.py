@@ -46,6 +46,9 @@ class RunRecord:
     group_id: str | None
     experiment_id: str
     experiment_revision: int
+    state: str = "queued"
+    completed_through: str | None = None
+    error: str | None = None
 
 
 @dataclass(frozen=True)
@@ -56,6 +59,12 @@ class JobRecord:
     run_id: str | None
     enqueue_seq: int
     artifact_root: Path
+    pid: int | None = None
+    process_start: str | None = None
+    heartbeat: str | None = None
+    completed_through: str | None = None
+    error: str | None = None
+    input_path: str | None = None
 
 
 @dataclass(frozen=True)

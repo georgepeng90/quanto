@@ -65,6 +65,8 @@ class WorkbenchStore:
                 db.execute("INSERT INTO schema_version VALUES (1)")
             elif db.execute("SELECT version FROM schema_version").fetchone()[0] != 1:
                 raise ValueError("unsupported workbench schema version")
+            if "input_path" not in {row[1] for row in db.execute("PRAGMA table_info(jobs)")}:
+                db.execute("ALTER TABLE jobs ADD COLUMN input_path TEXT")
 
     @contextmanager
     def transaction(self):
@@ -204,12 +206,53 @@ class WorkbenchStore:
         if db is None:
             with self.transaction() as connection:
                 return self.get_run(identity, connection)
-        row = db.execute("SELECT * FROM runs WHERE run_id=?", (identity,)).fetchone()
+        row = db.execute("SELECT runs.*, jobs.state, jobs.completed_through, jobs.error FROM runs JOIN jobs ON jobs.id=runs.job_id WHERE runs.run_id=?", (identity,)).fetchone()
         if row is None:
             raise KeyError(identity)
-        return RunRecord(row["run_id"], row["job_id"], Path(row["manifest_path"]), row["manifest_hash"], row["source"], row["parent_run_id"], row["group_id"], row["experiment_id"], row["experiment_revision"])
+        return RunRecord(row["run_id"], row["job_id"], Path(row["manifest_path"]), row["manifest_hash"], row["source"], row["parent_run_id"], row["group_id"], row["experiment_id"], row["experiment_revision"], row["state"], row["completed_through"], row["error"])
 
     def list_jobs(self) -> list[JobRecord]:
         with self.transaction() as db:
             rows = db.execute("SELECT * FROM jobs ORDER BY enqueue_seq").fetchall()
-        return [JobRecord(row["id"], row["kind"], row["state"], row["run_id"], row["enqueue_seq"], Path(row["artifact_root"])) for row in rows]
+        return [self._job(row) for row in rows]
+
+    @staticmethod
+    def _job(row) -> JobRecord:
+        values = dict(row)
+        values["artifact_root"] = Path(values["artifact_root"])
+        return JobRecord(**values)
+
+    def get_job(self, identity: str) -> JobRecord:
+        with self.transaction() as db:
+            row = db.execute("SELECT * FROM jobs WHERE id=?", (identity,)).fetchone()
+            if row is None:
+                raise KeyError(identity)
+            return self._job(row)
+
+    def claim_job(self) -> JobRecord | None:
+        with self.transaction() as db:
+            row = db.execute("SELECT * FROM jobs WHERE state='queued' ORDER BY enqueue_seq LIMIT 1").fetchone()
+            if row is None:
+                return None
+            db.execute("UPDATE jobs SET state='running' WHERE id=? AND state='queued'", (row["id"],))
+            return self._job(db.execute("SELECT * FROM jobs WHERE id=?", (row["id"],)).fetchone())
+
+    def request_cancel(self, identity: str) -> JobRecord:
+        with self.transaction() as db:
+            db.execute("UPDATE jobs SET state=CASE state WHEN 'queued' THEN 'cancelled' ELSE 'cancel_requested' END WHERE id=? AND state IN ('queued','running')", (identity,))
+        return self.get_job(identity)
+
+    def register_process(self, identity: str, pid: int, process_start: str) -> bool:
+        with self.transaction() as db:
+            return db.execute("UPDATE jobs SET pid=?, process_start=? WHERE id=? AND state IN ('running','cancel_requested') AND pid IS NULL", (pid, process_start, identity)).rowcount == 1
+
+    def checkpoint(self, identity: str, heartbeat: str | None, completed_through: str | None) -> None:
+        with self.transaction() as db:
+            db.execute("UPDATE jobs SET heartbeat=COALESCE(?,heartbeat), completed_through=COALESCE(?,completed_through) WHERE id=? AND state IN ('running','cancel_requested')", (heartbeat, completed_through, identity))
+
+    def finish_job(self, identity: str, state: str, *, expected: str, error: str | None = None) -> bool:
+        allowed = {"running": {"succeeded", "failed", "interrupted"}, "cancel_requested": {"cancelled", "interrupted"}}
+        if state not in allowed.get(expected, set()):
+            raise ValueError("invalid terminal transition")
+        with self.transaction() as db:
+            return db.execute("UPDATE jobs SET state=?, error=? WHERE id=? AND state=?", (state, error, identity, expected)).rowcount == 1

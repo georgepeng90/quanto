@@ -89,3 +89,6 @@ $RECYCLE.BIN/
 !/data/raw/
 !/data/raw/**
 /outputs/
+/data/workbench/
+/web/node_modules/
+/web/dist/

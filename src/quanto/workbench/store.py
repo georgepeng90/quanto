@@ -1,0 +1,187 @@
+from __future__ import annotations
+
+from contextlib import contextmanager
+import json
+from pathlib import Path
+import sqlite3
+from uuid import uuid4
+
+from quanto.config import validate_parameters
+from quanto.data.loaders import load_dataset
+from quanto.workbench.models import DatasetVersion, ExperimentDraft, JobRecord, RunRecord, StrategyRevision
+from quanto.workbench.revisions import digest, json_bytes, publish_files, safe_name, source_files
+
+
+class WorkbenchStore:
+    def __init__(self, root: Path, artifact_root: Path | None = None):
+        self.root = Path(root).resolve()
+        self.root.mkdir(parents=True, exist_ok=True)
+        if artifact_root is None:
+            artifact_root = self.root.parent.parent / "outputs" / "workbench" if self.root.parts[-2:] == ("data", "workbench") else self.root / "artifacts"
+        self.artifact_root = Path(artifact_root).resolve()
+        self.artifact_root.mkdir(parents=True, exist_ok=True)
+        self.db_path = self.root / "workbench.sqlite3"
+        with self.transaction() as db:
+            db.executescript("""
+                CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);
+                CREATE TABLE IF NOT EXISTS datasets (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS strategies (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS experiments (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, job_id TEXT NOT NULL UNIQUE, experiment_id TEXT NOT NULL, experiment_revision INTEGER NOT NULL, manifest_path TEXT NOT NULL, manifest_hash TEXT NOT NULL, source TEXT NOT NULL, parent_run_id TEXT, group_id TEXT);
+                CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK (kind IN ('backtest','demo','fetch','import','validate_strategy')), state TEXT NOT NULL, run_id TEXT UNIQUE, enqueue_seq INTEGER NOT NULL UNIQUE, artifact_root TEXT NOT NULL, pid INTEGER, process_start TEXT, heartbeat TEXT, completed_through TEXT, error TEXT);
+                CREATE TABLE IF NOT EXISTS idempotency (key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, run_ids_json TEXT NOT NULL);
+            """)
+            if db.execute("SELECT count(*) FROM schema_version").fetchone()[0] == 0:
+                db.execute("INSERT INTO schema_version VALUES (1)")
+            elif db.execute("SELECT version FROM schema_version").fetchone()[0] != 1:
+                raise ValueError("unsupported workbench schema version")
+
+    @contextmanager
+    def transaction(self):
+        db = sqlite3.connect(self.db_path, timeout=30, isolation_level=None)
+        db.row_factory = sqlite3.Row
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            yield db
+            db.commit()
+        except BaseException:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def register_dataset(self, bundle_dir: Path) -> DatasetVersion:
+        source = Path(bundle_dir)
+        if source.is_symlink():
+            raise ValueError("symbolic links are not snapshot inputs")
+        manifest_path = source / "manifest.json"
+        if manifest_path.is_symlink():
+            raise ValueError("symbolic links are not snapshot inputs")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        names = {"manifest.json"}
+        for table in ("prices", "benchmark", "calendar", "instruments", "status", "events"):
+            name = next((f"{table}.{suffix}" for suffix in ("parquet", "csv") if (source / f"{table}.{suffix}").exists()), None)
+            if name is None:
+                raise FileNotFoundError(source / f"{table}.csv")
+            names.add(name)
+        names.update(manifest.get("auxiliary_tables", {}).values())
+        for name in names:
+            safe_name(name)
+            path = source / name
+            if path.is_symlink() or not path.is_file() or any(parent.is_symlink() for parent in path.parents if parent != source and source in parent.parents):
+                raise ValueError("symbolic links are not snapshot inputs")
+        load_dataset(source)
+        before = {name: (source / name).read_bytes() for name in sorted(names)}
+        identity = str(uuid4())
+        target, hashes = publish_files(self.root / "datasets", identity, before)
+        if {name: (source / name).read_bytes() for name in sorted(names)} != before:
+            raise ValueError("dataset changed during registration")
+        load_dataset(target)
+        manifest = json.loads((target / "manifest.json").read_text(encoding="utf-8"))
+        content_hash = digest(json_bytes(hashes))
+        with self.transaction() as db:
+            db.execute("INSERT INTO datasets VALUES (?, ?, ?, ?)", (identity, str(target), content_hash, json_bytes(manifest).decode()))
+        return DatasetVersion(identity, target, content_hash, manifest)
+
+    def register_strategy(self, files: dict[str, bytes], manifest: dict) -> StrategyRevision:
+        import ast
+        if "strategy.json" not in files or json.loads(files["strategy.json"]) != manifest:
+            raise ValueError("strategy.json must match the declaration")
+        entrypoint = manifest.get("entrypoint", "")
+        module_path = entrypoint.partition(":")[0]
+        safe_name(module_path)
+        if not entrypoint.endswith(":create_strategy") or not module_path.endswith(".py"):
+            raise ValueError("invalid strategy entrypoint")
+        auxiliary = manifest.get("auxiliary_sources", [])
+        if not isinstance(auxiliary, list) or not isinstance(manifest.get("research_data", []), list):
+            raise ValueError("invalid strategy declaration")
+        declared = {"strategy.json", module_path}
+        for name in auxiliary:
+            safe_name(name)
+            declared.add(name)
+        if not declared.issubset(files):
+            raise ValueError("missing declared strategy file")
+        for name in files:
+            safe_name(name)
+        for name in declared:
+            if name.endswith(".py"):
+                ast.parse(files[name], filename=name)
+        local_modules = {Path(name).stem for name in files if name.endswith(".py")}
+        declared_modules = {Path(name).stem for name in declared if name.endswith(".py")}
+        for name in declared:
+            if not name.endswith(".py"):
+                continue
+            tree = ast.parse(files[name], filename=name)
+            imported = {alias.name.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
+            imported.update(node.module.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module)
+            if (imported & local_modules) - declared_modules:
+                raise ValueError("undeclared local strategy source")
+        identity = str(uuid4())
+        target, hashes = publish_files(self.root / "strategies", identity, {name: files[name] for name in declared})
+        content_hash = digest(json_bytes(hashes))
+        with self.transaction() as db:
+            db.execute("INSERT INTO strategies VALUES (?, ?, ?, ?)", (identity, str(target), content_hash, json_bytes(manifest).decode()))
+        return StrategyRevision(identity, target, content_hash, manifest)
+
+    def save_experiment(self, experiment_id: str | None, expected_revision: int | None, payload: dict) -> ExperimentDraft:
+        normalized = json.loads(json_bytes(payload))
+        if "strategy_revision_id" in normalized and "strategy_params" in normalized:
+            strategy = self.get_strategy(normalized["strategy_revision_id"])
+            normalized["effective_strategy_params"] = validate_parameters(strategy.manifest["parameter_schema"], normalized["strategy_params"])
+        encoded = json_bytes(normalized).decode()
+        with self.transaction() as db:
+            if experiment_id is None:
+                if expected_revision is not None:
+                    raise ValueError("new experiment cannot have expected revision")
+                experiment_id = str(uuid4())
+                revision = 1
+                db.execute("INSERT INTO experiments VALUES (?, ?, ?)", (experiment_id, revision, encoded))
+            else:
+                if expected_revision is None:
+                    raise ValueError("expected revision required")
+                updated = db.execute("UPDATE experiments SET revision=revision+1, payload_json=? WHERE id=? AND revision=?", (encoded, experiment_id, expected_revision))
+                if updated.rowcount != 1:
+                    raise ValueError("experiment revision conflict")
+                revision = expected_revision + 1
+        return ExperimentDraft(experiment_id, revision, json.loads(encoded))
+
+    def get_experiment(self, identity: str, db=None) -> ExperimentDraft:
+        if db is None:
+            with self.transaction() as connection:
+                return self.get_experiment(identity, connection)
+        row = db.execute("SELECT * FROM experiments WHERE id=?", (identity,)).fetchone()
+        if row is None:
+            raise KeyError(identity)
+        return ExperimentDraft(row["id"], row["revision"], json.loads(row["payload_json"]))
+
+    def get_dataset(self, identity: str, db=None) -> DatasetVersion:
+        if db is None:
+            with self.transaction() as connection:
+                return self.get_dataset(identity, connection)
+        row = db.execute("SELECT * FROM datasets WHERE id=?", (identity,)).fetchone()
+        if row is None:
+            raise KeyError(identity)
+        return DatasetVersion(row["id"], Path(row["path"]), row["content_hash"], json.loads(row["manifest_json"]))
+
+    def get_strategy(self, identity: str, db=None) -> StrategyRevision:
+        if db is None:
+            with self.transaction() as connection:
+                return self.get_strategy(identity, connection)
+        row = db.execute("SELECT * FROM strategies WHERE id=?", (identity,)).fetchone()
+        if row is None:
+            raise KeyError(identity)
+        return StrategyRevision(row["id"], Path(row["path"]), row["content_hash"], json.loads(row["manifest_json"]))
+
+    def get_run(self, identity: str, db=None) -> RunRecord:
+        if db is None:
+            with self.transaction() as connection:
+                return self.get_run(identity, connection)
+        row = db.execute("SELECT * FROM runs WHERE run_id=?", (identity,)).fetchone()
+        if row is None:
+            raise KeyError(identity)
+        return RunRecord(row["run_id"], row["job_id"], Path(row["manifest_path"]), row["manifest_hash"], row["source"], row["parent_run_id"], row["group_id"], row["experiment_id"], row["experiment_revision"])
+
+    def list_jobs(self) -> list[JobRecord]:
+        with self.transaction() as db:
+            rows = db.execute("SELECT * FROM jobs ORDER BY enqueue_seq").fetchall()
+        return [JobRecord(row["id"], row["kind"], row["state"], row["run_id"], row["enqueue_seq"], Path(row["artifact_root"])) for row in rows]

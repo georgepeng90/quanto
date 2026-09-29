@@ -36,12 +36,31 @@ def test_context_excludes_future_and_is_read_only():
         ctx.pending_orders[0]["quantity"] = 2
 
 
-def test_preflight_requires_an_evaluable_session():
-    from quanto.strategies.base import validate_evaluation_window
-    from quanto.strategies.trend_rotation import TrendRotation
+def test_preflight_checks_warmup_without_guessing_custom_schedule():
+    from quanto.strategies.base import validate_warmup_window
 
-    strategy = TrendRotation(trend_window=3, momentum_window=2, entry_rank=1, retain_rank=1, evaluation="weekly")
+    class ConditionalStrategy:
+        warmup_bars = 3
+
+        def should_evaluate(self, ctx):
+            raise AssertionError("preflight cannot evaluate a synthetic live context")
+
+        def on_close(self, ctx):
+            return Hold("wait")
+
+    strategy = ConditionalStrategy()
     calendar = pd.to_datetime(["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05"])
     with pytest.raises(ValueError):
-        validate_evaluation_window(strategy, calendar, pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-04"))
-    validate_evaluation_window(strategy, calendar, pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-05"))
+        validate_warmup_window(strategy, calendar, pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-03"))
+    validate_warmup_window(strategy, calendar, pd.Timestamp("2024-01-04"), pd.Timestamp("2024-01-04"))
+
+
+def test_week_end_requires_a_known_later_session():
+    from quanto.strategies.base import is_week_end
+
+    full_calendar = pd.bdate_range("2024-01-01", "2024-01-09")
+    assert is_week_end(full_calendar, pd.Timestamp("2024-01-03")) is False
+    assert is_week_end(full_calendar, pd.Timestamp("2024-01-05")) is True
+    assert is_week_end(full_calendar, pd.Timestamp("2024-01-09")) is False
+    assert is_week_end(full_calendar[:3], pd.Timestamp("2024-01-03")) is False
+    assert is_week_end(full_calendar[:5], pd.Timestamp("2024-01-05")) is False

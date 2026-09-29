@@ -84,18 +84,28 @@ def validate_intent(intent: Hold | TargetPortfolio, known_symbols: set[str]) -> 
         raise ValueError("Target weights exceed one")
 
 
-def validate_evaluation_window(
+def _calendar_dates(calendar: pd.Series | pd.DatetimeIndex | list[date]) -> pd.DatetimeIndex:
+    return pd.DatetimeIndex(pd.to_datetime(calendar)).sort_values().unique()
+
+
+def is_week_end(calendar: pd.Series | pd.DatetimeIndex | list[date], asof: date | pd.Timestamp) -> bool:
+    dates = _calendar_dates(calendar)
+    asof = pd.Timestamp(asof)
+    index = dates.searchsorted(asof)
+    if index >= len(dates) or dates[index] != asof:
+        raise ValueError("asof must be a calendar session")
+    return bool(index + 1 < len(dates) and dates[index + 1].to_period("W-FRI") != asof.to_period("W-FRI"))
+
+
+def validate_warmup_window(
     strategy: Strategy,
     calendar: pd.Series | pd.DatetimeIndex | list[date],
     start: date | pd.Timestamp,
     end: date | pd.Timestamp,
 ) -> None:
-    dates = pd.DatetimeIndex(pd.to_datetime(calendar)).sort_values().unique()
+    dates = _calendar_dates(calendar)
     start, end = pd.Timestamp(start), pd.Timestamp(end)
     for index, asof in enumerate(dates):
-        if index < strategy.warmup_bars or not start <= asof <= end:
-            continue
-        is_week_end = index == len(dates) - 1 or dates[index + 1].to_period("W-FRI") != asof.to_period("W-FRI")
-        if getattr(strategy, "evaluation", "daily") == "daily" or is_week_end:
+        if index >= strategy.warmup_bars and start <= asof <= end:
             return
-    raise ValueError("No strategy evaluation session remains after warmup")
+    raise ValueError("No strategy session remains after warmup")

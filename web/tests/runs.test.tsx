@@ -210,7 +210,7 @@ test('keeps each run log cursor independent when moving between detail URLs', as
   expect(logPaths[0]).toBe('/api/runs/r2/logs')
 })
 
-test('loads later run pages and refreshes a visible active run by ID', async () => {
+test('drains later run pages and refreshes a visible active run by ID', async () => {
   const listed = Array.from({ length: 50 }, (_, index) => ({ ...queued, run_id: `old-${index}`, state: 'succeeded', detail_url: `/runs/old-${index}` }))
   const later = { ...running, run_id: 'later', detail_url: '/runs/later' }
   const paths: string[] = []
@@ -222,10 +222,10 @@ test('loads later run pages and refreshes a visible active run by ID', async () 
     if (path === '/api/runs?cursor=50') return Response.json({ items: [later], next_cursor: null })
     if (path === '/api/runs?cursor=51') return Response.json(empty)
     if (path === '/api/runs/later') return Response.json({ ...later, state: 'cancel_requested' })
+    if (path.startsWith('/api/runs/old-')) return path.endsWith('/results') ? Response.json({ run_id: path.split('/')[3], state: 'succeeded', metrics: { final_equity: 100 }, metric_definitions: {}, metadata: {}, detail_url: path }) : Response.json({ ...queued, run_id: path.split('/')[3], state: 'succeeded', provenance: { strategy_revision_id: 's1', dataset_version_id: 'd1', effective_strategy_params: {} } })
     return prior(input, init)
   }))
   app('/runs')
-  await userEvent.click(await screen.findByRole('button', { name: '加载更多运行' }))
   expect(await screen.findByRole('link', { name: 'later' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '刷新' }))
   await waitFor(() => expect(paths).toContain('/api/runs/later'))
@@ -289,7 +289,7 @@ test('editing parameters during variant creation releases the lock without submi
   expect(JSON.parse(submitted[0]).items).toEqual([{ experiment_id: 'variant-2', expected_revision: 1 }])
 })
 
-test('refresh and load more do not skip a second append after exactly 50 runs', async () => {
+test('refresh after complete pagination does not skip a second append after exactly 50 runs', async () => {
   const records = Array.from({ length: 50 }, (_, index) => ({ ...queued, run_id: `old-${index}`, state: 'succeeded', detail_url: `/runs/old-${index}` }))
   const paths: string[] = []
   const prior = globalThis.fetch
@@ -307,7 +307,6 @@ test('refresh and load more do not skip a second append after exactly 50 runs', 
   records.push({ ...queued, run_id: 'new-51', state: 'succeeded', detail_url: '/runs/new-51' })
   await userEvent.click(screen.getByRole('button', { name: '刷新' }))
   expect(await screen.findByRole('link', { name: 'new-51' })).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: '加载更多运行' }))
   records.push({ ...queued, run_id: 'new-52', state: 'succeeded', detail_url: '/runs/new-52' })
   await userEvent.click(screen.getByRole('button', { name: '刷新' }))
   expect(await screen.findByRole('link', { name: 'new-52' })).toBeInTheDocument()

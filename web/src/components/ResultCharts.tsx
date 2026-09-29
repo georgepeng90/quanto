@@ -37,7 +37,7 @@ function Chart({ kind, rows }: { kind: ChartKind; rows: TableRow[] }) {
     if (typeof IntersectionObserver !== 'undefined') {
       visibility = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) { visibility?.disconnect(); initialize() } })
       visibility.observe(host.current)
-    }
+    } else initialize()
     return () => { disposed = true; visibility?.disconnect(); observer?.disconnect(); chart?.dispose() }
   }, [kind, rows])
   return <div ref={host} className="result-chart" role="img" aria-label={`${kind}图表，日期和数值详见下方数据表`} />
@@ -73,7 +73,7 @@ export function ComparisonCharts({ curves }: { curves: Record<string, TableRow[]
       chart = createChart(host.current)
       chart.setOption({ animation: false, tooltip: { trigger: 'axis' }, legend: {}, grid: { left: 55, right: 22, top: 38, bottom: 55 }, xAxis: { type: 'category', data: sampledDates, axisLabel: { hideOverlap: true, rotate: 30 } }, yAxis: { type: 'value', scale: true }, dataZoom: [{ type: 'inside' }], series: entries.map(([id, rows]) => { const values = new Map(rows.map(row => [String(row.date), numeric(row[field])])); return { name: id, type: 'line', showSymbol: false, data: sampledDates.map(date => values.get(date) ?? null) } }) })
     }) }
-    if (typeof IntersectionObserver !== 'undefined') { visibility = new IntersectionObserver(items => { if (items.some(item => item.isIntersecting)) { visibility?.disconnect(); initialize() } }); visibility.observe(host.current) }
+    if (typeof IntersectionObserver !== 'undefined') { visibility = new IntersectionObserver(items => { if (items.some(item => item.isIntersecting)) { visibility?.disconnect(); initialize() } }); visibility.observe(host.current) } else initialize()
     return () => { disposed = true; visibility?.disconnect(); chart?.dispose() }
   }, [curves, field])
   return <section className="panel"><h2>可比运行曲线</h2><p className="muted">叠加的是服务端账户权益金额，不重新归一化；初始现金差异见冻结输入表。按完整服务端日期并列，不截取重算。图表长序列仅视觉降采样；完整原始曲线见下表。</p><div className="result-tabs"><button type="button" aria-pressed={field === 'equity'} onClick={() => setField('equity')}>叠加权益金额</button><button type="button" aria-pressed={field === 'drawdown'} onClick={() => setField('drawdown')}>叠加回撤</button></div><div className="result-chart" ref={host} role="img" aria-label="可比运行叠加曲线" /><details open><summary>完整曲线数据</summary><div className="table-wrap"><table><thead><tr><th>运行</th><th>日期</th><th>权益金额</th><th>回撤</th></tr></thead><tbody>{entries.flatMap(([id, rows]) => rows.map((row, index) => <tr key={`${id}-${index}`}><td>{id}</td><td>{cell(row.date)}</td><td>{cell(row.equity)}</td><td>{cell(row.drawdown)}</td></tr>))}</tbody></table></div></details></section>

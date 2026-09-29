@@ -11,6 +11,7 @@ const page = (items: unknown[]) => Response.json({ items, next_cursor: null })
 const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
 
 beforeEach(() => {
+  vi.stubGlobal('IntersectionObserver', class { observe() {} disconnect() {} })
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/session') return Response.json({ token: 'secret', api_base: '/api', timezone: 'Asia/Shanghai' })
@@ -54,6 +55,21 @@ test('links fills to their order and dated signal without treating risk as a dir
   expect(document.querySelector('script:not([src])')).toBeNull()
 })
 
+test('execution-day filter keeps the visible order signal-day context reachable', async () => {
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input).includes('/tables/risk_events')) return page([{ date: '2024-01-03', code: 'RISK_NOTE', message: '当日风控说明', details: {} }])
+    return prior(input, init)
+  }))
+  app('/runs/r1')
+  await userEvent.selectOptions(await screen.findByLabelText('模拟日期'), '2024-01-04')
+  const order = screen.getByText(/订单 o1/).closest('article')
+  expect(order?.querySelector('a[href="#signal-2024-01-03"]')).toBeTruthy()
+  expect(document.getElementById('signal-2024-01-03')).toBeVisible()
+  expect(screen.getByText('当日风控说明')).toBeVisible()
+  expect(screen.getAllByText(/信号日上下文/).length).toBeGreaterThan(0)
+})
+
 test('downloads authenticated ZIP and HTML report bytes without token in URL', async () => {
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   const createObjectURL = vi.fn(() => 'blob:report')
@@ -87,4 +103,47 @@ test('run list shows frozen strategy, params, dataset and final metrics with sta
   expect(screen.getByRole('link', { name: 'r1' })).toBeVisible()
   await userEvent.selectOptions(screen.getByLabelText('状态筛选'), 'failed')
   expect(screen.getByText('暂无匹配运行。')).toBeVisible()
+})
+
+test('state and group filters include runs beyond the first server page', async () => {
+  let release!: () => void
+  const nextPage = new Promise<void>(resolve => { release = resolve })
+  const earlier = Array.from({ length: 50 }, (_, index) => ({ ...run, run_id: `old-${index}`, detail_url: `/runs/old-${index}`, group_id: 'earlier' }))
+  const later = { ...run, run_id: 'later', detail_url: '/runs/later', group_id: 'later-group', state: 'failed', error: '任务失败' }
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs') return Response.json({ items: earlier, next_cursor: '50' })
+    if (path === '/api/runs?cursor=50') { await nextPage; return page([later]) }
+    if (path === '/api/runs/later') return Response.json(later)
+    if (path.startsWith('/api/runs/old-')) {
+      const id = path.split('/')[3]
+      return path.endsWith('/results') ? Response.json({ ...result, run_id: id }) : Response.json({ ...run, run_id: id, provenance })
+    }
+    return prior(input, init)
+  }))
+  app('/runs')
+  expect(await screen.findByText(/正在加载全部运行记录/)).toBeVisible()
+  expect(screen.queryByText('暂无匹配运行。')).toBeNull()
+  release()
+  await userEvent.selectOptions(await screen.findByLabelText('批次筛选'), 'later-group')
+  await userEvent.selectOptions(screen.getByLabelText('状态筛选'), 'failed')
+  expect(await screen.findByRole('link', { name: 'later' })).toBeVisible()
+})
+
+test('navigation aborts an unfinished run-list page read', async () => {
+  let pendingSignal: AbortSignal | undefined
+  const earlier = Array.from({ length: 50 }, (_, index) => ({ ...run, run_id: `old-${index}`, detail_url: `/runs/old-${index}` }))
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/runs') return Response.json({ items: earlier, next_cursor: '50' })
+    if (String(input) === '/api/runs?cursor=50') { pendingSignal = init?.signal as AbortSignal; return new Promise<Response>(() => {}) }
+    return prior(input, init)
+  }))
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/runs'] })
+  render(<RouterProvider router={router} />)
+  await waitFor(() => expect(pendingSignal).toBeDefined())
+  await userEvent.click(screen.getByRole('link', { name: '对比' }))
+  await screen.findByRole('heading', { name: '运行对比' })
+  expect(pendingSignal?.aborted).toBe(true)
 })

@@ -140,8 +140,10 @@ export function RunDetailPage() {
   const filtered = (name: TableName) => tables[name].filter(row => matchesDate(name, row) && (!symbol || name === 'signals' || name === 'risk_events' || String(row.symbol || '') === symbol))
   const orders = filtered('orders')
   const fills = filtered('fills')
-  const signals = filtered('signals')
-  const risks = filtered('risk_events')
+  const signalDates = new Set(orders.map(row => String(row.signal_date || '')))
+  const datedContext = (row: TableRow) => !date || rowDate(row) === date || signalDates.has(rowDate(row))
+  const signals = tables.signals.filter(datedContext)
+  const risks = tables.risk_events.filter(datedContext)
   const dates = [...new Set([...tables.signals, ...tables.risk_events, ...tables.orders, ...tables.fills].map(rowDate).filter(Boolean))].sort()
   const symbols = [...new Set([...tables.orders, ...tables.fills].map(row => String(row.symbol || '')).filter(Boolean))].sort()
   return <div className="page-stack"><header className="page-heading"><h1>回测详情</h1><p><Link to="/runs">返回运行列表</Link> · {id}</p></header>
@@ -155,8 +157,8 @@ export function RunDetailPage() {
       {run.state === 'succeeded' && <ResultCharts curves={tables.curves} monthly={tables.monthly_returns} annual={tables.annual_returns} positions={tables.positions} />}
       <ResultTables tables={tables} />
       <section className="panel"><h2>交易决策追踪</h2><p className="muted">成交通过 order_id 精确关联订单；信号与风控仅按日期提供上下文。</p><div className="form-grid"><label>模拟日期<select value={date} onChange={event => setDate(event.target.value)}><option value="">全部日期</option>{dates.map(value => <option key={value} value={value}>{value}</option>)}</select></label><label>标的<select value={symbol} onChange={event => setSymbol(event.target.value)}><option value="">全部标的</option>{symbols.map(value => <option key={value} value={value}>{value}</option>)}</select></label></div>
-        <h3>策略信号</h3>{signals.length ? signals.map((row, index) => <article className="record" id={`signal-${row.date}`} key={`${row.date}-${index}`}><strong>{text(row.date)} · {text(row.intent)}</strong><p>目标权重 {text(row.weights)}</p><p>原因 {text(row.reasons)}</p><details><summary>策略诊断</summary><pre>{text(row.diagnostics)}</pre></details></article>) : <p className="empty">该筛选下无策略信号。</p>}
-        <h3>当日风控上下文</h3>{risks.length ? risks.map((row, index) => <article className="record" key={`${row.date}-${index}`}><strong>{text(row.date)} · {text(row.code)}</strong><p>{text(row.message)}</p><pre>{text(row.details)}</pre></article>) : <p className="empty">该筛选下无风控事件。</p>}
+        <h3>策略信号</h3>{signals.length ? signals.map((row, index) => <article className="record" id={`signal-${row.date}`} key={`${row.date}-${index}`}><strong>{text(row.date)} · {text(row.intent)}</strong>{date && row.date !== date && <p className="muted">可见订单的信号日上下文</p>}<p>目标权重 {text(row.weights)}</p><p>原因 {text(row.reasons)}</p><details><summary>策略诊断</summary><pre>{text(row.diagnostics)}</pre></details></article>) : <p className="empty">该筛选下无策略信号。</p>}
+        <h3>当日风控上下文</h3>{risks.length ? risks.map((row, index) => <article className="record" key={`${row.date}-${index}`}><strong>{text(row.date)} · {text(row.code)}</strong>{date && row.date !== date && <p className="muted">可见订单的信号日上下文；不是订单直接关联的风控决定。</p>}<p>{text(row.message)}</p><pre>{text(row.details)}</pre></article>) : <p className="empty">该筛选下无风控事件。</p>}
         <h3>订单</h3>{orders.length ? <div className="record-list">{orders.map(row => <article className="record" id={`order-${row.id}`} key={String(row.id)}><strong>{text(row.signal_date)} · {text(row.symbol)} · {text(row.side)} · {text(row.status)}</strong><p>订单 {text(row.id)} · 来源 {text(row.source)} · 原因 {text(row.reason)}</p><p>当日信号：<a href={`#signal-${row.signal_date}`}>{text(row.signal_date)}</a>（日期上下文）</p><p>委托 {text(row.quantity)} · 已成交 {text(row.filled_quantity)} · 到期未成交 {text(row.expired_quantity)} · 执行日 {text(row.execution_date)}</p>{!tables.fills.some(fill => fill.order_id === row.id) && <p>无成交：{text(row.reason)}</p>}</article>)}</div> : <p className="empty">该筛选下无订单。</p>}
         <h3>成交</h3>{fills.length ? <div className="record-list">{fills.map((row, index) => <article className="record" key={`${row.order_id}-${row.trade_date}-${index}`}><strong>{text(row.trade_date)} · {text(row.symbol)} · {text(row.side)}</strong><p>数量 {text(row.quantity)} · 价格 {text(row.price)} · 佣金 {text(row.commission)} · 滑点成本 {text(row.slippage_cost)}</p><p>订单：{orderById.has(String(row.order_id)) ? <a href={`#order-${row.order_id}`}>{text(row.order_id)}</a> : text(row.order_id)}</p></article>)}</div> : <p className="empty">该筛选下无成交；查看订单原因。</p>}</section>
     </>}

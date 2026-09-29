@@ -20,7 +20,8 @@ export function RunsPage() {
   const [selected, setSelected] = useState('')
   const [parameters, setParameters] = useState('')
   const [runs, setRuns] = useState<RunRecord[]>([])
-  const [runCursor, setRunCursor] = useState<string | null>(null)
+  const [listComplete, setListComplete] = useState(false)
+  const [listBusy, setListBusy] = useState(false)
   const [filter, setFilter] = useState<RunState | 'all'>('all')
   const [groupFilter, setGroupFilter] = useState('all')
   const [summaries, setSummaries] = useState<Record<string, { provenance?: Record<string, unknown>; result?: RunResult }>>({})
@@ -32,25 +33,48 @@ export function RunsPage() {
   const preparing = useRef(false)
   const inputGeneration = useRef(0)
   const runOffset = useRef(0)
+  const runCursorRef = useRef<string | null>(null)
+  const draining = useRef(false)
+  const refreshing = useRef(false)
   const summaryCache = useRef<Record<string, { provenance?: Record<string, unknown>; result?: RunResult }>>({})
   const summaryLoading = useRef(new Set<string>())
   const mountController = useRef<AbortController | null>(null)
 
+  const drainRuns = async (start?: string, signal?: AbortSignal) => {
+    if (draining.current) return
+    draining.current = true
+    setListBusy(true)
+    setListComplete(false)
+    let cursor = start
+    try {
+      for (;;) {
+        const page = await api.runs(cursor, signal)
+        if (signal?.aborted) return
+        setRuns(old => merge(old, page.items))
+        runOffset.current = Math.max(runOffset.current, Number(cursor || '0') + page.items.length)
+        runCursorRef.current = page.next_cursor
+        if (!page.next_cursor) { setListComplete(true); setError(''); return }
+        if (page.next_cursor === cursor) throw new Error('运行列表游标未前进')
+        cursor = page.next_cursor
+      }
+    } catch (value) { if (!signal?.aborted) setError(describeError(value)) }
+    finally { draining.current = false; if (!signal?.aborted) setListBusy(false) }
+  }
+
   useEffect(() => {
     const controller = new AbortController()
     mountController.current = controller
-    Promise.all([api.experiments(), api.runs(undefined, controller.signal)]).then(([drafts, page]) => {
+    void drainRuns(undefined, controller.signal)
+    api.experiments().then(drafts => {
       if (controller.signal.aborted) return
       setExperiments(drafts.items)
       setExperimentCursor(drafts.next_cursor)
-      setRuns(page.items)
-      setRunCursor(page.next_cursor)
-      runOffset.current = page.items.length
     }).catch(value => { if (!controller.signal.aborted) setError(describeError(value)) })
     return () => { controller.abort(); mountController.current = null }
   }, [])
 
   useEffect(() => {
+    if (!listComplete) return
     const signal = mountController.current?.signal
     for (const run of runs) {
       const cached = summaryCache.current[run.run_id]
@@ -68,7 +92,7 @@ export function RunsPage() {
         finally { summaryLoading.current.delete(run.run_id) }
       })()
     }
-  }, [runs])
+  }, [runs, listComplete])
 
   useEffect(() => {
     const active = runs.filter(run => !terminalStates.has(run.state))
@@ -89,27 +113,32 @@ export function RunsPage() {
     catch (value) { setError(describeError(value)) }
   }
   const loadMoreRuns = async () => {
-    if (!runCursor) return
-    const signal = mountController.current?.signal
-    try { const page = await api.runs(runCursor, signal); if (signal?.aborted) return; setRuns(old => merge(old, page.items)); runOffset.current = Math.max(runOffset.current, Number(runCursor) + page.items.length); setRunCursor(page.next_cursor) }
-    catch (value) { if (!signal?.aborted) setError(describeError(value)) }
+    await drainRuns(runCursorRef.current || undefined, mountController.current?.signal)
   }
   const refresh = async () => {
+    if (draining.current || refreshing.current) return
+    refreshing.current = true
+    setListBusy(true)
     const signal = mountController.current?.signal
     try {
       const edgeOffset = runOffset.current
+      const cursor = runCursorRef.current
       const [first, edge, tracked] = await Promise.all([
         api.runs(undefined, signal),
-        runCursor === null && edgeOffset > 0 ? api.runs(String(edgeOffset), signal) : Promise.resolve(null),
+        cursor === null && edgeOffset > 0 ? api.runs(String(edgeOffset), signal) : Promise.resolve(null),
         Promise.all(runs.filter(run => !terminalStates.has(run.state)).map(run => api.run(run.run_id, signal)))
       ])
       if (signal?.aborted) return
       setRuns(old => merge(old, [...first.items, ...(edge?.items || []), ...tracked]))
-      setRunCursor(old => old ?? first.next_cursor ?? edge?.next_cursor ?? null)
       if (edge) runOffset.current = Math.max(runOffset.current, edgeOffset + edge.items.length)
-      else if (runCursor === null) runOffset.current = Math.max(runOffset.current, first.items.length)
+      else if (cursor === null) runOffset.current = Math.max(runOffset.current, first.items.length)
+      const continuation = cursor || (edge ? edge.next_cursor : first.next_cursor)
+      runCursorRef.current = continuation
       setError('')
+      if (continuation) await drainRuns(continuation, signal)
+      else setListComplete(true)
     } catch (value) { if (!signal?.aborted) setError(describeError(value)) }
+    finally { refreshing.current = false; if (!signal?.aborted) setListBusy(false) }
   }
 
   const sendPrepared = async (request: Prepared) => {
@@ -177,7 +206,7 @@ export function RunsPage() {
     try { await sendPrepared(request) }
     finally { preparing.current = false; setBusy(false) }
   }
-  const visible = runs.filter(run => (filter === 'all' || run.state === filter) && (groupFilter === 'all' || (run.group_id || 'single') === groupFilter))
+  const visible = listComplete ? runs.filter(run => (filter === 'all' || run.state === filter) && (groupFilter === 'all' || (run.group_id || 'single') === groupFilter)) : []
   const groupIds = [...new Set(runs.map(run => run.group_id || 'single'))]
   const groups = new Map<string, RunRecord[]>()
   for (const run of visible) { const key = run.group_id || run.run_id; groups.set(key, [...(groups.get(key) || []), run]) }
@@ -185,7 +214,7 @@ export function RunsPage() {
     {error && <p role="alert" className="error callout">{error}</p>}
     <section className="panel"><h2>发起运行</h2><div className="form-grid"><label>实验草稿<select value={selected} onChange={event => { inputGeneration.current++; setSelected(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }}><option value="">选择实验</option>{experiments.map(item => <option key={item.id} value={item.id}>{item.id} · 修订 {item.revision}</option>)}</select></label><label className="wide">参数列表 JSON<textarea value={parameters} onChange={event => { inputGeneration.current++; setParameters(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }} placeholder={'[{"window":4},{"window":8}]'} /></label></div>
       <div className="inline-actions"><button type="button" disabled={busy} onClick={() => submit(false)}>运行</button><button type="button" disabled={busy} onClick={() => submit(true)}>运行参数列表</button>{retry && <button type="button" disabled={busy} onClick={retryPrepared}>重试提交</button>}{experimentCursor && <button type="button" onClick={loadMoreExperiments}>加载更多实验草稿</button>}</div><p className="muted">参数列表最多 100 组。先逐组保存为独立实验草稿，再提交一个批次；重试沿用已准备的草稿和幂等键。</p></section>
-    <section className="panel"><div className="section-heading"><div><h2>运行记录</h2><p>运行列表和状态来自服务端；队列中的任务也可查看详情。</p></div><button type="button" onClick={refresh}>刷新</button></div><div className="form-grid"><label>状态筛选<select value={filter} onChange={event => setFilter(event.target.value as RunState | 'all')}><option value="all">全部</option>{Object.entries(stateLabel).map(([state, label]) => <option key={state} value={state}>{label}</option>)}</select></label><label>批次筛选<select value={groupFilter} onChange={event => setGroupFilter(event.target.value)}><option value="all">全部批次</option>{groupIds.map(group => <option key={group} value={group}>{group === 'single' ? '单次运行' : group}</option>)}</select></label></div>
-      {visible.length === 0 ? <p className="empty">暂无匹配运行。</p> : [...groups].reverse().map(([group, items]) => <div key={group} className="run-group"><h3>{items[0].group_id ? `批次 ${group}` : '单次运行'}</h3><div className="record-list">{items.map(run => { const summary = summaries[run.run_id]; const source = summary?.provenance || run.provenance; const metrics = run.state === 'succeeded' ? summary?.result?.metrics : null; return <article className="record" key={run.run_id}><div className="record-head"><Link to={run.detail_url}>{run.run_id}</Link><span className="badge">{stateLabel[run.state]}</span></div><p>实验 {run.experiment_id} · 修订 {run.experiment_revision} · 已完成至 {run.completed_through || '尚无完整交易日'}</p><p>策略修订 {String(source?.strategy_revision_id || '读取中')} · 数据版本 {String(source?.dataset_version_id || '读取中')} · 参数 {source?.effective_strategy_params ? JSON.stringify(source.effective_strategy_params) : '读取中'}</p><p>最终权益 {metrics?.final_equity ?? '不可用'} · 累计收益 {metrics?.total_return ?? '不可用'} · 最大回撤 {metrics?.max_drawdown ?? '不可用'}</p><small>提交 {run.created_at || '历史记录未知'} · 开始 {run.started_at || '未知'} · 结束 {run.finished_at || '未知'}</small>{run.error && <p className="error">{run.error}</p>}</article> } )}</div></div>)}{runCursor && <button type="button" onClick={loadMoreRuns}>加载更多运行</button>}</section>
+    <section className="panel"><div className="section-heading"><div><h2>运行记录</h2><p>运行列表和状态来自服务端；队列中的任务也可查看详情。</p></div><button type="button" disabled={listBusy} onClick={refresh}>刷新</button></div><div className="form-grid"><label>状态筛选<select disabled={!listComplete} value={filter} onChange={event => setFilter(event.target.value as RunState | 'all')}><option value="all">全部</option>{Object.entries(stateLabel).map(([state, label]) => <option key={state} value={state}>{label}</option>)}</select></label><label>批次筛选<select disabled={!listComplete} value={groupFilter} onChange={event => setGroupFilter(event.target.value)}><option value="all">全部批次</option>{groupIds.map(group => <option key={group} value={group}>{group === 'single' ? '单次运行' : group}</option>)}</select></label></div>
+      {!listComplete ? <><p role="status" className="callout">{listBusy ? `正在加载全部运行记录；已读取 ${runs.length} 条。筛选在读取完成后可用。` : `运行记录尚未读取完整；已读取 ${runs.length} 条。请重试。`}</p>{!listBusy && <button type="button" onClick={loadMoreRuns}>继续加载运行记录</button>}</> : visible.length === 0 ? <p className="empty">暂无匹配运行。</p> : [...groups].reverse().map(([group, items]) => <div key={group} className="run-group"><h3>{items[0].group_id ? `批次 ${group}` : '单次运行'}</h3><div className="record-list">{items.map(run => { const summary = summaries[run.run_id]; const source = summary?.provenance || run.provenance; const metrics = run.state === 'succeeded' ? summary?.result?.metrics : null; return <article className="record" key={run.run_id}><div className="record-head"><Link to={run.detail_url}>{run.run_id}</Link><span className="badge">{stateLabel[run.state]}</span></div><p>实验 {run.experiment_id} · 修订 {run.experiment_revision} · 已完成至 {run.completed_through || '尚无完整交易日'}</p><p>策略修订 {String(source?.strategy_revision_id || '读取中')} · 数据版本 {String(source?.dataset_version_id || '读取中')} · 参数 {source?.effective_strategy_params ? JSON.stringify(source.effective_strategy_params) : '读取中'}</p><p>最终权益 {metrics?.final_equity ?? '不可用'} · 累计收益 {metrics?.total_return ?? '不可用'} · 最大回撤 {metrics?.max_drawdown ?? '不可用'}</p><small>提交 {run.created_at || '历史记录未知'} · 开始 {run.started_at || '未知'} · 结束 {run.finished_at || '未知'}</small>{run.error && <p className="error">{run.error}</p>}</article> } )}</div></div>)}</section>
   </div>
 }

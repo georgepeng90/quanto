@@ -1,0 +1,2 @@
+# Frozen environments hash the lock file bytes; keep them stable on Windows.
+uv.lock text eol=lf

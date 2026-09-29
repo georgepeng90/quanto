@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
@@ -78,4 +78,50 @@ test('loads later dataset and job pages with terminal job details', async () => 
   await userEvent.click(screen.getByRole('button', { name: '加载更多数据任务' }))
   expect(await screen.findByText('later-dataset')).toBeInTheDocument()
   expect(screen.getByText(/2024-01-03/)).toBeInTheDocument()
+})
+
+test('discovers a new dataset page after refreshing an initially full first page', async () => {
+  const manifest = { source: 'first-page', is_demo: true, price_mode: 'adjusted_research', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'unknown', limitations: [] }
+  const first = Array.from({ length: 50 }, (_, index) => ({ id: `d${index}`, content_hash: 'h', manifest }))
+  let reads = 0
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets') { reads += 1; return Response.json({ items: first, next_cursor: reads === 1 ? null : '50' }) }
+    if (path === '/api/jobs') return Response.json({ items: [], next_cursor: null })
+    if (path === '/api/datasets?cursor=50') return Response.json({ items: [{ id: 'd51', content_hash: 'h', manifest: { ...manifest, source: 'new-dataset' } }], next_cursor: null })
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await waitFor(() => expect(screen.getAllByText('first-page')).toHaveLength(50))
+  expect(screen.queryByRole('button', { name: '加载更多数据版本' })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '刷新' }))
+  await userEvent.click(await screen.findByRole('button', { name: '加载更多数据版本' }))
+  expect(await screen.findByText('new-dataset')).toBeInTheDocument()
+})
+
+test('polls a submitted 51st job by ID after the first job page is full', async () => {
+  const old = Array.from({ length: 50 }, (_, index) => ({ id: `j${index}`, kind: 'fetch', state: 'succeeded', run_id: null, enqueue_seq: index + 1, heartbeat: null, completed_through: null, error: null }))
+  let detailReads = 0
+  let listReads = 0
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets') return Response.json({ items: [], next_cursor: null })
+    if (path === '/api/jobs') { listReads += 1; return Response.json({ items: old, next_cursor: listReads === 1 ? null : '50' }) }
+    if (path === '/api/jobs/data' && init?.method === 'POST') return Response.json({ id: 'j51', kind: 'demo', state: 'queued', enqueue_seq: 51 })
+    if (path === '/api/jobs/j51') { detailReads += 1; return Response.json({ id: 'j51', kind: 'demo', state: 'succeeded', enqueue_seq: 51, result: { state: 'complete', dataset_version_id: 'd51', price_mode: 'adjusted_research' } }) }
+    if (path.startsWith('/api/jobs/j')) return Response.json(old.find(job => `/api/jobs/${job.id}` === path))
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await screen.findByText('j49')
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+  try {
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '生成演示' })); await Promise.resolve() })
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(detailReads).toBeGreaterThan(0)
+    expect(screen.getByText(/已验证并登记数据版本 d51/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '加载更多数据任务' })).toBeInTheDocument()
+  } finally { vi.useRealTimers() }
 })

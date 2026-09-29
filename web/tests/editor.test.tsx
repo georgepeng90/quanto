@@ -43,6 +43,15 @@ test('renders a newly declared parameter and edits the shared value', async () =
 })
 
 test('preserves unsaved experiment edits on revision conflict and shows server revision', async () => {
+  const priorFetch = globalThis.fetch
+  let reads = 0
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/experiments/e1' && !init?.method) {
+      reads += 1
+      return Response.json(reads === 1 ? experiment : { ...experiment, revision: 2, payload: { ...experiment.payload, sample_purpose: 'server-only' } })
+    }
+    return priorFetch(input, init)
+  }))
   renderApp()
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   await userEvent.clear(await screen.findByLabelText('初始资金'))
@@ -50,7 +59,11 @@ test('preserves unsaved experiment edits on revision conflict and shows server r
   await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
   await waitFor(() => expect(screen.getByText(/保存冲突/)).toBeInTheDocument())
   expect(screen.getByLabelText('初始资金')).toHaveValue(2000)
-  expect(screen.getAllByText(/服务端修订 1/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/服务端修订 2/).length).toBeGreaterThan(0)
+  expect(screen.getByLabelText('服务端实验内容')).toHaveTextContent('server-only')
+  expect(screen.getByLabelText('样本用途')).toHaveValue('exploration')
+  fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '3000' } })
+  expect(screen.getByLabelText('服务端实验内容')).toHaveTextContent('server-only')
 })
 
 test('shows source file and line for server AST syntax errors', async () => {
@@ -136,8 +149,52 @@ test('does not save stale parameters while their JSON editor is invalid', async 
   const editor = await screen.findByLabelText('参数 JSON（与表单共享状态）')
   await userEvent.clear(editor)
   fireEvent.change(editor, { target: { value: '{bad' } })
+  fireEvent.change(screen.getByRole('spinbutton', { name: '窗口' }), { target: { value: '8' } })
+  expect(editor).toHaveValue('{bad')
+  expect(screen.getByRole('button', { name: '验证当前策略与参数' })).toBeDisabled()
   await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
   expect(screen.getByText(/请先修正参数或风险配置中的 JSON/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '放弃未完成的参数 JSON' }))
+  expect((editor as HTMLTextAreaElement).value).toContain('"window": 8')
+})
+
+test('does not attach in-flight or completed validation to edited parameters and translates queued state', async () => {
+  let release: ((value: Response) => void) | undefined
+  const priorFetch = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/jobs/strategy-validation' && init?.method === 'POST') return new Promise<Response>(resolve => { release = resolve })
+    return priorFetch(input, init)
+  }))
+  renderApp()
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  await userEvent.click(screen.getByRole('button', { name: '验证当前策略与参数' }))
+  await waitFor(() => expect(release).toBeDefined())
+  fireEvent.change(screen.getByRole('spinbutton', { name: '窗口' }), { target: { value: '8' } })
+  release!(Response.json({ id: 'v1', kind: 'strategy-validation', state: 'succeeded', result: { valid: true, warmup_bars: 4 } }))
+  await waitFor(() => expect(screen.queryByText(/策略协议有效/)).not.toBeInTheDocument())
+  const fetchAfterEdit = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/jobs/strategy-validation' && init?.method === 'POST') return Response.json({ id: 'v2', kind: 'strategy-validation', state: 'queued' })
+    return fetchAfterEdit(input, init)
+  }))
+  await userEvent.click(screen.getByRole('button', { name: '验证当前策略与参数' }))
+  expect(await screen.findByText('验证任务 排队中')).toBeInTheDocument()
+  fireEvent.change(screen.getByRole('spinbutton', { name: '窗口' }), { target: { value: '9' } })
+  expect(screen.queryByText('验证任务 排队中')).not.toBeInTheDocument()
+})
+
+test('removes a completed valid result when its strategy parameters change', async () => {
+  const priorFetch = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/jobs/strategy-validation' && init?.method === 'POST') return Response.json({ id: 'v3', kind: 'strategy-validation', state: 'succeeded', result: { valid: true, warmup_bars: 4 } })
+    return priorFetch(input, init)
+  }))
+  renderApp()
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  await userEvent.click(screen.getByRole('button', { name: '验证当前策略与参数' }))
+  expect(await screen.findByText(/策略协议有效 · 解析预热 4 根/)).toBeInTheDocument()
+  fireEvent.change(screen.getByRole('spinbutton', { name: '窗口' }), { target: { value: '8' } })
+  expect(screen.queryByText(/策略协议有效/)).not.toBeInTheDocument()
 })
 
 test('blocks dates outside the selected dataset price coverage', async () => {

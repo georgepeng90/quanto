@@ -6,15 +6,15 @@ type Props = { schema: ParameterSchema; value: Record<string, unknown>; onChange
 function JsonParameter({ label, id, value, onChange, onValidityChange }: { label: string; id: string; value: unknown; onChange: (value: unknown) => void; onValidityChange: (valid: boolean) => void }) {
   const [text, setText] = useState(JSON.stringify(value, null, 2))
   const [error, setError] = useState(false)
-  useEffect(() => { setText(JSON.stringify(value, null, 2)); setError(false); onValidityChange(true) }, [value])
-  return <label htmlFor={id}>{label} · JSON<textarea id={id} spellCheck={false} value={text} onChange={event => { setText(event.target.value); try { onChange(JSON.parse(event.target.value)); setError(false); onValidityChange(true) } catch { setError(true); onValidityChange(false) } }} />{error && <small className="error">JSON 格式未完成，不能保存。</small>}</label>
+  useEffect(() => { if (!error) { setText(JSON.stringify(value, null, 2)); onValidityChange(true) } }, [value, error])
+  return <label htmlFor={id}>{label} · JSON<textarea id={id} spellCheck={false} value={text} onChange={event => { setText(event.target.value); try { onChange(JSON.parse(event.target.value)); setError(false); onValidityChange(true) } catch { setError(true); onValidityChange(false) } }} />{error && <><small className="error">JSON 格式未完成，不能保存。</small><button type="button" onClick={() => { setText(JSON.stringify(value, null, 2)); setError(false); onValidityChange(true) }}>放弃未完成的 {label} JSON</button></>}</label>
 }
 
 export function ParameterForm({ schema, value, onChange, onValidityChange }: Props) {
   const [text, setText] = useState(JSON.stringify(value, null, 2))
   const [error, setError] = useState('')
   const [complexValidity, setComplexValidity] = useState<Record<string, boolean>>({})
-  useEffect(() => { setText(JSON.stringify(value, null, 2)); setError('') }, [value])
+  useEffect(() => { if (!error) setText(JSON.stringify(value, null, 2)) }, [value, error])
   useEffect(() => { onValidityChange?.(!error && Object.values(complexValidity).every(Boolean)) }, [error, complexValidity, onValidityChange])
   const fields = schema.properties || {}
   const setField = (key: string, next: unknown) => onChange({ ...value, [key]: next })
@@ -35,8 +35,8 @@ export function ParameterForm({ schema, value, onChange, onValidityChange }: Pro
     <label htmlFor="parameter-json">参数 JSON（与表单共享状态）</label>
     <textarea id="parameter-json" spellCheck={false} value={text} onChange={event => {
       setText(event.target.value)
-      try { const parsed = JSON.parse(event.target.value); if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error(); onChange(parsed); setError('') } catch { setError('参数 JSON 必须是对象，不能保存。') }
+      try { const parsed = JSON.parse(event.target.value); if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error(); onChange(parsed); setError('') } catch { setError('参数 JSON 必须是对象，不能保存。'); onValidityChange?.(false) }
     }} />
-    {error && <p role="alert" className="error">{error}</p>}
+    {error && <><p role="alert" className="error">{error}</p><button type="button" onClick={() => { setText(JSON.stringify(value, null, 2)); setError('') }}>放弃未完成的参数 JSON</button></>}
   </div>
 }

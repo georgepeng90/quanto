@@ -1,4 +1,4 @@
-import type { DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, Page, Preflight, StrategyManifest, StrategyRevision } from './types'
+import type { DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, StrategyManifest, StrategyRevision, TableName, TableRow } from './types'
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}, public status = 0) { super(message) }
@@ -43,7 +43,14 @@ export const api = {
   validateStrategy: (strategy_revision_id: string, params: Record<string, unknown>) => request<JobRecord>('/jobs/strategy-validation', json({ strategy_revision_id, params })),
   upload: (file: File) => { const body = new FormData(); body.append('file', file); return request<{ upload_id: string }>('/uploads', { method: 'POST', body }) },
   preflight: (upload_id: string) => request<Preflight>('/datasets/preflight', json({ upload_id })),
-  importDataset: (upload_id: string) => request<JobRecord>('/datasets', json({ upload_id }))
+  importDataset: (upload_id: string) => request<JobRecord>('/datasets', json({ upload_id })),
+  runs: (cursor?: string, signal?: AbortSignal) => request<Page<RunRecord>>(`/runs${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal }),
+  run: (id: string, signal?: AbortSignal) => request<RunRecord>(`/runs/${encodeURIComponent(id)}`, { signal }),
+  submitRun: (experiment_id: string, expected_revision: number, idempotency_key: string) => request<RunRecord>('/runs', json({ experiment_id, expected_revision, idempotency_key, source: 'web' })),
+  submitBatch: (items: { experiment_id: string; expected_revision: number }[], idempotency_key: string) => request<{ items: RunRecord[] }>('/runs/batch', json({ items, idempotency_key, source: 'web' })),
+  cancelRun: (id: string) => request<RunRecord>(`/runs/${encodeURIComponent(id)}/cancel`, json({})),
+  runLogs: (id: string, cursor?: string, signal?: AbortSignal) => request<LogPage>(`/runs/${encodeURIComponent(id)}/logs${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal }),
+  runTable: (id: string, name: TableName, cursor?: string, signal?: AbortSignal) => request<Page<TableRow>>(`/runs/${encodeURIComponent(id)}/tables/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal })
 }
 
 export function describeError(error: unknown): string {

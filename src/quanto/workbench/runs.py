@@ -6,7 +6,7 @@ from uuid import uuid4
 from quanto.workbench.models import BatchItem, FrozenRun, RunRecord
 from quanto.workbench.revisions import digest, json_bytes
 from quanto.workbench.snapshots import SnapshotBuilder
-from quanto.workbench.store import WorkbenchStore
+from quanto.workbench.store import WorkbenchStore, utc_now
 
 
 class RunService:
@@ -38,7 +38,7 @@ class RunService:
             db.execute("INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (identity, job_id, original.experiment_id, original.experiment_revision,
                 str(original.manifest_path), original.manifest_hash, source, run_id, None))
             next_seq = db.execute("SELECT COALESCE(MAX(enqueue_seq),0)+1 FROM jobs").fetchone()[0]
-            db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root) VALUES (?,'backtest','queued',?,?,?)", (job_id, identity, next_seq, str(self.store.artifact_root)))
+            db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root,created_at) VALUES (?,'backtest','queued',?,?,?,?)", (job_id, identity, next_seq, str(self.store.artifact_root), utc_now()))
             db.execute("INSERT INTO idempotency VALUES (?,?,?)", (idempotency_key, fingerprint, json_bytes([identity]).decode()))
             return self.store.get_run(identity, db)
 
@@ -91,5 +91,5 @@ class RunService:
                 records.append(RunRecord(snapshot.run_id, job_id, snapshot.manifest_path, snapshot.manifest_hash, source, parent_run_id, group_id, draft.id, draft.revision))
             db.execute("INSERT INTO idempotency VALUES (?, ?, ?)", (key, fingerprint, json_bytes([record.run_id for record in records]).decode()))
             for offset, record in enumerate(records):
-                db.execute("INSERT INTO jobs (id, kind, state, run_id, enqueue_seq, artifact_root) VALUES (?, 'backtest', 'queued', ?, ?, ?)", (record.job_id, record.run_id, next_seq + offset, str(self.store.artifact_root)))
-            return records
+                db.execute("INSERT INTO jobs (id, kind, state, run_id, enqueue_seq, artifact_root, created_at) VALUES (?, 'backtest', 'queued', ?, ?, ?, ?)", (record.job_id, record.run_id, next_seq + offset, str(self.store.artifact_root), utc_now()))
+            return [self.store.get_run(record.run_id, db) for record in records]

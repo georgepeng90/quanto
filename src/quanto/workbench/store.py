@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from datetime import datetime, timezone
 from contextlib import contextmanager
 import json
 from pathlib import Path
@@ -11,6 +12,10 @@ from quanto.config import validate_parameters
 from quanto.data.loaders import load_dataset
 from quanto.workbench.models import DatasetVersion, ExperimentDraft, JobRecord, RunRecord, StrategyRevision
 from quanto.workbench.revisions import digest, json_bytes, publish_files, safe_name, source_files
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _module_name(filename: str) -> str:
@@ -58,7 +63,7 @@ class WorkbenchStore:
                 CREATE TABLE IF NOT EXISTS strategies (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS experiments (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload_json TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, job_id TEXT NOT NULL UNIQUE, experiment_id TEXT NOT NULL, experiment_revision INTEGER NOT NULL, manifest_path TEXT NOT NULL, manifest_hash TEXT NOT NULL, source TEXT NOT NULL, parent_run_id TEXT, group_id TEXT);
-                CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK (kind IN ('backtest','demo','fetch','import','validate_strategy')), state TEXT NOT NULL, run_id TEXT UNIQUE, enqueue_seq INTEGER NOT NULL UNIQUE, artifact_root TEXT NOT NULL, pid INTEGER, process_start TEXT, heartbeat TEXT, completed_through TEXT, error TEXT);
+                CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK (kind IN ('backtest','demo','fetch','import','validate_strategy')), state TEXT NOT NULL, run_id TEXT UNIQUE, enqueue_seq INTEGER NOT NULL UNIQUE, artifact_root TEXT NOT NULL, pid INTEGER, process_start TEXT, heartbeat TEXT, completed_through TEXT, error TEXT, input_path TEXT, created_at TEXT, started_at TEXT, finished_at TEXT);
                 CREATE TABLE IF NOT EXISTS idempotency (key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, run_ids_json TEXT NOT NULL);
             """)
             if db.execute("SELECT count(*) FROM schema_version").fetchone()[0] == 0:
@@ -67,6 +72,10 @@ class WorkbenchStore:
                 raise ValueError("unsupported workbench schema version")
             if "input_path" not in {row[1] for row in db.execute("PRAGMA table_info(jobs)")}:
                 db.execute("ALTER TABLE jobs ADD COLUMN input_path TEXT")
+            columns = {row[1] for row in db.execute("PRAGMA table_info(jobs)")}
+            for column in ("created_at", "started_at", "finished_at"):
+                if column not in columns:
+                    db.execute(f"ALTER TABLE jobs ADD COLUMN {column} TEXT")
 
     @contextmanager
     def transaction(self):
@@ -206,10 +215,10 @@ class WorkbenchStore:
         if db is None:
             with self.transaction() as connection:
                 return self.get_run(identity, connection)
-        row = db.execute("SELECT runs.*, jobs.state, jobs.completed_through, jobs.error FROM runs JOIN jobs ON jobs.id=runs.job_id WHERE runs.run_id=?", (identity,)).fetchone()
+        row = db.execute("SELECT runs.*, jobs.state, jobs.completed_through, jobs.error, jobs.created_at, jobs.started_at, jobs.finished_at FROM runs JOIN jobs ON jobs.id=runs.job_id WHERE runs.run_id=?", (identity,)).fetchone()
         if row is None:
             raise KeyError(identity)
-        return RunRecord(row["run_id"], row["job_id"], Path(row["manifest_path"]), row["manifest_hash"], row["source"], row["parent_run_id"], row["group_id"], row["experiment_id"], row["experiment_revision"], row["state"], row["completed_through"], row["error"])
+        return RunRecord(row["run_id"], row["job_id"], Path(row["manifest_path"]), row["manifest_hash"], row["source"], row["parent_run_id"], row["group_id"], row["experiment_id"], row["experiment_revision"], row["state"], row["completed_through"], row["error"], row["created_at"], row["started_at"], row["finished_at"])
 
     def list_jobs(self) -> list[JobRecord]:
         with self.transaction() as db:
@@ -234,12 +243,12 @@ class WorkbenchStore:
             row = db.execute("SELECT * FROM jobs WHERE state='queued' ORDER BY enqueue_seq LIMIT 1").fetchone()
             if row is None:
                 return None
-            db.execute("UPDATE jobs SET state='running' WHERE id=? AND state='queued'", (row["id"],))
+            db.execute("UPDATE jobs SET state='running', started_at=? WHERE id=? AND state='queued'", (utc_now(), row["id"]))
             return self._job(db.execute("SELECT * FROM jobs WHERE id=?", (row["id"],)).fetchone())
 
     def request_cancel(self, identity: str) -> JobRecord:
         with self.transaction() as db:
-            db.execute("UPDATE jobs SET state=CASE state WHEN 'queued' THEN 'cancelled' ELSE 'cancel_requested' END WHERE id=? AND state IN ('queued','running')", (identity,))
+            db.execute("UPDATE jobs SET state=CASE state WHEN 'queued' THEN 'cancelled' ELSE 'cancel_requested' END, finished_at=CASE WHEN state='queued' THEN ? ELSE finished_at END WHERE id=? AND state IN ('queued','running')", (utc_now(), identity))
         return self.get_job(identity)
 
     def register_process(self, identity: str, pid: int, process_start: str) -> bool:
@@ -255,7 +264,7 @@ class WorkbenchStore:
         if state not in allowed.get(expected, set()):
             raise ValueError("invalid terminal transition")
         with self.transaction() as db:
-            return db.execute("UPDATE jobs SET state=?, error=? WHERE id=? AND state=?", (state, error, identity, expected)).rowcount == 1
+            return db.execute("UPDATE jobs SET state=?, error=?, finished_at=? WHERE id=? AND state=?", (state, error, utc_now(), identity, expected)).rowcount == 1
 
     def finish_data_job(self, identity: str, bundle_path: Path, result: dict) -> bool:
         """Publish a verified data version and success in one conditional commit."""
@@ -267,5 +276,5 @@ class WorkbenchStore:
                 return False
             if manifest is not None:
                 db.execute("INSERT INTO datasets VALUES (?,?,?,?)", (identity, str(bundle_path), digest(json_bytes(hashes)), json_bytes(manifest).decode()))
-            db.execute("UPDATE jobs SET state='succeeded' WHERE id=? AND state='running'", (identity,))
+            db.execute("UPDATE jobs SET state='succeeded', finished_at=? WHERE id=? AND state='running'", (utc_now(), identity))
             return True

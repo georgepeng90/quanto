@@ -1,11 +1,14 @@
 from concurrent.futures import ThreadPoolExecutor
 import os
+import sqlite3
 import threading
+from datetime import datetime, timezone
 
 import pytest
 
 from quanto.workbench.runs import RunService
 from quanto.workbench.scheduler import Scheduler
+from quanto.workbench.store import WorkbenchStore
 from quanto.workbench.worker import EventWriter, atomic_json, read_partial, wait_for_ack
 from quanto.workbench.snapshots import SnapshotBuilder
 from tests.integration.test_snapshot_submission import _ready
@@ -22,6 +25,58 @@ def test_job_claim_is_exclusive(tmp_path):
     with ThreadPoolExecutor(2) as pool:
         claims = list(pool.map(lambda _: store.claim_job(), range(2)))
     assert [job.id for job in claims if job] == [run.job_id]
+
+
+def test_lifecycle_timestamps_survive_reopen_and_rejected_terminal_updates(tmp_path):
+    store, run = queued(tmp_path)
+    queued_at = store.get_job(run.job_id).created_at
+    assert datetime.fromisoformat(queued_at).tzinfo == timezone.utc
+    assert store.get_run(run.run_id).created_at == queued_at
+    assert store.get_job(run.job_id).started_at is None
+    assert store.get_job(run.job_id).finished_at is None
+    store.claim_job()
+    started_at = store.get_job(run.job_id).started_at
+    assert datetime.fromisoformat(started_at) >= datetime.fromisoformat(queued_at)
+    store.request_cancel(run.job_id)
+    pending = store.get_job(run.job_id)
+    assert pending.finished_at is None
+    assert not store.finish_job(run.job_id, "succeeded", expected="running")
+    assert store.finish_job(run.job_id, "cancelled", expected="cancel_requested")
+    finished_at = store.get_job(run.job_id).finished_at
+    assert datetime.fromisoformat(finished_at) >= datetime.fromisoformat(started_at)
+    assert not store.finish_job(run.job_id, "interrupted", expected="cancel_requested")
+    reopened = type(store)(store.root, store.artifact_root)
+    assert reopened.get_run(run.run_id).created_at == queued_at
+    assert reopened.get_run(run.run_id).started_at == started_at
+    assert reopened.get_run(run.run_id).finished_at == finished_at
+
+
+def test_queued_cancel_has_no_start_and_restart_has_finish_time(tmp_path):
+    store, run = queued(tmp_path)
+    store.request_cancel(run.job_id)
+    cancelled = store.get_job(run.job_id)
+    assert cancelled.started_at is None
+    assert cancelled.finished_at is not None
+    other = RunService(store).submit(run.experiment_id, 1, "timestamp-restart", "web")
+    store.claim_job()
+    Scheduler(store).recover()
+    interrupted = store.get_job(other.job_id)
+    assert interrupted.state == "interrupted"
+    assert interrupted.started_at is not None
+    assert interrupted.finished_at is not None
+
+
+def test_old_job_rows_keep_unknown_lifecycle_times_null(tmp_path):
+    root = tmp_path / "legacy"
+    root.mkdir()
+    with sqlite3.connect(root / "workbench.sqlite3") as db:
+        db.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
+        db.execute("INSERT INTO schema_version VALUES (1)")
+        db.execute("CREATE TABLE jobs (id TEXT PRIMARY KEY, kind TEXT NOT NULL, state TEXT NOT NULL, run_id TEXT, enqueue_seq INTEGER NOT NULL, artifact_root TEXT NOT NULL, pid INTEGER, process_start TEXT, heartbeat TEXT, completed_through TEXT, error TEXT)")
+        db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root) VALUES ('old','demo','succeeded',NULL,1,?)", (str(root / "artifacts"),))
+    store = WorkbenchStore(root)
+    old = store.get_job("old")
+    assert (old.created_at, old.started_at, old.finished_at) == (None, None, None)
 
 
 @pytest.mark.parametrize("first", ["cancel", "complete"])

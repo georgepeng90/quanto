@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from uuid import uuid4
+from datetime import datetime, timezone
 
 from quanto.api.app import create_app
 from tests.integration.test_snapshot_submission import _ready
@@ -58,6 +59,25 @@ def test_dataset_detail_exposes_registered_instruments_for_browser_selection(tmp
                                           "settlement_sessions": 1, "listing_date": "2024-01-01",
                                           "group": "industry"}]
         assert "instruments" not in client.get("/api/datasets", headers=headers).json()["items"][0]
+
+
+def test_run_and_job_api_expose_persisted_lifecycle_times(tmp_path):
+    store, draft, _, _ = _ready(tmp_path)
+    app = create_app(store.root)
+    with TestClient(app, base_url="http://127.0.0.1:8765") as client:
+        token = client.get("/api/session").json()["token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        run = client.post("/api/runs", json={"experiment_id": draft.id, "expected_revision": draft.revision,
+                                              "idempotency_key": "times"}, headers=headers).json()
+        assert datetime.fromisoformat(run["created_at"]).tzinfo == timezone.utc
+        if run["started_at"] is not None:
+            assert datetime.fromisoformat(run["started_at"]) >= datetime.fromisoformat(run["created_at"])
+        if run["finished_at"] is not None:
+            assert run["started_at"] is not None
+        job = client.get(f"/api/jobs/{run['job_id']}", headers=headers).json()
+        assert job["created_at"] == run["created_at"]
+        assert client.get(f"/api/runs/{run['run_id']}", headers=headers).json()["created_at"] == run["created_at"]
+        assert client.get("/api/runs", headers=headers).json()["items"][0]["created_at"] == run["created_at"]
 
 
 def test_idempotency_conflict_and_100_item_boundary(tmp_path):

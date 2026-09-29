@@ -20,7 +20,7 @@ from quanto.workbench.results import LogPage, Page, compare_runs
 from quanto.workbench.revisions import json_bytes
 from quanto.workbench.runs import RunService
 from quanto.workbench.scheduler import Scheduler
-from quanto.workbench.store import WorkbenchStore
+from quanto.workbench.store import WorkbenchStore, utc_now
 from quanto.workbench.worker import atomic_json, read_partial, validate_job_output
 
 
@@ -364,6 +364,6 @@ class WorkbenchService:
                                                 "source_hashes": hashes})
         with self.store.transaction() as db:
             seq = db.execute("SELECT COALESCE(MAX(enqueue_seq),0)+1 FROM jobs").fetchone()[0]
-            db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root,input_path) VALUES (?,?,'queued',NULL,?,?,?)",
-                       (identity, kind, seq, str(self.store.artifact_root), str(input_root / "input.json")))
+            db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root,input_path,created_at) VALUES (?,?,'queued',NULL,?,?,?,?)",
+                       (identity, kind, seq, str(self.store.artifact_root), str(input_root / "input.json"), utc_now()))
         return self.get_resource("jobs", identity)

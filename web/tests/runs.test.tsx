@@ -1,0 +1,231 @@
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { beforeEach, expect, test, vi } from 'vitest'
+import { App } from '../src/App'
+import type { RunRecord } from '../src/types'
+
+const experiment = { id: 'e1', revision: 3, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: { start: '2024-01-01', end: '2024-01-31' }, sample_purpose: 'exploration' } }
+const queued = { run_id: 'r1', job_id: 'j1', experiment_id: 'e1', experiment_revision: 3, manifest_hash: 'hash', source: 'web', parent_run_id: null, group_id: null, state: 'queued', completed_through: null, error: null, created_at: '2024-01-01T00:00:00+00:00', started_at: null, finished_at: null, detail_url: '/runs/r1' }
+const running = { ...queued, state: 'running', completed_through: '2024-01-03', started_at: '2024-01-01T00:01:00+00:00' }
+const event = { seq: 1, phase: '回测执行', asof: '2024-01-03', completed_days: 3, total_days: 10, level: 'info', code: 'DAY_DONE', message: '已完成交易日', payload: {} }
+const empty = { items: [], next_cursor: null }
+const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
+
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/experiments') return Response.json({ items: [experiment], next_cursor: null })
+    if (path === '/api/runs') return Response.json({ items: [], next_cursor: null })
+    if (path === '/api/runs/r1') return Response.json(running)
+    if (path === '/api/runs/r1/logs') return Response.json({ items: [event], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
+    if (path === '/api/runs/r1/logs?cursor=1') return Response.json({ items: [], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
+    if (path.startsWith('/api/runs/r1/tables/')) return Response.json(empty)
+    if (path === '/api/runs' && init?.method === 'POST') return Response.json(queued)
+    throw new Error(`unexpected ${init?.method || 'GET'} ${path}`)
+  }))
+})
+
+test('retries submission with the same key after a transport failure', async () => {
+  const requests: { idempotency_key: string; experiment_id: string; expected_revision: number }[] = []
+  let attempts = 0
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/runs' && init?.method === 'POST') {
+      requests.push(JSON.parse(String(init.body)))
+      if (++attempts === 1) throw new Error('network timeout')
+      return Response.json(queued)
+    }
+    return prior(input, init)
+  }))
+  app('/runs')
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  await userEvent.click(screen.getByRole('button', { name: '运行' }))
+  await userEvent.click(await screen.findByRole('button', { name: '重试提交' }))
+  await waitFor(() => expect(requests).toHaveLength(2))
+  expect(requests[0].idempotency_key).toBe(requests[1].idempotency_key)
+  expect(requests[0]).toMatchObject({ experiment_id: 'e1', expected_revision: 3 })
+  expect(await screen.findByRole('link', { name: /r1/ })).toBeInTheDocument()
+})
+
+test('keeps cancellation pending until the server acknowledges a terminal state', async () => {
+  let state: RunRecord = running as RunRecord
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/runs/r1' && !init?.method) return Response.json(state)
+    if (String(input) === '/api/runs/r1/cancel') { state = { ...state, state: 'cancel_requested' }; return Response.json(state) }
+    return prior(input, init)
+  }))
+  app('/runs/r1')
+  await userEvent.click(await screen.findByRole('button', { name: '取消任务' }))
+  expect(await screen.findAllByText('正在取消')).toHaveLength(2)
+  expect(screen.queryByText('已取消')).toBeNull()
+  state = { ...running, state: 'cancelled', finished_at: '2024-01-01T00:02:00+00:00' }
+  await userEvent.click(screen.getByRole('button', { name: '刷新状态' }))
+  expect(await screen.findByText('已取消')).toBeVisible()
+})
+
+test('restores run state and log cursor after a page reload', async () => {
+  const paths: string[] = []
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    paths.push(String(input))
+    return prior(input, init)
+  }))
+  const first = app('/runs/r1')
+  expect(await screen.findByText('已完成交易日')).toBeVisible()
+  expect(screen.getByText(/3 \/ 10/)).toBeVisible()
+  first.unmount()
+  app('/runs/r1')
+  expect(await screen.findByText('已完成交易日')).toBeVisible()
+  expect(screen.getAllByText('已完成交易日')).toHaveLength(1)
+  expect(paths.filter(path => path === '/api/runs/r1/logs')).toHaveLength(2)
+})
+
+test('rejects an oversized parameter list before creating variants', async () => {
+  const requests: string[] = []
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => { requests.push(`${init?.method || 'GET'} ${String(input)}`); return prior(input, init) }))
+  app('/runs')
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: JSON.stringify(Array.from({ length: 101 }, (_, i) => ({ window: i + 1 }))) } })
+  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('最多 100 组')
+  expect(requests.filter(path => path === 'POST /api/experiments')).toHaveLength(0)
+})
+
+test('validates every parameter set before creating any variant draft', async () => {
+  const requests: string[] = []
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    requests.push(`${init?.method || 'GET'} ${path}`)
+    if (path === '/api/strategies/s1') return Response.json({ id: 's1', manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer', minimum: 1 } }, required: ['window'] } } })
+    return prior(input, init)
+  }))
+  app('/runs')
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":4},{"window":0}]' } })
+  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('第 2 组')
+  expect(requests).not.toContain('POST /api/experiments')
+})
+
+test('batch transport retry keeps ordered draft revisions and idempotency key', async () => {
+  let draftNumber = 0
+  const submissions: { items: { experiment_id: string; expected_revision: number }[]; idempotency_key: string }[] = []
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/strategies/s1') return Response.json({ id: 's1', manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer', minimum: 1 } }, required: ['window'] } } })
+    if (path === '/api/experiments' && init?.method === 'POST') return Response.json({ id: `variant-${++draftNumber}`, revision: 1, payload: JSON.parse(String(init.body)).payload })
+    if (path === '/api/runs/batch') {
+      submissions.push(JSON.parse(String(init?.body)))
+      if (submissions.length === 1) throw new Error('network timeout')
+      return Response.json({ items: [{ ...queued, run_id: 'r2', group_id: 'g1' }] })
+    }
+    return prior(input, init)
+  }))
+  app('/runs')
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":4},{"window":8}]' } })
+  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
+  await userEvent.click(await screen.findByRole('button', { name: '重试提交' }))
+  await waitFor(() => expect(submissions).toHaveLength(2))
+  expect(submissions[1]).toEqual(submissions[0])
+  expect(submissions[0].items).toEqual([{ experiment_id: 'variant-1', expected_revision: 1 }, { experiment_id: 'variant-2', expected_revision: 1 }])
+  expect(draftNumber).toBe(2)
+})
+
+test('does not duplicate final equity rows when refreshing a finished run', async () => {
+  let equityReads = 0
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs/r1') return Response.json({ ...running, state: 'succeeded', finished_at: '2024-01-01T00:02:00+00:00' })
+    if (path === '/api/runs/r1/tables/equity') { equityReads++; return Response.json({ items: [{ date: '2024-01-03', cash: 10, receivables: 0, market_value: 90, equity: 100, stale_value: 0 }], next_cursor: null }) }
+    return prior(input, init)
+  }))
+  app('/runs/r1')
+  expect(await screen.findByRole('cell', { name: '2024-01-03' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '刷新状态' }))
+  await waitFor(() => expect(equityReads).toBe(2))
+  expect(screen.getAllByRole('cell', { name: '2024-01-03' })).toHaveLength(1)
+})
+
+test('upserts a partial order by ID when its fill status changes', async () => {
+  let status = 'pending'
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs/r1/tables/orders') return Response.json({ items: [{ id: 'o1', signal_date: '2024-01-03', execution_date: '2024-01-04', symbol: '000001', side: 'buy', status, reason: '目标仓位', source: 'strategy', quantity: 100, filled_quantity: status === 'filled' ? 100 : 0, expired_quantity: 0 }], next_cursor: '1' })
+    if (path === '/api/runs/r1/tables/orders?cursor=1') return Response.json({ items: [], next_cursor: '1' })
+    return prior(input, init)
+  }))
+  app('/runs/r1')
+  expect(await screen.findByText(/pending/)).toBeVisible()
+  status = 'filled'
+  await userEvent.click(screen.getByRole('button', { name: '刷新状态' }))
+  expect(await screen.findByText(/filled/)).toBeVisible()
+  expect(screen.queryByText(/pending/)).toBeNull()
+  expect(screen.getAllByText(/订单 o1/)).toHaveLength(1)
+})
+
+test('shows next-session fills beside the dated signal through their exact order ID', async () => {
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs/r1/tables/orders') return Response.json({ items: [{ id: 'o1', signal_date: '2024-01-03', execution_date: '2024-01-04', symbol: '000001', side: 'buy', status: 'filled', reason: '目标仓位', source: 'strategy', quantity: 100, filled_quantity: 100, expired_quantity: 0 }], next_cursor: '1' })
+    if (path === '/api/runs/r1/tables/orders?cursor=1') return Response.json({ items: [], next_cursor: '1' })
+    if (path === '/api/runs/r1/tables/fills') return Response.json({ items: [{ order_id: 'o1', trade_date: '2024-01-04', symbol: '000001', side: 'buy', quantity: 100, price: 1, commission: 0, slippage_cost: 0 }], next_cursor: '1' })
+    if (path === '/api/runs/r1/tables/fills?cursor=1') return Response.json({ items: [], next_cursor: '1' })
+    return prior(input, init)
+  }))
+  app('/runs/r1')
+  await userEvent.selectOptions(await screen.findByLabelText('模拟日期'), '2024-01-03')
+  expect(screen.getByRole('link', { name: 'o1' })).toHaveAttribute('href', '#order-o1')
+  expect(screen.getByText(/价格 1/)).toBeVisible()
+})
+
+test('keeps each run log cursor independent when moving between detail URLs', async () => {
+  const prior = globalThis.fetch
+  const logPaths: string[] = []
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs/r2') return Response.json({ ...running, run_id: 'r2', job_id: 'j2', detail_url: '/runs/r2' })
+    if (path.startsWith('/api/runs/r2/logs')) {
+      logPaths.push(path)
+      return Response.json({ items: path.endsWith('/logs') ? [{ ...event, message: '第二次运行事件' }] : [], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
+    }
+    if (path.startsWith('/api/runs/r2/tables/')) return Response.json(empty)
+    return prior(input, init)
+  }))
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/runs/r1'] })
+  render(<RouterProvider router={router} />)
+  expect(await screen.findByText('已完成交易日')).toBeVisible()
+  await act(async () => { await router.navigate('/runs/r2') })
+  expect(await screen.findByText('第二次运行事件')).toBeVisible()
+  expect(logPaths[0]).toBe('/api/runs/r2/logs')
+})
+
+test('loads later run pages and refreshes a visible active run by ID', async () => {
+  const listed = Array.from({ length: 50 }, (_, index) => ({ ...queued, run_id: `old-${index}`, state: 'succeeded', detail_url: `/runs/old-${index}` }))
+  const later = { ...running, run_id: 'later', detail_url: '/runs/later' }
+  const paths: string[] = []
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    paths.push(path)
+    if (path === '/api/runs') return Response.json({ items: listed, next_cursor: '50' })
+    if (path === '/api/runs?cursor=50') return Response.json({ items: [later], next_cursor: null })
+    if (path === '/api/runs?cursor=51') return Response.json(empty)
+    if (path === '/api/runs/later') return Response.json({ ...later, state: 'cancel_requested' })
+    return prior(input, init)
+  }))
+  app('/runs')
+  await userEvent.click(await screen.findByRole('button', { name: '加载更多运行' }))
+  expect(await screen.findByRole('link', { name: 'later' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '刷新' }))
+  await waitFor(() => expect(paths).toContain('/api/runs/later'))
+})

@@ -49,6 +49,9 @@ class RunRecord:
     state: str = "queued"
     completed_through: str | None = None
     error: str | None = None
+    created_at: str | None = None
+    started_at: str | None = None
+    finished_at: str | None = None
 
 
 @dataclass(frozen=True)
@@ -65,6 +68,9 @@ class JobRecord:
     completed_through: str | None = None
     error: str | None = None
     input_path: str | None = None
+    created_at: str | None = None
+    started_at: str | None = None
+    finished_at: str | None = None
 
 
 @dataclass(frozen=True)

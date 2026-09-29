@@ -67,6 +67,7 @@ label input,label select,label textarea{margin-top:4px;font-weight:400}
 .parameter-form>textarea{min-height:120px}
 .symbol-list{display:flex;flex-wrap:wrap;gap:8px 15px;max-height:140px;overflow:auto}
 .symbol-list label{font-size:12px;white-space:nowrap}
+.run-group{margin-top:16px}.run-group h3{font-size:13px;color:#5b707b;margin:0 0 8px}.run-progress progress{width:100%;height:12px}.event-timeline{padding-left:22px;max-height:350px;overflow:auto}.event-timeline li{padding:4px 0;border-bottom:1px solid #e6edef}.event-timeline p{margin:2px 0}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:6px 9px;border-bottom:1px solid #e1e9ec;white-space:nowrap}pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:950px){.two-column{grid-template-columns:1fr}
 .main{padding:18px}
 .editor-layout{grid-template-columns:145px minmax(0,1fr)}

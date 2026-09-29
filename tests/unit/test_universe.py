@@ -1,9 +1,9 @@
 import pandas as pd
 
-from quanto.universe import Universe, apply_universe_filters
+from quanto.universe import build_eligibility
 
 
-def test_universe_filters_history_by_asof_row_not_full_sample():
+def test_eligibility_does_not_delete_prices():
     prices = pd.DataFrame(
         {
             "date": pd.bdate_range("2024-01-01", periods=5),
@@ -17,6 +17,9 @@ def test_universe_filters_history_by_asof_row_not_full_sample():
         }
     )
 
-    filtered = apply_universe_filters(prices, Universe(["512480"], min_history_days=3, min_avg_turnover_20d=0))
+    instruments = pd.DataFrame({"symbol": ["512480"], "lot_size": [100], "settlement_sessions": [1], "listing_date": ["2024-01-01"], "group": ["industry"]})
+    eligible = build_eligibility(prices, instruments, {"min_history_days": 3, "min_avg_turnover_20d": 0})
 
-    assert list(filtered["date"]) == list(pd.bdate_range("2024-01-03", periods=3))
+    assert prices.shape[0] == 5
+    assert eligible.loc[:2, "eligible"].tolist() == [False, False, True]
+    assert eligible.shape[0] == 5

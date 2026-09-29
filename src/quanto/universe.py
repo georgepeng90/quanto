@@ -32,17 +32,20 @@ def load_universe(path: str | Path) -> Universe:
     )
 
 
-def apply_universe_filters(prices: pd.DataFrame, universe: Universe) -> pd.DataFrame:
-    prices = prices[prices["symbol"].astype(str).isin(universe.symbols)].copy()
-    prices["symbol"] = prices["symbol"].astype(str)
-    prices = prices.sort_values(["symbol", "date"])
-    counts = prices.groupby("symbol").cumcount() + 1
-    avg_amount = (
-        prices.groupby("symbol")["amount"]
-        .transform(lambda s: s.rolling(20, min_periods=1).mean())
-        .fillna(0)
-    )
-    return prices[
-        (counts >= universe.min_history_days)
-        & (avg_amount >= universe.min_avg_turnover_20d)
-    ].copy()
+def build_eligibility(prices: pd.DataFrame, instruments: pd.DataFrame, rule: dict) -> pd.DataFrame:
+    allowed = {"min_history_days", "min_avg_turnover_20d"}
+    if set(rule) - allowed:
+        raise ValueError(f"Unknown universe rule fields: {sorted(set(rule) - allowed)}")
+    min_history = rule.get("min_history_days", 1)
+    min_turnover = rule.get("min_avg_turnover_20d", 0)
+    if not isinstance(min_history, int) or min_history < 1 or not isinstance(min_turnover, (int, float)) or min_turnover < 0:
+        raise ValueError("Invalid universe eligibility rule")
+    ordered = prices.sort_values(["symbol", "date"]).copy()
+    counts = ordered.groupby("symbol").cumcount() + 1
+    avg_amount = ordered.groupby("symbol")["amount"].transform(lambda values: values.rolling(20, min_periods=1).mean())
+    listing = instruments.set_index("symbol")["listing_date"]
+    listing_dates = pd.to_datetime(ordered["symbol"].map(listing))
+    if listing_dates.isna().any():
+        raise ValueError("Prices include unregistered symbols")
+    ordered["eligible"] = ((counts >= min_history) & (avg_amount >= min_turnover) & (ordered["date"] >= listing_dates)).astype(bool)
+    return ordered[["date", "symbol", "eligible"]].sort_values(["date", "symbol"]).reset_index(drop=True)

@@ -2,8 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import ast
+import copy
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from typing import Literal
+from datetime import date
+from jsonschema import Draft202012Validator, ValidationError
+
+if TYPE_CHECKING:
+    from quanto.data.schemas import DatasetBundle
 
 try:
     import yaml
@@ -142,3 +151,112 @@ def load_strategy_config(path: str | Path) -> dict[str, Any]:
         if section not in cfg:
             raise ValueError(f"Missing required config section: {section}")
     return cfg
+
+
+class StrictSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+
+class ExecutionSpec(StrictSpec):
+    commission_rate: float = Field(ge=0)
+    minimum_commission: float = Field(ge=0)
+    slippage_rate: float = Field(ge=0)
+    max_stale_sessions: int = Field(ge=0)
+    model: Literal["next_open"]
+
+
+class StressScenario(StrictSpec):
+    name: str = Field(min_length=1)
+    symbol_shocks: dict[str, float]
+    execution_cost_rate: float = Field(ge=0)
+
+
+class RiskSpec(StrictSpec):
+    max_total_weight: float = Field(ge=0, le=1)
+    max_symbol_weight: float = Field(ge=0, le=1)
+    group_caps: dict[str, float]
+    stress_scenarios: list[StressScenario]
+    max_stress_loss: float | None = Field(ge=0, default=None)
+    drawdown_pause: float | None = Field(ge=0, le=1, default=None)
+    pause_action: Literal["block_new", "reduce", "liquidate"]
+    pause_target_weight: float | None = Field(ge=0, le=1, default=None)
+    recovery_mode: Literal["never", "recorded_approval"]
+
+    @model_validator(mode="after")
+    def check_limits(self) -> RiskSpec:
+        if any(cap < 0 or cap > 1 for cap in self.group_caps.values()):
+            raise ValueError("group caps must be between 0 and 1")
+        if self.pause_action == "reduce" and self.pause_target_weight is None:
+            raise ValueError("reduce requires pause_target_weight")
+        if self.pause_action != "reduce" and self.pause_target_weight is not None:
+            raise ValueError("pause_target_weight applies only to reduce")
+        if self.max_stress_loss is not None and not self.stress_scenarios:
+            raise ValueError("max_stress_loss requires stress_scenarios")
+        return self
+
+
+class MetricSpec(StrictSpec):
+    annual_sessions: int = Field(gt=0)
+    risk_free_rate: float
+    cash_rate: float
+    definition_version: str = Field(min_length=1)
+
+
+class BacktestSpec(StrictSpec):
+    start: date
+    end: date
+    symbols: list[str] = Field(min_length=1)
+    initial_cash: float = Field(gt=0)
+    seed: int
+    execution: ExecutionSpec
+    risk: RiskSpec
+    metrics: MetricSpec
+
+    @model_validator(mode="after")
+    def check_dates(self) -> BacktestSpec:
+        if self.start > self.end:
+            raise ValueError("start must not follow end")
+        if len(set(self.symbols)) != len(self.symbols) or any(not symbol for symbol in self.symbols):
+            raise ValueError("symbols must be unique and nonempty")
+        return self
+
+    def validate_for_dataset(self, bundle: DatasetBundle) -> BacktestSpec:
+        registered = set(bundle.instruments["symbol"])
+        if not set(self.symbols).issubset(registered):
+            raise ValueError("Backtest symbols must be registered in the dataset")
+        if self.start < bundle.manifest.data_start or self.end > bundle.manifest.data_end:
+            raise ValueError("Backtest dates must be covered by the dataset")
+        return self
+
+
+def resolve_strategy_params(schema: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+    checked_schema = copy.deepcopy(schema)
+
+    def close_objects(node: dict[str, Any]) -> None:
+        if node.get("type") == "object":
+            node["additionalProperties"] = False
+            for child in node.get("properties", {}).values():
+                close_objects(child)
+        if node.get("type") == "array" and isinstance(node.get("items"), dict):
+            close_objects(node["items"])
+
+    def apply_defaults(node: dict[str, Any], value: Any) -> None:
+        if node.get("type") == "object" and isinstance(value, dict):
+            for name, child in node.get("properties", {}).items():
+                if name not in value and "default" in child:
+                    value[name] = copy.deepcopy(child["default"])
+                if name in value:
+                    apply_defaults(child, value[name])
+        elif node.get("type") == "array" and isinstance(value, list) and isinstance(node.get("items"), dict):
+            for item in value:
+                apply_defaults(node["items"], item)
+
+    close_objects(checked_schema)
+    Draft202012Validator.check_schema(checked_schema)
+    effective = copy.deepcopy(params)
+    apply_defaults(checked_schema, effective)
+    try:
+        Draft202012Validator(checked_schema).validate(effective)
+    except ValidationError as exc:
+        raise ValueError(f"Invalid strategy parameters: {exc.message}") from exc
+    return effective

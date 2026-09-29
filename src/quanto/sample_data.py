@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 import numpy as np
 import pandas as pd
@@ -41,4 +42,32 @@ def generate_sample_data(output_dir: str | Path, years: int = 6, seed: int = 7) 
     benchmark_path = output / "benchmark.csv"
     pd.DataFrame(rows).to_csv(prices_path, index=False)
     benchmark.to_csv(benchmark_path, index=False)
+    pd.DataFrame({"date": dates.date}).to_csv(output / "calendar.csv", index=False)
+    pd.DataFrame({
+        "symbol": symbols,
+        "lot_size": [100] * len(symbols),
+        "settlement_sessions": [1] * len(symbols),
+        "listing_date": [dates[0].date().isoformat()] * len(symbols),
+        "group": ["sample"] * len(symbols),
+    }).to_csv(output / "instruments.csv", index=False)
+    pd.DataFrame({"date": np.tile(dates.date, len(symbols)), "symbol": np.repeat(symbols, len(dates)), "status": "trading", "can_buy": True, "can_sell": True}).to_csv(output / "status.csv", index=False)
+    pd.DataFrame(columns=["symbol", "event_type", "record_date", "ex_date", "pay_date", "cash_per_share", "split_ratio"]).to_csv(output / "events.csv", index=False)
+    manifest = {
+        "source": "quanto deterministic synthetic sample",
+        "is_demo": True,
+        "price_mode": "adjusted_research",
+        "currency": "CNY",
+        "calendar_start": dates[0].date().isoformat(),
+        "calendar_end": dates[-1].date().isoformat(),
+        "data_start": dates[0].date().isoformat(),
+        "data_end": dates[-1].date().isoformat(),
+        "volume_unit": "share",
+        "amount_unit": "CNY",
+        "event_coverage": "unknown",
+        "benchmark_type": "price_index",
+        "field_semantics": {"amount": "synthetic CNY turnover", "close": "synthetic price"},
+        "universe_rule": {"min_history_days": 1, "min_avg_turnover_20d": 0},
+        "limitations": ["Synthetic adjusted research prices do not replay cash distributions or corporate actions."],
+    }
+    (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     return prices_path, benchmark_path

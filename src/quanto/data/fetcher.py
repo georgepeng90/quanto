@@ -101,7 +101,7 @@ def _cache_covers(df: pd.DataFrame, start_date: str, end_date: str) -> bool:
 def _read_cached_csv(path: Path) -> pd.DataFrame | None:
     if not path.exists():
         return None
-    return pd.read_csv(path)
+    return pd.read_csv(path, dtype={"symbol": str})
 
 
 def _write_raw_csv(path: Path, df: pd.DataFrame) -> None:

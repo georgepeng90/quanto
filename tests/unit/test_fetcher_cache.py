@@ -1,6 +1,6 @@
 import pandas as pd
 
-from quanto.data.fetcher import build_processed_dataset
+from quanto.data.fetcher import build_processed_dataset, fetch_cached_etf
 
 
 class FakeProvider:
@@ -112,3 +112,12 @@ def test_build_processed_dataset_skips_uncached_failed_symbol_when_allowed(tmp_p
 
     assert result.price_rows > 0
     assert result.failed_symbols == ("BROKEN",)
+
+
+def test_fetch_cache_preserves_leading_zero_symbol(tmp_path):
+    provider = FakeProvider()
+    first = fetch_cached_etf(provider, "000001", "2024-01-01", "2024-01-05", tmp_path, max_retries=0)
+    second = fetch_cached_etf(provider, "000001", "2024-01-01", "2024-01-05", tmp_path, max_retries=0)
+    assert first.iloc[0]["symbol"] == "000001"
+    assert second.iloc[0]["symbol"] == "000001"
+    assert provider.etf_calls == 1

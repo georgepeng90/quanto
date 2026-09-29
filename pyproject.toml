@@ -7,11 +7,14 @@ name = "quanto"
 version = "0.1.0"
 description = "A-share industry ETF rotation research backtest"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.13,<3.14"
 dependencies = [
   "numpy>=1.24",
   "pandas>=2.0",
   "PyYAML>=6.0",
+  "pydantic>=2.12,<3",
+  "jsonschema>=4.25,<5",
+  "pyarrow>=21,<24",
 ]
 
 [project.optional-dependencies]
@@ -19,7 +22,6 @@ dev = [
   "pytest>=8.0",
 ]
 data = [
-  "pyarrow>=14.0",
   "akshare>=1.13",
 ]
 
@@ -28,4 +30,4 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]

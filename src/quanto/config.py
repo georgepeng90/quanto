@@ -31,36 +31,6 @@ class Paths:
     outputs: Path
 
 
-@dataclass(frozen=True)
-class AppConfig:
-    raw: dict[str, Any]
-    path: Path
-
-    @property
-    def initial_cash(self) -> float:
-        return float(self.raw["backtest"].get("initial_cash", 100000))
-
-    @property
-    def commission_rate(self) -> float:
-        return float(self.raw["backtest"].get("commission_rate", 0.0005))
-
-    @property
-    def slippage_rate(self) -> float:
-        return float(self.raw["backtest"].get("slippage_rate", 0.0005))
-
-    @property
-    def top_n(self) -> int:
-        return int(self.raw["strategy"].get("top_n", 3))
-
-    @property
-    def output_dir(self) -> Path:
-        return Path(self.raw["backtest"].get("output_dir", "outputs/backtests"))
-
-    @property
-    def data_dir(self) -> Path:
-        return Path(self.raw["backtest"].get("data_dir", "data/processed"))
-
-
 def load_yaml(path: str | Path) -> dict[str, Any]:
     path = Path(path)
     text = path.read_text(encoding="utf-8")
@@ -125,11 +95,6 @@ def _load_minimal_yaml(text: str) -> dict[str, Any]:
     return root
 
 
-def load_config(path: str | Path) -> AppConfig:
-    path = Path(path)
-    return AppConfig(raw=load_yaml(path), path=path)
-
-
 def project_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -144,14 +109,6 @@ def default_paths(root: str | Path | None = None) -> Paths:
         benchmark=base / "data" / "processed" / "benchmark.csv",
         outputs=base / "outputs" / "backtests",
     )
-
-
-def load_strategy_config(path: str | Path) -> dict[str, Any]:
-    cfg = load_yaml(path)
-    for section in ("strategy", "factors", "risk", "backtest"):
-        if section not in cfg:
-            raise ValueError(f"Missing required config section: {section}")
-    return cfg
 
 
 class StrictSpec(BaseModel):

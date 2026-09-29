@@ -99,11 +99,12 @@ def is_week_end(calendar: pd.Series | pd.DatetimeIndex | list[date], asof: date 
 
 def validate_warmup_window(
     strategy: Strategy,
-    calendar: pd.Series | pd.DatetimeIndex | list[date],
+    observed_dates: pd.Series | pd.DatetimeIndex | list[date],
     start: date | pd.Timestamp,
     end: date | pd.Timestamp,
 ) -> None:
-    dates = _calendar_dates(calendar)
+    """Validate an opportunity using observed price dates, not empty sessions."""
+    dates = _calendar_dates(observed_dates)
     start, end = pd.Timestamp(start), pd.Timestamp(end)
     for index, asof in enumerate(dates):
         if index >= strategy.warmup_bars and start <= asof <= end:

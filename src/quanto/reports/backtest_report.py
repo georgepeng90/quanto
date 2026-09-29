@@ -1,43 +1,195 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import date, datetime, timezone
+import hashlib
+from html import escape
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
-
-def _write_csv(df: pd.DataFrame, path: Path) -> None:
-    out = df.copy()
-    for col in out.columns:
-        if "date" in col:
-            out[col] = pd.to_datetime(out[col]).dt.strftime("%Y-%m-%d")
-    out.to_csv(path, index=False)
+from quanto.backtest.metrics import compute_metrics, match_trades
+from quanto.backtest.models import BacktestResult, TABLE_COLUMNS
+from quanto.config import BacktestSpec
+from quanto.data.schemas import DatasetBundle
 
 
-def write_backtest_outputs(
-    output_dir: str | Path,
-    run_id: str,
-    equity_curve: pd.DataFrame,
-    trades: pd.DataFrame,
-    positions: pd.DataFrame,
-    signals: pd.DataFrame,
-    metrics: dict,
-) -> Path:
-    run_dir = Path(output_dir) / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
-    _write_csv(equity_curve, run_dir / "equity_curve.csv")
-    _write_csv(trades, run_dir / "trades.csv")
-    _write_csv(positions, run_dir / "positions.csv")
-    _write_csv(signals, run_dir / "signals.csv")
-    with (run_dir / "metrics.json").open("w", encoding="utf-8") as f:
-        json.dump(metrics, f, ensure_ascii=False, indent=2)
-    with (run_dir / "report.md").open("w", encoding="utf-8") as f:
-        f.write("# Backtest Report\n\n")
-        f.write(f"- Final equity: {metrics['final_equity']:.2f}\n")
-        f.write(f"- Total return: {metrics['total_return']:.2%}\n")
-        f.write(f"- Annual return: {metrics['annual_return']:.2%}\n")
-        f.write(f"- Max drawdown: {metrics['max_drawdown']:.2%}\n")
-        f.write(f"- Sharpe: {metrics['sharpe']:.3f}\n")
-        f.write(f"- Calmar: {metrics['calmar']:.3f}\n")
-        f.write(f"- Trades: {metrics['trade_count']}\n")
-    return run_dir
+SCHEMA_VERSION = "1"
+OUTPUT_TABLES = (*TABLE_COLUMNS, "curves", "monthly_returns", "annual_returns", "matched_trades", "open_lots")
+OUTPUT_FILES = tuple(f"{name}.csv" for name in OUTPUT_TABLES) + ("metrics.json", "metadata.json", "report.html", "manifest.json")
+
+
+@dataclass(frozen=True)
+class ReportBundle:
+    metrics: dict[str, float | int | None]
+    metric_definitions: dict[str, dict]
+    curves: pd.DataFrame
+    monthly_returns: pd.DataFrame
+    annual_returns: pd.DataFrame
+    matched_trades: pd.DataFrame
+    open_lots: pd.DataFrame
+    warnings: list[str]
+    metadata: dict
+    artifact_manifest: tuple[str, ...]
+
+
+def _period_returns(curves: pd.DataFrame, frequency: str) -> pd.DataFrame:
+    period = pd.to_datetime(curves.date).dt.to_period(frequency).astype(str)
+    return pd.DataFrame({"period": period, "return": curves["return"]}).groupby("period", sort=True)["return"].apply(
+        lambda values: float((1 + values).prod() - 1)).reset_index()
+
+
+def _definitions(spec: BacktestSpec, bundle: DatasetBundle) -> dict[str, dict]:
+    return {
+        "total_return": {"description": "最终权益相对初始现金的累计收益；首个交易日从初始现金计算", "formula": "final_equity / initial_cash - 1"},
+        "annual_return": {"description": "按观测交易日年化；不足两个绩效日为空", "formula": "(final_equity / initial_cash) ** (annual_sessions / observed_sessions) - 1", "annual_sessions": spec.metrics.annual_sessions},
+        "volatility": {"description": "包含首日收益的日收益总体标准差乘交易日数平方根；不足两个绩效日为空", "formula": "std(returns, ddof=0) * sqrt(annual_sessions)"},
+        "sharpe": {"description": "日超额收益均值除日收益总体标准差再乘交易日数平方根；零方差或不足两个绩效日为空", "risk_free_period_rate": spec.metrics.risk_free_rate / spec.metrics.annual_sessions, "risk_free_convention": "名义年利率除以 annual_sessions；与引擎现金利息 cash_rate / annual_sessions 使用同一交易日口径"},
+        "max_drawdown": {"description": "初始现金及完整日权益序列的峰谷最大回撤", "formula": "max(1 - equity / running_peak)"},
+        "calmar": {"description": "年化收益除最大回撤；零回撤或不足两个绩效日为空"},
+        "fill_count": {"description": "实际成交记录数；部分成交各记一笔"},
+        "final_equity": {"description": "最后一个已完成交易日的现金、应收和持仓市值之和"},
+        "round_trip_count": {"description": "每个代码从空仓到持仓再回到空仓算一次完整往返；多笔建仓或部分卖出不增加次数；拆分延续同一持仓阶段"},
+        "open_lot_count": {"description": "期末未平仓 FIFO 批次数，按每笔买入留存数量计"},
+        "realized_pnl": {"description": "按 FIFO 匹配的已平仓价差，成交价已包含滑点；买卖佣金分别计入成本和扣减收入；不包含现金分红"},
+        "average_holding_sessions": {"description": "FIFO 匹配行按平仓数量加权的持有交易日；未平仓批次单列"},
+        "dividend_income": {"description": "现金分红支付事件之和，与交易价差分开"},
+        "interest_income": {"description": "现金利息事件之和；引擎在开盘成交前的现金基数上按 cash_rate / annual_sessions 计息，收盘记账"},
+        "benchmark_equity": {"description": "基准首个绩效日收盘价归一到初始现金；基准首日收益为零", "kind": bundle.manifest.benchmark_type, "period": "spec trading sessions", "source": bundle.manifest.source},
+        "schema_version": {"value": SCHEMA_VERSION, "metric_definition_version": spec.metrics.definition_version},
+    }
+
+
+def build_report(result: BacktestResult, bundle: DatasetBundle, spec: BacktestSpec) -> ReportBundle:
+    metrics = compute_metrics(result, spec)
+    daily = result.equity.sort_values("date", kind="stable").reset_index(drop=True)
+    dates = pd.to_datetime(daily.date)
+    if dates.duplicated().any():
+        raise ValueError("DUPLICATE_EQUITY_DATE: 权益日期重复")
+    benchmark = bundle.benchmark.set_index(pd.to_datetime(bundle.benchmark.date))["close"].reindex(dates).astype(float)
+    if benchmark.isna().any() or (benchmark <= 0).any() or not np.isfinite(benchmark.to_numpy()).all():
+        raise ValueError("INVALID_BENCHMARK: 基准缺少绩效日或价格无效")
+    equity = daily.equity.astype(float).reset_index(drop=True)
+    returns = equity.div(pd.concat([pd.Series([spec.initial_cash]), equity.iloc[:-1]], ignore_index=True)).sub(1)
+    benchmark = benchmark.reset_index(drop=True)
+    benchmark_equity = benchmark.div(benchmark.iloc[0]).mul(spec.initial_cash)
+    benchmark_return = benchmark.pct_change().fillna(0.0)
+    peak = pd.concat([pd.Series([spec.initial_cash]), equity], ignore_index=True).cummax().iloc[1:].reset_index(drop=True)
+    curves = pd.DataFrame({"date": dates, "equity": equity, "return": returns,
+        "drawdown": equity.div(peak).sub(1), "benchmark_equity": benchmark_equity,
+        "benchmark_return": benchmark_return})
+    matched, open_lots, _ = match_trades(result)
+    warnings = list(bundle.manifest.limitations)
+    if bundle.manifest.benchmark_type != "total_return":
+        warnings.append("基准为价格指数或其他口径，未必包含分红；比较收益时请核对口径。")
+    metadata = {"schema_version": SCHEMA_VERSION, "metric_definition_version": spec.metrics.definition_version,
+        "price_mode": bundle.price_mode, "benchmark_type": bundle.manifest.benchmark_type,
+        "benchmark_source": bundle.manifest.source, "currency": bundle.manifest.currency,
+        "sample_start": spec.start, "sample_end": spec.end,
+        "completed_through": result.completed_through,
+        "table_columns": {name: columns for name, columns in TABLE_COLUMNS.items()},
+        "csv_convention": "UTF-8; header in canonical column order; ISO dates; 12 decimal places for floats; stable row sorting",
+        "metric_period": "observed trading sessions", "market_timezone": "Asia/Shanghai"}
+    return ReportBundle(metrics, _definitions(spec, bundle), curves,
+        _period_returns(curves, "M"), _period_returns(curves, "Y"),
+        matched, open_lots, warnings, metadata, OUTPUT_FILES)
+
+
+def _normalized(value):
+    if value is pd.NaT or value is pd.NA:
+        return None
+    if isinstance(value, pd.Timestamp):
+        return value.date().isoformat() if value.tzinfo is None else value.tz_convert("UTC").isoformat()
+    if isinstance(value, datetime):
+        return value.date().isoformat() if value.tzinfo is None else value.astimezone(timezone.utc).isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, np.generic):
+        return _normalized(value.item())
+    if isinstance(value, dict):
+        return {str(key): _normalized(item) for key, item in sorted(value.items())}
+    if isinstance(value, (list, tuple)):
+        return [_normalized(item) for item in value]
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        if not np.isfinite(value):
+            raise ValueError("NONFINITE_OUTPUT: 产物含非有限数值")
+        return value
+    if pd.isna(value):
+        return None
+    raise TypeError(f"Unsupported report value: {type(value).__name__}")
+
+
+def _json_bytes(value) -> bytes:
+    return (json.dumps(_normalized(value), ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+
+
+def _records(frame: pd.DataFrame) -> list[dict]:
+    return [_normalized(row) for row in frame.to_dict("records")]
+
+
+def _csv_bytes(frame: pd.DataFrame) -> bytes:
+    out = frame.copy()
+    for column in out.columns:
+        out[column] = out[column].map(lambda value: json.dumps(_normalized(value), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            if isinstance(value, (dict, list, tuple)) else _normalized(value))
+    if len(out):
+        out = out.sort_values(list(out.columns), kind="stable", key=lambda column: column.map(str)).reset_index(drop=True)
+    return out.to_csv(index=False, lineterminator="\n", float_format="%.12f").encode("utf-8")
+
+
+def _svg(curves: pd.DataFrame) -> str:
+    values = curves.equity.to_numpy(dtype=float)
+    benchmark = curves.benchmark_equity.to_numpy(dtype=float)
+    low, high = min(values.min(), benchmark.min()), max(values.max(), benchmark.max())
+    span = high - low or 1.0
+    def points(series):
+        return " ".join(f"{40 + index * 700 / max(1, len(series) - 1):.1f},{220 - (value - low) * 180 / span:.1f}"
+            for index, value in enumerate(series))
+    return ("<svg viewBox=\"0 0 780 250\" role=\"img\" aria-label=\"策略与基准权益曲线\">"
+        "<rect width=\"780\" height=\"250\" fill=\"#fff\"/>"
+        f"<polyline fill=\"none\" stroke=\"#1463a5\" stroke-width=\"2\" points=\"{points(values)}\"/>"
+        f"<polyline fill=\"none\" stroke=\"#c17b1d\" stroke-width=\"2\" points=\"{points(benchmark)}\"/>"
+        "</svg>")
+
+
+def _html(report: ReportBundle, result: BacktestResult) -> bytes:
+    embedded = _json_bytes({"metrics": report.metrics, "metric_definitions": report.metric_definitions,
+        "curves": _records(report.curves), "signals": _records(result.signals), "warnings": report.warnings}).decode("utf-8")
+    # A literal closing script tag would terminate application/json content in the HTML parser.
+    embedded = embedded.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    rows = "".join(f"<tr><th>{escape(key)}</th><td>{escape(str(value))}</td></tr>" for key, value in report.metrics.items())
+    definitions = "".join(f"<tr><th>{escape(key)}</th><td>{escape(str(value['description']))}</td></tr>"
+        for key, value in report.metric_definitions.items() if "description" in value)
+    warnings = "".join(f"<li>{escape(warning)}</li>" for warning in report.warnings)
+    html = ("<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\"><title>回测报告</title>"
+        "<style>body{font:16px system-ui,sans-serif;max-width:960px;margin:2rem auto;color:#18324a}"
+        "table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:.5rem;text-align:left}"
+        "svg{max-width:100%;height:auto}</style></head><body><h1>回测报告</h1>"
+        "<p>策略权益（蓝）与基准权益（橙）；基准按首个绩效日归一化。</p>"
+        f"{_svg(report.curves)}<h2>指标</h2><table>{rows}</table>"
+        f"<h2>指标定义</h2><table>{definitions}</table><h2>说明</h2><ul>{warnings}</ul>"
+        f"<script type=\"application/json\" id=\"report-data\">{embedded}</script></body></html>\n")
+    return html.encode("utf-8")
+
+
+def write_backtest_outputs(target_dir: Path, result: BacktestResult, report: ReportBundle) -> dict[str, str]:
+    target_dir = Path(target_dir)
+    frames = {name: getattr(result, name)[TABLE_COLUMNS[name]] if name in TABLE_COLUMNS else getattr(report, name)
+        for name in OUTPUT_TABLES}
+    payloads = {f"{name}.csv": _csv_bytes(frame) for name, frame in frames.items()}
+    payloads["metrics.json"] = _json_bytes({"schema_version": SCHEMA_VERSION, "metrics": report.metrics,
+        "metric_definitions": report.metric_definitions, "warnings": report.warnings,
+        "completed_through": result.completed_through, "artifacts": report.artifact_manifest})
+    payloads["metadata.json"] = _json_bytes(report.metadata)
+    payloads["report.html"] = _html(report, result)
+    hashes = {name: hashlib.sha256(data).hexdigest() for name, data in sorted(payloads.items())}
+    payloads["manifest.json"] = _json_bytes({"schema_version": SCHEMA_VERSION, "files": hashes})
+    hashes["manifest.json"] = hashlib.sha256(payloads["manifest.json"]).hexdigest()
+    target_dir.mkdir(parents=True, exist_ok=False)
+    for name, data in payloads.items():
+        (target_dir / name).write_bytes(data)
+    return hashes

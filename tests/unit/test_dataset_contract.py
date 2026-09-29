@@ -130,6 +130,19 @@ def test_unsupported_strategy_schema_composition_is_rejected(schema):
         resolve_strategy_params(schema, {"settings": {"surprise": True}})
 
 
+def test_typeless_nested_object_schema_is_rejected_before_defaults_are_skipped():
+    schema = {"type": "object", "properties": {"settings": {"properties": {"lookback": {"type": "integer", "default": 20}}}}}
+    with pytest.raises(ValueError):
+        resolve_strategy_params(schema, {"settings": {"surprise": True}})
+    with pytest.raises(ValueError):
+        resolve_strategy_params(schema, {"settings": {}})
+
+
+def test_parameter_named_allof_is_not_treated_as_schema_composition():
+    schema = {"type": "object", "properties": {"allOf": {"type": "integer", "default": 7}}}
+    assert resolve_strategy_params(schema, {}) == {"allOf": 7}
+
+
 @pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
 def test_strategy_parameters_must_be_finite_json_numbers(bad):
     schema = {"type": "object", "properties": {"weight": {"type": "number"}}}

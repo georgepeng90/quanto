@@ -238,20 +238,27 @@ def resolve_strategy_params(schema: dict[str, Any], params: dict[str, Any]) -> d
     unsupported = {"$ref", "$dynamicRef", "$defs", "allOf", "anyOf", "oneOf", "not", "if", "then", "else", "dependentSchemas", "patternProperties", "unevaluatedProperties", "unevaluatedItems", "contains", "prefixItems"}
 
     def require_supported(node: Any) -> None:
-        if isinstance(node, dict):
-            invalid = unsupported & node.keys()
-            if invalid:
-                raise ValueError(f"Unsupported strategy schema keywords: {sorted(invalid)}")
-            if isinstance(node.get("type"), list):
-                raise ValueError("Strategy parameter schema union types are unsupported")
-            if node.get("additionalProperties") not in (None, False):
-                raise ValueError("Strategy parameter objects cannot allow unknown fields")
-            for key, child in node.items():
-                if key not in {"default", "enum", "const", "examples"}:
-                    require_supported(child)
-        elif isinstance(node, list):
-            for child in node:
-                require_supported(child)
+        if not isinstance(node, dict):
+            raise ValueError("Strategy parameter schema nodes must be objects")
+        invalid = unsupported & node.keys()
+        if invalid:
+            raise ValueError(f"Unsupported strategy schema keywords: {sorted(invalid)}")
+        node_type = node.get("type")
+        if node_type not in ("object", "array", "string", "integer", "number", "boolean", "null"):
+            raise ValueError("Strategy parameter schema nodes require a supported type")
+        if node.get("additionalProperties") not in (None, False):
+            raise ValueError("Strategy parameter objects cannot allow unknown fields")
+        if "properties" in node and node_type != "object":
+            raise ValueError("Only object schemas can declare properties")
+        if "items" in node and node_type != "array":
+            raise ValueError("Only array schemas can declare items")
+        properties = node.get("properties", {})
+        if not isinstance(properties, dict):
+            raise ValueError("Strategy parameter properties must be a mapping")
+        for child in properties.values():
+            require_supported(child)
+        if "items" in node:
+            require_supported(node["items"])
 
     def close_objects(node: dict[str, Any]) -> None:
         if node.get("type") == "object":

@@ -51,12 +51,13 @@ def test_snapshot_ignores_later_workspace_edits(tmp_path):
     run = RunService(store).submit(draft.id, draft.revision, "frozen", "web")
     before = json.loads(run.manifest_path.read_text())
     original_hash = hashlib.sha256(run.manifest_path.read_bytes()).hexdigest()
+    registered_hash = hashlib.sha256((dataset.path / "prices.parquet").read_bytes()).hexdigest()
     (tmp_path / "source" / "prices.csv").write_text("changed")
     (strategy.path / "helper.py").write_text("changed")
     assert json.loads(run.manifest_path.read_text()) == before
     assert hashlib.sha256(run.manifest_path.read_bytes()).hexdigest() == original_hash == run.manifest_hash
     assert (run.manifest_path.parent / "strategy" / "helper.py").read_text() == "value = 1\n"
-    assert (dataset.path / "prices.csv").read_text() != "changed"
+    assert hashlib.sha256((dataset.path / "prices.parquet").read_bytes()).hexdigest() == registered_hash
     assert "src/quanto/backtest/engine.py" in before["files"]
     assert SnapshotBuilder(store).verify(FrozenRun(run.run_id, run.manifest_path, run.manifest_hash))["run_id"] == run.run_id
 

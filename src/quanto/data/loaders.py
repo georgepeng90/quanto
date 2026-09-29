@@ -6,6 +6,7 @@ import json
 import pandas as pd
 import numpy as np
 
+from quanto.config import BacktestSpec
 from quanto.data.schemas import BENCHMARK_COLUMNS, INSTRUMENT_COLUMNS, PRICE_COLUMNS, DatasetBundle, DatasetManifest
 from quanto.universe import build_eligibility
 
@@ -100,6 +101,50 @@ def load_dataset(path: Path) -> DatasetBundle:
         eligibility=pd.DataFrame(),
         auxiliary=auxiliary,
     ))
+
+
+def _run_table(root: Path, name: str, *, symbols: list[str] | None = None,
+               end: pd.Timestamp | None = None) -> pd.DataFrame:
+    path = root / f"{name}.parquet"
+    if path.exists():
+        filters = []
+        if symbols is not None:
+            filters.append(("symbol", "in", symbols))
+        if end is not None:
+            filters.append(("date", "<=", end))
+        return pd.read_parquet(path, filters=filters or None)
+    table = _dataset_table(root, name)
+    if symbols is not None:
+        table = table.loc[table["symbol"].isin(symbols)]
+    if end is not None:
+        table = table.loc[pd.to_datetime(table["date"]) <= end]
+    return table.reset_index(drop=True)
+
+
+def load_dataset_for_run(path: Path, spec: BacktestSpec) -> DatasetBundle:
+    """Read a previously validated and hash-verified version for one run."""
+    root = Path(path)
+    manifest = DatasetManifest.model_validate(json.loads((root / "manifest.json").read_text(encoding="utf-8")))
+    end = pd.Timestamp(spec.end)
+    prices = validate_prices(_run_table(root, "prices", symbols=spec.symbols, end=end))
+    benchmark = validate_benchmark(_run_table(root, "benchmark", end=end))
+    calendar = _dates(_dataset_table(root, "calendar"), "calendar").sort_values("date").reset_index(drop=True)
+    instruments = _dataset_table(root, "instruments")
+    instruments["symbol"] = instruments["symbol"].astype(str)
+    instruments["listing_date"] = pd.to_datetime(instruments["listing_date"])
+    status = _dates(_run_table(root, "status", symbols=spec.symbols, end=end), "status")
+    status["symbol"] = status["symbol"].astype(str)
+    events = _dataset_table(root, "events")
+    events = events.loc[events["symbol"].isin(spec.symbols)].copy()
+    events["symbol"] = events["symbol"].astype(str)
+    for column in ("record_date", "ex_date", "pay_date"):
+        events[column] = pd.to_datetime(events[column])
+    auxiliary = {name: _read_table(root / filename) for name, filename in manifest.auxiliary_tables.items()}
+    for table in auxiliary.values():
+        table["available_at"] = pd.to_datetime(table["available_at"], utc=True)
+    eligibility = build_eligibility(prices, instruments, manifest.universe_rule)
+    return DatasetBundle(manifest, prices, benchmark, calendar, instruments, status, events.reset_index(drop=True),
+        eligibility, auxiliary)
 
 
 def validate_dataset(bundle: DatasetBundle) -> DatasetBundle:

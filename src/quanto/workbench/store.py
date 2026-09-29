@@ -6,10 +6,12 @@ from contextlib import contextmanager
 import json
 from pathlib import Path
 import sqlite3
+import tempfile
 from uuid import uuid4
 
 from quanto.config import validate_parameters
 from quanto.data.loaders import load_dataset
+from quanto.data.storage import write_parquet_dataset
 from quanto.workbench.models import DatasetVersion, ExperimentDraft, JobRecord, RunRecord, StrategyRevision
 from quanto.workbench.revisions import digest, json_bytes, publish_files, safe_name, source_files
 
@@ -118,13 +120,15 @@ class WorkbenchStore:
             path = source / name
             if path.is_symlink() or not path.is_file() or any(parent.is_symlink() for parent in path.parents if parent != source and source in parent.parents):
                 raise ValueError("symbolic links are not snapshot inputs")
-        load_dataset(source)
         before = {name: (source / name).read_bytes() for name in sorted(names)}
+        bundle = load_dataset(source)
         identity = str(uuid4())
-        target, hashes = publish_files(self.root / "datasets", identity, before)
+        with tempfile.TemporaryDirectory(prefix="quanto-parquet-") as directory:
+            normalized = Path(directory)
+            write_parquet_dataset(bundle, normalized)
+            target, hashes = publish_files(self.root / "datasets", identity, source_files(normalized))
         if {name: (source / name).read_bytes() for name in sorted(names)} != before:
             raise ValueError("dataset changed during registration")
-        load_dataset(target)
         manifest = json.loads((target / "manifest.json").read_text(encoding="utf-8"))
         content_hash = digest(json_bytes(hashes))
         with self.transaction() as db:

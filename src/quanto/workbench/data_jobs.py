@@ -13,6 +13,7 @@ import pandas as pd
 
 from quanto.data.fetcher import AKShareDataProvider, build_processed_dataset
 from quanto.data.loaders import load_dataset
+from quanto.data.storage import write_parquet_dataset
 from quanto.data.schemas import DatasetManifest
 from quanto.config import validate_parameters
 from quanto.sample_data import generate_sample_data
@@ -144,6 +145,22 @@ def execute_data_job(kind: str, payload: dict, emit, cancelled) -> dict:
     if cancelled():
         raise RuntimeError("CANCELLED: 数据任务已取消")
     bundle = load_dataset(destination)
+    # Only this job's unpublished staging files are replaced; imports and old versions stay intact.
+    old_names = {"manifest.json", *bundle.manifest.auxiliary_tables.values()}
+    old_names.update(f"{name}.{suffix}" for name in ("prices", "benchmark", "calendar", "instruments", "status", "events")
+                     for suffix in ("csv", "parquet") if (destination / f"{name}.{suffix}").exists())
+    with tempfile.TemporaryDirectory(prefix=".parquet-", dir=destination.parent) as directory:
+        normalized = Path(directory)
+        write_parquet_dataset(bundle, normalized)
+        if cancelled():
+            raise RuntimeError("CANCELLED: 数据任务已取消")
+        for name in old_names:
+            (destination / name).unlink()
+        for path in normalized.rglob("*"):
+            if path.is_file():
+                target = destination / path.relative_to(normalized)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                path.replace(target)
     _emit(emit, "DATA_VALIDATED", "数据集结构及覆盖已验证")
     return {"state": "complete", "dataset_version_id": None,
             "coverage": {"data_start": bundle.manifest.data_start.isoformat(), "data_end": bundle.manifest.data_end.isoformat()},

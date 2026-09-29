@@ -57,6 +57,7 @@ def test_fetch_job_publishes_verified_outcome_through_scheduler(tmp_path, mode):
             assert job["result"]["state"] == "complete"
             assert job["result"]["dataset_version_id"] == job_id
             assert service.store.get_dataset(job_id).manifest["price_mode"] == "adjusted_research"
+            assert (service.store.get_dataset(job_id).path / "prices.parquet").exists()
         else:
             assert job["result"]["state"] == "incomplete"
             assert job["result"]["coverage"]["000001"]["missing"] == ["2024-01-04", "2024-01-05"]
@@ -212,7 +213,8 @@ def test_import_nested_auxiliary_table_preserves_registered_file_hashes(tmp_path
         dataset = service.store.get_dataset(identity)
         from quanto.workbench.revisions import digest, json_bytes, source_files
         hashes = {name: digest(content) for name, content in source_files(dataset.path).items()}
-        assert "aux/signals.csv" in hashes
+        assert dataset.manifest["auxiliary_tables"]["signals"].endswith(".parquet")
+        assert dataset.manifest["auxiliary_tables"]["signals"] in hashes
         assert dataset.content_hash == digest(json_bytes(hashes))
         assert "signals" in load_dataset(dataset.path).auxiliary
     finally:

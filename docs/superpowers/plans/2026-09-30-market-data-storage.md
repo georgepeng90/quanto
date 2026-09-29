@@ -39,10 +39,10 @@ Files: src/quanto/data/storage.py, src/quanto/data/loaders.py, tests/unit/test_s
 
 Interfaces: write_parquet_dataset(bundle, destination) -> None; load_dataset_for_run(path, spec) -> DatasetBundle. Runtime path assumes full version validation and hash check have already succeeded.
 
-- [ ] Write tests asserting normalized Parquet roundtrip and equivalence to full-load backtest, including eligibility/history/calendar/event boundaries. Observe failure before implementation.
-- [ ] Implement Parquet writer and filtered loader with conservative preservation of history and event/auxiliary tables.
-- [ ] Route new registration and successful data jobs through canonical Parquet publication; update tests that assume new versions must contain CSV.
-- [ ] Run unit dataset/universe/strategy and data-job/revision integration checks; commit Task 2 files.
+- [x] Write tests asserting normalized Parquet roundtrip and equivalence to full-load backtest, including eligibility/history/calendar/event boundaries. Observed missing-interface and four publication failures before implementation.
+- [x] Implement Parquet writer and filtered loader with conservative preservation of history and event/auxiliary tables.
+- [x] Route new registration and successful data jobs through canonical Parquet publication; update tests that assume new versions must contain CSV.
+- [x] Run unit dataset/universe/strategy and data-job/revision integration checks; commit Task 2 files. Primary verification: 53 dataset/loading/publication/revision tests and 12 data-job tests passed. Independent scoped review found no important issue.
 
 ## Task 3: Shared immutable dataset objects
 
@@ -69,3 +69,5 @@ Files: benchmark results and README/docs/00/docs/05 descriptions of actual stora
 User approved the proposed direction and measurement in conversation. Preserve that authorization; do not add repeat permission gates. Delegated implementation is bounded by explicit file ownership; primary agent owns publication integration, final review coordination and merges.
 
 Ruling: retain full pre-start prices for selected symbols because current StrategyContext allows arbitrary historical reads; date optimization removes post-end prices, not permitted history.
+
+Ruling: Parquet may widen timestamp resolution (empty CSV datetime64[s] becomes datetime64[ms]); compare event date values, not this storage-specific dtype. Midnight event dates retain exact values and the full/filtered transaction-ledger comparison passes.

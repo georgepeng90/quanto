@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from datetime import date
+import copy
 import json
 import random
 from typing import Callable
@@ -46,7 +47,7 @@ def run_backtest(
     validate_warmup_window(strategy, observed, spec.start, spec.end)
     random.seed(spec.seed)
     np.random.seed(spec.seed)
-    ledger, risk = PortfolioLedger(spec.initial_cash), RiskPolicy(spec.risk)
+    ledger, risk = PortfolioLedger(spec.initial_cash), RiskPolicy(spec.risk, initial_equity=spec.initial_cash)
     ledger.calendar = calendar
     instruments = bundle.instruments[bundle.instruments.symbol.isin(spec.symbols)]
     groups = instruments.set_index("symbol")["group"].to_dict()
@@ -96,13 +97,14 @@ def run_backtest(
                     ledger.apply_event(dict(event_type="dividend_payment", amount=amount))
                     account("dividend_payment", event.symbol, amount)
         interest_base = ledger.cash
+        interest = money(interest_base * spec.metrics.cash_rate / spec.metrics.annual_sessions)
+        ledger.reserve_cash(max(0, -interest))
         daily = price_groups.get(asof, prices.iloc[:0])
         opens, closes = daily.set_index("symbol").open.to_dict(), daily.set_index("symbol").close.to_dict()
         status = status_groups.get(asof, {})
         scheduled = [order for order in orders if order.status == "pending" and order.execution_date == asof]
         fills = execute_open(scheduled, opens, status, ledger, spec.execution)
         tables["fills"].extend(asdict(fill) for fill in fills)
-        interest = money(interest_base * spec.metrics.cash_rate / spec.metrics.annual_sessions)
         ledger.apply_event(dict(event_type="interest", amount=interest))
         account("interest", amount=interest, opening_cash=interest_base, annual_rate=spec.metrics.cash_rate, annual_sessions=spec.metrics.annual_sessions)
         equity = ledger.mark(asof, closes, status, spec.execution.max_stale_sessions)
@@ -127,10 +129,10 @@ def run_backtest(
         decision = risk.evaluate(ctx, proposed)
         tables["risk_events"].extend(decision.events)
         intent = decision.intent
-        tables["signals"].append(dict(date=asof, intent="hold" if isinstance(intent, Hold) else "target",
+        tables["signals"].append(copy.deepcopy(dict(date=asof, intent="hold" if isinstance(intent, Hold) else "target",
             weights={} if isinstance(intent, Hold) else intent.weights,
             reasons={"hold": intent.reason} if isinstance(intent, Hold) else intent.reasons,
-            diagnostics={} if isinstance(intent, Hold) else intent.diagnostics))
+            diagnostics={} if isinstance(intent, Hold) else intent.diagnostics)))
         if isinstance(intent, TargetPortfolio):
             for order in orders:
                 if order.status == "pending":

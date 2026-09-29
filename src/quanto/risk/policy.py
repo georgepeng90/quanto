@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import copy
 
 import pandas as pd
 
@@ -14,9 +15,9 @@ class RiskDecision:
 
 
 class RiskPolicy:
-    def __init__(self, spec: RiskSpec):
+    def __init__(self, spec: RiskSpec, initial_equity: float = 0.0):
         self.spec = spec
-        self.state = dict(paused=False, pause_asof=None, risk_reference=0.0)
+        self.state = dict(paused=False, pause_asof=None, risk_reference=initial_equity)
         self.consumed_approvals: set[str] = set()
 
     def _limited(self, weights, groups):
@@ -50,7 +51,7 @@ class RiskPolicy:
         limited_requested = self._limited(requested, groups)
 
         def event(code, message, **details):
-            events.append(dict(date=ctx.asof, code=code, message=message, details=details))
+            events.append(dict(date=ctx.asof, code=code, message=message, details=copy.deepcopy(details)))
 
         reference = max(self.state["risk_reference"], ctx.portfolio.equity)
         self.state["risk_reference"] = reference

@@ -137,3 +137,44 @@ def test_favorable_gap_cannot_enlarge_request_and_slippage_is_auditable():
     assert fills[0].price == pytest.approx(8.08, abs=1e-8)
     assert fills[0].slippage_cost == pytest.approx(8, abs=1e-8)
     assert ledger.cash == pytest.approx(192, abs=1e-8)
+
+
+def test_actual_cap_reduction_after_odd_lot_split_sells_one_legal_lot():
+    from quanto.risk.policy import RiskPolicy
+    from quanto.strategies.base import Hold, StrategyContext
+
+    b = bundle_case()
+    b.instruments.loc[0, "lot_size"] = 100
+    ledger = PortfolioLedger(1000)
+    ledger.apply_fill(fill("buy", 100))
+    ledger.apply_event(dict(event_type="split", symbol="A", split_ratio=1.5))
+    ledger.mark(pd.Timestamp("2024-01-01"), {"A": 10 / 1.5}, {}, 0)
+    ctx = StrategyContext(pd.Timestamp("2024-01-02"), b.prices, ("A",), ledger.snapshot(pd.Timestamp("2024-01-02")), (), {}, False)
+    decision = RiskPolicy(spec_case(b, risk={"max_symbol_weight": .8}).risk).evaluate(ctx, Hold("保持"))
+    orders = orders_for(ledger, decision.intent, b, {"A": 10 / 1.5})
+    assert len(orders) == 1 and orders[0].quantity == 100
+    assert not orders[0].full_exit
+    execute_open(orders, {"A": 10 / 1.5}, {}, ledger, spec_case(b).execution)
+    portfolio = ledger.snapshot(pd.Timestamp("2024-01-02"))
+    assert portfolio.shares["A"] == 50
+    assert portfolio.market_values["A"] / portfolio.equity <= .8
+
+
+def test_reserved_interest_cash_cannot_be_spent_before_close():
+    b = bundle_case()
+    ledger = PortfolioLedger(990)
+    orders = orders_for(ledger, target(A=1), b)
+    ledger.reserve_cash(9.9)
+    fills = execute_open(orders, {"A": 10}, {}, ledger, spec_case(b).execution)
+    assert fills[0].quantity == 98
+    assert ledger.cash == 10 and ledger.available_cash == pytest.approx(.1, abs=1e-8)
+    ledger.apply_event(dict(event_type="interest", amount=-9.9))
+    assert ledger.cash == pytest.approx(.1, abs=1e-8)
+    assert ledger.available_cash == ledger.cash
+
+
+def test_ledger_rejects_unfunded_interest_without_mutating_cash():
+    ledger = PortfolioLedger(1000)
+    with pytest.raises(ValueError, match="UNFUNDED_INTEREST"):
+        ledger.apply_event(dict(event_type="interest", amount=-1001))
+    assert ledger.cash == 1000

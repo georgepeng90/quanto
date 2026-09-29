@@ -64,3 +64,20 @@ def test_week_end_requires_a_known_later_session():
     assert is_week_end(full_calendar, pd.Timestamp("2024-01-09")) is False
     assert is_week_end(full_calendar[:3], pd.Timestamp("2024-01-03")) is False
     assert is_week_end(full_calendar[:5], pd.Timestamp("2024-01-05")) is False
+
+
+def test_nested_risk_facts_and_order_summaries_are_read_only():
+    approval = {"approval_id": "ok", "pause_asof": "2024-01-01", "available_at": "2024-01-02T06:00:00Z"}
+    state = {"symbol_groups": {"A": "G"}, "risk_approvals": [approval]}
+    ctx = StrategyContext(pd.Timestamp("2024-01-02"), pd.DataFrame(columns=["date"]), ("A",),
+        _portfolio(), ({"metadata": {"source": "risk"}},), state, False)
+    with pytest.raises(TypeError):
+        ctx.risk_state["symbol_groups"]["A"] = "bypass"
+    with pytest.raises(TypeError):
+        ctx.risk_state["risk_approvals"][0]["pause_asof"] = "2024-01-02"
+    with pytest.raises(AttributeError):
+        ctx.risk_state["risk_approvals"].append(approval)
+    with pytest.raises(TypeError):
+        ctx.pending_orders[0]["metadata"]["source"] = "strategy"
+    approval["pause_asof"] = "2024-01-05"
+    assert ctx.risk_state["risk_approvals"][0]["pause_asof"] == "2024-01-01"

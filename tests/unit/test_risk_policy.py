@@ -56,3 +56,21 @@ def test_pause_actions_effective_and_never_recovery_persists(action, expected):
     decision = policy.evaluate(context(2, 800, {"A": .8}), target(A=1))
     assert sum(decision.intent.weights.values()) == pytest.approx(expected, abs=1e-8)
     assert policy.evaluate(context(5, 1200), target(A=1)).state["paused"]
+
+
+def test_initial_equity_reference_counts_the_first_close_loss():
+    policy = RiskPolicy(spec_case(bundle_case(), risk={"drawdown_pause": .00005}).risk, initial_equity=1000)
+    decision = policy.evaluate(context(1, 999.9), Hold("保持"))
+    assert decision.state["paused"]
+    assert decision.state["risk_reference"] == 1000
+    assert decision.events[0]["details"]["drawdown"] == pytest.approx(.0001, abs=1e-8)
+
+
+def test_risk_event_snapshots_requested_weights():
+    weights = {"A": 1.0}
+    from quanto.strategies.base import TargetPortfolio
+
+    decision = RiskPolicy(spec_case(bundle_case(), risk={"max_symbol_weight": .25}).risk).evaluate(
+        context(1), TargetPortfolio(weights, {}, {}))
+    weights["A"] = .1
+    assert decision.events[0]["details"]["requested"] == {"A": 1.0}

@@ -12,6 +12,14 @@ import pandas as pd
 from quanto.config import validate_parameters
 
 
+def _readonly(value):
+    if isinstance(value, Mapping):
+        return MappingProxyType({key: _readonly(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_readonly(item) for item in value)
+    return copy.deepcopy(value)
+
+
 @dataclass(frozen=True)
 class PortfolioView:
     cash: float
@@ -45,8 +53,8 @@ class StrategyContext:
         object.__setattr__(self, "asof", asof)
         object.__setattr__(self, "history", history)
         object.__setattr__(self, "eligible_symbols", tuple(self.eligible_symbols))
-        object.__setattr__(self, "pending_orders", tuple(MappingProxyType(copy.deepcopy(dict(order))) for order in self.pending_orders))
-        object.__setattr__(self, "risk_state", MappingProxyType(copy.deepcopy(dict(self.risk_state))))
+        object.__setattr__(self, "pending_orders", _readonly(self.pending_orders))
+        object.__setattr__(self, "risk_state", _readonly(self.risk_state))
 
 
 @dataclass(frozen=True)

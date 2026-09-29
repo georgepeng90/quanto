@@ -18,6 +18,7 @@ class PortfolioLedger:
 
     def __init__(self, initial_cash: float):
         self.cash = money(initial_cash)
+        self._reserved_cash = 0.0
         self.receivables = 0.0
         self.lots: dict[str, list[Lot]] = {}
         self.marks: dict[str, float] = {}
@@ -28,6 +29,16 @@ class PortfolioLedger:
     @property
     def realized_pnl(self) -> float:
         return money(sum(self.realized.values()))
+
+    @property
+    def available_cash(self) -> float:
+        return money(self.cash - self._reserved_cash)
+
+    def reserve_cash(self, amount: float) -> None:
+        amount = money(amount)
+        if amount > self.cash:
+            raise ValueError("UNFUNDED_INTEREST: 开盘可用现金不足以支付当日利息费用")
+        self._reserved_cash = amount
 
     def cost_basis(self, symbol: str) -> float:
         return money(sum(lot.basis for lot in self.lots.get(symbol, [])))
@@ -52,7 +63,7 @@ class PortfolioLedger:
         lots = self.lots.setdefault(fill.symbol, [])
         if fill.side == "buy":
             cost = money(notional + fill.commission)
-            if cost > self.cash + 1e-8:
+            if cost > self.available_cash + 1e-8:
                 raise ValueError("INSUFFICIENT_CASH: 可用现金不足")
             self.cash = money(self.cash - cost)
             lots.append(Lot(fill.quantity, cost, fill.sellable_date if fill.sellable_date is not None else self.settlement_date(fill.trade_date, 1)))
@@ -86,7 +97,11 @@ class PortfolioLedger:
             self.receivables = money(self.receivables - amount)
             self.cash = money(self.cash + amount)
         elif kind == "interest":
-            self.cash = money(self.cash + amount)
+            cash_after = money(self.cash + amount)
+            if cash_after < 0:
+                raise ValueError("UNFUNDED_INTEREST: 可用现金不足以支付当日利息费用")
+            self.cash = cash_after
+            self._reserved_cash = 0.0
         elif kind == "split":
             symbol, ratio = event["symbol"], event["split_ratio"]
             lots = self.lots.get(symbol, [])

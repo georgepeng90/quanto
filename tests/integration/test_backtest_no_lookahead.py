@@ -125,7 +125,7 @@ def test_future_approvals_are_not_visible_to_strategy():
     approvals = pd.DataFrame([dict(approval_id="future", pause_asof="2024-01-02", available_at="2024-01-03T08:00:00Z")])
     strategy = ScriptedStrategy({})
     run_backtest(replace(b, auxiliary={"risk_approvals": approvals}), strategy, spec_case(b), lambda e: None, lambda: False)
-    assert strategy.contexts[2].risk_state["risk_approvals"] == []
+    assert strategy.contexts[2].risk_state["risk_approvals"] == ()
     assert len(strategy.contexts[3].risk_state["risk_approvals"]) == 1
 
 
@@ -166,3 +166,74 @@ def test_start_after_record_date_has_no_dividend_entitlement():
     result = run(replace(b, events=events), {3: target(A=1)}, start="2024-01-03")
     assert result.account_events.loc[result.account_events.event_type == "dividend_payment", "amount"].sum() == 0
     assert result.equity.receivables.sum() == 0
+
+
+def test_signal_history_snapshots_reused_nested_strategy_dicts():
+    from quanto.strategies.base import TargetPortfolio
+
+    class Reused(ScriptedStrategy):
+        def __init__(self):
+            self.weights, self.reasons, self.diagnostics = {"A": .5}, {"A": "first"}, {"trace": {"days": []}}
+
+        def should_evaluate(self, ctx):
+            return True
+
+        def on_close(self, ctx):
+            self.diagnostics["trace"]["days"].append(ctx.asof.day)
+            if ctx.asof.day > 1:
+                self.weights["A"], self.reasons["A"] = .2, "later"
+            return TargetPortfolio(self.weights, self.reasons, self.diagnostics)
+
+    b, events = bundle_case(), []
+    result = run_backtest(b, Reused(), spec_case(b), events.append, lambda: False)
+    first = result.signals.iloc[0]
+    assert first.weights == {"A": .5} and first.reasons == {"A": "first"}
+    assert first.diagnostics == {"trace": {"days": [1]}}
+    assert events[0].payload["tables"]["signals"][0]["diagnostics"] == first.diagnostics
+    assert events[0].payload["tables"]["signals"][0]["weights"] == first.weights
+
+
+def test_first_day_negative_interest_counts_toward_drawdown():
+    result = run(bundle_case(), {1: target(A=1)}, metrics={"cash_rate": -.0252}, risk={"drawdown_pause": .00005})
+    assert result.equity.iloc[0].equity == pytest.approx(999.9, abs=1e-8)
+    pauses = result.risk_events[result.risk_events.code == "DRAWDOWN_PAUSE"]
+    assert pauses.iloc[0].date == pd.Timestamp("2024-01-01")
+    assert result.fills.empty
+
+
+def test_negative_interest_reserves_cash_before_buys_and_posts_at_close():
+    result = run(bundle_case(), {1: target(A=1)}, metrics={"cash_rate": -2.52})
+    assert (result.equity.cash >= 0).all()
+    assert result.fills.iloc[0].quantity == 98
+    assert result.equity.iloc[1].cash == pytest.approx(.1, abs=1e-8)
+    interest = result.account_events[result.account_events.event_type == "interest"]
+    assert interest.amount.iloc[:2].tolist() == pytest.approx([-10, -9.9], abs=1e-8)
+    assert interest.details.iloc[1]["opening_cash"] == 990
+
+
+def test_unaffordable_interest_charge_fails_without_completed_day():
+    b, events = bundle_case(), []
+    with pytest.raises(ValueError, match="UNFUNDED_INTEREST"):
+        run_backtest(b, ScriptedStrategy({1: target(A=1)}), spec_case(b, metrics={"cash_rate": -504}), events.append, lambda: False)
+    assert events == []
+
+
+def test_strategy_cannot_mutate_group_or_approval_facts_before_policy():
+    class MutationAttempt(ScriptedStrategy):
+        def on_close(self, ctx):
+            with pytest.raises(TypeError):
+                ctx.risk_state["symbol_groups"]["A"] = "bypass"
+            with pytest.raises(TypeError):
+                ctx.risk_state["risk_approvals"][0]["pause_asof"] = ctx.risk_state["pause_asof"]
+            with pytest.raises(AttributeError):
+                ctx.risk_state["risk_approvals"].append(dict(approval_id="invented", pause_asof=ctx.risk_state["pause_asof"], available_at="2024-01-01T06:00:00Z"))
+            return target(A=1)
+
+    b = bundle_case({(3, "A"): (10, 5)})
+    approvals = pd.DataFrame([dict(approval_id="prior", pause_asof="2023-12-29", available_at="2024-01-01T06:00:00Z")])
+    result = run_backtest(replace(b, auxiliary={"risk_approvals": approvals}), MutationAttempt({}),
+        spec_case(b, risk={"group_caps": {"G": .25}, "drawdown_pause": .1, "pause_action": "liquidate", "recovery_mode": "recorded_approval"}), lambda e: None, lambda: False)
+    assert result.signals.iloc[0].weights == {"A": .25}
+    assert result.fills.iloc[0].quantity == 25
+    assert "RISK_RESUMED" not in result.risk_events.code.tolist()
+    assert result.positions.iloc[-1].shares == 0

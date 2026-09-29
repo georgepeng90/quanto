@@ -22,7 +22,13 @@ def create_orders(intent, portfolio, reference_prices, signal_date, execution_da
         lot = int(metadata[symbol]["lot_size"])
         desired = math.floor(portfolio.equity * weight / price / lot + 1e-12) * lot
         delta = desired - current
-        quantity = abs(delta) if desired == 0 else abs(delta) // lot * lot
+        if desired == 0:
+            quantity = abs(delta)
+        elif delta < 0:
+            # A legal partial sell must meet or exceed the required reduction.
+            quantity = (abs(delta) + lot - 1) // lot * lot
+        else:
+            quantity = delta // lot * lot
         if quantity:
             result.append(Order(f"{pd.Timestamp(signal_date).date()}:{symbol}:{'buy' if delta > 0 else 'sell'}",
                 symbol, "buy" if delta > 0 else "sell", quantity, pd.Timestamp(signal_date),
@@ -74,7 +80,7 @@ def execute_open(orders, open_quotes, status, ledger, execution_spec) -> list[Fi
             quantity = min(order.quantity, available)
             if not (order.full_exit and quantity == ledger.snapshot(order.execution_date).shares.get(order.symbol, 0)):
                 quantity = quantity // order.lot_size * order.lot_size
-            if commission(quantity, price) > quantity * price + ledger.cash:
+            if commission(quantity, price) > quantity * price + ledger.available_cash:
                 quantity = 0
                 order.reason = "insufficient_fee_cash"
             complete(order, quantity, price)
@@ -82,7 +88,7 @@ def execute_open(orders, open_quotes, status, ledger, execution_spec) -> list[Fi
             buys.append((order, price))
     # Allocate cash proportionally to frozen requests, then whole lots by symbol.
     required = sum(cost(o, o.quantity, p) for o, p in buys)
-    ratio = min(1, ledger.cash / required) if required else 0
+    ratio = min(1, ledger.available_cash / required) if required else 0
     allocations = []
     for order, price in buys:
         budget = cost(order, order.quantity, price) * ratio
@@ -90,7 +96,7 @@ def execute_open(orders, open_quotes, status, ledger, execution_spec) -> list[Fi
         while quantity and cost(order, quantity, price) > budget + 1e-8:
             quantity -= order.lot_size
         allocations.append(quantity)
-    remaining = money(ledger.cash - sum(cost(o, q, p) for (o, p), q in zip(buys, allocations)))
+    remaining = money(ledger.available_cash - sum(cost(o, q, p) for (o, p), q in zip(buys, allocations)))
     for index, (order, price) in enumerate(buys):
         quantity = allocations[index]
         # Binary search the deterministic residual award; avoids per-share loops.

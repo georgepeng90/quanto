@@ -63,7 +63,7 @@ Files: benchmark results and README/docs/00/docs/05 descriptions of actual stora
 - [x] Run full Python tests; independently review cross-component correctness and fix supported findings. 241 tests passed; additionally executed, exactly replayed, and cloned a real v1 snapshot produced by the original e3cc24d code in a temporary workspace.
 - [x] Build the existing UI and run Chrome edit/run/compare/export E2E against temporary workspace. Build and one complete browser scenario passed.
 - [x] Update operation/backup guidance, measurement results and completed verification checklist; commit.
-- [ ] Fast-forward merge into v2 and verify merged source plus original PRD unchanged.
+- [x] Fast-forward merge into v2 and verify merged source plus original PRD unchanged. Merged a3b2744 with an identical Git tree; 17 loading/shared-snapshot/v1-worker checks passed in the primary checkout. Original untracked PRD SHA-256 remains 85f6eade5d6f75a844e847bf6636d1311d172e92450b207d3b102258b54d48e1. No push, preview restart or existing-data migration was performed.
 
 ## Execution notes
 

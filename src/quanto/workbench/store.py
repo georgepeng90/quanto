@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 from contextlib import contextmanager
+import hashlib
 import json
 from pathlib import Path
 import sqlite3
@@ -256,3 +257,17 @@ class WorkbenchStore:
             raise ValueError("invalid terminal transition")
         with self.transaction() as db:
             return db.execute("UPDATE jobs SET state=?, error=? WHERE id=? AND state=?", (state, error, identity, expected)).rowcount == 1
+
+    def finish_data_job(self, identity: str, bundle_path: Path, result: dict) -> bool:
+        """Publish a verified data version and success in one conditional commit."""
+        manifest = json.loads((bundle_path / "manifest.json").read_text(encoding="utf-8")) if result.get("state") == "complete" else None
+        hashes = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in bundle_path.iterdir() if path.is_file()} if manifest else None
+        with self.transaction() as db:
+            row = db.execute("SELECT state FROM jobs WHERE id=?", (identity,)).fetchone()
+            if row is None or row["state"] != "running":
+                return False
+            if manifest is not None:
+                db.execute("INSERT INTO datasets VALUES (?,?,?,?)", (identity, str(bundle_path), digest(json_bytes(hashes)), json_bytes(manifest).decode()))
+            db.execute("UPDATE jobs SET state='succeeded' WHERE id=? AND state='running'", (identity,))
+            return True

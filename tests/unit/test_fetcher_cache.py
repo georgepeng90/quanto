@@ -89,6 +89,7 @@ def test_build_processed_dataset_falls_back_to_existing_cache_when_network_fails
 
     assert result.price_rows > 0
     assert result.benchmark_rows > 0
+    assert not result.complete
 
 
 def test_build_processed_dataset_skips_uncached_failed_symbol_when_allowed(tmp_path):
@@ -112,6 +113,7 @@ def test_build_processed_dataset_skips_uncached_failed_symbol_when_allowed(tmp_p
 
     assert result.price_rows > 0
     assert result.failed_symbols == ("BROKEN",)
+    assert not result.complete
 
 
 def test_fetch_cache_preserves_leading_zero_symbol(tmp_path):
@@ -121,3 +123,39 @@ def test_fetch_cache_preserves_leading_zero_symbol(tmp_path):
     assert first.iloc[0]["symbol"] == "000001"
     assert second.iloc[0]["symbol"] == "000001"
     assert provider.etf_calls == 1
+
+
+def test_interior_cache_gap_triggers_refetch(tmp_path):
+    provider = FakeProvider()
+    sessions = [day.date().isoformat() for day in pd.bdate_range("2024-01-01", "2024-01-05")]
+    kwargs = {"symbols": ["512480"], "start_date": sessions[0], "end_date": sessions[-1],
+              "processed_dir": tmp_path / "processed", "raw_dir": tmp_path / "raw",
+              "provider": provider, "request_delay_seconds": 0, "expected_sessions": sessions}
+    assert build_processed_dataset(**kwargs).complete
+    for path in (tmp_path / "raw/etf/512480.csv", tmp_path / "raw/benchmark/sh000300.csv"):
+        frame = pd.read_csv(path, dtype={"symbol": str})
+        frame.loc[frame.date != sessions[2]].to_csv(path, index=False)
+    assert build_processed_dataset(**kwargs).complete
+    assert provider.etf_calls == 2
+    assert provider.benchmark_calls == 2
+
+
+def test_failed_refresh_keeps_partial_provenance(tmp_path):
+    provider = FakeProvider()
+    sessions = [day.date().isoformat() for day in pd.bdate_range("2024-01-01", "2024-01-05")]
+    kwargs = {"symbols": ["512480"], "start_date": sessions[0], "end_date": sessions[-1],
+              "processed_dir": tmp_path / "processed", "raw_dir": tmp_path / "raw",
+              "provider": provider, "request_delay_seconds": 0, "expected_sessions": sessions, "max_retries": 0}
+    build_processed_dataset(**kwargs)
+    for path in (tmp_path / "raw/etf/512480.csv", tmp_path / "raw/benchmark/sh000300.csv"):
+        frame = pd.read_csv(path, dtype={"symbol": str})
+        frame.loc[frame.date != sessions[2]].to_csv(path, index=False)
+    class Broken(FakeProvider):
+        def fetch_etf_daily(self, *args):
+            raise RuntimeError("offline")
+        def fetch_benchmark_daily(self, *args):
+            raise RuntimeError("offline")
+    result = build_processed_dataset(**{**kwargs, "provider": Broken()})
+    assert not result.complete
+    assert result.coverage["512480"]["missing"] == [sessions[2]]
+    assert result.coverage["benchmark"]["missing"] == [sessions[2]]

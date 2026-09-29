@@ -1,79 +1,113 @@
 from __future__ import annotations
 
 import argparse
+import json
+import os
+from pathlib import Path
 import sys
-from datetime import datetime
 
-from quanto.data.fetcher import build_processed_dataset
-from quanto.sample_data import generate_sample_data
-from quanto.universe import load_universe
+import httpx
+
+
+class WorkbenchClient:
+    def __init__(self, base_url: str, token: str, transport=None):
+        self.base_url = base_url.rstrip("/")
+        self.token = token
+        self.transport = transport
+
+    def request(self, method: str, path: str, body: dict | None = None) -> dict:
+        client = self.transport or httpx.Client(timeout=30)
+        try:
+            response = client.request(method, f"{self.base_url}/api{path}",
+                                      headers={"Authorization": f"Bearer {self.token}"}, json=body)
+            response.raise_for_status()
+            return response.json()
+        finally:
+            if self.transport is None:
+                client.close()
+
+    def get(self, path: str) -> dict:
+        return self.request("GET", path)
+
+    def post(self, path: str, body: dict) -> dict:
+        return self.request("POST", path, body)
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="quanto")
-    sub = parser.add_subparsers(dest="command", required=True)
-    sample = sub.add_parser("generate-sample-data", help="Generate deterministic local processed sample data")
-    sample.add_argument("--output-dir", default="data/processed")
-    sample.add_argument("--years", type=int, default=6)
-    sample.add_argument("--seed", type=int, default=7)
-    sample.set_defaults(func=generate_sample_data_command)
-
-    fetch = sub.add_parser("fetch-data", help="Fetch real ETF and benchmark data through AKShare with local cache")
-    fetch.add_argument("--universe", default="configs/universe.yaml")
-    fetch.add_argument("--start-date", default="2018-01-01")
-    fetch.add_argument("--end-date", default=datetime.now().strftime("%Y-%m-%d"))
-    fetch.add_argument("--data-dir", default="data/processed")
-    fetch.add_argument("--raw-dir", default="data/raw")
-    fetch.add_argument("--benchmark-symbol", default="sh000300")
-    fetch.add_argument("--force-refresh", action="store_true")
-    fetch.add_argument("--request-delay", type=float, default=1.0, help="Seconds to wait between ETF requests")
-    fetch.add_argument("--max-retries", type=int, default=3)
-    fetch.add_argument("--retry-delay", type=float, default=2.0)
-    fetch.add_argument("--stop-on-error", action="store_true")
-    fetch.add_argument("--quiet", action="store_true")
-    fetch.set_defaults(func=fetch_data_command)
-
+    parser = argparse.ArgumentParser(prog="quanto", description="本机回测工作台")
+    parser.add_argument("--url", default="http://127.0.0.1:8765")
+    parser.add_argument("--token", help="本机会话令牌；也可设置 QUANTO_TOKEN")
+    commands = parser.add_subparsers(dest="command", required=True)
+    serve = commands.add_parser("serve", help="启动本机 API 和网页服务")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8765)
+    serve.add_argument("--workspace", type=Path, default=Path("data/workbench"))
+    serve.add_argument("--frontend-dir", type=Path)
+    for name in ("datasets", "strategies", "experiments", "runs"):
+        group = commands.add_parser(name, help=f"管理 {name}")
+        actions = group.add_subparsers(dest="action", required=True)
+        actions.add_parser("list")
+        get = actions.add_parser("get")
+        get.add_argument("identity")
+        if name != "runs":
+            create = actions.add_parser("create")
+            create.add_argument("--json", required=True, help="JSON 文件路径")
+        if name == "experiments":
+            update = actions.add_parser("update")
+            update.add_argument("identity")
+            update.add_argument("--json", required=True)
+        if name == "runs":
+            submit = actions.add_parser("submit")
+            submit.add_argument("--json", required=True)
+            for action in ("cancel", "rerun", "results", "logs"):
+                entry = actions.add_parser(action)
+                entry.add_argument("identity")
+                if action == "rerun":
+                    entry.add_argument("--json", required=True)
+    compare = commands.add_parser("compare", help="比较运行")
+    compare.add_argument("run_ids", nargs="+")
     return parser
 
 
-def generate_sample_data_command(args: argparse.Namespace) -> int:
-    prices, benchmark = generate_sample_data(args.output_dir, years=args.years, seed=args.seed)
-    print(f"Sample prices written: {prices}")
-    print(f"Sample benchmark written: {benchmark}")
-    return 0
-
-
-def fetch_data_command(args: argparse.Namespace) -> int:
-    universe = load_universe(args.universe)
-    result = build_processed_dataset(
-        symbols=universe.symbols,
-        start_date=args.start_date,
-        end_date=args.end_date,
-        processed_dir=args.data_dir,
-        raw_dir=args.raw_dir,
-        benchmark_symbol=args.benchmark_symbol,
-        force_refresh=args.force_refresh,
-        request_delay_seconds=args.request_delay,
-        max_retries=args.max_retries,
-        retry_delay_seconds=args.retry_delay,
-        continue_on_error=not args.stop_on_error,
-        log=not args.quiet,
-    )
-    print(f"Prices written: {result.prices_path} ({result.price_rows} rows)")
-    print(f"Benchmark written: {result.benchmark_path} ({result.benchmark_rows} rows)")
-    print(f"Fetch log written: {result.fetch_log_path}")
-    if result.failed_symbols:
-        print(f"Failed symbols skipped: {', '.join(result.failed_symbols)}")
-    return 0
-
-
 def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+    args = build_parser().parse_args(argv)
+    if args.command == "serve":
+        from quanto.api.app import create_app
+        from quanto.api.security import local_host
+        import uvicorn
+        if not local_host(args.host):
+            print("INVALID_HOST: 仅允许回环地址", file=sys.stderr)
+            return 2
+        uvicorn.run(create_app(args.workspace, args.frontend_dir), host=args.host, port=args.port)
+        return 0
+    token = args.token or os.environ.get("QUANTO_TOKEN", "")
+    if not token:
+        print("UNAUTHORIZED: 请提供 --token 或 QUANTO_TOKEN", file=sys.stderr)
+        return 2
+    client = WorkbenchClient(args.url, token)
     try:
-        return int(args.func(args))
-    except Exception as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        if args.command == "compare":
+            result = client.post("/comparisons", {"run_ids": args.run_ids})
+        else:
+            root = f"/{args.command}"
+            action = args.action
+            body = json.loads(Path(args.json).read_text(encoding="utf-8")) if hasattr(args, "json") else None
+            if action == "list":
+                result = client.get(root)
+            elif action == "get":
+                result = client.get(f"{root}/{args.identity}")
+            elif action in ("create", "submit"):
+                result = client.post(root, body)
+            elif action == "update":
+                result = client.request("PUT", f"{root}/{args.identity}", body)
+            elif action in ("rerun", "cancel"):
+                result = client.post(f"{root}/{args.identity}/{action}", body or {})
+            else:
+                result = client.get(f"{root}/{args.identity}/{action}")
+        print(json.dumps(result, ensure_ascii=False, allow_nan=False))
+        return 0
+    except (OSError, ValueError, httpx.HTTPError) as exc:
+        print(f"REQUEST_FAILED: 请求失败：{exc}", file=sys.stderr)
         return 1
 
 

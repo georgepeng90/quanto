@@ -92,7 +92,8 @@ class EventWriter:
                 for name, rows in payload["tables"].items():
                     for index, row in enumerate(rows):
                         key = str(row["id"]) if name == "orders" else f"{self.seq}:{index}"
-                        db.execute("INSERT OR REPLACE INTO rows VALUES (?,?,?)", (name, key, json.dumps(row, ensure_ascii=False, allow_nan=False)))
+                        db.execute("INSERT INTO rows VALUES (?,?,?) ON CONFLICT(table_name,row_key) DO UPDATE SET payload=excluded.payload",
+                                   (name, key, json.dumps(row, ensure_ascii=False, allow_nan=False)))
                 db.execute("INSERT OR REPLACE INTO progress VALUES (1,?)", (payload["completed_through"],))
         with (self.control_dir / "events.ndjson").open("a", encoding="utf-8", newline="\n") as stream:
             stream.write(json.dumps(value, ensure_ascii=False, allow_nan=False) + "\n")
@@ -151,6 +152,16 @@ def _verify_inputs(descriptor: dict) -> dict:
         if hashlib.sha256((root / name).read_bytes()).hexdigest() != expected:
             raise ValueError("SNAPSHOT_INVALID: 冻结文件哈希无效")
     return manifest
+
+
+def verify_source_hashes(descriptor: dict) -> None:
+    root = Path(descriptor["source_root"])
+    expected = descriptor["source_hashes"]
+    actual = {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in root.rglob("*") if path.is_file()}
+    actual.pop("input.json", None)
+    if any(path.is_symlink() for path in root.rglob("*")) or actual != expected:
+        raise ValueError("SNAPSHOT_INVALID: 数据任务源码或上传快照无效")
 
 
 def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
@@ -236,17 +247,49 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
     return {"hashes": hashes}
 
 
-# T7 adds fixed trusted handlers here, never import a handler supplied by a request.
-# Handlers accept (descriptor, control_dir, emit, cancelled), return JSON result data,
-# and raise on failure. Extend validate_job_output alongside each new handler.
-JOB_HANDLERS = {"backtest": run_frozen_backtest}
+def run_data_job(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:
+    from quanto.workbench.data_jobs import execute_data_job, execute_strategy_validation
+    stage = control_dir.parent / "staging"
+    stage.mkdir()
+    payload = dict(descriptor["input"])
+    payload["_output_dir"] = str(stage)
+    payload["_source_root"] = descriptor["source_root"]
+    if descriptor["kind"] == "validate_strategy":
+        result = execute_strategy_validation(payload, cancelled)
+    else:
+        result = execute_data_job(descriptor["kind"], payload, emit, cancelled)
+    atomic_json(stage / "result.json", result)
+    hashes = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in stage.iterdir() if path.is_file()}
+    if cancelled():
+        raise RuntimeError("CANCELLED: 任务已取消")
+    stage.rename(control_dir.parent / "final")
+    return {"hashes": hashes, **result}
+
+
+JOB_HANDLERS = {"backtest": run_frozen_backtest,
+                "demo": run_data_job, "fetch": run_data_job,
+                "import": run_data_job, "validate_strategy": run_data_job}
 
 
 def validate_job_output(kind: str, root: Path, receipt: dict) -> None:
     if kind == "backtest":
         validate_backtest_output(root / "final", receipt["result"]["hashes"])
     else:
-        raise ValueError("UNSUPPORTED_JOB: 未注册的任务类型")
+        if kind not in JOB_HANDLERS:
+            raise ValueError("UNSUPPORTED_JOB: 未注册的任务类型")
+        final = root / "final"
+        hashes = receipt["result"]["hashes"]
+        if not final.is_dir() or {path.name for path in final.iterdir()} != set(hashes):
+            raise ValueError("INVALID_OUTPUT: 数据任务文件集合无效")
+        for name, expected in hashes.items():
+            if not (final / name).is_file() or hashlib.sha256((final / name).read_bytes()).hexdigest() != expected:
+                raise ValueError("INVALID_OUTPUT: 数据任务哈希无效")
+        result = read_json(final / "result.json")
+        if result.get("state") == "complete" and kind in ("demo", "fetch", "import"):
+            from quanto.data.loaders import load_dataset
+            load_dataset(final)
+        elif result.get("state") not in ("incomplete", None) and kind != "validate_strategy":
+            raise ValueError("INVALID_OUTPUT: 数据任务状态无效")
 
 
 def worker_main(job_path: Path, control_dir: Path) -> int:
@@ -298,6 +341,8 @@ def _bootstrap(job_path: Path, control_dir: Path) -> int:
     sys.dont_write_bytecode = True
     if descriptor["kind"] == "backtest":
         verify_bootstrap(descriptor)
+    else:
+        verify_source_hashes(descriptor)
     return worker_main(job_path, control_dir)
 
 

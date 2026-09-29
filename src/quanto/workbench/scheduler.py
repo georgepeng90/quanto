@@ -170,7 +170,9 @@ class Scheduler:
         else:
             # A T7 submission freezes its own kind/input descriptor with source_root.
             frozen = read_json(Path(job.input_path))
-            descriptor.update(source_root=frozen["source_root"], input=frozen["input"])
+            descriptor.update(source_root=frozen["source_root"], input=frozen["input"], source_hashes=frozen["source_hashes"])
+            from quanto.workbench.worker import verify_source_hashes
+            verify_source_hashes(descriptor)
         path = control / "job.json"
         atomic_json(path, descriptor)
         env = {key: value for key, value in os.environ.items() if not key.upper().startswith("PYTHON")}
@@ -244,7 +246,11 @@ class Scheduler:
                 except (OSError, ValueError, KeyError):
                     valid = False
                     error = "INVALID_OUTPUT: 最终产物校验失败"
-            if not self.store.finish_job(job.id, "succeeded" if valid else "failed", expected="running", error=None if valid else error):
+            if valid and job.kind in {"demo", "fetch", "import"}:
+                committed = self.store.finish_data_job(job.id, control.parent / "final", receipt["result"])
+            else:
+                committed = self.store.finish_job(job.id, "succeeded" if valid else "failed", expected="running", error=None if valid else error)
+            if not committed:
                 # Cancel committed after the read above, and the child is already gone.
                 self.store.finish_job(job.id, "cancelled", expected="cancel_requested")
         del self._active[job.id]

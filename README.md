@@ -2,7 +2,7 @@
 
 本项目研究场内行业 ETF 的中期多头趋势策略。目标交易设计见[策略设计](docs/02_策略设计.md)，研究需求见[需求分析](docs/01_需求分析.md)。这些文档描述的是待验证的规则，不表示当前代码已实现该设计，也不表示策略已达到实盘条件。
 
-近期系统目标是建设网页回测工作台，让用户和 Agent 使用同一套能力编辑策略代码与参数、反复回测、查看过程并比较结果。已认可的设计见[工作台架构设计](docs/planning-artifacts/architecture.md)，开发任务见[实施计划](docs/superpowers/plans/2026-09-29-web-backtest-workbench.md)，概览见[系统架构](docs/03_量化系统架构.md)。首版采用本机单用户、ETF 日线研究；网页与实验服务尚未实现。
+近期系统目标是建设网页回测工作台，让用户和 Agent 使用同一套能力编辑策略代码与参数、反复回测、查看过程并比较结果。已认可的设计见[工作台架构设计](docs/planning-artifacts/architecture.md)，开发任务见[实施计划](docs/superpowers/plans/2026-09-29-web-backtest-workbench.md)，概览见[系统架构](docs/03_量化系统架构.md)。首版采用本机单用户、ETF 日线研究；实验 API 已实现，网页仍在开发。
 
 ## 目标交易设计
 
@@ -21,42 +21,30 @@
 
 ## 快速启动
 
-安装开发环境：
+安装开发环境与本机 API：
 
 ```bash
-pip install -e ".[dev]"
+uv sync --extra dev --extra web
 ```
 
-如需通过 AKShare 拉取真实数据，安装数据源依赖：
+如需通过 AKShare 拉取真实数据，另安装数据源依赖：
 
 ```bash
-pip install -e ".[dev,data]"
+uv sync --extra dev --extra web --extra data
 ```
 
-拉取并缓存真实 ETF 与基准数据：
+启动本机服务：
 
 ```bash
-python -m quanto.cli fetch-data --start-date 2018-01-01 --end-date 2026-05-19
+uv run --extra web quanto serve --workspace data/workbench
 ```
 
-该命令会优先复用 `data/raw` 下的本地缓存；只有缺失覆盖区间或使用 `--force-refresh` 时才重新走网络。标准化后的回测输入会写到 `data/processed/prices.csv` 和 `data/processed/benchmark.csv`。
+同源 `GET /api/session` 返回本机令牌；浏览器后续请求和 Agent CLI 均以 `Authorization: Bearer <token>` 调用 `/api`。CLI 可通过 `QUANTO_TOKEN` 环境变量读取令牌，例如 `uv run --extra web quanto datasets list`。任务提交和结果查询共用这套 API；`quanto runs --help` 可查看运行命令。
 
-生成离线样例数据：
-
-```bash
-python -m quanto.cli generate-sample-data --output-dir data/processed
-```
-
-旧版 `run-backtest` 命令已停用；新的回测入口将由网页工作台提供。
-
-样例数据写入 `data/processed`，包含：
-
-- `prices.parquet` 或 `prices.csv`，列为 `date,symbol,open,high,low,close,volume,amount`
-- `benchmark.parquet` 或 `benchmark.csv`，列为 `date,close,turnover`
-
+旧版 `fetch-data`、`generate-sample-data` 和 `run-backtest` 命令已由任务 API 取代。演示数据使用 `POST /api/jobs/data`，请求体为 `{"kind":"demo","payload":{"years":1}}`；真实采集使用 `kind:"fetch"`，并显式检查返回的覆盖与 `result.state`。不完整采集不会注册数据版本。
 
 运行测试：
 
 ```bash
-pytest -q
+uv run --extra dev --extra web pytest -q
 ```

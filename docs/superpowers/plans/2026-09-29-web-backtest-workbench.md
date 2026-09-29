@@ -344,9 +344,9 @@ Ruling: Under architecture sections6-7, quote-only qfq data may use explicitly d
 Ruling: Preserve arbitrary integer BacktestSpec.seed; Python random uses the full integer while NumPy and PYTHONHASHSEED receive seed modulo 2**32, with derived seeds recorded in runtime metadata. Their native ranges differ from the existing accepted contract; cost if wrong is distinct integers colliding for NumPy/hash randomness, explicitly visible and reproducible.
 
 
-## 最终整合修正（独立复审待完成）
+## 最终整合修正与复核
 
-I1–I6 修正完整配置比较、原始/批准信号分离、权威演示披露、延迟保存防覆盖、枚举类型及历史冻结运行分支；M1/M2 修正指标单位/精度与中文比较标签。针对每个触发条件新增回归，旧通过结果不作为新增场景覆盖。最终验证（2026-09-30）如下；仅作者自检，独立复审尚未完成。
+I1–I6 修正完整配置比较、原始/批准信号分离、权威演示披露、延迟保存防覆盖、枚举类型及历史冻结运行分支；M1/M2 修正指标单位/精度与中文比较标签。针对每个触发条件新增回归，旧通过结果不作为新增场景覆盖。最终验证（2026-09-30）如下；控制器已核对原始日志，独立复核结论见文末。
 
 - `uv run pytest -q`：220 passed，111.38 秒，exit 0；新增 15 项配置、信号、披露、历史分支、枚举验证及旧/新报告严格读取回归。历史 schema 1 继续读取/导出；新报告 schema 2，未知版本拒绝。旧信号测试改为分别验证原始和批准权重。
 - `npm.cmd --prefix web run test -- --run`：61 passed / 6 文件，exit 0；新增延迟保存、枚举类型、原始/批准追踪、演示标记、历史草稿深链接和 CodeMirror 文件切换回归。文件切换 RED 实际显示 Python 缓冲区留在 JSON 标签；按文件绑定编辑器后 GREEN。
@@ -365,3 +365,11 @@ Ruling: Block current-draft cloning while strategy source has unsaved edits, wit
 持久预览替换被 automatic approval 以 `blocked by policy` 拒绝，未执行停止或启动，也未创建两次新预览运行。原 PID 4020 仍使用旧后端；旧日志/控制仍在 SDD scratch，不能清理。已通过的隔离 Chrome 验收不替代持久预览重启。此保护修正不重试这些操作。
 
 局部修正验证：真实 ExperimentsPage + CodeMirror 回归先 RED（克隆后源码注释丢失），再 GREEN；`npm.cmd --prefix web run test -- --run tests/editor.test.tsx` 为 22 passed / exit 0。`npm.cmd --prefix web run typecheck`、`npm.cmd --prefix web run build` 均 exit 0；新实验编辑块 500.39 kB / gzip 168.63 kB，ECharts 623.28 kB / gzip 211.37 kB，保留警告。本次仅前端与文档，按控制器要求不重复 Python 220 或预览操作。
+
+### 最终独立复核结论（2026-09-30）
+
+- T11：`bc144b4..9ec37f0` 独立任务复核通过。
+- 全分支：审查 `e6de77f..9ec37f0`，六项 Important 和两项展示 Minor 经 `6320f89` 修正后，独立复核逐项确认关闭。
+- 局部保护：复核发现的源码克隆丢失问题经 `c50fb9e` 修正；独立定点确认保护生效、保存后恢复克隆、未保存实验配置仍可克隆，无新的阻断问题。
+- 仍保留两个延迟加载模块的体积提示及 Node 颜色环境警告，均非功能阻断。辅助研究表通用查询、真实来源完整性、非 Windows 进程清理及环境字节校验边界维持已披露范围。
+- 代码完成并已本地提交，未 push 或 merge。持久预览重启仍受自动审批阻断；隔离浏览器验收通过不等于当前旧服务已更新。保留正在被旧服务使用的工作区和 SDD 日志/控制文件，不能声称清理或重启已完成。手动重启步骤见使用指南。

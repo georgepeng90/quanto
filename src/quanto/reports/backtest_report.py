@@ -16,7 +16,7 @@ from quanto.config import BacktestSpec
 from quanto.data.schemas import DatasetBundle
 
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
 REPORT_TABLE_COLUMNS = {"curves": ["date", "equity", "return", "drawdown", "benchmark_equity", "benchmark_return"],
     "monthly_returns": ["period", "return"], "annual_returns": ["period", "return"],
     "matched_trades": MATCH_COLUMNS, "open_lots": OPEN_COLUMNS}
@@ -100,11 +100,14 @@ def build_report(result: BacktestResult, bundle: DatasetBundle, spec: BacktestSp
         "benchmark_return": benchmark_return})
     matched, open_lots, _ = match_trades(result)
     warnings = list(bundle.manifest.limitations)
+    if bundle.manifest.is_demo:
+        warnings.insert(0, "演示数据：合成绩效，不代表真实市场表现")
     if bundle.manifest.benchmark_type != "total_return":
         warnings.append("基准为价格指数或其他口径，未必包含分红；比较收益时请核对口径。")
     metadata = {"schema_version": SCHEMA_VERSION, "metric_definition_version": spec.metrics.definition_version,
         "price_mode": bundle.price_mode, "benchmark_type": bundle.manifest.benchmark_type,
         "benchmark_source": bundle.manifest.source, "currency": bundle.manifest.currency,
+        "is_demo": bundle.manifest.is_demo, "source": bundle.manifest.source,
         "sample_start": spec.start, "sample_end": spec.end,
         "completed_through": result.completed_through,
         "table_columns": {name: columns for name, columns in TABLE_COLUMNS.items()},
@@ -185,13 +188,13 @@ def _html(report: ReportBundle, result: BacktestResult) -> bytes:
         for key, value in report.metric_definitions.items() if "description" in value)
     warnings = "".join(f"<li>{escape(warning)}</li>" for warning in report.warnings)
     provenance = "".join(f"<tr><th>{label}</th><td>{escape(str(report.metadata[key]))}</td></tr>"
-        for key, label in (("price_mode", "价格口径"), ("dataset_version_id", "数据版本"), ("strategy_revision_id", "策略修订")) if key in report.metadata)
+        for key, label in (("source", "数据来源"), ("price_mode", "价格口径"), ("dataset_version_id", "数据版本"), ("strategy_revision_id", "策略修订")) if key in report.metadata)
     html = ("<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\"><title>回测报告</title>"
         "<style>body{font:16px system-ui,sans-serif;max-width:960px;margin:2rem auto;color:#18324a}"
         "table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:.5rem;text-align:left}"
         "svg{max-width:100%;height:auto}</style></head><body><h1>回测报告</h1>"
         "<p>策略权益（蓝）与基准权益（橙）；基准按首个绩效日归一化。</p>"
-        f"<h2>来源</h2><table>{provenance}</table>{_svg(report.curves)}<h2>指标</h2><table>{rows}</table>"
+        f"{'<p><strong>演示数据：合成绩效，不代表真实市场表现</strong></p>' if report.metadata['is_demo'] else ''}<h2>来源</h2><table>{provenance}</table>{_svg(report.curves)}<h2>指标</h2><table>{rows}</table>"
         f"<h2>指标定义</h2><table>{definitions}</table><h2>说明</h2><ul>{warnings}</ul>"
         f"<script type=\"application/json\" id=\"report-data\">{embedded}</script></body></html>\n")
     return html.encode("utf-8")

@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from quanto.data.schemas import DatasetManifest
 from quanto.data.loaders import load_dataset
-from quanto.workbench.models import BatchItem
+from quanto.workbench.models import BatchItem, FrozenRun
 from quanto.workbench.results import LogPage, Page, compare_runs
 from quanto.workbench.revisions import json_bytes
 from quanto.workbench.runs import RunService
@@ -32,7 +32,7 @@ INT_FIELDS = {"quantity", "filled_quantity", "expired_quantity", "lot_size", "se
 FLOAT_FIELDS = {"cash", "receivables", "market_value", "equity", "stale_value", "price", "commission",
                 "slippage_cost", "weight", "cost_basis", "unrealized_pnl", "realized_pnl", "amount",
                 "return", "drawdown", "benchmark_equity", "benchmark_return", "proceeds"}
-JSON_FIELDS = {"weights", "reasons", "diagnostics", "details"}
+JSON_FIELDS = {"weights", "reasons", "diagnostics", "approved_weights", "approved_reasons", "approved_diagnostics", "details"}
 
 
 def _typed_row(row: dict) -> dict:
@@ -146,7 +146,10 @@ class WorkbenchService:
                 "engine_source_hashes": {name: value for name, value in manifest["files"].items()
                                          if name.startswith(engine_prefixes) or name in engine_names},
                 "effective_strategy_params": manifest["effective_strategy_params"],
-                "backtest_spec": spec,
+                "backtest_spec": spec, "symbols": spec["symbols"], "evaluation": spec["metrics"],
+                "is_demo": manifest["dataset_manifest"]["is_demo"], "source": manifest["dataset_manifest"]["source"],
+                "currency": manifest["dataset_manifest"]["currency"],
+                "source_run_id": run.parent_run_id,
                 "benchmark": manifest["dataset_manifest"]["benchmark_type"],
                 "price_mode": manifest["dataset_manifest"]["price_mode"],
                 "start": spec["start"], "end": spec["end"], "costs": spec["execution"],
@@ -158,6 +161,16 @@ class WorkbenchService:
                 "environment": {key: environment[key] for key in ("python", "platform", "declared_requirements",
                     "declared_optional_requirements", "installed_distributions", "lock_hashes") if key in environment},
                 "reproducibility": manifest["reproducibility"], "sample_purpose": manifest["sample_purpose"]}
+
+    def clone_run(self, identity: str) -> dict:
+        run = self.store.get_run(identity)
+        manifest = self.runs.snapshots.verify(FrozenRun(identity, run.manifest_path, run.manifest_hash), exact=False)
+        payload = {"dataset_version_id": manifest["dataset_version_id"],
+                   "strategy_revision_id": manifest["strategy_revision_id"],
+                   "strategy_params": manifest["effective_strategy_params"],
+                   "backtest_spec": manifest["backtest_spec"],
+                   "sample_purpose": manifest["sample_purpose"], "source_run_id": identity}
+        return self._record(self.store.save_experiment(None, None, payload))
 
     def submit(self, experiment_id: str, expected_revision: int, key: str, source: str = "web") -> dict:
         return self.get_resource("runs", self.runs.submit(experiment_id, expected_revision, key, source).run_id)

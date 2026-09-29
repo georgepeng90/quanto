@@ -174,9 +174,16 @@ def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
         if hashlib.sha256((directory / name).read_bytes()).hexdigest() != expected:
             raise ValueError("INVALID_OUTPUT: 产物哈希不一致")
     manifest = read_json(directory / "manifest.json")
-    if manifest != {"schema_version": "1", "files": {name: value for name, value in hashes.items() if name != "manifest.json"}}:
+    version = manifest.get("schema_version")
+    if version not in {"1", "2"}:
+        raise ValueError("INVALID_OUTPUT: 不支持的报告结构版本")
+    if manifest != {"schema_version": version, "files": {name: value for name, value in hashes.items() if name != "manifest.json"}}:
         raise ValueError("INVALID_OUTPUT: 产物清单不一致")
-    columns = {**TABLE_COLUMNS, **REPORT_TABLE_COLUMNS}
+    # Historical schema 1 stored the approved target in signals; never invent its original intent.
+    table_columns = dict(TABLE_COLUMNS)
+    if version == "1":
+        table_columns["signals"] = ["date", "intent", "weights", "reasons", "diagnostics"]
+    columns = {**table_columns, **REPORT_TABLE_COLUMNS}
     for name, expected in columns.items():
         with (directory / f"{name}.csv").open(encoding="utf-8", newline="") as stream:
             reader = csv.reader(stream)
@@ -186,10 +193,12 @@ def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
         raise ValueError("INVALID_OUTPUT: 产物数值不是有限数")
     metrics = json.loads((directory / "metrics.json").read_text(encoding="utf-8"), parse_constant=reject_constant)
     metadata = read_json(directory / "metadata.json")
-    if metrics.get("schema_version") != "1" or metrics.get("artifacts") != list(OUTPUT_FILES) or not isinstance(metrics.get("metrics"), dict):
+    if metrics.get("schema_version") != version or metrics.get("artifacts") != list(OUTPUT_FILES) or not isinstance(metrics.get("metrics"), dict):
         raise ValueError("INVALID_OUTPUT: 指标结构无效")
-    if metadata.get("table_columns") != TABLE_COLUMNS or metadata.get("schema_version") != "1":
+    if metadata.get("table_columns") != table_columns or metadata.get("schema_version") != version:
         raise ValueError("INVALID_OUTPUT: 元数据结构无效")
+    if version == "2" and (type(metadata.get("is_demo")) is not bool or not isinstance(metadata.get("source"), str)):
+        raise ValueError("INVALID_OUTPUT: 数据来源元数据无效")
 
 
 def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:

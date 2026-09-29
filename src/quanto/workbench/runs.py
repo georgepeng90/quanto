@@ -74,7 +74,11 @@ class RunService:
                 if draft.revision != item.expected_revision:
                     raise ValueError("experiment revision conflict")
                 experiments.append(draft)
-        frozen = [self.snapshots.freeze(draft, source, parent_run_id) for draft in experiments]
+        parents = [parent_run_id or draft.payload.get("source_run_id") for draft in experiments]
+        for parent in parents:
+            if parent is not None:
+                self.store.get_run(parent)
+        frozen = [self.snapshots.freeze(draft, source, parent) for draft, parent in zip(experiments, parents, strict=True)]
         with self.store.transaction() as db:
             existing = self._existing(db, key, fingerprint)
             if existing is not None:
@@ -85,10 +89,10 @@ class RunService:
             group_id = str(uuid4()) if operation == "submit_batch" else None
             next_seq = db.execute("SELECT COALESCE(MAX(enqueue_seq), 0) + 1 FROM jobs").fetchone()[0]
             records = []
-            for offset, (draft, snapshot) in enumerate(zip(experiments, frozen, strict=True)):
+            for offset, (draft, snapshot, parent) in enumerate(zip(experiments, frozen, parents, strict=True)):
                 job_id = str(uuid4())
-                db.execute("INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (snapshot.run_id, job_id, draft.id, draft.revision, str(snapshot.manifest_path), snapshot.manifest_hash, source, parent_run_id, group_id))
-                records.append(RunRecord(snapshot.run_id, job_id, snapshot.manifest_path, snapshot.manifest_hash, source, parent_run_id, group_id, draft.id, draft.revision))
+                db.execute("INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (snapshot.run_id, job_id, draft.id, draft.revision, str(snapshot.manifest_path), snapshot.manifest_hash, source, parent, group_id))
+                records.append(RunRecord(snapshot.run_id, job_id, snapshot.manifest_path, snapshot.manifest_hash, source, parent, group_id, draft.id, draft.revision))
             db.execute("INSERT INTO idempotency VALUES (?, ?, ?)", (key, fingerprint, json_bytes([record.run_id for record in records]).decode()))
             for offset, record in enumerate(records):
                 db.execute("INSERT INTO jobs (id, kind, state, run_id, enqueue_seq, artifact_root, created_at) VALUES (?, 'backtest', 'queued', ?, ?, ?, ?)", (record.job_id, record.run_id, next_seq + offset, str(self.store.artifact_root), utc_now()))

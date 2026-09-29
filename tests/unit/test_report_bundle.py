@@ -30,7 +30,7 @@ def test_export_records_schema_and_mode_for_empty_trade_tables(tmp_path):
     report = build_report(result, bundle, spec)
     files = write_backtest_outputs(tmp_path / "run", result, report)
     metadata = json.loads((tmp_path / "run" / "metadata.json").read_text(encoding="utf-8"))
-    assert metadata["schema_version"] == "1"
+    assert metadata["schema_version"] == "2"
     assert metadata["price_mode"] == "raw_cash"
     assert metadata["benchmark_type"] == "price_index"
     assert metadata["metric_definition_version"] == spec.metrics.definition_version
@@ -93,7 +93,7 @@ def test_html_escapes_embedded_script_closer_and_outputs_are_deterministic(tmp_p
     assert "<svg" in html
     assert "<h2>指标定义</h2>" in html
     assert "https://" not in html
-    assert json.loads((tmp_path / "a" / "metrics.json").read_text(encoding="utf-8"))["schema_version"] == "1"
+    assert json.loads((tmp_path / "a" / "metrics.json").read_text(encoding="utf-8"))["schema_version"] == "2"
 
 
 def test_cash_only_html_displays_unavailable_ratios_without_changing_json(tmp_path):

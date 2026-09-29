@@ -104,7 +104,7 @@ test('run list shows frozen strategy, params, dataset and final metrics with sta
   expect(await screen.findByText(/strategy-1/)).toBeVisible()
   expect(screen.getByText(/dataset-1/)).toBeVisible()
   expect(screen.getByText(/window.*4/)).toBeVisible()
-  expect(screen.getByText(/最终权益.*100000/)).toBeVisible()
+  expect(screen.getByText(/最终权益.*100,000.00/)).toBeVisible()
   await userEvent.click(screen.getByRole('button', { name: '刷新' }))
   await waitFor(() => expect(calls.filter(path => path === '/api/runs').length).toBeGreaterThan(1))
   expect(calls.filter(path => path === '/api/runs/r1/results')).toHaveLength(1)
@@ -155,4 +155,31 @@ test('navigation aborts an unfinished run-list page read', async () => {
   await userEvent.click(screen.getByRole('link', { name: '对比' }))
   await screen.findByRole('heading', { name: '运行对比' })
   expect(pendingSignal?.aborted).toBe(true)
+})
+
+
+test.each(['/runs/r1', '/runs'])('demo disclosure remains visible beside performance on %s', async path => {
+  const previous = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/runs/r1') return Response.json({ ...run, provenance: { ...provenance, is_demo: true, source: 'synthetic fixture', currency: 'CNY' } })
+    return previous(input, init)
+  }))
+  app(path)
+  expect(await screen.findByText(/演示数据：合成绩效/)).toBeVisible()
+  expect(screen.getByText(/演示数据：合成绩效/)).toHaveTextContent('synthetic fixture')
+})
+
+test('shows separate raw signal and approved target, and marks historical signal uncertainty', async () => {
+  const previous = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input).includes('/tables/signals')) return page([
+      { date: '2024-01-03', intent: 'target', weights: { A: 1 }, reasons: { A: 'original' }, diagnostics: { score: 42 }, approved_intent: 'target', approved_weights: { A: .5 }, approved_reasons: { A: 'risk_limit' }, approved_diagnostics: {} },
+      { date: '2024-01-04', intent: 'target', weights: { A: .5 }, reasons: {}, diagnostics: {} },
+    ])
+    return previous(input, init)
+  }))
+  app('/runs/r1')
+  expect(await screen.findByText(/策略原始目标权重/)).toHaveTextContent('"A":1')
+  expect(screen.getByText(/风控批准目标权重/)).toHaveTextContent('"A":0.5')
+  expect(screen.getByText(/历史记录未保存原始信号/)).toBeVisible()
 })

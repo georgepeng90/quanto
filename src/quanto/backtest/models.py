@@ -40,7 +40,8 @@ TABLE_COLUMNS = {
     "orders": list(Order.__dataclass_fields__),
     "fills": list(Fill.__dataclass_fields__),
     "positions": ["date", "symbol", "shares", "sellable_shares", "market_value", "weight", "cost_basis", "unrealized_pnl", "realized_pnl"],
-    "signals": ["date", "intent", "weights", "reasons", "diagnostics"],
+    "signals": ["date", "intent", "weights", "reasons", "diagnostics",
+                "approved_intent", "approved_weights", "approved_reasons", "approved_diagnostics"],
     "risk_events": ["date", "code", "message", "details"],
     "account_events": ["date", "event_type", "symbol", "amount", "details"],
 }

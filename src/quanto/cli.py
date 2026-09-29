@@ -61,7 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
         if name == "runs":
             submit = actions.add_parser("submit")
             submit.add_argument("--json", required=True)
-            for action in ("cancel", "rerun", "results", "logs"):
+            for action in ("cancel", "rerun", "clone", "results", "logs"):
                 entry = actions.add_parser(action)
                 entry.add_argument("identity")
                 if action == "rerun":
@@ -123,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
                 result = client.post(root, body)
             elif action == "update":
                 result = client.request("PUT", f"{root}/{args.identity}", body)
-            elif action in ("rerun", "cancel"):
+            elif action in ("rerun", "cancel", "clone"):
                 result = client.post(f"{root}/{args.identity}/{action}", body or {})
             else:
                 result = client.get(f"{root}/{args.identity}/{action}")

@@ -304,7 +304,7 @@ T11 最终交付证据（2026-09-29，实施目录 `C:\Users\georg\.codex\worktr
 - Windows Job Object 已验证突退回收；分配失败在执行前报错。非 Windows 两个根进程都消失后的任意辅助进程遗留窗口仍存在，未宣称跨平台同等保证。详细时序假设与例子见使用指南。
 - 原工作区 `D:/Projects/quanto/docs/planning-artifacts/prd.md` 仍未跟踪且未修改；SHA-256 `85f6eade5d6f75a844e847bf6636d1311d172e92450b207d3b102258b54d48e1`。全部修改仅在现有 managed worktree，本阶段只本地提交，不 push/merge。
 
-T11 提交主题：`feat: deliver the local browser backtesting workbench`。以下为此前控制器记录的独立任务完成范围；本阶段任务复核与全分支复核待控制器接续，未将作者自检冒充独立复核。
+T11 提交主题：`feat: deliver the local browser backtesting workbench`。以下为此前控制器记录的独立任务完成范围；T11 已经控制器独立复核；全分支审查提出的最终整合修正及其独立复审记录见下文。
 
 - Task 1: complete (commits e6de77f..6ac61f0, review clean)
 - Task 2: complete (commits 6ac61f0..bd05489, review clean)
@@ -342,3 +342,15 @@ Ruling: Complete round trips count per-symbol flat-to-long-to-flat episodes; FIF
 Ruling: Under architecture sections6-7, quote-only qfq data may use explicitly disclosed synthetic trading/lot/settlement assumptions in adjusted_research when its calendar and quote/benchmark grid are complete. These are model assumptions, never verified real tradability; missing quote sessions are still unresolved unless confirmed suspended, and raw_cash retains actual event/status requirements. Cost if wrong is a simplified execution assumption affecting results, always disclosed before running and in reports.
 
 Ruling: Preserve arbitrary integer BacktestSpec.seed; Python random uses the full integer while NumPy and PYTHONHASHSEED receive seed modulo 2**32, with derived seeds recorded in runtime metadata. Their native ranges differ from the existing accepted contract; cost if wrong is distinct integers colliding for NumPy/hash randomness, explicitly visible and reproducible.
+
+
+## 最终整合修正（独立复审待完成）
+
+I1–I6 修正完整配置比较、原始/批准信号分离、权威演示披露、延迟保存防覆盖、枚举类型及历史冻结运行分支；M1/M2 修正指标单位/精度与中文比较标签。针对每个触发条件新增回归，旧通过结果不作为新增场景覆盖。最终验证（2026-09-30）如下；仅作者自检，独立复审尚未完成。
+
+- `uv run pytest -q`：220 passed，111.38 秒，exit 0；新增 15 项配置、信号、披露、历史分支、枚举验证及旧/新报告严格读取回归。历史 schema 1 继续读取/导出；新报告 schema 2，未知版本拒绝。旧信号测试改为分别验证原始和批准权重。
+- `npm.cmd --prefix web run test -- --run`：61 passed / 6 文件，exit 0；新增延迟保存、枚举类型、原始/批准追踪、演示标记、历史草稿深链接和 CodeMirror 文件切换回归。文件切换 RED 实际显示 Python 缓冲区留在 JSON 标签；按文件绑定编辑器后 GREEN。
+- `npm.cmd --prefix web run typecheck` 与 `npm.cmd --prefix web run build`：exit 0。ECharts 623.28 kB / gzip 211.37 kB，实验编辑页 500.27 kB 左右，保留体积警告，不拆包或抬阈值。
+- `$env:PLAYWRIGHT_CHANNEL='chrome'; npm.cmd --prefix web run test:e2e`：1 passed，16.9 秒，exit 0；真实创建/执行两次运行，修改原草稿后再从历史运行分支仍得到旧权重，验证来源、演示披露、信号与批准目标、比较和 HTML。首次图表 208 ms；Node 颜色环境警告仍为非阻塞。作者查看最终桌面截图。
+- 原预览两份 schema 1 报告实际通过新服务结果/表/CSV/JSON/HTML 读取；154 个既有冻结输入/最终产物文件在预览重启前记录哈希，禁止改写。原工作区 PRD SHA-256 仍为 `85f6eade5d6f75a844e847bf6636d1311d172e92450b207d3b102258b54d48e1`。
+Ruling: The first release does not add a generic StrategyContext query API for arbitrary auxiliary research tables. Declared research-file freezing remains a reproducibility boundary, not a promise of general point-in-time data access; the approved context and explicit later breadth-data extension support this scope. Cost if wrong is that strategies needing those extra research tables require a later context/data-access extension before their research can run reliably.

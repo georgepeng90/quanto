@@ -44,3 +44,21 @@ test('loads complete comparable curves across cursor pages for overlay', async (
   expect(paths).toContain('/api/runs/r1/tables/curves?cursor=100')
   expect(paths).toContain('/api/runs/r2/tables/curves?cursor=100')
 })
+
+
+test('comparison shows demo disclosure, complete configuration labels and readable metric units', async () => {
+  const previous = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/comparisons') return Response.json({ runs: [{ ...base, run_id: 'r1', is_demo: true, source: 'fixture', currency: 'CNY', metrics: { total_return: .123456, final_equity: 1234.567, benchmark_return: .12, relative_return_difference: .003456 } }, { ...base, run_id: 'r2', is_demo: false, source: 'real' }], differences: { symbols: [['A'], ['B']], evaluation: [{ cash_rate: 0 }, { cash_rate: .1 }], backtest_spec: [{}, {}] }, directly_comparable: false })
+    return previous(input, init)
+  }))
+  render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/compare?run_ids=r1,r2'] })} />)
+  await userEvent.click(await screen.findByRole('button', { name: '比较运行' }))
+  expect(await screen.findByText(/演示数据：合成绩效/)).toBeVisible()
+  expect(screen.getByText('基准收益')).toBeVisible()
+  expect(screen.getByText('相对收益差')).toBeVisible()
+  expect(screen.getByText('12.35%')).toBeVisible()
+  expect(screen.getByText('CNY 1,234.57')).toBeVisible()
+  expect(screen.getByText(/标的池/)).toBeVisible()
+  expect(screen.getByText(/评估与现金利息/)).toBeVisible()
+})

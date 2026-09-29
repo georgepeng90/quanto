@@ -58,6 +58,7 @@ export const api = {
   run: (id: string, signal?: AbortSignal) => request<RunRecord>(`/runs/${encodeURIComponent(id)}`, { signal }),
   submitRun: (experiment_id: string, expected_revision: number, idempotency_key: string) => request<RunRecord>('/runs', json({ experiment_id, expected_revision, idempotency_key, source: 'web' })),
   submitBatch: (items: { experiment_id: string; expected_revision: number }[], idempotency_key: string) => request<{ items: RunRecord[] }>('/runs/batch', json({ items, idempotency_key, source: 'web' })),
+  cloneRun: (id: string) => request<ExperimentDraft>(`/runs/${encodeURIComponent(id)}/clone`, json({})),
   cancelRun: (id: string) => request<RunRecord>(`/runs/${encodeURIComponent(id)}/cancel`, json({})),
   runLogs: (id: string, cursor?: string, signal?: AbortSignal) => request<LogPage>(`/runs/${encodeURIComponent(id)}/logs${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal }),
   runTable: (id: string, name: TableName, cursor?: string, signal?: AbortSignal) => request<Page<TableRow>>(`/runs/${encodeURIComponent(id)}/tables/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal }),

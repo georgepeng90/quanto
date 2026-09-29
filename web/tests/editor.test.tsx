@@ -263,3 +263,93 @@ test('loads later dataset, strategy, and experiment pages into their selectors',
   expect(screen.getByRole('option', { name: /later-strategy/ })).toBeInTheDocument()
   expect(screen.getByRole('option', { name: /e2/ })).toBeInTheDocument()
 })
+
+
+test('enum choices preserve typed values and empty string distinct from unset', async () => {
+  function Harness() { const [value, setValue] = useState<Record<string, unknown>>({}); return <ParameterForm schema={{ type: 'object', properties: { count: { type: 'integer', enum: [1, 2] }, enabled: { type: 'boolean', enum: [false, true] }, mode: { type: 'string', enum: ['', 'x'] } } }} value={value} onChange={setValue} /> }
+  render(<Harness />)
+  for (const [name, label] of [['count', '2'], ['enabled', 'true'], ['mode', '']]) {
+    const select = screen.getByLabelText(name) as HTMLSelectElement
+    const option = [...select.options].find(item => item.text === label)!
+    await userEvent.selectOptions(select, option)
+  }
+  expect(JSON.parse((screen.getByLabelText('参数 JSON（与表单共享状态）') as HTMLTextAreaElement).value)).toEqual({ count: 2, enabled: true, mode: '' })
+  await userEvent.selectOptions(screen.getByLabelText('mode'), '')
+  expect(JSON.parse((screen.getByLabelText('参数 JSON（与表单共享状态）') as HTMLTextAreaElement).value)).toEqual({ count: 2, enabled: true })
+})
+
+test.each([false, true])('late experiment save preserves newer typing or switched identity (%s)', async switched => {
+  let release!: (value: Response) => void
+  let requestBody: typeof experiment | undefined
+  const previous = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/experiments/e1' && init?.method === 'PUT') { requestBody = JSON.parse(String(init.body)); return new Promise<Response>(resolve => { release = resolve }) }
+    return previous(input, init)
+  }))
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  await screen.findByRole('option', { name: /e1/ })
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  await screen.findByText(/当前修订 s1/)
+  await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
+  await waitFor(() => expect(requestBody).toBeDefined())
+  if (switched) await userEvent.selectOptions(screen.getByLabelText('实验草稿'), '')
+  fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: 'typed after save' } })
+  await act(async () => release(Response.json({ ...experiment, revision: 2 })))
+  expect(screen.getByLabelText('样本用途')).toHaveValue('typed after save')
+  expect(screen.getByText('实验配置未保存')).toBeInTheDocument()
+  expect(screen.getByLabelText('实验草稿')).toHaveValue(switched ? '' : 'e1')
+  if (!switched) {
+    expect(screen.getByText('修订 2', { exact: true })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
+    await waitFor(() => expect(requestBody).toEqual(expect.objectContaining({ expected_revision: 2, payload: expect.objectContaining({ sample_purpose: 'typed after save' }) })))
+    await act(async () => release(Response.json({ ...experiment, revision: 3, payload: { ...experiment.payload, sample_purpose: 'typed after save' } })))
+  }
+})
+
+test.each([false, true])('late source registration preserves newer buffer or switched revision (%s)', async switched => {
+  let release!: (value: Response) => void
+  const onSaved = vi.fn()
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input) === '/api/session') return Response.json({ token: 'token' })
+    return new Promise<Response>(resolve => { release = resolve })
+  }))
+  const props = { onSaved, onDirtyChange: vi.fn() }
+  const view = render(<StrategyEditor revision={strategy} {...props} />)
+  await userEvent.click(screen.getByRole('button', { name: '保存新修订' }))
+  await waitFor(() => expect(release).toBeDefined())
+  if (switched) view.rerender(<StrategyEditor revision={{ ...strategy, id: 's3', files: { ...strategy.files, 'strategy.py': 'switched source' } }} {...props} />)
+  const editor = EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!
+  act(() => editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: 'newer source' } }))
+  await act(async () => release(Response.json({ ...strategy, id: 's2' })))
+  expect(editor.state.doc.toString()).toBe('newer source')
+  expect(screen.getByText('未保存', { exact: true })).toBeInTheDocument()
+  expect(onSaved).not.toHaveBeenCalled()
+})
+
+
+test('historical draft deep link remains selected beyond the first listing page', async () => {
+  const previous = globalThis.fetch
+  const historical = { ...experiment, id: 'historic-clone', payload: { ...experiment.payload, source_run_id: 'old-run' } }
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/experiments/historic-clone') return Response.json(historical)
+    return previous(input, init)
+  }))
+  render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments?draft=historic-clone'] })} />)
+  await screen.findByText(/当前修订 s1/)
+  expect(screen.getByLabelText('实验草稿')).toHaveValue('historic-clone')
+  expect(screen.getByLabelText('样本用途')).toHaveValue('exploration')
+})
+
+
+test('switching source files during the typing latch binds the buffer to its file', async () => {
+  render(<StrategyEditor revision={strategy} onSaved={vi.fn()} onDirtyChange={vi.fn()} />)
+  const pythonView = EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!
+  act(() => pythonView.dispatch({ changes: { from: 0, to: pythonView.state.doc.length, insert: 'from quanto import something' } }))
+  await userEvent.click(screen.getByRole('button', { name: 'strategy.json' }))
+  const jsonView = EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!
+  expect(jsonView.state.doc.toString()).toBe(JSON.stringify(manifest))
+  act(() => jsonView.dispatch({ changes: { from: 0, to: jsonView.state.doc.length, insert: JSON.stringify({ ...manifest, name: 'new declaration' }) } }))
+  await userEvent.click(screen.getByRole('button', { name: 'strategy.py' }))
+  expect(EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!.state.doc.toString()).toBe('from quanto import something')
+})

@@ -28,13 +28,15 @@ def compare_runs(run_ids: list[dict]) -> ComparisonResult:
         raise ValueError("comparison requires between 2 and 20 runs")
     fields = ("strategy_revision_id", "strategy_source_hashes", "effective_strategy_params", "dataset_version_id",
               "benchmark", "start", "end", "costs", "price_mode", "metric_definition_version", "metric_definitions",
-              "engine_source_hashes", "environment_fingerprint", "seed", "risk", "initial_cash")
+              "engine_source_hashes", "environment_fingerprint", "seed", "risk", "initial_cash", "symbols", "evaluation", "backtest_spec",
+              "execution_definition_version", "risk_definition_version")
     differences = {}
     for field in fields:
         values = [run.get(field) for run in run_ids]
         if any(value != values[0] for value in values[1:]):
             differences[field] = values
     blockers = {"dataset_version_id", "benchmark", "start", "end", "costs", "price_mode", "metric_definition_version",
-                "metric_definitions", "engine_source_hashes", "environment_fingerprint"}
+                "metric_definitions", "engine_source_hashes", "environment_fingerprint", "evaluation",
+                "execution_definition_version", "risk_definition_version"}
     comparable = all(run.get("state") == "succeeded" for run in run_ids) and not blockers.intersection(differences)
     return ComparisonResult(run_ids, differences, comparable)

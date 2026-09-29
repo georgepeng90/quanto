@@ -129,10 +129,14 @@ def run_backtest(
         decision = risk.evaluate(ctx, proposed)
         tables["risk_events"].extend(decision.events)
         intent = decision.intent
-        tables["signals"].append(copy.deepcopy(dict(date=asof, intent="hold" if isinstance(intent, Hold) else "target",
-            weights={} if isinstance(intent, Hold) else intent.weights,
-            reasons={"hold": intent.reason} if isinstance(intent, Hold) else intent.reasons,
-            diagnostics={} if isinstance(intent, Hold) else intent.diagnostics)))
+        tables["signals"].append(copy.deepcopy(dict(date=asof, intent="hold" if isinstance(proposed, Hold) else "target",
+            weights={} if isinstance(proposed, Hold) else proposed.weights,
+            reasons={"hold": proposed.reason} if isinstance(proposed, Hold) else proposed.reasons,
+            diagnostics={} if isinstance(proposed, Hold) else proposed.diagnostics,
+            approved_intent="hold" if isinstance(intent, Hold) else "target",
+            approved_weights={} if isinstance(intent, Hold) else intent.weights,
+            approved_reasons={"hold": intent.reason} if isinstance(intent, Hold) else intent.reasons,
+            approved_diagnostics={} if isinstance(intent, Hold) else intent.diagnostics)))
         if isinstance(intent, TargetPortfolio):
             for order in orders:
                 if order.status == "pending":

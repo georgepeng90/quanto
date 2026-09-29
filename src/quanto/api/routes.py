@@ -95,6 +95,11 @@ def cancel_run(request: Request, identity: str):
     return service(request).cancel_run(identity)
 
 
+@router.post("/runs/{identity}/clone")
+def clone_run(request: Request, identity: str):
+    return service(request).clone_run(identity)
+
+
 @router.post("/runs/{identity}/rerun")
 def rerun(request: Request, identity: str, body: dict):
     return service(request).rerun(identity, body.get("idempotency_key", ""), body.get("source", "web"))

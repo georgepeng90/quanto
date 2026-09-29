@@ -233,7 +233,8 @@ def test_strategy_cannot_mutate_group_or_approval_facts_before_policy():
     approvals = pd.DataFrame([dict(approval_id="prior", pause_asof="2023-12-29", available_at="2024-01-01T06:00:00Z")])
     result = run_backtest(replace(b, auxiliary={"risk_approvals": approvals}), MutationAttempt({}),
         spec_case(b, risk={"group_caps": {"G": .25}, "drawdown_pause": .1, "pause_action": "liquidate", "recovery_mode": "recorded_approval"}), lambda e: None, lambda: False)
-    assert result.signals.iloc[0].weights == {"A": .25}
+    assert result.signals.iloc[0].weights == {"A": 1}
+    assert result.signals.iloc[0].approved_weights == {"A": .25}
     assert result.fills.iloc[0].quantity == 25
     assert "RISK_RESUMED" not in result.risk_events.code.tolist()
     assert result.positions.iloc[-1].shares == 0

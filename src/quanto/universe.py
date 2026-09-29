@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from pathlib import Path
 
 import pandas as pd
@@ -38,7 +39,7 @@ def build_eligibility(prices: pd.DataFrame, instruments: pd.DataFrame, rule: dic
         raise ValueError(f"Unknown universe rule fields: {sorted(set(rule) - allowed)}")
     min_history = rule.get("min_history_days", 1)
     min_turnover = rule.get("min_avg_turnover_20d", 0)
-    if not isinstance(min_history, int) or min_history < 1 or not isinstance(min_turnover, (int, float)) or min_turnover < 0:
+    if isinstance(min_history, bool) or not isinstance(min_history, int) or min_history < 1 or isinstance(min_turnover, bool) or not isinstance(min_turnover, (int, float)) or not math.isfinite(min_turnover) or min_turnover < 0:
         raise ValueError("Invalid universe eligibility rule")
     ordered = prices.sort_values(["symbol", "date"]).copy()
     counts = ordered.groupby("symbol").cumcount() + 1

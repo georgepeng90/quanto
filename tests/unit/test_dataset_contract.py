@@ -119,11 +119,41 @@ def test_strategy_params_apply_schema_defaults_and_reject_unknown_keys():
         resolve_strategy_params(schema, {"lookback": 0})
 
 
+@pytest.mark.parametrize("schema", [
+    {"$defs": {"settings": {"type": "object", "properties": {"lookback": {"type": "integer", "default": 20}}}}, "type": "object", "properties": {"settings": {"$ref": "#/$defs/settings"}}},
+    {"allOf": [{"type": "object", "properties": {"lookback": {"type": "integer", "default": 20}}}]},
+    {"type": ["object", "null"], "properties": {"settings": {"type": "object"}}},
+    {},
+])
+def test_unsupported_strategy_schema_composition_is_rejected(schema):
+    with pytest.raises(ValueError):
+        resolve_strategy_params(schema, {"settings": {"surprise": True}})
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_strategy_parameters_must_be_finite_json_numbers(bad):
+    schema = {"type": "object", "properties": {"weight": {"type": "number"}}}
+    with pytest.raises(ValueError):
+        resolve_strategy_params(schema, {"weight": bad})
+    with pytest.raises(ValueError):
+        resolve_strategy_params({"type": "object", "properties": {"weight": {"type": "number", "default": bad}}}, {})
+
+
 def test_manifest_rejects_unknown_fields(tmp_path):
     path = dataset_case(tmp_path)
     manifest_path = path / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     manifest["surprise"] = 1
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError):
+        load_dataset(path)
+
+
+def test_manifest_rejects_nonfinite_universe_turnover(tmp_path):
+    path = dataset_case(tmp_path)
+    manifest_path = path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["universe_rule"]["min_avg_turnover_20d"] = float("nan")
     manifest_path.write_text(json.dumps(manifest))
     with pytest.raises(ValueError):
         load_dataset(path)

@@ -17,7 +17,7 @@
 
 ## 当前仓库状态
 
-仓库包含数据拉取、离线样例数据和命令行回测原型。现有 `configs/strategy.yaml` 与回测代码仍采用早期多因子参数和周频轮动逻辑；下列命令运行的是这个**现有原型**，不能用于验证上面的新设计已落地。新规则的实现、参数校准、样本外验证和实盘可行性均尚待完成。
+仓库包含数据拉取、离线样例数据和旧版回测原型代码。现有 `configs/strategy.yaml` 与回测代码仍采用早期多因子参数和周频轮动逻辑，不能用于验证上面的新设计已落地。新规则的实现、参数校准、样本外验证和实盘可行性均尚待完成。
 
 ## 快速启动
 
@@ -41,19 +41,19 @@ python -m quanto.cli fetch-data --start-date 2018-01-01 --end-date 2026-05-19
 
 该命令会优先复用 `data/raw` 下的本地缓存；只有缺失覆盖区间或使用 `--force-refresh` 时才重新走网络。标准化后的回测输入会写到 `data/processed/prices.csv` 和 `data/processed/benchmark.csv`。
 
-生成离线样例数据并运行现有回测原型：
+生成离线样例数据：
 
 ```bash
 python -m quanto.cli generate-sample-data --output-dir data/processed
-python -m quanto.cli run-backtest --config configs/strategy.yaml --universe configs/universe.yaml
 ```
 
-默认读取 `data/processed` 下的本地缓存数据：
+旧版 `run-backtest` 命令已停用；新的回测入口将由网页工作台提供。
+
+样例数据写入 `data/processed`，包含：
 
 - `prices.parquet` 或 `prices.csv`，列为 `date,symbol,open,high,low,close,volume,amount`
 - `benchmark.parquet` 或 `benchmark.csv`，列为 `date,close,turnover`
 
-回测输出写入 `outputs/backtests/{run_id}`，包含 `equity_curve.csv`、`trades.csv`、`positions.csv`、`signals.csv`、`metrics.json` 和 `report.md`。
 
 运行测试：
 

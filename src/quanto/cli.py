@@ -4,28 +4,9 @@ import argparse
 import sys
 from datetime import datetime
 
-from quanto.config import load_config
-from quanto.data.cache import load_processed_benchmark, load_processed_prices
 from quanto.data.fetcher import build_processed_dataset
 from quanto.sample_data import generate_sample_data
-from quanto.universe import apply_universe_filters, load_universe
-from quanto.backtest.engine import run_backtest
-
-
-def run_backtest_command(args: argparse.Namespace) -> int:
-    cfg = load_config(args.config)
-    prices = load_processed_prices(args.data_dir or cfg.data_dir)
-    benchmark = load_processed_benchmark(args.data_dir or cfg.data_dir)
-    universe = load_universe(args.universe)
-    prices = apply_universe_filters(prices, universe)
-    if prices.empty:
-        raise ValueError("No price rows remain after universe filters.")
-    run_id = args.run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
-    result = run_backtest(prices, benchmark, cfg.raw, args.output_dir or cfg.output_dir, run_id)
-    print(f"Backtest completed: {result.run_dir}")
-    print(f"Final equity: {result.metrics['final_equity']:.2f}")
-    print(f"Max drawdown: {result.metrics['max_drawdown']:.2%}")
-    return 0
+from quanto.universe import load_universe
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -52,13 +33,6 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--quiet", action="store_true")
     fetch.set_defaults(func=fetch_data_command)
 
-    bt = sub.add_parser("run-backtest", help="Run pandas weekly rotation backtest")
-    bt.add_argument("--config", default="configs/strategy.yaml")
-    bt.add_argument("--universe", default="configs/universe.yaml")
-    bt.add_argument("--data-dir", default=None)
-    bt.add_argument("--output-dir", default=None)
-    bt.add_argument("--run-id", default=None)
-    bt.set_defaults(func=run_backtest_command)
     return parser
 
 

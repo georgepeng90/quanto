@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import ast
 import copy
+import math
 from pathlib import Path
 from typing import Any, TYPE_CHECKING
 
@@ -231,6 +232,26 @@ class BacktestSpec(StrictSpec):
 
 def resolve_strategy_params(schema: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
     checked_schema = copy.deepcopy(schema)
+    if checked_schema.get("type") != "object":
+        raise ValueError("Strategy parameter schema must have an object root")
+
+    unsupported = {"$ref", "$dynamicRef", "$defs", "allOf", "anyOf", "oneOf", "not", "if", "then", "else", "dependentSchemas", "patternProperties", "unevaluatedProperties", "unevaluatedItems", "contains", "prefixItems"}
+
+    def require_supported(node: Any) -> None:
+        if isinstance(node, dict):
+            invalid = unsupported & node.keys()
+            if invalid:
+                raise ValueError(f"Unsupported strategy schema keywords: {sorted(invalid)}")
+            if isinstance(node.get("type"), list):
+                raise ValueError("Strategy parameter schema union types are unsupported")
+            if node.get("additionalProperties") not in (None, False):
+                raise ValueError("Strategy parameter objects cannot allow unknown fields")
+            for key, child in node.items():
+                if key not in {"default", "enum", "const", "examples"}:
+                    require_supported(child)
+        elif isinstance(node, list):
+            for child in node:
+                require_supported(child)
 
     def close_objects(node: dict[str, Any]) -> None:
         if node.get("type") == "object":
@@ -251,10 +272,27 @@ def resolve_strategy_params(schema: dict[str, Any], params: dict[str, Any]) -> d
             for item in value:
                 apply_defaults(node["items"], item)
 
+    def require_json_value(value: Any) -> None:
+        if value is None or isinstance(value, (str, bool, int)):
+            return
+        if isinstance(value, float) and math.isfinite(value):
+            return
+        if isinstance(value, list):
+            for item in value:
+                require_json_value(item)
+            return
+        if isinstance(value, dict) and all(isinstance(key, str) for key in value):
+            for item in value.values():
+                require_json_value(item)
+            return
+        raise ValueError("Strategy parameters must contain finite JSON values")
+
+    require_supported(checked_schema)
     close_objects(checked_schema)
     Draft202012Validator.check_schema(checked_schema)
     effective = copy.deepcopy(params)
     apply_defaults(checked_schema, effective)
+    require_json_value(effective)
     try:
         Draft202012Validator(checked_schema).validate(effective)
     except ValidationError as exc:

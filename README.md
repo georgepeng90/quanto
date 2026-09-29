@@ -19,6 +19,8 @@
 
 工作台包含独立策略协议、买入持有与趋势轮动模板、按时间推进的账本、不可变快照、持久队列和中文网页。`configs/strategy.yaml` 不是工作台实验输入；实验使用 JSON 契约。模板可运行不表示目标交易设计的全部研究规则或盈利能力已经验证。参数校准、样本外验证和实盘可行性仍待研究。
 
+新登记的行情数据使用 Parquet，SQLite 管理版本、实验和任务。新回测共享一份经校验的数据对象，分别冻结策略与配置；运行时读取所选标的至结束日的行情，保留起点前全部历史。CSV 继续用于导入、下载缓存及报告导出。旧数据和旧快照不改写；完整工作区备份须包含共享数据对象与结果目录。设计与实测见[存储优化方案](docs/superpowers/specs/2026-09-30-market-data-storage-design.md)和[基准记录](docs/superpowers/benchmarks/2026-09-30-market-data-storage-baseline.md)。
+
 ## 快速启动
 
 代码已合入 `v2`。在仓库根目录 `D:\Projects\quanto` 执行（Python 3.13、Node.js 24、uv）：

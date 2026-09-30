@@ -1,0 +1,683 @@
+{
+  "benchmark_rows_through_cutoff": 2029,
+  "calendar_observation_end": "2026-05-21",
+  "calendar_rows_including_observed_future_sessions": 2031,
+  "configured_enabled_symbols": 50,
+  "configured_symbols_without_source_files": [
+    "512980",
+    "562500",
+    "159770",
+    "159667",
+    "516960",
+    "516160",
+    "515790",
+    "516880",
+    "512200",
+    "512010",
+    "159992",
+    "512290",
+    "159825",
+    "159865",
+    "516780",
+    "515220",
+    "516020",
+    "561560"
+  ],
+  "data_start": "2018-01-02",
+  "eligibility_rows": 40798,
+  "etf_source_coverage": {
+    "159611": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2022-01-07",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1053,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159745": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-06-18",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1190,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159755": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-06-24",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1186,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159766": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-07-23",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1165,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159819": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2020-09-23",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1365,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159869": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-03-05",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1260,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159928": {
+      "coverage_end": "2026-05-19",
+      "coverage_start": "2018-01-02",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 2029,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159995": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2020-02-10",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1521,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159996": {
+      "coverage_end": "2026-05-19",
+      "coverage_start": "2020-03-16",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1496,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "159998": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2020-04-13",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1477,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512000": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 2029,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512170": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-06-17",
+      "missing_benchmark_sessions_through_cutoff": [
+        "2021-02-24"
+      ],
+      "rows_through_cutoff": 1677,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512400": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 2029,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512480": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-06-12",
+      "missing_benchmark_sessions_through_cutoff": [
+        "2021-03-26"
+      ],
+      "rows_through_cutoff": 1680,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512580": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 2029,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512660": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 2029,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512690": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-05-06",
+      "missing_benchmark_sessions_through_cutoff": [
+        "2021-05-14"
+      ],
+      "rows_through_cutoff": 1706,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512710": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-08-26",
+      "missing_benchmark_sessions_through_cutoff": [
+        "2021-03-19"
+      ],
+      "rows_through_cutoff": 1627,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512720": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-08-16",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1634,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512760": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-06-12",
+      "missing_benchmark_sessions_through_cutoff": [
+        "2020-09-09"
+      ],
+      "rows_through_cutoff": 1680,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512800": {
+      "coverage_end": "2026-05-19",
+      "coverage_start": "2018-01-02",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 2029,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "512880": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 2029,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "515030": {
+      "coverage_end": "2026-05-19",
+      "coverage_start": "2020-03-04",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1504,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "515050": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-10-16",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1597,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "515170": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-01-13",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1292,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "515210": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2020-03-02",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1506,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "515880": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-09-06",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1619,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "516010": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-03-05",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1260,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "516120": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-03-09",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1258,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "516510": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-04-07",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1238,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "516950": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-05-14",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 1214,
+      "through_cutoff_end": "2026-05-19"
+    },
+    "562550": {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2023-03-27",
+      "missing_benchmark_sessions_through_cutoff": [],
+      "rows_through_cutoff": 760,
+      "through_cutoff_end": "2026-05-19"
+    }
+  },
+  "exclusions": {
+    "159667": [
+      "no_source_csv"
+    ],
+    "159770": [
+      "no_source_csv"
+    ],
+    "159825": [
+      "no_source_csv"
+    ],
+    "159865": [
+      "no_source_csv"
+    ],
+    "159992": [
+      "no_source_csv"
+    ],
+    "512010": [
+      "no_source_csv"
+    ],
+    "512170": [
+      "unknown_missing_benchmark_sessions"
+    ],
+    "512200": [
+      "no_source_csv"
+    ],
+    "512290": [
+      "no_source_csv"
+    ],
+    "512480": [
+      "unknown_missing_benchmark_sessions"
+    ],
+    "512690": [
+      "unknown_missing_benchmark_sessions"
+    ],
+    "512710": [
+      "unknown_missing_benchmark_sessions"
+    ],
+    "512760": [
+      "unknown_missing_benchmark_sessions"
+    ],
+    "512980": [
+      "no_source_csv"
+    ],
+    "515220": [
+      "no_source_csv"
+    ],
+    "515790": [
+      "no_source_csv"
+    ],
+    "516020": [
+      "no_source_csv"
+    ],
+    "516160": [
+      "no_source_csv"
+    ],
+    "516780": [
+      "no_source_csv"
+    ],
+    "516880": [
+      "no_source_csv"
+    ],
+    "516960": [
+      "no_source_csv"
+    ],
+    "561560": [
+      "no_source_csv"
+    ],
+    "562500": [
+      "no_source_csv"
+    ]
+  },
+  "inputs": [
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\benchmark\\sh000300.csv",
+      "row_count": 2031,
+      "sha256": "b6e9dccefd45de8df3ed3a137493eac3db539e953090bb2830ac7ebdcb3af201"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2022-01-07",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159611.csv",
+      "row_count": 1055,
+      "sha256": "3d46efd4c0009e0127fa97e1d66256c4e3c31a5f48d189ef54ca19d752c4293d"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-06-18",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159745.csv",
+      "row_count": 1192,
+      "sha256": "6f37093c52a0413d28f8005fa6d401c896da8e01896f2ca1bf31c0d7f3254c82"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-06-24",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159755.csv",
+      "row_count": 1188,
+      "sha256": "0053a420a5ecbcc848e12cd46117ac5e165fd35ce8bf9c26edc35303e3b61742"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-07-23",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159766.csv",
+      "row_count": 1167,
+      "sha256": "3e12435890537b35d491bc16a3023279c060a8e3c51c83f58da350b4d90c4cb6"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2020-09-23",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159819.csv",
+      "row_count": 1367,
+      "sha256": "741c4dd08ef72eb25f8468d88dd8c7dcf1c334d27d8ed8ce5486ad689b1fae9c"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-03-05",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159869.csv",
+      "row_count": 1262,
+      "sha256": "babc12c2ab45ac9a7965542fe2f4cb1ec1b03dfb0c0924700fab5bdf27b14ad3"
+    },
+    {
+      "coverage_end": "2026-05-19",
+      "coverage_start": "2018-01-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159928.csv",
+      "row_count": 2029,
+      "sha256": "7a7ca36b36ea35d01e1aa34f83beba9125845cadac1e9a23b7a5c6f7398d7b0e"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2020-02-10",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159995.csv",
+      "row_count": 1523,
+      "sha256": "e7454c929aaa2f6a9f9821e5840bf644c79a678a24bea231b3e7cca4904a0530"
+    },
+    {
+      "coverage_end": "2026-05-19",
+      "coverage_start": "2020-03-16",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159996.csv",
+      "row_count": 1496,
+      "sha256": "d9ae368a013a5f67aa4ed6144c831848ce1edf164e3d33b3db91da7f8a491661"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2020-04-13",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\159998.csv",
+      "row_count": 1479,
+      "sha256": "858585b92bc81a7dcb81e4691a1238e8bb5cbfc32cb3c316e483cc0324ca0833"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512000.csv",
+      "row_count": 2031,
+      "sha256": "5cc7e417ee6665f22e733a87d6eecfe191891ac96b8b821fc6ab60f0c52c5629"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-06-17",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512170.csv",
+      "row_count": 1679,
+      "sha256": "7ccf6d2d1a91238e5944e294789d1e41030e0532523b67df1590c3da59a345b4"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512400.csv",
+      "row_count": 2031,
+      "sha256": "a235d05d4b1e3e332fc98e7b639445f57e49ab8a5e3d4c346de578e5d0dbfe05"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-06-12",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512480.csv",
+      "row_count": 1682,
+      "sha256": "c34564d43f30b43f2f5c2a5caa5f2da5cf46e1d3e1e5b68d8612cf31f9f2efb7"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512580.csv",
+      "row_count": 2031,
+      "sha256": "229060da1c642136bff2fc91345ae458a7565f09cae8159874ebc6f7bc5f2f45"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512660.csv",
+      "row_count": 2031,
+      "sha256": "e51e2e3e837c4f434d8dcd31421690c6ee951c999b5a0a546209ee65aff7c15f"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-05-06",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512690.csv",
+      "row_count": 1708,
+      "sha256": "084f7fe9258192246a87b27090449b29d45ff33f354a644d580e566a01afec78"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-08-26",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512710.csv",
+      "row_count": 1629,
+      "sha256": "d5c487e1515472778bfac12367100e4715726a6c64baf2a0d1fb164ac1bae66c"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-08-16",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512720.csv",
+      "row_count": 1636,
+      "sha256": "763cdec6e4f4e54209a1c2a6990c322a842cd414dedac78d9f7c049d89b481aa"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-06-12",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512760.csv",
+      "row_count": 1682,
+      "sha256": "f5ed558cc342d544817ed8dddc59a1e9db6206d5eb59f66a5bd823977023c4d2"
+    },
+    {
+      "coverage_end": "2026-05-19",
+      "coverage_start": "2018-01-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512800.csv",
+      "row_count": 2029,
+      "sha256": "eb579cee1242fd338c69b684525b24a1cb2eff156481d11644531fd6b4072bc4"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2018-01-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\512880.csv",
+      "row_count": 2031,
+      "sha256": "33afc8526c46ec270328b7a525530a40590120616790b8d35a73631e8fef9e8c"
+    },
+    {
+      "coverage_end": "2026-05-19",
+      "coverage_start": "2020-03-04",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\515030.csv",
+      "row_count": 1504,
+      "sha256": "accbb1528b8c7530def4e00506e84a6241cebf8ed3b7b046330b4b5675a8e9e6"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-10-16",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\515050.csv",
+      "row_count": 1599,
+      "sha256": "6985f214820dc3f4c26c2f338374028d41e8ae3f119854b809b37a5197df8d26"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-01-13",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\515170.csv",
+      "row_count": 1294,
+      "sha256": "a78740ea9d73b8dea3d718696fc7e3c754a54e8662b51a3a0541b2e2f82db2ca"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2020-03-02",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\515210.csv",
+      "row_count": 1508,
+      "sha256": "ae6e8a3981f5fb739f8d471958ad38c7f72e421edce165eb0db0264f0f47e293"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2019-09-06",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\515880.csv",
+      "row_count": 1621,
+      "sha256": "26ed250acf06e0b7b28381d0f90f99900a2963aff3ad7f281ae849d6a061e934"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-03-05",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\516010.csv",
+      "row_count": 1262,
+      "sha256": "1478e7daeffaeefbc18982272379625a7342c9c13a6c3f5d157a6df17bb4402d"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-03-09",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\516120.csv",
+      "row_count": 1260,
+      "sha256": "fbce80703416efa32ba2e5ad06073efd886f35627907281dbe9dadd07256a81a"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-04-07",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\516510.csv",
+      "row_count": 1240,
+      "sha256": "447c84366a6da3923f0e3b934c5c5edc79c90b75c6e88f96fc4207a3b528132b"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2021-05-14",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\516950.csv",
+      "row_count": 1216,
+      "sha256": "39c3a930df973df6819a1bf159cebf037f28d52405108134226e3dcf5bffe02a"
+    },
+    {
+      "coverage_end": "2026-05-21",
+      "coverage_start": "2023-03-27",
+      "duplicate_dates": 0,
+      "path": "data\\raw\\etf\\562550.csv",
+      "row_count": 762,
+      "sha256": "9b2a5cf629fde09d41c346a2710a00d693f03feea8c017f9e695bcd4bfa3e76f"
+    },
+    {
+      "coverage_end": null,
+      "coverage_start": null,
+      "duplicate_dates": 0,
+      "path": "configs\\universe.yaml",
+      "row_count": 50,
+      "sha256": "19410ac0b7c24a6f4d628441dda62ab6454a7fff5cb7407c5e7424e85cd1fe0d"
+    }
+  ],
+  "limitations": [
+    "The source CSVs lack independent source and price-adjustment evidence; qfq is inferred from the repository's historical fetcher request.",
+    "Universe constituents and available history create survivorship and availability-sample bias.",
+    "Listing dates use first observation and may not be actual listing dates; lot size 100, T+1 settlement, and all observed sessions tradable are research assumptions.",
+    "Price limits, market impact, and execution slippage are not modeled by this dataset.",
+    "Unknown quote gaps are excluded as symbols; they are not imputed or labeled as suspensions.",
+    "The benchmark calendar retains observed sessions through 2026-05-21; price and benchmark performance data end on 2026-05-19."
+  ],
+  "missing_session_exclusions": {
+    "512170": {
+      "dates": [
+        "2021-02-24"
+      ],
+      "reason": "unknown_missing_benchmark_sessions; excluded without imputing prices or assuming suspension"
+    },
+    "512480": {
+      "dates": [
+        "2021-03-26"
+      ],
+      "reason": "unknown_missing_benchmark_sessions; excluded without imputing prices or assuming suspension"
+    },
+    "512690": {
+      "dates": [
+        "2021-05-14"
+      ],
+      "reason": "unknown_missing_benchmark_sessions; excluded without imputing prices or assuming suspension"
+    },
+    "512710": {
+      "dates": [
+        "2021-03-19"
+      ],
+      "reason": "unknown_missing_benchmark_sessions; excluded without imputing prices or assuming suspension"
+    },
+    "512760": {
+      "dates": [
+        "2020-09-09"
+      ],
+      "reason": "unknown_missing_benchmark_sessions; excluded without imputing prices or assuming suspension"
+    }
+  },
+  "raw_etf_csv_count": 32,
+  "research_cutoff": "2026-05-19",
+  "selected_count": 27,
+  "selected_price_rows": 40798,
+  "selected_symbols": [
+    "159995",
+    "159819",
+    "512720",
+    "159998",
+    "516510",
+    "515050",
+    "515880",
+    "159869",
+    "516010",
+    "515030",
+    "159755",
+    "512660",
+    "512880",
+    "512000",
+    "512800",
+    "159928",
+    "515170",
+    "159996",
+    "512400",
+    "515210",
+    "516120",
+    "159611",
+    "562550",
+    "512580",
+    "516950",
+    "159745",
+    "159766"
+  ],
+  "validation": "passed"
+}

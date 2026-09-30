@@ -1,0 +1,14 @@
+{
+  "development_finalists": [
+    "guarded_momentum_200_v0.1",
+    "guarded_momentum_120_v0.1",
+    "guarded_pullback_120_v0.1"
+  ],
+  "validation_candidates": [
+    "buy_hold",
+    "guarded_momentum_120_v0.1",
+    "guarded_momentum_200_v0.1",
+    "guarded_pullback_120_v0.1",
+    "trend_20_20_k3"
+  ]
+}

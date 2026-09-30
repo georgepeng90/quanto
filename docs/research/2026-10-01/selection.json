@@ -1,0 +1,10 @@
+{
+  "selected": "guarded_momentum_200_v0.1",
+  "validation_score": -0.01237707700368812,
+  "reason": "Development top 3 only; validate those plus fixed baselines; choose highest validation score among finalists; freeze before holdout.",
+  "validation_ranking": [
+    "guarded_momentum_200_v0.1",
+    "guarded_momentum_120_v0.1",
+    "guarded_pullback_120_v0.1"
+  ]
+}

@@ -27,22 +27,25 @@ test('does not rank incompatible runs and displays supplied differences', async 
   expect(screen.getByText('不可用')).toBeVisible()
 })
 
-test('loads complete comparable curves across cursor pages for overlay', async () => {
+test('loads one bounded chart summary per comparable run', async () => {
   const prior = globalThis.fetch
   const paths: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     paths.push(path)
     if (path === '/api/comparisons') return Response.json({ runs: [{ ...base, run_id: 'r1' }, { ...base, run_id: 'r2', metrics: { total_return: 0.2, max_drawdown: 0.1, sharpe: 1.2 } }], differences: { effective_strategy_params: [{ window: 4 }, { window: 8 }] }, directly_comparable: true })
-    if (path.endsWith('/tables/curves')) return Response.json({ items: Array.from({ length: 100 }, (_, index) => ({ date: `2024-01-${String(index + 1).padStart(3, '0')}`, equity: 100 + index, drawdown: -0.01 })), next_cursor: '100' })
-    if (path.endsWith('/tables/curves?cursor=100')) return Response.json({ items: [{ date: '2024-05-01', equity: 250, drawdown: -0.2 }], next_cursor: null })
+    if (path.includes('/charts/curves')) return Response.json({ items: [{ date: '2024-05-01', equity: 250, drawdown: -0.2 }], total_rows: 50000, sampled: true })
     return prior(input, init)
   }))
   render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/compare?run_ids=r1,r2'] })} />)
   await userEvent.click(await screen.findByRole('button', { name: '比较运行' }))
-  expect((await screen.findAllByText(/2024-05-01/)).length).toBe(2)
-  expect(paths).toContain('/api/runs/r1/tables/curves?cursor=100')
-  expect(paths).toContain('/api/runs/r2/tables/curves?cursor=100')
+  await screen.findByRole('heading', { name: '可比运行曲线' })
+  await userEvent.click(screen.getByText('图表摘要数据'))
+  expect(await screen.findByRole('cell', { name: '2024-05-01' })).toBeVisible()
+  await userEvent.selectOptions(screen.getByLabelText('图表数据运行'), 'r2')
+  expect(screen.getByRole('cell', { name: '250' })).toBeVisible()
+  expect(paths.filter(path => path.includes('/charts/'))).toEqual(['/api/runs/r1/charts/curves?max_points=1200', '/api/runs/r2/charts/curves?max_points=1200'])
+  expect(paths.some(path => path.includes('/tables/'))).toBe(false)
 })
 
 

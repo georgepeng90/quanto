@@ -28,15 +28,8 @@ export function ComparePage() {
       setComparison(result)
       if (result.directly_comparable) {
         const loaded = await Promise.all(ids.map(async id => {
-          const rows: TableRow[] = []
-          let cursor: string | undefined
-          for (;;) {
-            const page = await api.runTable(id, 'curves', cursor, next.signal)
-            rows.push(...page.items)
-            if (!page.next_cursor || page.next_cursor === cursor) break
-            cursor = page.next_cursor
-          }
-          return [id, rows] as const
+          const chart = await api.runChart(id, 'curves', { max_points: 1200 }, next.signal)
+          return [id, chart.items] as const
         }))
         if (!next.signal.aborted) setCurves(Object.fromEntries(loaded))
       }

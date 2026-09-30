@@ -9,7 +9,8 @@ const experiment = { id: 'e1', revision: 3, payload: { strategy_revision_id: 's1
 const queued = { run_id: 'r1', job_id: 'j1', experiment_id: 'e1', experiment_revision: 3, manifest_hash: 'hash', source: 'web', parent_run_id: null, group_id: null, state: 'queued', completed_through: null, error: null, created_at: '2024-01-01T00:00:00+00:00', started_at: null, finished_at: null, detail_url: '/runs/r1' }
 const running = { ...queued, state: 'running', completed_through: '2024-01-03', started_at: '2024-01-01T00:01:00+00:00' }
 const event = { seq: 1, phase: '回测执行', asof: '2024-01-03', completed_days: 3, total_days: 10, level: 'info', code: 'DAY_DONE', message: '已完成交易日', payload: {} }
-const empty = { items: [], next_cursor: null }
+const empty = { items: [], next_cursor: null, total: 0 }
+const requestUrl = (input: RequestInfo | URL) => new URL(String(input), 'http://local')
 const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
 
 beforeEach(() => {
@@ -20,9 +21,9 @@ beforeEach(() => {
     if (path === '/api/runs') return Response.json({ items: [], next_cursor: null })
     if (path === '/api/runs/r1') return Response.json(running)
     if (path === '/api/runs/r1/results') return Response.json({ run_id: 'r1', state: 'succeeded', completed_through: '2024-01-03', metrics: { final_equity: 100 }, metric_definitions: { final_equity: { description: '最终权益' } }, warnings: [], metadata: { dataset_version_id: 'd1', strategy_revision_id: 's1', price_mode: 'raw_cash' }, detail_url: '/runs/r1' })
-    if (path === '/api/runs/r1/logs') return Response.json({ items: [event], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
-    if (path === '/api/runs/r1/logs?cursor=1') return Response.json({ items: [], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
-    if (path.startsWith('/api/runs/r1/tables/')) return Response.json(empty)
+    if (requestUrl(input).pathname === '/api/runs/r1/logs') return Response.json({ items: [event], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
+    if (requestUrl(input).pathname.startsWith('/api/runs/r1/tables/')) return Response.json(empty)
+    if (requestUrl(input).pathname.startsWith('/api/runs/r1/charts/')) return Response.json({ items: [], total_rows: 0, sampled: false })
     if (path === '/api/runs' && init?.method === 'POST') return Response.json(queued)
     throw new Error(`unexpected ${init?.method || 'GET'} ${path}`)
   }))
@@ -67,7 +68,7 @@ test('keeps cancellation pending until the server acknowledges a terminal state'
   expect(await screen.findByText('已取消')).toBeVisible()
 })
 
-test('restores run state and log cursor after a page reload', async () => {
+test('restores run state and the recent log tail after a page reload', async () => {
   const paths: string[] = []
   const prior = globalThis.fetch
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -81,7 +82,7 @@ test('restores run state and log cursor after a page reload', async () => {
   app('/runs/r1')
   expect(await screen.findByText('已完成交易日')).toBeVisible()
   expect(screen.getAllByText('已完成交易日')).toHaveLength(1)
-  expect(paths.filter(path => path === '/api/runs/r1/logs')).toHaveLength(2)
+  expect(paths.filter(path => path === '/api/runs/r1/logs?tail=true')).toHaveLength(2)
 })
 
 test('rejects an oversized parameter list before creating variants', async () => {
@@ -145,7 +146,14 @@ test('does not duplicate final equity rows when refreshing a finished run', asyn
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/runs/r1') return Response.json({ ...running, state: 'succeeded', finished_at: '2024-01-01T00:02:00+00:00' })
-    if (path === '/api/runs/r1/tables/equity') { equityReads++; return Response.json({ items: [{ date: '2024-01-03', cash: 10, receivables: 0, market_value: 90, equity: 100, stale_value: 0 }], next_cursor: null }) }
+    const url = requestUrl(input)
+    if (url.pathname === '/api/runs/r1/tables/equity') {
+      expect(url.searchParams.get('date_from')).toBe('2024-01-03')
+      expect(url.searchParams.get('date_to')).toBe('2024-01-03')
+      expect(url.searchParams.get('limit')).toBe('100')
+      equityReads++
+      return Response.json({ items: [{ date: '2024-01-03', cash: 10, receivables: 0, market_value: 90, equity: 100, stale_value: 0 }], next_cursor: null, total: 1 })
+    }
     return prior(input, init)
   }))
   app('/runs/r1')
@@ -160,8 +168,7 @@ test('upserts a partial order by ID when its fill status changes', async () => {
   const prior = globalThis.fetch
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
-    if (path === '/api/runs/r1/tables/orders') return Response.json({ items: [{ id: 'o1', signal_date: '2024-01-03', execution_date: '2024-01-04', symbol: '000001', side: 'buy', status, reason: '目标仓位', source: 'strategy', quantity: 100, filled_quantity: status === 'filled' ? 100 : 0, expired_quantity: 0 }], next_cursor: '1' })
-    if (path === '/api/runs/r1/tables/orders?cursor=1') return Response.json({ items: [], next_cursor: '1' })
+    if (requestUrl(input).pathname === '/api/runs/r1/tables/orders') return Response.json({ items: [{ id: 'o1', signal_date: '2024-01-03', execution_date: '2024-01-04', symbol: '000001', side: 'buy', status, reason: '目标仓位', source: 'strategy', quantity: 100, filled_quantity: status === 'filled' ? 100 : 0, expired_quantity: 0 }], next_cursor: null, total: 1 })
     return prior(input, init)
   }))
   app('/runs/r1')
@@ -175,21 +182,27 @@ test('upserts a partial order by ID when its fill status changes', async () => {
 
 test('shows next-session fills beside the dated signal through their exact order ID', async () => {
   const prior = globalThis.fetch
+  const traceRequests: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
-    if (path === '/api/runs/r1/tables/orders') return Response.json({ items: [{ id: 'o1', signal_date: '2024-01-03', execution_date: '2024-01-04', symbol: '000001', side: 'buy', status: 'filled', reason: '目标仓位', source: 'strategy', quantity: 100, filled_quantity: 100, expired_quantity: 0 }], next_cursor: '1' })
-    if (path === '/api/runs/r1/tables/orders?cursor=1') return Response.json({ items: [], next_cursor: '1' })
-    if (path === '/api/runs/r1/tables/fills') return Response.json({ items: [{ order_id: 'o1', trade_date: '2024-01-04', symbol: '000001', side: 'buy', quantity: 100, price: 1, commission: 0, slippage_cost: 0 }], next_cursor: '1' })
-    if (path === '/api/runs/r1/tables/fills?cursor=1') return Response.json({ items: [], next_cursor: '1' })
+    const url = requestUrl(input)
+    if (url.pathname === '/api/runs/r1/tables/orders' || url.pathname === '/api/runs/r1/tables/fills') {
+      traceRequests.push(path)
+      if (url.searchParams.get('context_date') !== '2024-01-03' || url.searchParams.get('limit') !== '100') return Response.json(empty)
+      if (url.pathname.endsWith('/orders')) return Response.json({ items: [{ id: 'o1', signal_date: '2024-01-03', execution_date: '2024-01-04', symbol: '000001', side: 'buy', status: 'filled', reason: '目标仓位', source: 'strategy', quantity: 100, filled_quantity: 100, expired_quantity: 0 }], next_cursor: null, total: 1 })
+      return Response.json({ items: [{ order_id: 'o1', trade_date: '2024-01-04', symbol: '000001', side: 'buy', quantity: 100, price: 1, commission: 0, slippage_cost: 0 }], next_cursor: null, total: 1 })
+    }
     return prior(input, init)
   }))
   app('/runs/r1')
-  await userEvent.selectOptions(await screen.findByLabelText('模拟日期'), '2024-01-03')
+  fireEvent.change(await screen.findByLabelText('模拟日期'), { target: { value: '2024-01-03' } })
+  await userEvent.click(screen.getByRole('button', { name: '查询追踪' }))
   expect(screen.getByRole('link', { name: 'o1' })).toHaveAttribute('href', '#order-o1')
   expect(screen.getByText(/价格 1/)).toBeVisible()
+  expect(traceRequests.some(path => requestUrl(path).pathname.endsWith('/fills') && requestUrl(path).searchParams.get('context_date') === '2024-01-03')).toBe(true)
 })
 
-test('keeps each run log cursor independent when moving between detail URLs', async () => {
+test('keeps each run log tail independent when moving between detail URLs', async () => {
   const prior = globalThis.fetch
   const logPaths: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -197,7 +210,7 @@ test('keeps each run log cursor independent when moving between detail URLs', as
     if (path === '/api/runs/r2') return Response.json({ ...running, run_id: 'r2', job_id: 'j2', detail_url: '/runs/r2' })
     if (path.startsWith('/api/runs/r2/logs')) {
       logPaths.push(path)
-      return Response.json({ items: path.endsWith('/logs') ? [{ ...event, message: '第二次运行事件' }] : [], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
+      return Response.json({ items: [{ ...event, message: '第二次运行事件' }], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
     }
     if (path.startsWith('/api/runs/r2/tables/')) return Response.json(empty)
     return prior(input, init)
@@ -207,7 +220,7 @@ test('keeps each run log cursor independent when moving between detail URLs', as
   expect(await screen.findByText('已完成交易日')).toBeVisible()
   await act(async () => { await router.navigate('/runs/r2') })
   expect(await screen.findByText('第二次运行事件')).toBeVisible()
-  expect(logPaths[0]).toBe('/api/runs/r2/logs')
+  expect(logPaths[0]).toBe('/api/runs/r2/logs?tail=true')
 })
 
 test('drains later run pages and refreshes a visible active run by ID', async () => {
@@ -313,23 +326,27 @@ test('refresh after complete pagination does not skip a second append after exac
   expect(paths).toContain('/api/runs?cursor=51')
 })
 
-test('drains more than 100 terminal log events from the server cursor', async () => {
+test('shows only the latest 100 terminal log events without draining earlier pages', async () => {
   const prior = globalThis.fetch
   const paths: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/runs/r1') return Response.json({ ...running, state: 'succeeded', finished_at: '2024-01-01T00:02:00+00:00' })
-    if (path.startsWith('/api/runs/r1/logs')) {
+    if (requestUrl(input).pathname === '/api/runs/r1/logs') {
       paths.push(path)
-      const cursor = Number(new URL(path, 'http://local').searchParams.get('cursor') || 0)
-      const items = Array.from({ length: Math.min(100, 205 - cursor) }, (_, index) => ({ ...event, seq: cursor + index + 1, message: `事件 ${cursor + index + 1}` }))
-      return Response.json({ items, next_cursor: String(cursor + items.length), state: 'succeeded', completed_through: '2024-01-03' })
+      const url = requestUrl(input)
+      expect(url.searchParams.get('tail')).toBe('true')
+      expect(url.searchParams.has('cursor')).toBe(false)
+      const items = Array.from({ length: 100 }, (_, index) => ({ ...event, seq: index + 106, message: `事件 ${index + 106}` }))
+      return Response.json({ items, next_cursor: '205', state: 'succeeded', completed_through: '2024-01-03' })
     }
     return prior(input, init)
   }))
   app('/runs/r1')
   expect(await screen.findByText('事件 205')).toBeVisible()
-  expect(paths).toEqual(['/api/runs/r1/logs', '/api/runs/r1/logs?cursor=100', '/api/runs/r1/logs?cursor=200'])
+  expect(screen.getByText('事件 106')).toBeVisible()
+  expect(screen.queryByText('事件 105')).toBeNull()
+  expect(paths).toEqual(['/api/runs/r1/logs?tail=true'])
 })
 
 test('worker completion keeps the last known day count and completion phase', async () => {
@@ -337,7 +354,7 @@ test('worker completion keeps the last known day count and completion phase', as
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/runs/r1') return Response.json({ ...running, state: 'succeeded', finished_at: '2024-01-01T00:02:00+00:00' })
-    if (path === '/api/runs/r1/logs') return Response.json({ items: [
+    if (path === '/api/runs/r1/logs?tail=true') return Response.json({ items: [
       { ...event, seq: 1, phase: 'worker', asof: null, completed_days: 0, total_days: 0, code: 'WORKER_STARTED', message: '工作进程已启动' },
       { ...event, seq: 2, phase: 'backtest', code: 'DAY_COMPLETED', message: '交易日计算完成' },
       { ...event, seq: 3, phase: 'worker', asof: null, completed_days: 0, total_days: 0, code: 'WORKER_COMPLETED', message: '任务计算和产物校验已完成' }

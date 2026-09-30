@@ -1,4 +1,4 @@
-import type { ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TableRow } from './types'
+import type { ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}, public status = 0) { super(message) }
@@ -16,12 +16,35 @@ async function session() {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const current = await session()
+  init.signal?.throwIfAborted()
   const response = await fetch(`${current.api_base}${path}`, { ...init, headers: { Authorization: `Bearer ${current.token}`, ...init.headers } })
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { code?: string; message?: string; details?: Record<string, unknown> } | null
     throw new ApiError(body?.code || 'HTTP_ERROR', body?.message || '请求无法完成', body?.details || {}, response.status)
   }
   return response.json() as Promise<T>
+}
+
+async function resultRequest<T>(path: string, signal?: AbortSignal): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try { return await request<T>(path, { signal }) }
+    catch (value) {
+      const transient = !(value instanceof ApiError) || value.status === 408 || value.status === 429 || value.status >= 500
+      if (signal?.aborted || !transient || attempt >= 2) throw value
+      await new Promise<void>((resolve, reject) => {
+        const abort = () => { clearTimeout(timer); reject(signal?.reason) }
+        const timer = setTimeout(() => { signal?.removeEventListener('abort', abort); resolve() }, 300 * (attempt + 1))
+        signal?.addEventListener('abort', abort, { once: true })
+        if (signal?.aborted) abort()
+      })
+    }
+  }
+}
+
+const queryString = (query: Record<string, string | number | undefined>) => {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(query)) if (value !== undefined && value !== '') params.set(key, String(value))
+  return params.size ? `?${params}` : ''
 }
 
 async function download(path: string, signal?: AbortSignal): Promise<Blob> {
@@ -60,8 +83,9 @@ export const api = {
   submitBatch: (items: { experiment_id: string; expected_revision: number }[], idempotency_key: string) => request<{ items: RunRecord[] }>('/runs/batch', json({ items, idempotency_key, source: 'web' })),
   cloneRun: (id: string) => request<ExperimentDraft>(`/runs/${encodeURIComponent(id)}/clone`, json({})),
   cancelRun: (id: string) => request<RunRecord>(`/runs/${encodeURIComponent(id)}/cancel`, json({})),
-  runLogs: (id: string, cursor?: string, signal?: AbortSignal) => request<LogPage>(`/runs/${encodeURIComponent(id)}/logs${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal }),
-  runTable: (id: string, name: TableName, cursor?: string, signal?: AbortSignal) => request<Page<TableRow>>(`/runs/${encodeURIComponent(id)}/tables/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`, { signal }),
+  runLogs: (id: string, cursor?: string, signal?: AbortSignal, tail = false) => request<LogPage>(`/runs/${encodeURIComponent(id)}/logs${queryString({ cursor, tail: tail ? 'true' : undefined })}`, { signal }),
+  runTable: (id: string, name: TableName, query: TableQuery = {}, signal?: AbortSignal) => resultRequest<TablePage>(`/runs/${encodeURIComponent(id)}/tables/${name}${queryString(query)}`, signal),
+  runChart: (id: string, name: ChartName, query: ChartQuery = {}, signal?: AbortSignal) => resultRequest<ChartData>(`/runs/${encodeURIComponent(id)}/charts/${name}${queryString(query)}`, signal),
   runResult: (id: string, signal?: AbortSignal) => request<RunResult>(`/runs/${encodeURIComponent(id)}/results`, { signal }),
   comparison: (run_ids: string[], signal?: AbortSignal) => request<ComparisonResult>('/comparisons', { ...json({ run_ids }), signal }),
   exportRun: (id: string, format: 'csv' | 'json' | 'html', signal?: AbortSignal) => download(`/runs/${encodeURIComponent(id)}/exports/${format}`, signal)

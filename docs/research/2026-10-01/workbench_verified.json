@@ -1,0 +1,44 @@
+[
+  {
+    "period": "holdout",
+    "candidate": "guarded_momentum_200_v0.1",
+    "run_id": "b1c1ddfd-c956-47be-ac8a-459ffb4e84dc",
+    "url": "http://127.0.0.1:8767/runs/b1c1ddfd-c956-47be-ac8a-459ffb4e84dc",
+    "all_metrics_equal": true
+  },
+  {
+    "period": "holdout",
+    "candidate": "trend_20_20_k3",
+    "run_id": "746d6a21-9f81-44b9-b20e-abb3eff526de",
+    "url": "http://127.0.0.1:8767/runs/746d6a21-9f81-44b9-b20e-abb3eff526de",
+    "all_metrics_equal": true
+  },
+  {
+    "period": "holdout",
+    "candidate": "buy_hold",
+    "run_id": "3db2d56d-b045-4179-8706-66af209f256e",
+    "url": "http://127.0.0.1:8767/runs/3db2d56d-b045-4179-8706-66af209f256e",
+    "all_metrics_equal": true
+  },
+  {
+    "period": "full",
+    "candidate": "guarded_momentum_200_v0.1",
+    "run_id": "794f810a-8861-49ab-b096-31691b8b3510",
+    "url": "http://127.0.0.1:8767/runs/794f810a-8861-49ab-b096-31691b8b3510",
+    "all_metrics_equal": true
+  },
+  {
+    "period": "full",
+    "candidate": "trend_20_20_k3",
+    "run_id": "d95db7d9-a5cb-48f1-bb39-5f17d7358a5c",
+    "url": "http://127.0.0.1:8767/runs/d95db7d9-a5cb-48f1-bb39-5f17d7358a5c",
+    "all_metrics_equal": true
+  },
+  {
+    "period": "full",
+    "candidate": "buy_hold",
+    "run_id": "23140c72-09a7-4302-8f64-a43a344d70e2",
+    "url": "http://127.0.0.1:8767/runs/23140c72-09a7-4302-8f64-a43a344d70e2",
+    "all_metrics_equal": true
+  }
+]

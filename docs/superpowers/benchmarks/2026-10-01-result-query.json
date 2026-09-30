@@ -1,0 +1,223 @@
+{
+  "old_baseline": [
+    {
+      "table": "positions",
+      "ms": 106.89,
+      "rows": 100,
+      "response_bytes": 16328,
+      "next_cursor": "100"
+    },
+    {
+      "table": "curves",
+      "ms": 41.29,
+      "rows": 100,
+      "response_bytes": 16949,
+      "next_cursor": "100"
+    }
+  ],
+  "new_measurements": {
+    "date": "2026-10-01",
+    "environment": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.12",
+    "workspace": "data/research-20261001",
+    "run_id": "794f810a-8861-49ab-b096-31691b8b3510",
+    "period": [
+      "2020-01-02",
+      "2026-05-19"
+    ],
+    "initial_index_exists": true,
+    "initial_index_version": "2",
+    "index_version": "3",
+    "index_bytes": 20979712,
+    "counts": {
+      "account_events": 1542,
+      "annual_returns": 7,
+      "curves": 1542,
+      "equity": 1542,
+      "fills": 1012,
+      "matched_trades": 791,
+      "monthly_returns": 77,
+      "open_lots": 3,
+      "orders": 1012,
+      "positions": 41634,
+      "signals": 1542
+    },
+    "index_query_plan": [
+      "SEARCH rows USING INDEX rows_symbol_date (table_name=? AND symbol=? AND date>? AND date<?)"
+    ],
+    "warm_positions_median_ms": 21.57,
+    "checks": [
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100",
+        "ms": 578.97,
+        "rows": 100,
+        "response_bytes": 16342,
+        "total": 41634,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100",
+        "ms": 19.32,
+        "rows": 100,
+        "response_bytes": 16342,
+        "total": 41634,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100",
+        "ms": 30.1,
+        "rows": 100,
+        "response_bytes": 16342,
+        "total": 41634,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100",
+        "ms": 30.44,
+        "rows": 100,
+        "response_bytes": 16342,
+        "total": 41634,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100",
+        "ms": 9.99,
+        "rows": 100,
+        "response_bytes": 16342,
+        "total": 41634,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100",
+        "ms": 21.57,
+        "rows": 100,
+        "response_bytes": 16342,
+        "total": 41634,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100",
+        "ms": 8.37,
+        "rows": 100,
+        "response_bytes": 16342,
+        "total": 41634,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100",
+        "ms": 35.06,
+        "rows": 100,
+        "response_bytes": 16342,
+        "total": 41634,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100&date_from=2026-05-19&date_to=2026-05-19",
+        "ms": 6.5,
+        "rows": 27,
+        "response_bytes": 4902,
+        "total": 27,
+        "next_cursor": null,
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/tables/positions?limit=100&date_from=2020-01-02&date_to=2026-05-19&symbol=159611",
+        "ms": 7.53,
+        "rows": 100,
+        "response_bytes": 16044,
+        "total": 1542,
+        "next_cursor": "100",
+        "sampled": null
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/charts/curves?max_points=1200",
+        "ms": 51.66,
+        "rows": 609,
+        "response_bytes": 104028,
+        "total": 1542,
+        "next_cursor": null,
+        "sampled": true
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/charts/curves?max_points=1200",
+        "ms": 48.82,
+        "rows": 609,
+        "response_bytes": 104028,
+        "total": 1542,
+        "next_cursor": null,
+        "sampled": true
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/charts/monthly_returns?max_points=1200",
+        "ms": 26.89,
+        "rows": 77,
+        "response_bytes": 3493,
+        "total": 77,
+        "next_cursor": null,
+        "sampled": false
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/charts/monthly_returns?max_points=1200",
+        "ms": 32.04,
+        "rows": 77,
+        "response_bytes": 3493,
+        "total": 77,
+        "next_cursor": null,
+        "sampled": false
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/charts/annual_returns?max_points=1200",
+        "ms": 44.94,
+        "rows": 7,
+        "response_bytes": 336,
+        "total": 7,
+        "next_cursor": null,
+        "sampled": false
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/charts/annual_returns?max_points=1200",
+        "ms": 33.31,
+        "rows": 7,
+        "response_bytes": 336,
+        "total": 7,
+        "next_cursor": null,
+        "sampled": false
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/charts/allocation?max_points=1200",
+        "ms": 50.44,
+        "rows": 1188,
+        "response_bytes": 87506,
+        "total": 41634,
+        "next_cursor": null,
+        "sampled": true
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/charts/allocation?max_points=1200",
+        "ms": 43.08,
+        "rows": 1188,
+        "response_bytes": 87506,
+        "total": 41634,
+        "next_cursor": null,
+        "sampled": true
+      },
+      {
+        "path": "/runs/794f810a-8861-49ab-b096-31691b8b3510/logs?tail=true&limit=100",
+        "ms": 20.2,
+        "rows": 100,
+        "response_bytes": 31944,
+        "total": null,
+        "next_cursor": "1544",
+        "sampled": null
+      }
+    ]
+  }
+}

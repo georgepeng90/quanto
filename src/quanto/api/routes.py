@@ -106,14 +106,23 @@ def rerun(request: Request, identity: str, body: dict):
 
 
 @router.get("/runs/{identity}/logs")
-def run_logs(request: Request, identity: str, cursor: str | None = None, limit: int = 100):
+def run_logs(request: Request, identity: str, cursor: str | None = None, limit: int = 100, tail: bool = False):
     run = service(request).store.get_run(identity)
-    return asdict(service(request).logs(run.job_id, cursor, limit))
+    return asdict(service(request).logs(run.job_id, cursor, limit, tail))
 
 
 @router.get("/runs/{identity}/tables/{name}")
-def table(request: Request, identity: str, name: str, cursor: str | None = None, limit: int = 100):
-    return asdict(service(request).table(identity, name, cursor, limit))
+def table(request: Request, identity: str, name: str, cursor: str | None = None, limit: int = 100,
+          date_from: str | None = None, date_to: str | None = None, symbol: str | None = None,
+          context_date: str | None = None):
+    return asdict(service(request).table(identity, name, cursor, limit, date_from=date_from, date_to=date_to,
+                                         symbol=symbol, context_date=context_date))
+
+
+@router.get("/runs/{identity}/charts/{name}")
+def chart(request: Request, identity: str, name: str, date_from: str | None = None,
+          date_to: str | None = None, max_points: int = 1200):
+    return service(request).chart(identity, name, date_from, date_to, max_points)
 
 
 @router.get("/runs/{identity}/results")
@@ -158,8 +167,8 @@ def strategy_validation(request: Request, body: dict):
 
 
 @router.get("/jobs/{identity}/logs")
-def job_logs(request: Request, identity: str, cursor: str | None = None, limit: int = 100):
-    return asdict(service(request).logs(identity, cursor, limit))
+def job_logs(request: Request, identity: str, cursor: str | None = None, limit: int = 100, tail: bool = False):
+    return asdict(service(request).logs(identity, cursor, limit, tail))
 
 
 @router.post("/jobs/{identity}/cancel")

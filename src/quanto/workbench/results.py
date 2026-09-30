@@ -10,6 +10,11 @@ class Page:
 
 
 @dataclass(frozen=True)
+class TablePage(Page):
+    total: int
+
+
+@dataclass(frozen=True)
 class LogPage(Page):
     state: str
     completed_through: str | None

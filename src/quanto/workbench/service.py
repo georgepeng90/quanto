@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from datetime import date, datetime, timezone
-import csv
+from collections import OrderedDict
 import hashlib
 import io
 import json
 import math
 import re
+from threading import Lock
 import zipfile
 from pathlib import Path
 import shutil
@@ -16,7 +17,8 @@ from uuid import uuid4
 from quanto.data.schemas import DatasetManifest
 from quanto.data.loaders import load_dataset
 from quanto.workbench.models import BatchItem, FrozenRun
-from quanto.workbench.results import LogPage, Page, compare_runs
+from quanto.workbench.results import LogPage, Page, TablePage, compare_runs
+from quanto.workbench.result_index import PartialResultIndex, ResultIndex
 from quanto.workbench.revisions import json_bytes
 from quanto.workbench.runs import RunService
 from quanto.workbench.scheduler import Scheduler
@@ -33,6 +35,7 @@ FLOAT_FIELDS = {"cash", "receivables", "market_value", "equity", "stale_value", 
                 "slippage_cost", "weight", "cost_basis", "unrealized_pnl", "realized_pnl", "amount",
                 "return", "drawdown", "benchmark_equity", "benchmark_return", "proceeds"}
 JSON_FIELDS = {"weights", "reasons", "diagnostics", "approved_weights", "approved_reasons", "approved_diagnostics", "details"}
+VALIDATION_CACHE_MAX_ENTRIES = 32
 
 
 def _typed_row(row: dict) -> dict:
@@ -54,11 +57,48 @@ def _typed_row(row: dict) -> dict:
     return converted
 
 
+def _reverse_complete_lines(path: Path):
+    with path.open("rb") as stream:
+        stream.seek(0, 2)
+        position = stream.tell()
+        if not position:
+            return
+        stream.seek(position - 1)
+        drop_last = stream.read(1) != b"\n"
+        pending = b""
+        while position:
+            size = min(position, 8192)
+            position -= size
+            stream.seek(position)
+            parts = (stream.read(size) + pending).split(b"\n")
+            pending = parts[0]
+            for line in reversed(parts[1:]):
+                if not line:
+                    continue
+                if drop_last:
+                    drop_last = False
+                    continue
+                yield line
+        if pending and not drop_last:
+            yield pending
+
+
 class WorkbenchService:
     def __init__(self, root: Path):
         self.store = WorkbenchStore(root)
         self.runs = RunService(self.store)
         self.scheduler = Scheduler(self.store)
+        self._cache_lock = Lock()
+        self._validated_outputs = OrderedDict()
+
+    @staticmethod
+    def _verify_output_hashes(directory: Path, hashes: dict[str, str]) -> None:
+        if {path.name for path in directory.iterdir()} != set(hashes):
+            raise ValueError("INVALID_OUTPUT: artifact file set changed")
+        for name, expected in hashes.items():
+            with (directory / name).open("rb") as stream:
+                if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
+                    raise ValueError("INVALID_OUTPUT: artifact hash mismatch")
 
     @staticmethod
     def _record(value):
@@ -188,7 +228,7 @@ class WorkbenchService:
         job = self.store.get_job(job_id)
         return job.artifact_root / job.id
 
-    def logs(self, job_id: str, cursor: str | None, limit: int = 100) -> LogPage:
+    def logs(self, job_id: str, cursor: str | None, limit: int = 100, tail: bool = False) -> LogPage:
         job = self.store.get_job(job_id)
         if not 1 <= limit <= 500:
             raise ValueError("invalid limit")
@@ -197,7 +237,24 @@ class WorkbenchService:
             raise ValueError("invalid cursor")
         path = self._job_root(job_id) / "control" / "events.ndjson"
         rows = []
-        if path.exists():
+        if tail and path.exists():
+            for line in _reverse_complete_lines(path):
+                try:
+                    item = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if item.get("seq", 0) <= offset:
+                    break
+                payload = item.get("payload")
+                if isinstance(payload, dict) and isinstance(payload.get("tables"), dict):
+                    tables = payload["tables"]
+                    item["payload"] = {key: value for key, value in payload.items() if key != "tables"}
+                    item["payload"]["table_counts"] = {name: len(value) for name, value in tables.items()}
+                rows.append(item)
+                if len(rows) == limit:
+                    break
+            rows.reverse()
+        elif path.exists():
             with path.open(encoding="utf-8") as stream:
                 for line in stream:
                     try:
@@ -211,14 +268,30 @@ class WorkbenchService:
         items = rows[:limit]
         return LogPage(items, str(items[-1]["seq"]) if items else cursor, job.state, job.completed_through)
 
-    def _verified_final(self, run_id: str) -> tuple[Path, dict]:
+    def _verified_final(self, run_id: str, indexed: bool = False) -> tuple[Path, dict, dict]:
         run = self.store.get_run(run_id)
         if run.state != "succeeded":
             raise ValueError("run has no completed results")
         root = self._job_root(run.job_id)
         receipt = json.loads((root / "control" / "receipt.json").read_text(encoding="utf-8"))
-        validate_job_output("backtest", root, receipt)
-        return root / "final", json.loads((root / "final" / "metadata.json").read_text(encoding="utf-8"))
+        hashes = receipt["result"]["hashes"]
+        key = tuple(sorted(hashes.items()))
+        if indexed:
+            self._verify_output_hashes(root / "final", hashes)
+        else:
+            cached = False
+            with self._cache_lock:
+                if key not in self._validated_outputs:
+                    validate_job_output("backtest", root, receipt)
+                    self._validated_outputs[key] = None
+                    if len(self._validated_outputs) > VALIDATION_CACHE_MAX_ENTRIES:
+                        self._validated_outputs.popitem(last=False)
+                else:
+                    self._validated_outputs.move_to_end(key)
+                    cached = True
+            if cached:
+                self._verify_output_hashes(root / "final", hashes)
+        return root / "final", json.loads((root / "final" / "metadata.json").read_text(encoding="utf-8")), hashes
 
     def results(self, run_id: str) -> dict:
         run = self.store.get_run(run_id)
@@ -228,7 +301,7 @@ class WorkbenchService:
             return {"run_id": run_id, "state": run.state, "completed_through": partial["completed_through"],
                     "metrics": None, "metric_definitions": {}, "tables": partial["tables"], "error": run.error,
                     "detail_url": f"/runs/{run_id}"}
-        root, metadata = self._verified_final(run_id)
+        root, metadata, _ = self._verified_final(run_id)
         metrics = json.loads((root / "metrics.json").read_text(encoding="utf-8"))
         with self.store.transaction() as db:
             db.execute("CREATE TABLE IF NOT EXISTS result_views (run_id TEXT, viewed_at TEXT, interval_start TEXT, interval_end TEXT)")
@@ -239,27 +312,54 @@ class WorkbenchService:
                 "metrics": metrics["metrics"], "metric_definitions": metrics.get("metric_definitions", {}),
                 "warnings": metrics.get("warnings", []), "metadata": metadata, "detail_url": f"/runs/{run_id}"}
 
-    def table(self, run_id: str, name: str, cursor: str | None = None, limit: int = 100) -> Page:
+    @staticmethod
+    def _query_dates(date_from: str | None, date_to: str | None, context_date: str | None) -> None:
+        for value in (date_from, date_to, context_date):
+            if value is not None and (len(value) != 10 or date.fromisoformat(value).isoformat() != value):
+                raise ValueError("invalid date")
+        if date_from and date_to and date_from > date_to:
+            raise ValueError("invalid date range")
+        if context_date and (date_from or date_to):
+            raise ValueError("context date cannot be combined with range")
+
+    def table(self, run_id: str, name: str, cursor: str | None = None, limit: int = 100, *,
+              date_from: str | None = None, date_to: str | None = None, symbol: str | None = None,
+              context_date: str | None = None) -> TablePage:
         if name not in TABLES or not 1 <= limit <= 500:
             raise ValueError("invalid table or limit")
+        self._query_dates(date_from, date_to, context_date)
         offset = int(cursor or "0")
         if offset < 0:
             raise ValueError("invalid cursor")
         run = self.store.get_run(run_id)
         if run.state == "succeeded":
-            root, _ = self._verified_final(run_id)
-            with (root / f"{name}.csv").open(encoding="utf-8", newline="") as stream:
-                rows = list(csv.DictReader(stream))
+            root, _, hashes = self._verified_final(run_id, indexed=True)
+            index = ResultIndex(self.store.root, run_id, hashes)
+            receipt = json.loads((root.parent / "control" / "receipt.json").read_text(encoding="utf-8"))
+            index.ensure(root, lambda: validate_job_output("backtest", root.parent, receipt))
+            items, total = index.page(name, offset, limit, date_from, date_to, symbol, context_date)
+            next_cursor = str(offset + limit) if offset + limit < total else None
         else:
-            rows = read_partial(self._job_root(run.job_id) / "control")["tables"].get(name, [])
-        items = [_typed_row(row) for row in rows[offset:offset + limit]]
-        return Page(items, str(offset + len(items)) if items and run.state != "succeeded" else
-                    (str(offset + limit) if offset + limit < len(rows) else None))
+            index = PartialResultIndex(self._job_root(run.job_id) / "control")
+            items, total = index.page(name, offset, limit, date_from, date_to, symbol, context_date)
+            next_cursor = str(offset + len(items)) if items else None
+        return TablePage(items, next_cursor, total)
+
+    def chart(self, run_id: str, name: str, date_from: str | None = None,
+              date_to: str | None = None, max_points: int = 1200) -> dict:
+        if name not in {"curves", "monthly_returns", "annual_returns", "allocation"} or not 2 <= max_points <= 5000:
+            raise ValueError("invalid chart or max_points")
+        self._query_dates(date_from, date_to, None)
+        root, _, hashes = self._verified_final(run_id, indexed=True)
+        index = ResultIndex(self.store.root, run_id, hashes)
+        receipt = json.loads((root.parent / "control" / "receipt.json").read_text(encoding="utf-8"))
+        index.ensure(root, lambda: validate_job_output("backtest", root.parent, receipt))
+        return index.chart(name, date_from, date_to, max_points)
 
     def export(self, run_id: str, format: str) -> tuple[bytes, str]:
         if format not in EXPORTS:
             raise ValueError("invalid export format")
-        root, _ = self._verified_final(run_id)
+        root, _, _ = self._verified_final(run_id)
         if format == "html":
             return (root / "report.html").read_bytes(), "html"
         names = ["metrics.json", "metadata.json", "manifest.json"]

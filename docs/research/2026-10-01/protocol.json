@@ -1,0 +1,384 @@
+{
+  "purpose": "收益与回撤平衡；有限搜索，后续时间段验证，不承诺收益",
+  "periods": {
+    "development": [
+      "2020-01-02",
+      "2022-12-30"
+    ],
+    "validation": [
+      "2023-01-03",
+      "2024-12-31"
+    ],
+    "holdout": [
+      "2025-01-02",
+      "2026-05-19"
+    ],
+    "full": [
+      "2020-01-02",
+      "2026-05-19"
+    ]
+  },
+  "candidates": {
+    "trend_20_20_k3": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 20,
+        "momentum_window": 20,
+        "entry_rank": 3,
+        "retain_rank": 5,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_20_20_k5": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 20,
+        "momentum_window": 20,
+        "entry_rank": 5,
+        "retain_rank": 7,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_60_60_k3": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 60,
+        "momentum_window": 60,
+        "entry_rank": 3,
+        "retain_rank": 5,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_60_60_k5": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 60,
+        "momentum_window": 60,
+        "entry_rank": 5,
+        "retain_rank": 7,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_120_120_k3": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 120,
+        "momentum_window": 120,
+        "entry_rank": 3,
+        "retain_rank": 5,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_120_120_k5": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 120,
+        "momentum_window": 120,
+        "entry_rank": 5,
+        "retain_rank": 7,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_200_200_k3": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 200,
+        "momentum_window": 200,
+        "entry_rank": 3,
+        "retain_rank": 5,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_200_200_k5": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 200,
+        "momentum_window": 200,
+        "entry_rank": 5,
+        "retain_rank": 7,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_120_60_k3": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 120,
+        "momentum_window": 60,
+        "entry_rank": 3,
+        "retain_rank": 5,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_120_60_k5": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 120,
+        "momentum_window": 60,
+        "entry_rank": 5,
+        "retain_rank": 7,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_200_60_k3": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 200,
+        "momentum_window": 60,
+        "entry_rank": 3,
+        "retain_rank": 5,
+        "evaluation": "weekly"
+      }
+    },
+    "trend_200_60_k5": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 200,
+        "momentum_window": 60,
+        "entry_rank": 5,
+        "retain_rank": 7,
+        "evaluation": "weekly"
+      }
+    },
+    "guarded_momentum_120_v0.1": {
+      "kind": "guarded_rotation",
+      "params": {
+        "trend_window": 120,
+        "momentum_window": 60,
+        "selection": "momentum",
+        "target_volatility": 0.1,
+        "entry_rank": 3
+      }
+    },
+    "guarded_momentum_120_v0.15": {
+      "kind": "guarded_rotation",
+      "params": {
+        "trend_window": 120,
+        "momentum_window": 60,
+        "selection": "momentum",
+        "target_volatility": 0.15,
+        "entry_rank": 3
+      }
+    },
+    "guarded_pullback_120_v0.1": {
+      "kind": "guarded_rotation",
+      "params": {
+        "trend_window": 120,
+        "momentum_window": 60,
+        "selection": "pullback",
+        "target_volatility": 0.1,
+        "entry_rank": 3
+      }
+    },
+    "guarded_pullback_120_v0.15": {
+      "kind": "guarded_rotation",
+      "params": {
+        "trend_window": 120,
+        "momentum_window": 60,
+        "selection": "pullback",
+        "target_volatility": 0.15,
+        "entry_rank": 3
+      }
+    },
+    "guarded_momentum_200_v0.1": {
+      "kind": "guarded_rotation",
+      "params": {
+        "trend_window": 200,
+        "momentum_window": 60,
+        "selection": "momentum",
+        "target_volatility": 0.1,
+        "entry_rank": 3
+      }
+    },
+    "guarded_momentum_200_v0.15": {
+      "kind": "guarded_rotation",
+      "params": {
+        "trend_window": 200,
+        "momentum_window": 60,
+        "selection": "momentum",
+        "target_volatility": 0.15,
+        "entry_rank": 3
+      }
+    },
+    "guarded_pullback_200_v0.1": {
+      "kind": "guarded_rotation",
+      "params": {
+        "trend_window": 200,
+        "momentum_window": 60,
+        "selection": "pullback",
+        "target_volatility": 0.1,
+        "entry_rank": 3
+      }
+    },
+    "guarded_pullback_200_v0.15": {
+      "kind": "guarded_rotation",
+      "params": {
+        "trend_window": 200,
+        "momentum_window": 60,
+        "selection": "pullback",
+        "target_volatility": 0.15,
+        "entry_rank": 3
+      }
+    },
+    "buy_hold": {
+      "kind": "buy_hold",
+      "params": {}
+    }
+  },
+  "baseline": "trend_20_20_k3",
+  "development_amendment": "After seeing only the original 12 development results, add 8 guarded candidates. No validation or holdout results had been viewed. Preserve the pilot results; repeat the original grid to verify reproducibility.",
+  "selection": {
+    "development_shortlist": 3,
+    "score": "annual_return - 0.5 * max_drawdown",
+    "procedure": "Development top 3 only; validate those plus fixed baselines; choose highest validation score among finalists; freeze before holdout.",
+    "acceptance": "Holdout annual return > 0, Sharpe >= 0.7, max drawdown <= 0.20; compare with same-risk baseline. These are research gates, not guarantees.",
+    "stress": "Double commission, minimum commission and slippage; no retuning after holdout."
+  },
+  "spec": {
+    "start": "2020-01-02",
+    "end": "2022-12-30",
+    "symbols": [
+      "159611",
+      "159745",
+      "159755",
+      "159766",
+      "159819",
+      "159869",
+      "159928",
+      "159995",
+      "159996",
+      "159998",
+      "512000",
+      "512400",
+      "512580",
+      "512660",
+      "512720",
+      "512800",
+      "512880",
+      "515030",
+      "515050",
+      "515170",
+      "515210",
+      "515880",
+      "516010",
+      "516120",
+      "516510",
+      "516950",
+      "562550"
+    ],
+    "initial_cash": 1000000,
+    "seed": 7,
+    "execution": {
+      "commission_rate": 0.0002,
+      "minimum_commission": 5,
+      "slippage_rate": 0.0005,
+      "max_stale_sessions": 0,
+      "model": "next_open"
+    },
+    "risk": {
+      "max_total_weight": 0.8,
+      "max_symbol_weight": 0.35,
+      "group_caps": {
+        "communication": 0.5,
+        "consumer": 0.5,
+        "cyclical": 0.5,
+        "defense": 0.5,
+        "financials": 0.5,
+        "infrastructure": 0.5,
+        "media": 0.5,
+        "new_energy": 0.5,
+        "semiconductor": 0.5,
+        "services": 0.5,
+        "technology": 0.5,
+        "utilities": 0.5
+      },
+      "stress_scenarios": [],
+      "drawdown_pause": null,
+      "pause_action": "block_new",
+      "recovery_mode": "never"
+    },
+    "metrics": {
+      "annual_sessions": 252,
+      "risk_free_rate": 0,
+      "cash_rate": 0,
+      "definition_version": "1"
+    }
+  },
+  "source_audit_sha256": "56742584f1e88d1d3cce3fa69bf2ab730b5301609adb84492e2744e722f6b2b7",
+  "data_files": {
+    "benchmark.parquet": "4ec3c6cf79b813da3f1c7e8df2f22d6826c2fdb51309ac90de67783ed34f18e2",
+    "calendar.parquet": "d748681e55485cb0dbcf40f812678a69918854843f710b2663b0b253d5776fa2",
+    "events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d",
+    "instruments.parquet": "0708f4e7585e5a491544310a6ba6e1cae1f2b333d095264288e237249b92316c",
+    "manifest.json": "1aaa919d7d2ac7270c06e719af61068e9a90262842898519a7cff07aec0bff95",
+    "prices.parquet": "c447dae45e750447de724037ab901e16507865eeb1ab106b95266acd61853cac",
+    "status.parquet": "f18275bc37cd4bc54545307b362211a7b6d9556cff04fa58cc74427d1611f222"
+  },
+  "engine_commit": "472a2e0686b9e33a9a3ef39456cd5c15641ec499",
+  "runtime": {
+    "python": "3.13.12",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "pyarrow": "23.0.1",
+    "pydantic": "2.13.5"
+  },
+  "source_files": {
+    "src/quanto/__init__.py": "761fc59209d0e2ff33051ff6c504b42a8f790c1eb02f153c1604247bd76ce51d",
+    "src/quanto/api/__init__.py": "9a2b8a2e75335df2aba77517f70db96c0c2c58ac97105c624e6e875cf95bc2b9",
+    "src/quanto/api/app.py": "5102c364002763f8e771f1d7c3449bd79e26b8826c4c9d069991cad88e5584e4",
+    "src/quanto/api/routes.py": "23695a79ea2ed7df9f4263932fd29b0e7bf3deb582bb4e4e38310bb4b84eae6b",
+    "src/quanto/api/security.py": "c4184177d2111f3ec755d35991ee4c64e18aaaac2ff71925b18f52b550cb09e8",
+    "src/quanto/backtest/__init__.py": "2bd1c64052841ddf5c69f61799ed8d97a01cac019ab0b6f0f2bd3d4b2277c45a",
+    "src/quanto/backtest/engine.py": "5ce2f6bd31a4abda434e72323eea3e709ed4a4661f1a5a12447c825c4e4a721b",
+    "src/quanto/backtest/ledger.py": "3072626a7291003ec7a2d08e734cdc38f37272eb8f6be4e74e9d6b04965e10da",
+    "src/quanto/backtest/metrics.py": "fc0eed4e6392fb438cfb8543861b5eb98772d79ed7ff67192d55f7a0f2302044",
+    "src/quanto/backtest/models.py": "85bf346715b8abdb3c4f6178b55fc2e91cc0ece0035aa5b66c59c6d68dde0769",
+    "src/quanto/backtest/orders.py": "c0526282f804c6ec2d18ead43074759aea83ab96b548d6387e7fb6107a7d4534",
+    "src/quanto/cli.py": "57044f9204fac7897694bcf5f97eeba68c3fe672a91ca6318eab63618a3e5659",
+    "src/quanto/config.py": "ed6c458ecd74d5e9fd1c9927d6ab38f0d9f6b8357f715106d55f09f6ea4fca52",
+    "src/quanto/data/__init__.py": "5551bbc58001f5018040fa7a7e116e501410823c258e01abdfaec4208b0bf6f6",
+    "src/quanto/data/cache.py": "f53d7f0bd78a7e4bd3bdecac358e0b23451cf5011fc932c52417fe3f859c9f66",
+    "src/quanto/data/fetcher.py": "da46a531b83f92bda1684c2619f788507ced68c9165d17efa544a5b9ff6a7278",
+    "src/quanto/data/loaders.py": "fb9bc35a5243706055048a212900e38e7519aeb0ba70af6fde02b8bc622e2ea7",
+    "src/quanto/data/schemas.py": "3f372a7e393a075b213e3e606d3c3182cd81c86a64d682e6c2dd486559d54e9f",
+    "src/quanto/data/storage.py": "bdebafa4d92e47db98d4f6807bc763fcff98163c3fc2e57b0b2f39bbb0c66c99",
+    "src/quanto/factors/__init__.py": "f77631ccba316b6ad25b98054c3dab02be87950ff057f9637be6c2cc850d60a9",
+    "src/quanto/factors/price_volume.py": "53d2573f189c4636c786ea3ac43a78e2fd1871152dfb1d15275421feb83268e7",
+    "src/quanto/factors/scoring.py": "80678d395522a3a70366cd4d8856bf9aeca36a7519330702904f9a03a9846225",
+    "src/quanto/reports/__init__.py": "772816acc43e110923a356799b49240cf6c32503af6d33b1b650e96b8ac69111",
+    "src/quanto/reports/backtest_report.py": "60cb903862b72a5421bc1d584ff9d343e1145017b1febd4e55a560a6fc0c5a3e",
+    "src/quanto/risk/__init__.py": "6df19712607024d120bdb4cb53ef9960a5b7dc3ee1bb93ac6a7e4cd9f94cb61b",
+    "src/quanto/risk/policy.py": "41b5b91fdb4f02770039d7d4adb5bd4ef7db7e72e4bba8d8c6b5b13a770d4df3",
+    "src/quanto/sample_data.py": "052c15147da33eb68829589e6ae97098f1f42ba0afcbdcfdf7063223304df4ed",
+    "src/quanto/strategies/__init__.py": "765f577c21400db07ecf696446700dc0924bb6a01ea1ff7b050200f3b98d72c0",
+    "src/quanto/strategies/base.py": "376a883e82fc38a369a64e6d1dba12f9f18e2480f0be8dd28a79a498e0e4d763",
+    "src/quanto/strategies/buy_hold.py": "e2d5c093d59d1e2d39a09565122d5fcc57e4abe64fac530a040ae9b935e5cc06",
+    "src/quanto/strategies/trend_rotation.py": "5d39d220df3b2f4f2506650cb35e4e392ef51e26081157d082b14bd143f9d51f",
+    "src/quanto/universe.py": "f9af878689dcdd3aebed924c0f21614b8b8a5dcb1b7fd5bbf7208c35ed83d9ff",
+    "src/quanto/workbench/__init__.py": "a47da94e15a0d2e1cdb83ee4b462999967d36bb9869e97eced188e905199f541",
+    "src/quanto/workbench/data_jobs.py": "0a2bd9fa3512e0ccb397e8d85b617d3a3f744ed905a184bb81bc4fa9afe8409a",
+    "src/quanto/workbench/dataset_objects.py": "7ff0e2ffb1603534692bde97f9802e650a73009d79f0577352794b079b64f958",
+    "src/quanto/workbench/frontend.py": "e5a28bcea4f3cd3cedd7f830a52aa2c4bac5c24fd0efcebe487601b9731864f1",
+    "src/quanto/workbench/models.py": "f2f4c81b3cfe5fe81bf7c2bed9075afb3dfa2d6853a7789d0eaa0366ce9ad94f",
+    "src/quanto/workbench/processes.py": "65ede88377c9dfe47378a5530a23c899c35b6870d3206183ee0710cf18255f0f",
+    "src/quanto/workbench/results.py": "99bad4e18442ca7ec2566418efdc07c8199e85a07051953cb0f5d5b3eaa3f44c",
+    "src/quanto/workbench/revisions.py": "9bf4c0e2133a34fb634721aef4666dd5f88e3f959d66be2d121608e02b49a97b",
+    "src/quanto/workbench/runs.py": "ec9b0e45eaba83551a19fb35dc577ca9cceb1228abe572471423d8786ef12aee",
+    "src/quanto/workbench/scheduler.py": "052171701115ac7e7c94a91d20953669b07ea743f903f7347c8fffd3f9e23e54",
+    "src/quanto/workbench/service.py": "60fa168dac9c11c11760ce9f012648c34c6af448bb9eabb2ea59d6c3ae147624",
+    "src/quanto/workbench/snapshots.py": "41dcc25466d4002a2d1086c0aa7ad6309a23506a2bd02c1951b39ada12b9458c",
+    "src/quanto/workbench/store.py": "a7478540310065b81215e69962a3e03e989d27e148ad3b6c7499c56a64b41404",
+    "src/quanto/workbench/worker.py": "f702c3a11066170df710f60503192ace32f445720e28a5fdff7978c3efb29bb3",
+    "scripts/prepare_strategy_research_data.py": "7401fd7d34ea57fbdb3c5d61e1071e37c7379e018bd95bf5ef909b6ee18fdb9d",
+    "scripts/research_rotation_candidates.py": "49aa493608f70d83b0fc32378fa9e2f71edbe18fa6b8fdbf5c73af5127bf5fd7",
+    "scripts/research_strategy_parameters.py": "8f6470f446ac682a9f7c19525186a48c0d7d69701c2eb5db1fc435c596562a7b",
+    "uv.lock": "ef149aa5cfd26a3b1f1e632c9d7d34cda9568f57291d20d3117f372ce1b90bd9"
+  },
+  "limitations": [
+    "All periods are historical and may have been seen previously; holdout means not used in this search.",
+    "Only cached, surviving ETFs are available; universe selection is not point-in-time complete.",
+    "Each period starts in cash with prior history retained; it is not a continuous walk-forward portfolio.",
+    "BuyHold buys eligible instruments at the first session only; later listings are not added.",
+    "Risk caps are enforced daily by the current engine, including drift reductions.",
+    "No automatic drawdown pause: existing never-resume mode would change the research question."
+  ]
+}

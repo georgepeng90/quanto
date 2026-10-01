@@ -112,3 +112,25 @@ def test_trading_dates_follow_calendar_session_labels(tmp_path, frequency):
         market.catalog.create_request("repair", requirement)
         market.catalog.publish_fragments(bad, refs, (), ("repair",))
         assert market.wait_ready(market.prefetch(requirement).id, 10).coverage.complete
+
+
+@pytest.mark.parametrize("kind,proof", [("trading_status", "status"), ("instruments", "instruments")])
+def test_conflicting_reference_facts_block_ready(tmp_path, kind, proof):
+    requirement, bars, calendar = market_case("1d")
+    missing = bars.frame.iloc[0]
+    instrument = next(item for item in bars.request.instruments if item.key == missing.instrument_id)
+    if kind == "trading_status":
+        rows = [dict(instrument_id=instrument.key, trading_date=missing.trading_date, status=value) for value in ("suspended", "trading")]
+    else:
+        rows = [dict(instrument_id=instrument.key, listing_date=pd.Timestamp(value).date()) for value in ("2024-01-31", "2024-02-02")]
+    request = DataRequest(kind=kind, instruments=(instrument,), start=bars.request.start, end=bars.request.end, columns=tuple(rows[0]))
+    source = bars.source.model_copy(update={"verified": (proof,)})
+    with MarketData(tmp_path, providers=()) as market:
+        for chunk in (replace(bars, frame=bars.frame.iloc[1:]), calendar):
+            import_table(market.store, market.catalog, chunk.request, chunk.frame, chunk.source, chunk.evidence)
+        for index, row in enumerate(rows):
+            import_table(market.store, market.catalog, request, pd.DataFrame([row]), source, str(index).encode())
+        wanted = DataRequirement(requests=(*requirement.requests, request)) if kind == "trading_status" else DataRequirement(requests=(request,))
+        with pytest.raises(MarketDataError) as failure:
+            market.wait_ready(market.prefetch(wanted).id, 10)
+        assert any(entry.reason == "SEMANTIC_CONFLICT" for entry in failure.value.coverage.entries)

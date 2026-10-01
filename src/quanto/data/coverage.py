@@ -51,9 +51,17 @@ def expected_bars(request: DataRequest, calendar: pd.DataFrame, status: pd.DataF
 
 def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef, ...], store: MarketStore) -> CoverageReport:
     frames = {index: fragment_frame(store, fragment) for index, fragment in enumerate(fragments)}
+    reference_conflicts = set()
     def reference(kind, evidence):
         selected = [frames[index] for index, item in enumerate(fragments) if item.request.kind == kind and evidence in item.source.verified]
-        return pd.concat(selected, ignore_index=True).drop_duplicates() if selected else pd.DataFrame()
+        if not selected:
+            return pd.DataFrame()
+        keys = {"calendar": ("session_start", "session_end"), "trading_status": ("instrument_id", "trading_date"), "instruments": ("instrument_id",)}
+        try:
+            return deduplicate(pd.concat(selected, ignore_index=True), keys[kind])
+        except MarketDataError:
+            reference_conflicts.add(kind)
+            return pd.DataFrame()
     calendar = reference("calendar", "calendar")
     status = reference("trading_status", "status")
     instruments = reference("instruments", "instruments")
@@ -71,6 +79,8 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
             reason = "NO_LOCAL_DATA"
             fields.update(request.columns)
         else:
+            if request.kind in reference_conflicts:
+                reason = "SEMANTIC_CONFLICT"
             data = pd.concat([frame for _, frame in selected], ignore_index=True)
             if request.kind == "bars":
                 data = data[(data.bar_start >= request.start) & (data.bar_end <= request.end)]
@@ -82,6 +92,8 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                         semantics = content_key([ref.request.price_basis.model_dump(mode="json"), ref.source.units])
                         bases_by_instrument.setdefault(instrument.key, set()).add(semantics)
                 if any(len(bases) > 1 for bases in bases_by_instrument.values()):
+                    reason = "SEMANTIC_CONFLICT"
+                elif reference_conflicts:
                     reason = "SEMANTIC_CONFLICT"
                 elif any(ref.request.price_basis.mode == "vendor_research" and not ref.request.price_basis.basis_id for ref in refs):
                     reason = "UNRESOLVED_PRICE_BASIS"

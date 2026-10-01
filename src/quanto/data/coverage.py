@@ -6,7 +6,7 @@ import pyarrow.parquet as pq
 from quanto.data.catalog import compatible
 from quanto.data.contracts import BAR_KEY, CoverageEntry, CoverageReport, DataRequest, DataRequirement, FragmentRef, MarketDataError, content_key
 from quanto.data.storage import MarketStore
-from quanto.data.validation import deduplicate
+from quanto.data.validation import REFERENCE_KEYS, deduplicate, merge_reference
 
 
 def fragment_frame(store: MarketStore, fragment: FragmentRef) -> pd.DataFrame:
@@ -57,9 +57,8 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
         selected = [frames[index] for index, item in enumerate(fragments) if item.request.kind == kind and evidence in item.source.verified]
         if not selected:
             return pd.DataFrame()
-        keys = {"calendar": ("session_start", "session_end"), "trading_status": ("instrument_id", "trading_date"), "instruments": ("instrument_id",)}
         try:
-            return deduplicate(pd.concat(selected, ignore_index=True), keys[kind])
+            return merge_reference(pd.concat(selected, ignore_index=True), REFERENCE_KEYS[kind])
         except MarketDataError:
             reference_conflicts.add(kind)
             return pd.DataFrame()
@@ -120,6 +119,11 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                         if column in data and data[column].isna().any():
                             fields.add(column)
             else:
+                if request.kind in REFERENCE_KEYS:
+                    try:
+                        data = merge_reference(data, REFERENCE_KEYS[request.kind])
+                    except MarketDataError:
+                        reason = "SEMANTIC_CONFLICT"
                 proof = {"trading_status": "status", "corporate_actions": "actions"}.get(request.kind, request.kind)
                 verified = [(ref, frame) for ref, frame in selected if proof in ref.source.verified]
                 for instrument in request.instruments or (None,):

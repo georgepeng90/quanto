@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from quanto.data import MarketData
-from quanto.data.contracts import DataRequest, DataRequirement, MarketDataError, PriceBasis
+from quanto.data.contracts import DataRequest, DataRequirement, MarketDataError, NormalizedChunk, PriceBasis, TableQuery
 from quanto.data.imports import import_table
 from quanto.data.validation import validate_chunk
 from tests.fixtures.market_data_cases import market_case
@@ -146,3 +146,29 @@ def test_conflicting_reference_facts_block_ready(tmp_path, kind, proof):
         engine, catalog = coordinator(tmp_path, (ReferenceProvider(),))
         repaired = prepare(engine, catalog, DataRequirement(requests=(request,)), "reference-refresh", refresh=True)
         assert repaired.coverage.complete
+
+
+def test_reference_enrichment_preserves_existing_scope_and_fields(tmp_path):
+    from quanto.data.providers.base import ProviderCapabilities
+    _, bars, _ = market_case("1d")
+    frame = bars.frame[["instrument_id", "trading_date"]].drop_duplicates().assign(status="trading", can_sell=True)
+    old = DataRequest(kind="trading_status", instruments=bars.request.instruments, start=bars.request.start, end=bars.request.end, columns=tuple(frame.columns))
+    wanted = old.model_copy(update={"instruments": old.instruments[:1], "start": pd.Timestamp("2024-02-01", tz="UTC").to_pydatetime(),
+        "columns": ("instrument_id", "trading_date", "status", "can_buy")})
+    source = bars.source.model_copy(update={"verified": ("status",)})
+    class Provider:
+        name = "enrichment"
+        def capabilities(self):
+            return ProviderCapabilities(("trading_status",), (), {}, ())
+        def fetch(self, request, context):
+            enriched = frame.loc[frame.instrument_id == wanted.instruments[0].key].drop(columns="can_sell").assign(can_buy=True)
+            return NormalizedChunk(request, enriched, source, b"added buy flag")
+    with MarketData(tmp_path, providers=(Provider(),)) as market:
+        import_table(market.store, market.catalog, old, frame, source, b"sell flags for both instruments")
+        snapshot = market.wait_ready(market.prefetch(DataRequirement(requests=(old, wanted))).id, 10)
+        def query(request):
+            return TableQuery(instruments=request.instruments, start=request.start, end=request.end, columns=request.columns)
+        enriched = market.read_table(snapshot, "trading_status", query(wanted))
+        assert len(enriched) == 1 and enriched.can_buy.all()
+        retained = market.read_table(snapshot, "trading_status", query(old))
+        assert len(retained) == 4 and retained.can_sell.all()

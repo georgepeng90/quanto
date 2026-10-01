@@ -14,6 +14,7 @@ REFERENCE_COLUMNS = {
     "trading_status": ("instrument_id", "trading_date", "status"),
     "corporate_actions": ("instrument_id", "event_type", "record_date", "ex_date", "pay_date", "cash_per_share", "split_ratio"),
 }
+REFERENCE_KEYS = {"calendar": ("session_start", "session_end"), "trading_status": ("instrument_id", "trading_date"), "instruments": ("instrument_id",)}
 
 
 def aware_column(values: pd.Series) -> pd.Series:
@@ -27,6 +28,17 @@ def deduplicate(frame: pd.DataFrame, keys: tuple[str, ...]) -> pd.DataFrame:
     if frame.duplicated(list(keys)).any():
         raise MarketDataError("SEMANTIC_CONFLICT", "different records at identical market key")
     return frame
+
+
+def merge_reference(frame: pd.DataFrame, keys: tuple[str, ...]) -> pd.DataFrame:
+    frame = frame.drop_duplicates()
+    repeated = frame.duplicated(list(keys), keep=False)
+    if not repeated.any():
+        return frame
+    groups = frame.loc[repeated].groupby(list(keys), sort=False, dropna=False)
+    if (groups.nunique(dropna=True) > 1).any().any():
+        raise MarketDataError("SEMANTIC_CONFLICT", "different known reference facts at identical market key")
+    return pd.concat([frame.loc[~repeated], groups.first().reset_index()], ignore_index=True)[list(frame.columns)]
 
 
 def validate_chunk(chunk: NormalizedChunk) -> NormalizedChunk:

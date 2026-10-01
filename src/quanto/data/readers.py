@@ -11,6 +11,7 @@ from quanto.data.catalog import compatible
 from quanto.data.contracts import BAR_KEY, BAR_ORDER, DataQuery, DataRequest, MarketDataError, SnapshotRef, TableQuery
 from quanto.data.coverage import fragment_frame
 from quanto.data.storage import MarketStore
+from quanto.data.validation import REFERENCE_KEYS, merge_reference
 
 
 class MarketReader:
@@ -109,4 +110,6 @@ class MarketReader:
             frame = frame[keep]
         elif table.startswith("auxiliary:"):
             frame = frame[frame.available_at.isna() | ((frame.available_at >= query.start) & (frame.available_at < query.end))]
+        if table in REFERENCE_KEYS:
+            frame = merge_reference(frame, REFERENCE_KEYS[table])
         return frame[list(query.columns)].reset_index(drop=True)

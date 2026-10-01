@@ -27,24 +27,26 @@ def covers_interval(fragments, request) -> bool:
 
 def expected_bars(request: DataRequest, calendar: pd.DataFrame, status: pd.DataFrame, instruments: pd.DataFrame):
     calendar = calendar[(calendar.session_start >= request.start) & (calendar.session_end <= request.end)]
+    exclusions = {}
+    if not status.empty:
+        excluded = status.loc[status.status.isin(["suspended", "not_listed", "delisted"])]
+        exclusions = excluded.groupby("instrument_id").trading_date.agg(set).to_dict()
+    listings = instruments.dropna(subset=["listing_date"]).groupby("instrument_id").listing_date.min().to_dict() if not instruments.empty else {}
+    schedule = []
+    if request.frequency == "1d":
+        daily = calendar.groupby("trading_date", sort=True).agg(begin=("session_start", "min"), finish=("session_end", "max"))
+        schedule = list(daily.itertuples(index=True, name=None))
+    else:
+        for session in calendar.itertuples(index=False):
+            schedule.extend((session.trading_date, begin, begin + pd.Timedelta(minutes=1))
+                for begin in pd.date_range(session.session_start, session.session_end, freq="min", inclusive="left"))
     for instrument in request.instruments:
-        excluded = set()
-        if not status.empty:
-            selected = status[(status.instrument_id == instrument.key) & status.status.isin(["suspended", "not_listed", "delisted"])]
-            excluded = set(selected.trading_date)
-        listing = None
-        if not instruments.empty:
-            dates = instruments.loc[instruments.instrument_id == instrument.key, "listing_date"].dropna()
-            listing = dates.min() if len(dates) else None
-        for day, sessions in calendar.groupby("trading_date", sort=True):
+        excluded = exclusions.get(instrument.key, set())
+        listing = listings.get(instrument.key)
+        for day, begin, finish in schedule:
             if day in excluded or (listing and day < listing):
                 continue
-            if request.frequency == "1d":
-                yield instrument.key, sessions.session_start.min(), sessions.session_end.max()
-            else:
-                for session in sessions.itertuples(index=False):
-                    for begin in pd.date_range(session.session_start, session.session_end, freq="min", inclusive="left"):
-                        yield instrument.key, begin, begin + pd.Timedelta(minutes=1)
+            yield instrument.key, begin, finish
 
 
 def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef, ...], store: MarketStore) -> CoverageReport:

@@ -56,7 +56,6 @@ class WorkbenchStore:
         self.root.mkdir(parents=True, exist_ok=True)
         config_path = self.root / "workspace.json"
         config = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
-        self.market_root = get_market_root()
         if artifact_root is None and config_path.exists():
             artifact_root = Path(config["artifact_root"])
             if not artifact_root.is_absolute():
@@ -89,6 +88,10 @@ class WorkbenchStore:
             for column in ("created_at", "started_at", "finished_at"):
                 if column not in columns:
                     db.execute(f"ALTER TABLE jobs ADD COLUMN {column} TEXT")
+
+    @property
+    def market_root(self) -> Path:
+        return get_market_root()
 
     @contextmanager
     def transaction(self):

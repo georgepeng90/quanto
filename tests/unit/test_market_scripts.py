@@ -74,3 +74,14 @@ def test_minute_measurement_fetches_only_last_missing_minute_and_reuses():
     assert all(pd.Timestamp(request["end"]) - pd.Timestamp(request["start"]) == pd.Timedelta(minutes=1) for request in result["gap_requests"])
     assert result["object_bytes"] > 0
     assert result["batch_rss_peak"] >= result["batch_rss_baseline"]
+
+
+def test_daily_measurement_isolates_shared_library_in_worker():
+    from quanto.data import get_market_root
+    from scripts.benchmark_market_data import measure
+    configured = get_market_root()
+    result = measure(2, 3, "1d")
+    assert result["seconds"]["workbench_job"] is not None
+    assert result["repeat_request_count"] == 0
+    assert get_market_root() == configured
+    assert not configured.exists()

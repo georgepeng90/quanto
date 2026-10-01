@@ -4,11 +4,13 @@ from __future__ import annotations
 import argparse
 from dataclasses import replace
 import json
+import os
 from pathlib import Path
 import platform
 import tempfile
 import threading
 import time
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -95,8 +97,11 @@ def timed(operation):
 def measure(count=32, days=20, frequency="1d"):
     payload, requirement, chunks = synthetic_case(count, days, frequency)
     provider = SyntheticProvider(chunks)
-    with tempfile.TemporaryDirectory(prefix="quanto-market-bench-") as directory:
+    with tempfile.TemporaryDirectory(prefix="quanto-market-bench-") as directory, patch.dict(os.environ):
         root = Path(directory)
+        market_config = root / "market-config.json"
+        market_config.write_text(json.dumps({"root": str(root / "workspace/market")}), encoding="utf-8")
+        os.environ["QUANTO_MARKET_CONFIG"] = str(market_config)
         with MarketData(root / "workspace/market", MarketConfig(max_retries=0, max_workers=2, batch_size=4096), (provider,)) as market:
             start = time.perf_counter()
             for chunk in chunks:
@@ -140,7 +145,6 @@ def measure(count=32, days=20, frequency="1d"):
         if frequency == "1d":
             from quanto.workbench.service import WorkbenchService
             service = WorkbenchService(root / "workspace")
-            service.store.market_root = root / "workspace/market"
             start = time.perf_counter()
             identity = service.submit_job("fetch", payload)["id"]
             service.scheduler.start(background=False)

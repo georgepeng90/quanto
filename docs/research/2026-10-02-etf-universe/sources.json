@@ -1,0 +1,101 @@
+{
+  "information_window": [
+    "2023-10-02",
+    "2026-10-02"
+  ],
+  "sources": [
+    {
+      "title": "上交所2024年行业报告，统计2023年度",
+      "published": "2024-02-02",
+      "url": "https://www.chnfund.com/article/AR2024020219362226115968",
+      "use": "交易所报告公开转载，行业与产品布局背景"
+    },
+    {
+      "title": "上交所ETF投资交易白皮书2024年上半年",
+      "published": "2024-09-13",
+      "url": "https://www.sse.com.cn/aboutus/mediacenter/hotandd/c/c_20240913_10761555.shtml",
+      "use": "流动性与产品类别背景"
+    },
+    {
+      "title": "上交所2025年行业报告，统计2024年度",
+      "url": "https://etf.sse.com.cn/fundtrends/c/10770698/files/69a55dcfb84b4e8e87dc6cf396c628f7.pdf",
+      "use": "年度行业与产品结构背景"
+    },
+    {
+      "title": "上交所2026年行业报告，统计2025年度",
+      "published": "2026-02-06",
+      "url": "https://etf.sse.com.cn/fundtrends/c/10808765/files/31409f49c20a4ca6944fb4cfd387cff8.pdf",
+      "use": "年度行业与新产品布局背景"
+    },
+    {
+      "title": "上交所产品名录",
+      "url": "https://etf.sse.com.cn/fundlist/",
+      "use": "代码、指数、上市日期、最新规模、分类"
+    },
+    {
+      "title": "深交所产品名录",
+      "url": "https://fund.szse.cn/marketdata/fundslist/index.html",
+      "use": "代码、上市日期、份额、净值；规模为份额乘净值"
+    },
+    {
+      "title": "新浪ETF报价",
+      "url": "https://vip.stock.finance.sina.com.cn/fund_center/index.html#jjhqetf",
+      "use": "2026-09-30单日成交额候选预筛，不能代表60日均"
+    },
+    {
+      "title": "上交所历史ETF份额",
+      "url": "https://www.sse.com.cn/market/funddata/volumn/etfvolumn/",
+      "use": "保存2023/2024/2025年末份额记录供后续复核；份额排名不是资产规模或收益排名，未混入质量评分"
+    }
+  ],
+  "local_evidence": {
+    "sse_funds.json": {
+      "path": "outputs/etf-expansion-20261002/sse_funds.json",
+      "sha256": "242a6d55ef667edc4584714536b3098b80cee39afa5ed38081febb47cf00249e"
+    },
+    "sse_categories.json": {
+      "path": "outputs/etf-expansion-20261002/sse_categories.json",
+      "sha256": "f230d7d9a2ef91409b01ea8026ec80b90a627584a0dc15fe65c330a7b9d6784b"
+    },
+    "szse_funds.csv": {
+      "path": "outputs/etf-expansion-20261002/szse_funds.csv",
+      "sha256": "91e64885a4187fa0dd5ca8b8458674ff16a508e959068d0e99c604529ba04505"
+    },
+    "szse_funds.xlsx": {
+      "path": "outputs/etf-expansion-20261002/szse_funds.xlsx",
+      "sha256": "15f2c1e606467b3e07787f43d34267b914b7fa9945701b924a88f86b7d541794"
+    },
+    "sina_etfs.csv": {
+      "path": "outputs/etf-expansion-20261002/sina_etfs.csv",
+      "sha256": "40532a93df7ea4c2da8541e5d176b3578fc1ccb9c07c72082ead0607da975b35"
+    },
+    "sse_shares_2023-12-29.json": {
+      "path": "outputs/etf-expansion-20261002/sse_shares_2023-12-29.json",
+      "sha256": "4d650e484652889ff4e52b85fab8dc7263ee5395a2ad208632ac2054ce9df716"
+    },
+    "sse_shares_2024-12-31.json": {
+      "path": "outputs/etf-expansion-20261002/sse_shares_2024-12-31.json",
+      "sha256": "b64268fb7f7f8c27db220390ed5d796f5bf104642845b7f9a78431f0e64dfa14"
+    },
+    "sse_shares_2025-12-31.json": {
+      "path": "outputs/etf-expansion-20261002/sse_shares_2025-12-31.json",
+      "sha256": "e772495029e4c339de537627ff42f781230adf3904834491f113cd7933b7c6a3"
+    }
+  },
+  "coverage_definition": "31行业名称和指数词的保守核对，非成分股穿透或独立风险暴露计数",
+  "coverage_gaps": [
+    "纺织服饰",
+    "轻工制造",
+    "交通运输",
+    "商贸零售",
+    "综合",
+    "美容护理"
+  ],
+  "known_limits": [
+    "规模最新估值日期未在官方目录接口给出；沪深目录口径不同",
+    "最新单日成交额用于宽松预筛，60日流动性与真实数据覆盖尚未核验",
+    "费用、跟踪误差、价差、停牌及清盘公告未完成逐只核验",
+    "深交所名单暂无标的指数，跨发行人同指数去重需补充资料",
+    "按当前名单回看历史存在选择与幸存偏差，不能作为独立样本外证明"
+  ]
+}

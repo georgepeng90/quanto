@@ -70,6 +70,40 @@ def test_akshare_index_does_not_fabricate_ohlc():
     assert chunk.source.upstream == "Eastmoney"
 
 
+@pytest.mark.parametrize("start,end", [("2024-01-02T01:30:00Z", "2024-01-02T07:00:00Z"),
+    ("2024-01-01T16:00:00Z", "2024-01-02T16:00:00Z")])
+def test_akshare_daily_parameters_include_requested_close_in_local_timezone(start, end):
+    from quanto.data.providers.akshare import AKShareProvider
+    calls = []
+    def sdk(function, kwargs, context):
+        calls.append(kwargs)
+        return pd.DataFrame({"日期": ["2024-01-02"], "收盘": [10.], "成交额": [100.]})
+    query = request().model_copy(update={"start": pd.Timestamp(start).to_pydatetime(), "end": pd.Timestamp(end).to_pydatetime()})
+    chunk = AKShareProvider(sdk_call=sdk).fetch(query, context())
+    assert calls[0]["start_date"] == calls[0]["end_date"] == "20240102"
+    assert len(chunk.frame) == 1
+
+
+def test_calendar_horizon_uses_trading_dates_in_exchange_timezone():
+    from quanto.data.providers.akshare import AKShareProvider
+    query = DataRequest(kind="calendar", start=pd.Timestamp("2024-01-01T16:00:00Z").to_pydatetime(),
+        end=pd.Timestamp("2024-01-02T16:00:00Z").to_pydatetime(), columns=("trading_date", "session_start", "session_end"))
+    chunk = AKShareProvider(sdk_call=lambda *args: pd.DataFrame({"trade_date": ["2024-01-02"]})).fetch(query, context())
+    assert len(chunk.frame) == 2
+
+
+@pytest.mark.parametrize("field,value", [("exchange", "NYSE"), ("currency", "USD")])
+def test_chinese_sources_reject_unsupported_market_semantics(field, value):
+    from quanto.data.providers.akshare import AKShareProvider
+    from quanto.data.providers.tencent import TencentProvider
+    query = request()
+    query = query.model_copy(update={"instruments": (query.instruments[0].model_copy(update={field: value}),)}) if field == "exchange" else query.model_copy(update={field: value})
+    for provider in (AKShareProvider(), TencentProvider()):
+        assert not provider.capabilities().supports(query)
+        with pytest.raises(MarketDataError, match="CAPABILITY_UNAVAILABLE"):
+            provider.fetch(query, context())
+
+
 def test_minute_fetch_is_not_silently_daily():
     from quanto.data.providers.akshare import AKShareProvider
     from quanto.data.providers.tencent import TencentProvider

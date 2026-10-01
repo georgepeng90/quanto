@@ -29,9 +29,12 @@ class ProviderCapabilities:
     frequencies: tuple[str, ...]
     fields: dict[str, tuple[str, ...]]
     modes: tuple[str, ...] = ("vendor_research",)
+    exchanges: tuple[str, ...] = ()
+    currencies: tuple[str, ...] = ()
 
     def supports(self, request: DataRequest) -> bool:
-        if request.kind not in self.kinds:
+        if request.kind not in self.kinds or (self.currencies and request.currency not in self.currencies) or (
+            self.exchanges and any(item.exchange not in self.exchanges for item in request.instruments)):
             return False
         if request.kind != "bars":
             return True
@@ -44,6 +47,11 @@ class MarketProvider(Protocol):
     name: str
     def capabilities(self) -> ProviderCapabilities: ...
     def fetch(self, request: DataRequest, context: FetchContext) -> NormalizedChunk: ...
+
+
+def local_date_bounds(request: DataRequest):
+    return pd.Timestamp(request.start).tz_convert("Asia/Shanghai").date(), (
+        pd.Timestamp(request.end) - pd.Timedelta(nanoseconds=1)).tz_convert("Asia/Shanghai").date()
 
 
 def daily_bars(frame: pd.DataFrame, instrument, request: DataRequest) -> pd.DataFrame:

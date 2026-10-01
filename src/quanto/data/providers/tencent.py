@@ -8,7 +8,7 @@ from urllib.request import Request, urlopen
 import pandas as pd
 
 from quanto.data.contracts import BAR_COLUMNS, DataRequest, MarketDataError, NormalizedChunk, PriceBasis, SourceRecord, content_key
-from quanto.data.providers.base import FetchContext, ProviderCapabilities, daily_bars
+from quanto.data.providers.base import FetchContext, ProviderCapabilities, daily_bars, local_date_bounds
 from quanto.data.validation import validate_chunk
 
 
@@ -30,7 +30,7 @@ class TencentProvider:
             raise ValueError("unit conversion requires evidence")
 
     def capabilities(self):
-        return ProviderCapabilities(("bars",), ("1d",), {"etf": BAR_COLUMNS[4:], "index": BAR_COLUMNS[4:]})
+        return ProviderCapabilities(("bars",), ("1d",), {"etf": BAR_COLUMNS[4:], "index": BAR_COLUMNS[4:]}, exchanges=("SSE", "SZSE"), currencies=("CNY",))
 
     def fetch(self, request: DataRequest, context: FetchContext) -> NormalizedChunk:
         if not self.capabilities().supports(request) or len(request.instruments) != 1:
@@ -38,8 +38,9 @@ class TencentProvider:
         instrument = request.instruments[0]
         symbol = ("sz" if instrument.exchange == "SZSE" else "sh") + instrument.code
         records, modes, evidence, parameters = [], set(), [], []
+        start_day, end_day = local_date_bounds(request)
         try:
-            for year in range(request.start.year, request.end.year + 1, 2):
+            for year in range(start_day.year, end_day.year + 1, 2):
                 params = {"_var": f"kline_dayqfq{year}", "param": f"{symbol},day,{year}-01-01,{year+1}-12-31,640,qfq"}
                 raw = self.transport(params, context.remaining())
                 context.remaining()

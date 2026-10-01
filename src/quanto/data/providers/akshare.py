@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import pandas as pd
 
 from quanto.data.contracts import BAR_COLUMNS, DataRequest, MarketDataError, NormalizedChunk, PriceBasis, SourceRecord, content_key
-from quanto.data.providers.base import FetchContext, ProviderCapabilities, daily_bars
+from quanto.data.providers.base import FetchContext, ProviderCapabilities, daily_bars, local_date_bounds
 from quanto.data.providers.sdk_call import run_sdk_call
 from quanto.data.validation import validate_chunk
 
@@ -17,17 +17,18 @@ class AKShareProvider:
         self.sdk_call = sdk_call
 
     def capabilities(self):
-        return ProviderCapabilities(("bars", "calendar"), ("1d",), {"etf": BAR_COLUMNS[4:], "index": ("close", "amount")})
+        return ProviderCapabilities(("bars", "calendar"), ("1d",), {"etf": BAR_COLUMNS[4:], "index": ("close", "amount")}, exchanges=("SSE", "SZSE"), currencies=("CNY",))
 
     def fetch(self, request: DataRequest, context: FetchContext) -> NormalizedChunk:
         if not self.capabilities().supports(request):
             raise MarketDataError("CAPABILITY_UNAVAILABLE", "AKShare does not support requested fields/frequency/basis")
         context.remaining()
+        start_day, end_day = local_date_bounds(request)
         if request.kind == "calendar":
             function, kwargs = "tool_trade_date_hist_sina", {}
             raw = self.sdk_call(function, kwargs, context)
             days = pd.to_datetime(raw["trade_date"]).dt.normalize()
-            if days.empty or days.min().date() > request.start.date() or days.max().date() < (pd.Timestamp(request.end) - pd.Timedelta(days=1)).date():
+            if days.empty or days.min().date() > start_day or days.max().date() < end_day:
                 raise MarketDataError("INCOMPLETE", "calendar source does not establish requested horizon")
             local = days.dt.tz_localize("Asia/Shanghai")
             sessions = []
@@ -42,8 +43,8 @@ class AKShareProvider:
                 raise MarketDataError("CAPABILITY_UNAVAILABLE", "adapter fetch expects one instrument")
             instrument = request.instruments[0]
             if instrument.instrument_type == "etf":
-                function, kwargs = "fund_etf_hist_em", dict(symbol=instrument.code, period="daily", start_date=request.start.strftime("%Y%m%d"),
-                    end_date=(pd.Timestamp(request.end) - pd.Timedelta(days=1)).strftime("%Y%m%d"), adjust="qfq")
+                function, kwargs = "fund_etf_hist_em", dict(symbol=instrument.code, period="daily", start_date=start_day.strftime("%Y%m%d"),
+                    end_date=end_day.strftime("%Y%m%d"), adjust="qfq")
             else:
                 function, kwargs = "stock_zh_index_daily_em", dict(symbol=("sz" if instrument.exchange == "SZSE" else "sh") + instrument.code)
             raw = self.sdk_call(function, kwargs, context)

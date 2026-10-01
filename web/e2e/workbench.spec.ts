@@ -6,9 +6,20 @@ import { resolve } from 'node:path'
 test('edits runs compares and exports a backtest', async ({ page }, testInfo) => {
   const errors: string[] = []
   page.on('pageerror', error => { errors.push(error.message); console.log(`Browser error: ${error.message}`) })
+  const sessionResponse = await page.request.get('/api/session')
+  expect(sessionResponse.ok()).toBeTruthy()
+  const { token } = await sessionResponse.json() as { token: string }
+  const demoResponse = await page.request.post('/api/jobs/data', {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { kind: 'demo', payload: { years: 1, seed: 7 } }
+  })
+  expect(demoResponse.ok()).toBeTruthy()
   await page.goto('/datasets')
   await expect(page.getByRole('heading', { name: '数据版本', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: '生成演示', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '生成演示数据', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '生成演示', exact: true })).toHaveCount(0)
+  await expect(page.getByLabel('年数', { exact: true })).toHaveCount(0)
+  await expect(page.getByLabel('种子', { exact: true })).toHaveCount(0)
   await expect(page.getByText(/已验证并登记数据版本/)).toBeVisible({ timeout: 60_000 })
   await page.getByRole('link', { name: '策略与实验', exact: true }).click()
   await page.getByRole('combobox', { name: '选择数据', exact: true }).selectOption({ index: 1 })

@@ -72,7 +72,7 @@ export const api = {
   saveExperiment: (id: string, expected_revision: number, payload: ExperimentPayload) => request<ExperimentDraft>(`/experiments/${encodeURIComponent(id)}`, { ...json({ expected_revision, payload }), method: 'PUT' }),
   jobs: (cursor?: string) => list<JobRecord>('jobs', cursor),
   job: (id: string) => request<JobRecord>(`/jobs/${encodeURIComponent(id)}`),
-  dataJob: (kind: 'demo' | 'fetch', payload: Record<string, unknown>) => request<JobRecord>('/jobs/data', json({ kind, payload })),
+  dataJob: (kind: 'fetch', payload: Record<string, unknown>) => request<JobRecord>('/jobs/data', json({ kind, payload })),
   validateStrategy: (strategy_revision_id: string, params: Record<string, unknown>) => request<JobRecord>('/jobs/strategy-validation', json({ strategy_revision_id, params })),
   upload: (file: File) => { const body = new FormData(); body.append('file', file); return request<{ upload_id: string }>('/uploads', { method: 'POST', body }) },
   preflight: (upload_id: string) => request<Preflight>('/datasets/preflight', json({ upload_id })),

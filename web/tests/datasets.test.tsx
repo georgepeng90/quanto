@@ -16,11 +16,14 @@ beforeEach(() => {
   }))
 })
 
-test('shows demo, research mode, coverage and acquisition errors', async () => {
+test('shows registered provenance and acquisition errors without demo generation', async () => {
   renderApp()
   expect(await screen.findByText('演示数据')).toBeInTheDocument()
   expect(screen.getByText('复权研究价')).toBeInTheDocument()
   expect(screen.getByText(/2024-02-01.*2024-11-30/)).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '生成演示' })).not.toBeInTheDocument()
+  expect(screen.queryByLabelText('年数')).not.toBeInTheDocument()
+  expect(screen.queryByLabelText('种子')).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '发起获取' }))
   await waitFor(() => expect(screen.getByText(/coverage incomplete/)).toBeInTheDocument())
 })
@@ -36,6 +39,7 @@ test('never presents an incomplete finished fetch as a usable data version', asy
   }))
   renderApp()
   expect(await screen.findByText(/尚无已验证数据版本/)).toBeInTheDocument()
+  expect(screen.queryByText(/可生成演示数据/)).not.toBeInTheDocument()
   expect(screen.getByText(/覆盖不完整/)).toBeInTheDocument()
   expect(screen.getByText(/2024-01-03/)).toBeInTheDocument()
   expect(screen.queryByText(/已验证并登记数据版本/)).not.toBeInTheDocument()
@@ -141,8 +145,8 @@ test('polls a submitted 51st job by ID after the first job page is full', async 
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
     if (path === '/api/datasets') return Response.json({ items: [], next_cursor: null })
     if (path === '/api/jobs') { listReads += 1; return Response.json({ items: old, next_cursor: listReads === 1 ? null : '50' }) }
-    if (path === '/api/jobs/data' && init?.method === 'POST') return Response.json({ id: 'j51', kind: 'demo', state: 'queued', enqueue_seq: 51 })
-    if (path === '/api/jobs/j51') { detailReads += 1; return Response.json({ id: 'j51', kind: 'demo', state: 'succeeded', enqueue_seq: 51, result: { state: 'complete', dataset_version_id: 'd51', price_mode: 'adjusted_research' } }) }
+    if (path === '/api/jobs/data' && init?.method === 'POST') return Response.json({ id: 'j51', kind: 'fetch', state: 'queued', enqueue_seq: 51 })
+    if (path === '/api/jobs/j51') { detailReads += 1; return Response.json({ id: 'j51', kind: 'fetch', state: 'succeeded', enqueue_seq: 51, result: { state: 'complete', market_prefetch_state: 'ready', dataset_version_id: 'd51', price_mode: 'adjusted_research' } }) }
     if (path.startsWith('/api/jobs/j')) return Response.json(old.find(job => `/api/jobs/${job.id}` === path))
     throw new Error(`unexpected ${path}`)
   }))
@@ -150,7 +154,7 @@ test('polls a submitted 51st job by ID after the first job page is full', async 
   await screen.findByText('j49')
   vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
   try {
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '生成演示' })); await Promise.resolve() })
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '发起获取' })); await Promise.resolve() })
     await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
     expect(detailReads).toBeGreaterThan(0)
     expect(screen.getByText(/已验证并登记数据版本 d51/)).toBeInTheDocument()

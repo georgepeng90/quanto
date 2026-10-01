@@ -36,11 +36,11 @@ npm.cmd --prefix web run build
 
 若 `8765` 被已有服务占用，可明确使用 `.\scripts\start-workbench.ps1 -Port 8767`，然后访问 [8767 工作台](http://127.0.0.1:8767)。Git 合并不会迁移被忽略的本地数据库和运行产物；主目录默认工作区与此前 worktree 的工作区各自独立。2026-09-30 的当前 `8765` 预览已切换到主仓 `v2` 源码和前端，继续使用旧 worktree 的 Python 环境、历史数据及产物；应保留该目录。继续使用这份预览的重启命令和验收结果见[切换记录](docs/superpowers/plans/2026-09-30-preview-cutover.md)。
 
-首次启动自动登记两套策略模板。在“数据版本”点击“生成演示”，登记成功后进入“策略与实验”，选择数据和模板、填写有效范围/资金/用途并保存；随后在“回测任务”运行，查看订单、图表、克隆实验、比较和下载。可用演示区间为 `2018-01-02` 至 `2018-01-31`，代码 `512480`；示例金额和参数只用于流程演示。
+首次启动自动登记两套策略模板。首次回测前，在“数据版本”获取 ETF 真实行情或导入符合契约的 ZIP；确认登记版本的实际覆盖后，进入“策略与实验”选择数据、模板及覆盖中的标的和日期，填写资金与用途并保存。随后在“回测任务”运行，查看订单、图表、克隆实验、比较和下载。示例金额和参数只用于说明操作。
 
 同源 `GET /api/session` 返回本机令牌；浏览器后续请求和 Agent CLI 均以 `Authorization: Bearer <token>` 调用 `/api`。CLI 可通过 `QUANTO_TOKEN` 环境变量读取令牌，例如 `uv run --extra web quanto datasets list`。任务提交和结果查询共用这套 API；`quanto runs --help` 可查看运行命令。
 
-旧版 `fetch-data`、`generate-sample-data` 和 `run-backtest` 命令已由任务 API 取代。演示数据使用 `POST /api/jobs/data`，请求体为 `{"kind":"demo","payload":{"years":1}}`。行情获取使用 `{"kind":"fetch","payload":{"symbols":["512480"],"start_date":"2024-01-08","end_date":"2024-01-12","refresh":false}}`。只有 `result.market_prefetch_state == "ready"`、回测包验证通过且返回 `dataset_version_id` 才能用于回测；通用任务 `succeeded` 也可能返回不完整覆盖。重复请求优先使用本地缓存，页面“更新已有行情”才显式刷新。普通请求不接受供应商、物理根、缓存版本或重试配置。
+旧版 `fetch-data`、`generate-sample-data` 和 `run-backtest` 命令已由任务 API 取代。`POST /api/jobs/data` 的 demo 请求（例如 `{"kind":"demo","payload":{"years":1}}`）仅供开发与自动化测试；合成数据生成不属于正式用户流程。行情获取使用 `{"kind":"fetch","payload":{"symbols":["512480"],"start_date":"2024-01-08","end_date":"2024-01-12","refresh":false}}`。只有 `result.market_prefetch_state == "ready"`、回测包验证通过且返回 `dataset_version_id` 才能用于回测；通用任务 `succeeded` 也可能返回不完整覆盖。重复请求优先使用本地缓存，页面“更新已有行情”才显式刷新。普通请求不接受供应商、物理根、缓存版本或重试配置。
 
 ## 独立行情 API 与预缓存
 
@@ -106,4 +106,4 @@ npm.cmd --prefix web run test:e2e
 
 浏览器测试自行启动 `127.0.0.1:8766`，使用独立临时工作区和真实后端。已有 Chrome 可设置 `$env:PLAYWRIGHT_CHANNEL='chrome'`，不影响日常启动。
 
-真实数据的有限检查：2026-09-29 拉取 ETF `512480` 的 `2024-01-08..12` 五个交易日成功，但默认 `sh000300` 基准出现 `ConnectionError`；最终为 `incomplete / COVERAGE_INCOMPLETE`，未登记数据版本。演示/导入闭环不依赖此次联网成功，不能据此宣称真实数据整体就绪。策略以受信任本地 Python 执行，子进程不是恶意代码沙箱。复现边界、价格模式及 Windows/非 Windows 生命周期差异见使用指南。
+真实数据的有限检查：2026-09-29 拉取 ETF `512480` 的 `2024-01-08..12` 五个交易日成功，但默认 `sh000300` 基准出现 `ConnectionError`；最终为 `incomplete / COVERAGE_INCOMPLETE`，未登记数据版本。导入闭环不依赖此次联网成功，不能据此宣称真实数据整体就绪。策略以受信任本地 Python 执行，子进程不是恶意代码沙箱。复现边界、价格模式及 Windows/非 Windows 生命周期差异见使用指南。

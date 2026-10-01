@@ -147,3 +147,18 @@ def test_different_instruments_can_resolve_distinct_research_bases(tmp_path):
         for index, instrument in enumerate(wanted.instruments):
             query = DataQuery(**wanted.model_copy(update={"instruments": (instrument,), "price_basis": PriceBasis(mode="vendor_research", basis_id=f"source_{index}")}).model_dump())
             assert len(market.read_bars(snapshot, query)) == 2
+
+
+def test_equivalent_requirement_ordering_reuses_snapshot_identity(tmp_path):
+    from quanto.data import MarketData
+    from quanto.data.contracts import DataRequirement, QualityPolicy
+    _, _, requirement = import_case(tmp_path)
+    requirement = requirement.model_copy(update={"quality": QualityPolicy(required_evidence=("calendar", "price_basis"), accepted_limitations=("unknown_units", "unknown_availability"))})
+    reordered = DataRequirement(requests=tuple(request.model_copy(update={"columns": request.columns[::-1], "instruments": request.instruments[::-1]})
+        for request in requirement.requests[::-1]), quality=QualityPolicy(required_evidence=requirement.quality.required_evidence[::-1],
+            accepted_limitations=requirement.quality.accepted_limitations[::-1]))
+    assert reordered.key == requirement.key
+    with MarketData(tmp_path, providers=()) as market:
+        first = market.wait_ready(market.prefetch(requirement).id, 10)
+        second = market.wait_ready(market.prefetch(reordered).id, 10)
+        assert first.id == second.id

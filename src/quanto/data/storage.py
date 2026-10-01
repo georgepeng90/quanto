@@ -80,9 +80,12 @@ class MarketStore:
             "price_basis": ref.request.price_basis.model_dump(mode="json") if ref.request.price_basis else None,
             "currency": ref.request.currency, "units": ref.source.units} for ref in manifest.fragments}
         manifest = manifest.model_copy(update={"quality": {**manifest.quality, "series": [series[key] for key in sorted(series)], "requirement_key": manifest.requirement.key}})
-        requests = tuple(sorted(manifest.requirement.requests, key=lambda item: content_key(item.model_dump(mode="json"))))
-        entries = tuple(sorted(manifest.coverage.entries, key=lambda item: content_key(item.request.model_dump(mode="json"))))
-        manifest = manifest.model_copy(update={"requirement": manifest.requirement.model_copy(update={"requests": requests}),
+        def canonical_request(request):
+            return request.model_copy(update={"instruments": tuple(sorted(request.instruments, key=lambda item: item.key)), "columns": tuple(sorted(request.columns))})
+        requests = tuple(sorted((canonical_request(request) for request in manifest.requirement.requests), key=lambda item: content_key(item.model_dump(mode="json"))))
+        entries = tuple(sorted((entry.model_copy(update={"request": canonical_request(entry.request)}) for entry in manifest.coverage.entries), key=lambda item: content_key(item.request.model_dump(mode="json"))))
+        quality = manifest.requirement.quality.model_copy(update={key: tuple(sorted(values)) for key, values in manifest.requirement.quality.model_dump().items()})
+        manifest = manifest.model_copy(update={"requirement": manifest.requirement.model_copy(update={"requests": requests, "quality": quality}),
             "fragments": tuple(sorted(manifest.fragments, key=lambda item: content_key(item.model_dump(mode="json")))),
             "coverage": manifest.coverage.model_copy(update={"entries": entries})})
         data = json_bytes(manifest.model_dump(mode="json"))

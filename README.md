@@ -23,7 +23,7 @@
 
 ## 快速启动
 
-代码已合入 `v2`。在仓库根目录 `D:\Projects\quanto` 执行（Python 3.13、Node.js 24、uv）：
+在使用该版本代码的 checkout 根目录执行（Python 3.13、Node.js 24、uv）：
 
 ```powershell
 uv sync --locked --extra dev --extra web --extra data

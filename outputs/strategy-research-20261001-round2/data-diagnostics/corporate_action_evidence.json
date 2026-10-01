@@ -1,0 +1,105 @@
+{
+  "checked_utc": "2026-10-01T11:11:10.916556+00:00",
+  "announcements": [
+    {
+      "symbol": "515880",
+      "event": "split",
+      "record_date": "2026-07-03",
+      "ex_date": "2026-07-06",
+      "ratio": "1:2",
+      "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-06-30/515880_20260630_NHF1.pdf",
+      "file": "515880-split-plan-20260630.pdf",
+      "http_status": 200,
+      "bytes": 265136,
+      "sha256": "3efba48cc0063c4905a4d00dc219ccbc02201df713dddaa20531e90d3425d455"
+    },
+    {
+      "symbol": "515880",
+      "event": "split_result",
+      "record_date": "2026-07-03",
+      "ex_date": "2026-07-06",
+      "ratio": "1:2",
+      "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-07-06/515880_20260706_PYMW.pdf",
+      "file": "515880-split-result-20260706.pdf",
+      "http_status": 200,
+      "bytes": 252784,
+      "sha256": "10a7f8e70a7633d00882d8cba128a5db18d136dd4db1ae2244d2a6c65a90fab4"
+    },
+    {
+      "symbol": "512400",
+      "event": "cash_dividend",
+      "record_date": "2026-09-08",
+      "ex_date": "2026-09-09",
+      "cash_cny_per_unit": 0.08,
+      "payout_date": "2026-09-14",
+      "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-09-04/512400_20260904_MAOK.pdf",
+      "file": "512400-dividend-20260904.pdf",
+      "http_status": 200,
+      "bytes": 85557,
+      "sha256": "97e24ae97e7f12ebe66604606aa2515bfa0fff0d757894d73f3de154fdba354f"
+    },
+    {
+      "symbol": "159995",
+      "event": "split_result",
+      "record_date": "2026-07-06",
+      "ex_date": "2026-07-07",
+      "ratio": "1:2",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-07-07/1225412524.PDF",
+      "file": "159995-split-result-20260707.pdf",
+      "http_status": 200,
+      "bytes": 111169,
+      "sha256": "7222daa71c785136521fa69a2fd99ca012c7996ae247fbb908f59f20012465de"
+    }
+  ],
+  "qfq_overlap_comparisons": [
+    {
+      "symbol": "515880",
+      "cache_source": "data/raw/etf/515880.csv",
+      "new_source": "alternate-data/tencent_qfq/515880.csv",
+      "overlap_rows": 1621,
+      "first_overlap_date": "2019-09-06",
+      "last_overlap_date": "2026-05-21",
+      "expected_transform": "old_close / 2",
+      "maximum_abs_residual_cny": 0.0005,
+      "rows_residual_gt_0p001_cny": 0,
+      "last_overlap": {
+        "date": "2026-05-21",
+        "old_close": 1.44,
+        "new_close": 0.72
+      }
+    },
+    {
+      "symbol": "512400",
+      "cache_source": "data/raw/etf/512400.csv",
+      "new_source": "alternate-data/tencent_qfq/512400.csv",
+      "overlap_rows": 2031,
+      "first_overlap_date": "2018-01-02",
+      "last_overlap_date": "2026-05-21",
+      "expected_transform": "old_close - 0.08",
+      "maximum_abs_residual_cny": 0.001,
+      "rows_residual_gt_0p001_cny": 0,
+      "last_overlap": {
+        "date": "2026-05-21",
+        "old_close": 1.947,
+        "new_close": 1.867
+      }
+    },
+    {
+      "symbol": "159995",
+      "cache_source": "data/raw/etf/159995.csv",
+      "new_source": "alternate-data/tencent_qfq/159995.csv",
+      "overlap_rows": 1523,
+      "first_overlap_date": "2020-02-10",
+      "last_overlap_date": "2026-05-21",
+      "expected_transform": "old_close / 2",
+      "maximum_abs_residual_cny": 0.0005,
+      "rows_residual_gt_0p001_cny": 0,
+      "last_overlap": {
+        "date": "2026-05-21",
+        "old_close": 2.477,
+        "new_close": 1.239
+      }
+    }
+  ],
+  "interpretation": "Each old-vs-new close shift agrees with the subsequent manager-announced split or cash dividend, within 0.001 CNY daily rounding. This is evidence for changed qfq adjustment basis, not permission to splice earlier cached qfq to later data. Notices concern fund units and cash distribution; trading prices were cross-checked separately against Sina."
+}

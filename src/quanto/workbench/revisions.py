@@ -1,28 +1,12 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import shutil
 import tempfile
 
-
-def json_bytes(value: object) -> bytes:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
-
-
-def digest(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def safe_name(name: str) -> str:
-    if not isinstance(name, str) or not name or "\\" in name or ":" in name:
-        raise ValueError(f"unsafe path: {name}")
-    path = PurePosixPath(name)
-    if path.is_absolute() or any(part in (".", "..") for part in name.split("/")):
-        raise ValueError(f"unsafe path: {name}")
-    return name
+from quanto.objects import digest, json_bytes, safe_name
 
 
 def source_files(root: Path) -> dict[str, bytes]:

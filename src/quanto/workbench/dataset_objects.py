@@ -1,40 +1,15 @@
 from __future__ import annotations
 
 import hashlib
-import os
 from pathlib import Path
 import re
 import shutil
 import tempfile
 
-from quanto.workbench.revisions import digest, json_bytes, safe_name
+from quanto.objects import digest, json_bytes, safe_name, file_hash as _file_hash, file_paths as _paths
 
 
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
-
-
-def _file_hash(path: Path) -> str:
-    value = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            value.update(chunk)
-    return value.hexdigest()
-
-
-def _paths(root: Path) -> dict[str, Path]:
-    if root.is_symlink() or not root.is_dir():
-        raise ValueError("dataset object path invalid")
-    result = {}
-    for current, dirs, files in os.walk(root, followlinks=False):
-        for name in dirs + files:
-            if (Path(current) / name).is_symlink():
-                raise ValueError("dataset object contains symbolic link")
-        for name in files:
-            path = Path(current) / name
-            relative = path.relative_to(root).as_posix()
-            safe_name(relative)
-            result[relative] = path
-    return result
 
 
 def _hashes(root: Path) -> dict[str, str]:

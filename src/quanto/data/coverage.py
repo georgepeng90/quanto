@@ -4,7 +4,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from quanto.data.catalog import compatible
-from quanto.data.contracts import BAR_KEY, CoverageEntry, CoverageReport, DataRequest, DataRequirement, FragmentRef, MarketDataError
+from quanto.data.contracts import BAR_KEY, CoverageEntry, CoverageReport, DataRequest, DataRequirement, FragmentRef, MarketDataError, content_key
 from quanto.data.storage import MarketStore
 from quanto.data.validation import deduplicate
 
@@ -79,7 +79,8 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                 bases_by_instrument = {}
                 for ref in refs:
                     for instrument in ref.request.instruments:
-                        bases_by_instrument.setdefault(instrument.key, set()).add(ref.request.price_basis.model_dump_json())
+                        semantics = content_key([ref.request.price_basis.model_dump(mode="json"), ref.source.units])
+                        bases_by_instrument.setdefault(instrument.key, set()).add(semantics)
                 if any(len(bases) > 1 for bases in bases_by_instrument.values()):
                     reason = "SEMANTIC_CONFLICT"
                 elif calendar.empty:

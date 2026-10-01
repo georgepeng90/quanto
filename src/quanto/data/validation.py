@@ -60,6 +60,10 @@ def validate_chunk(chunk: NormalizedChunk) -> NormalizedChunk:
                     raise ValueError(f"invalid {column}")
             if ((frame.high < frame[["open", "close", "low"]].max(axis=1)) | (frame.low > frame[["open", "close", "high"]].min(axis=1))).any():
                 raise ValueError("OHLC bounds invalid")
+            if "units" in chunk.source.verified:
+                for column, unit in (("volume", "share"), ("amount", request.currency)):
+                    if frame[column].notna().any() and chunk.source.units.get(column) != unit:
+                        raise ValueError("verified units must use shares and the declared currency")
             frame = deduplicate(frame, BAR_KEY).sort_values(list(BAR_ORDER), kind="stable")
         elif request.kind == "calendar":
             if frame[["session_start", "session_end"]].isna().any().any() or (frame.session_start >= frame.session_end).any():

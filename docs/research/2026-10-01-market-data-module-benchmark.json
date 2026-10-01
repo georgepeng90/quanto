@@ -16,18 +16,18 @@
       "gap_request_count": 33,
       "repeat_request_count": 0,
       "seconds": {
-        "import_tables": 1.0434842000249773,
-        "prepare_gaps": 15.276831800001673,
-        "repeat": 2.2332920000189915,
-        "full_read": 0.7279315000050701,
-        "one_symbol_read": 0.11622750002425164,
-        "integrity_verification": 0.09794190002139658,
-        "batch_read": 0.6880340999923646,
-        "workbench_job": 10.862512100022286
+        "import_tables": 1.083759899949655,
+        "prepare_gaps": 23.770432199991774,
+        "repeat": 3.1366490999935195,
+        "full_read": 0.9154901999863796,
+        "one_symbol_read": 0.12099609995493665,
+        "integrity_verification": 0.10737660003360361,
+        "batch_read": 0.8910529999993742,
+        "workbench_job": 10.96392280003056
       },
-      "batch_rss_baseline": 234835968,
-      "batch_rss_peak": 242548736,
-      "batch_rss_increase": 7712768,
+      "batch_rss_baseline": 239566848,
+      "batch_rss_peak": 245432320,
+      "batch_rss_increase": 5865472,
       "methodology": "Synthetic seed 20261001, random OHLC, 240 minute bars/session, benchmark plus factual reference tables; one sample, warm OS cache, batch peak sampled every 5ms; workbench time includes frozen child and parent registration; no real source throughput measured.",
       "gap_intervals": [
         [
@@ -48,18 +48,18 @@
       "gap_request_count": 33,
       "repeat_request_count": 0,
       "seconds": {
-        "import_tables": 1.5430363999912515,
-        "prepare_gaps": 24.849136999982875,
-        "repeat": 3.4558800000231713,
-        "full_read": 1.1196814000140876,
-        "one_symbol_read": 0.13961059995926917,
-        "integrity_verification": 0.10063060000538826,
-        "batch_read": 1.1224917999934405,
+        "import_tables": 1.503366900025867,
+        "prepare_gaps": 30.204748099960852,
+        "repeat": 4.704111900005955,
+        "full_read": 1.2408882000017911,
+        "one_symbol_read": 0.13523760001407936,
+        "integrity_verification": 0.10064580000471324,
+        "batch_read": 1.2247603999567218,
         "workbench_job": null
       },
-      "batch_rss_baseline": 304553984,
-      "batch_rss_peak": 311439360,
-      "batch_rss_increase": 6885376,
+      "batch_rss_baseline": 307367936,
+      "batch_rss_peak": 314208256,
+      "batch_rss_increase": 6840320,
       "methodology": "Synthetic seed 20261001, random OHLC, 240 minute bars/session, benchmark plus factual reference tables; one sample, warm OS cache, batch peak sampled every 5ms; workbench time includes frozen child and parent registration; no real source throughput measured.",
       "gap_intervals": [
         [
@@ -69,5 +69,6 @@
       ],
       "gap_instruments": "32 ETFs plus one benchmark; one final bar each"
     }
-  ]
+  ],
+  "revision": "e776dc4aa02c5538f294fdae0c99ce8d3253264e"
 }

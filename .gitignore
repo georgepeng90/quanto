@@ -86,7 +86,7 @@ $RECYCLE.BIN/
 
 ### Quanto generated artifacts
 /data/*
-# Already tracked historical samples stay tracked; new downloads never enter Git.
+# Generated market cache and research artifacts never enter Git.
 /market/
 /outputs/
 /data/workbench/

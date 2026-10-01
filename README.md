@@ -47,14 +47,13 @@ npm.cmd --prefix web run build
 模块公开 `coverage`、`prefetch`、`get_prefetch`、`wait_ready`、`cancel_prefetch`、`resolve_snapshot`、`read_bars`、`read_table` 和 `iter_batches`，各有同名 `_async` 方法。时间戳须有时区，区间为 `[start, end)`，标的包含交易所、类型与字符串代码。同步与异步查询都只读已提交快照；缺口不会在回测或训练读取中触发联网。等待超时或取消一个异步等待者不会取消共享获取；取消预缓存请求需显式调用 `cancel_prefetch`。
 
 ```python
-from pathlib import Path
 from quanto.data import MarketData
 from quanto.data.contracts import DataQuery
 from quanto.backtest.market_dataset import build_data_requirement
 
 requirement = build_data_requirement({"symbols": ["512480"],
     "start_date": "2024-01-08", "end_date": "2024-01-12"})
-with MarketData(Path("data/market")) as market:
+with MarketData() as market:
     task = market.prefetch(requirement)
     snapshot = market.wait_ready(task.id)  # 缺口或失败抛 MarketDataError，含 coverage
     request = requirement.requests[0]
@@ -91,7 +90,9 @@ uv run --no-sync python -m scripts.benchmark_market_data --symbols 32 --daily-da
 
 研究准备脚本要求已提交快照和显式需求，拒绝覆盖既有输出。`prepare_round2_market_data --audit-legacy` 只校验原 round-two 冻结样本和原来源审核，不复制到腾讯目录、不重新生成旧输出。
 
-行情缓存不进入 Git：默认 `data/market`、工作台根以及仓库级 `market/` 被忽略；已跟踪历史冻结样本保留。Git 保存代码、契约、导入说明和小型测试夹具。外置根本身位于仓库外；若管理员选择仓库内的其他根，须先将该路径加入忽略规则。备份时先停止行情获取与工作台服务，再完整复制行情根的 catalog、manifest、引用对象和 evidence，并一并备份工作台数据库、共享回测对象与结果目录。只复制 Parquet 会丢失来源证据及快照资格。模块保留旧快照对象且不自动回收，长期容量还需计入历史版本、原始响应和备份。
+旧 `data/raw` 的 61 个 CSV（101,096 行）已核对原始 SHA-256、字符串代码、日期及全部行情值后迁入共享库，旧目录已删除。迁移报告与复核命令见[行情迁移记录](docs/research/2026-10-02/market-migration.md)。历史审计 JSON 和报告仍记录当时的路径，迁移报告把这些路径映射到证据与 Parquet 对象；它们不是当前读取路径。研究工作区管理实验、回测数据包和结果，实际行情始终由共享库提供。
+
+行情缓存不进入 Git：本机共享根 `data/market` 被忽略。Git 保存代码、契约、迁移说明、来源元数据和小型测试夹具；保留已经冻结的研究回测副本以支持重放。若把共享根迁到仓库内的其他位置，须先将该路径加入忽略规则。备份时先停止行情获取与工作台服务，再完整复制共享根的 catalog、manifest、引用对象和 evidence，并一并备份工作台数据库、共享回测对象与结果目录。只复制 Parquet 会丢失来源证据及快照资格。模块保留旧快照对象且不自动回收，长期容量还需计入历史版本、原始响应和备份。
 
 运行测试：
 

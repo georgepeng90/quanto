@@ -1,5 +1,7 @@
 # 统一行情模块与预缓存 Implementation Plan
 
+> 历史实施计划。工作区 `market_root` 与生产脚本 `--root` 的要求已由[共享行情库方案](../specs/2026-10-02-shared-market-library-design.md)取代；实际行情不按工作区分库。当前入口和路径以 README 为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 将行情获取与缓存收拢到独立模块，以统一存储、同步及异步预缓存、固定版本的本地读取服务当前日线回测和未来训练输入。

@@ -198,7 +198,6 @@ def verify_legacy() -> None:
 def main():
     parser = argparse.ArgumentParser(description="Read prepared market snapshots, or audit an existing round-two freeze")
     parser.add_argument("--audit-legacy", action="store_true")
-    parser.add_argument("--root", type=Path)
     parser.add_argument("--snapshot")
     parser.add_argument("--requirement", type=Path)
     parser.add_argument("--output", type=Path)
@@ -207,12 +206,13 @@ def main():
     if args.audit_legacy:
         verify_legacy()
         return
-    if any(value is None for value in (args.root, args.snapshot, args.requirement, args.output)):
-        parser.error("--root, --snapshot, --requirement and --output are required")
+    if any(value is None for value in (args.snapshot, args.requirement, args.output)):
+        parser.error("--snapshot, --requirement and --output are required")
     sys.path.insert(0, str(ROOT))
     from scripts.prepare_strategy_research_data import prepare_from_snapshot
+    from quanto.data import get_market_root
     assumptions = json.loads(args.assumptions.read_text(encoding="utf-8")) if args.assumptions else {}
-    result = prepare_from_snapshot(args.root, args.snapshot, json.loads(args.requirement.read_text(encoding="utf-8")), args.output, assumptions)
+    result = prepare_from_snapshot(get_market_root(), args.snapshot, json.loads(args.requirement.read_text(encoding="utf-8")), args.output, assumptions)
     print(json.dumps(result, ensure_ascii=False))
 
 

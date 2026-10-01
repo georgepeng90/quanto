@@ -1,0 +1,13 @@
+{
+  "validation": "passed",
+  "count": 329,
+  "max_volume_difference_shares": 50.0,
+  "max_amount_difference_CNY": 50.0,
+  "audit_sha256": "95a67fe82cb28033b660e7a0cfdd6acc981a120d00b4c7c2f0707503ff677930",
+  "source": "outputs/etf-expansion-20261002/unit_audit.json",
+  "raw_evidence_directory": "outputs/etf-expansion-20261002/unit_evidence",
+  "limitations": [
+    "Empirical 2026-09-30 spot check; not official Tencent unit documentation.",
+    "Historical unit convention is inferred from recent evidence. Index units are not covered."
+  ]
+}

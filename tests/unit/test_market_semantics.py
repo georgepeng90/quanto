@@ -170,5 +170,7 @@ def test_reference_enrichment_preserves_existing_scope_and_fields(tmp_path):
             return TableQuery(instruments=request.instruments, start=request.start, end=request.end, columns=request.columns)
         enriched = market.read_table(snapshot, "trading_status", query(wanted))
         assert len(enriched) == 1 and enriched.can_buy.all()
+        assert pd.api.types.is_bool_dtype(enriched.can_buy)
         retained = market.read_table(snapshot, "trading_status", query(old))
         assert len(retained) == 4 and retained.can_sell.all()
+        assert pd.api.types.is_bool_dtype(retained.can_sell)

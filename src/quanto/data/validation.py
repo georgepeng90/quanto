@@ -34,11 +34,11 @@ def merge_reference(frame: pd.DataFrame, keys: tuple[str, ...]) -> pd.DataFrame:
     frame = frame.drop_duplicates()
     repeated = frame.duplicated(list(keys), keep=False)
     if not repeated.any():
-        return frame
+        return frame.infer_objects()
     groups = frame.loc[repeated].groupby(list(keys), sort=False, dropna=False)
     if (groups.nunique(dropna=True) > 1).any().any():
         raise MarketDataError("SEMANTIC_CONFLICT", "different known reference facts at identical market key")
-    return pd.concat([frame.loc[~repeated], groups.first().reset_index()], ignore_index=True)[list(frame.columns)]
+    return pd.concat([frame.loc[~repeated], groups.first().reset_index()], ignore_index=True)[list(frame.columns)].infer_objects()
 
 
 def validate_chunk(chunk: NormalizedChunk) -> NormalizedChunk:

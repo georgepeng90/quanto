@@ -38,7 +38,8 @@ def test_consumer_requirement_selects_full_history_and_auxiliary_visibility():
     assert next(item for item in req.requests if item.kind == "auxiliary:signals").columns == ("available_at", "symbol", "score")
 
 
-def test_offline_factual_assembly_matches_daily_tables_orders_and_reports(tmp_path):
+@pytest.mark.parametrize("split_status", [False, True])
+def test_offline_factual_assembly_matches_daily_tables_orders_and_reports(tmp_path, split_status):
     from quanto.data import MarketData
     from quanto.data.contracts import SourceRecord, DataRequirement
     from quanto.data.imports import import_table
@@ -81,7 +82,12 @@ def test_offline_factual_assembly_matches_daily_tables_orders_and_reports(tmp_pa
             frames[request.series_key] = frame.rename(columns={"symbol": "instrument_id", "date": "trading_date"}).assign(instrument_id="SZSE:etf:000001")
     with MarketData(tmp_path / "market", providers=()) as market:
         for request in requirement.requests:
-            import_table(market.store, market.catalog, request, frames[request.series_key], source, b"declared synthetic facts")
+            if split_status and request.kind == "trading_status":
+                for omitted in ("can_buy", "can_sell"):
+                    partial = request.model_copy(update={"columns": tuple(column for column in request.columns if column != omitted)})
+                    import_table(market.store, market.catalog, partial, frames[request.series_key].drop(columns=omitted), source, omitted.encode())
+            else:
+                import_table(market.store, market.catalog, request, frames[request.series_key], source, b"declared synthetic facts")
         ref = market.wait_ready(market.prefetch(requirement).id, 10)
         new = assemble_dataset(market, ref, requirement, {"universe_rule": old.manifest.universe_rule})
     for name in ("prices", "benchmark", "calendar", "instruments", "status", "events", "eligibility"):

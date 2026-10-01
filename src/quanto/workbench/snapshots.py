@@ -163,6 +163,9 @@ class SnapshotBuilder:
             "files": file_hashes,
             "reproducibility": {"mode": "non_exact" if non_exact_reasons else "exact_inputs", "reasons": sorted(set(non_exact_reasons))},
         }
+        market_source = self.store.dataset_market_source(dataset.id, db)
+        if market_source is not None:
+            manifest["market_snapshot_ref"] = market_source
         files["manifest.json"] = json_bytes(manifest)
         target, written_hashes = publish_files(self.store.root / "snapshots", run_id, files)
         verify_files(target, written_hashes)

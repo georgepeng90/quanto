@@ -21,7 +21,12 @@ class MarketReader:
         manifest = self.store.verify_snapshot(snapshot)
         for prepared in manifest.requirement.requests:
             implicit = set(BAR_KEY).union({"trading_date"}) if request.kind == "bars" else set()
-            if compatible(prepared, request) and prepared.start <= request.start and prepared.end >= request.end and set(request.columns).issubset(set(prepared.columns).union(implicit)):
+            scope = request
+            if prepared.price_basis and prepared.price_basis.mode == "vendor_research" and not prepared.price_basis.basis_id:
+                if not any(compatible(ref.request, request) for ref in manifest.fragments):
+                    continue
+                scope = request.model_copy(update={"price_basis": prepared.price_basis})
+            if compatible(prepared, scope) and prepared.start <= request.start and prepared.end >= request.end and set(request.columns).issubset(set(prepared.columns).union(implicit)):
                 if set(request.instruments).issubset(prepared.instruments):
                     return manifest
         raise MarketDataError("DATA_NOT_PREPARED", "query exceeds snapshot requirement")
@@ -31,6 +36,8 @@ class MarketReader:
             raise ValueError("positive batch_size required")
         manifest = self._prepared(snapshot, query)
         refs = [ref for ref in manifest.fragments if compatible(ref.request, query)]
+        if not refs:
+            return
         columns = list(dict.fromkeys((*BAR_KEY, "trading_date", *query.columns)))
         refs.sort(key=lambda item: item.request.start)
         groups = [refs] if query.frequency == "1d" else [list(group) for _, group in groupby(refs, key=lambda item: item.request.start.strftime("%Y-%m"))]

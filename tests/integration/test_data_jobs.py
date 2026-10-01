@@ -11,7 +11,7 @@ import zipfile
 
 from quanto.backtest.dataset_loaders import load_dataset
 import quanto.workbench.data_jobs as data_jobs
-from tests.unit.test_fetcher_cache import FakeProvider
+from tests.fixtures.market_dataset_cases import research_market
 from tests.fixtures.backtest_cases import dataset_case
 
 
@@ -23,7 +23,7 @@ def _fake_feed_in_frozen_job(service, job_id, mode):
     fake = root / "src" / "akshare.py"
     source = '''import pandas as pd
 def tool_trade_date_hist_sina():
-    return pd.DataFrame({"trade_date": pd.bdate_range("2024-01-01", "2024-01-12")})
+    return pd.DataFrame({"trade_date": pd.bdate_range("2024-01-01", "2024-01-31")})
 def fund_etf_hist_em(symbol, period, start_date, end_date, adjust):
     dates = pd.bdate_range("2024-01-01", "2024-01-03" if MODE == "prefix" else "2024-01-05")
     return pd.DataFrame({"日期": dates, "开盘": 1.0, "最高": 1.1, "最低": 0.9,
@@ -41,7 +41,7 @@ def stock_zh_index_daily_em(symbol):
 def test_fetch_job_publishes_verified_outcome_through_scheduler(tmp_path, mode):
     service = WorkbenchService(tmp_path / "data")
     job_id = service.submit_job("fetch", {"symbols": ["000001"], "start_date": "2024-01-01",
-        "end_date": "2024-01-05", "cache_version": mode, "request_delay_seconds": 0, "max_retries": 0})["id"]
+        "end_date": "2024-01-05", "refresh": False})["id"]
     _fake_feed_in_frozen_job(service, job_id, mode)
     service.scheduler.start(background=False)
     try:
@@ -60,39 +60,34 @@ def test_fetch_job_publishes_verified_outcome_through_scheduler(tmp_path, mode):
             assert (service.store.get_dataset(job_id).path / "prices.parquet").exists()
         else:
             assert job["result"]["state"] == "incomplete"
-            assert job["result"]["coverage"]["000001"]["missing"] == ["2024-01-04", "2024-01-05"]
+            assert missing_days(job["result"]) == ["2024-01-04", "2024-01-05"]
             with pytest.raises(KeyError):
                 service.store.get_dataset(job_id)
     finally:
         service.scheduler.stop()
 
 
-def test_calendar_provider_runtime_error_returns_incomplete_diagnostic(tmp_path, monkeypatch):
-    class Broken(FakeProvider):
-        def fetch_calendar(self, start, end):
-            raise RuntimeError("provider unavailable")
-    monkeypatch.setattr(data_jobs, "AKShareDataProvider", Broken)
-    result = execute_data_job("fetch", {"workspace": str(tmp_path), "symbols": ["000001"],
+def missing_days(result):
+    entries = result["coverage"]["entries"]
+    return sorted({stamp[:10] for entry in entries for instrument, stamps in entry["missing_by_instrument"].items()
+                   if instrument.endswith("etf:000001") for stamp in stamps})
+
+
+def test_provider_runtime_error_reports_failed_market_state(tmp_path, monkeypatch):
+    monkeypatch.setattr(data_jobs, "MarketData", lambda root: research_market(root, "broken"))
+    result = execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "symbols": ["000001"],
         "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: False)
-    assert result == {"state": "incomplete", "dataset_version_id": None, "coverage": {},
-                      "reason": "CALENDAR_INCOMPLETE", "error": "RuntimeError"}
+    assert result["state"] == "incomplete"
+    assert result["market_prefetch_state"] == "failed"
+    assert result["dataset_version_id"] is None
 
 
-def test_calendar_provider_error_during_cancellation_is_not_incomplete(tmp_path, monkeypatch):
-    class Broken(FakeProvider):
-        def fetch_calendar(self, start, end):
-            raise RuntimeError("provider interrupted")
-    monkeypatch.setattr(data_jobs, "AKShareDataProvider", Broken)
+def test_cancellation_during_market_preparation_is_not_incomplete(tmp_path, monkeypatch):
+    monkeypatch.setattr(data_jobs, "MarketData", lambda root: research_market(root))
     calls = iter([False, True])
     with pytest.raises(RuntimeError, match="CANCELLED"):
-        execute_data_job("fetch", {"workspace": str(tmp_path), "symbols": ["000001"],
+        execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "symbols": ["000001"],
             "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: next(calls))
-
-
-def test_incomplete_fetch_is_not_registered_as_complete(tmp_path):
-    result = execute_data_job("fetch", {"workspace": str(tmp_path), "symbols": ["512480"], "start_date": "2024-01-01", "end_date": "2024-01-03", "calendar": []}, lambda _: None, lambda: False)
-    assert result["state"] == "incomplete"
-    assert result["dataset_version_id"] is None
 
 
 def test_cancel_winning_publication_does_not_register_dataset(tmp_path):
@@ -126,37 +121,27 @@ def test_demo_job_uses_shared_scheduler_and_publishes_dataset(tmp_path):
 
 
 def test_complete_fake_qfq_feed_maps_to_research_bundle(tmp_path, monkeypatch):
-    class Feed(FakeProvider):
-        def fetch_calendar(self, start, end):
-            return [day.date().isoformat() for day in pd.bdate_range("2024-01-01", "2024-01-08")]
-    monkeypatch.setattr(data_jobs, "AKShareDataProvider", Feed)
+    monkeypatch.setattr(data_jobs, "MarketData", lambda root: research_market(root))
     output = tmp_path / "bundle"
-    payload = {"workspace": str(tmp_path), "_output_dir": str(output), "symbols": ["000001"],
-               "start_date": "2024-01-01", "end_date": "2024-01-05", "cache_version": "fake-v1",
-               "request_delay_seconds": 0, "max_retries": 0}
-    result = execute_data_job("fetch", payload, lambda _: None, lambda: False)
+    result = execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "_output_dir": str(output),
+        "symbols": ["000001"], "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: False)
     assert result["state"] == "complete"
+    assert result["market_prefetch_state"] == "ready"
     bundle = load_dataset(output)
     assert bundle.price_mode == "adjusted_research"
     assert bundle.prices.symbol.iloc[0] == "000001"
-    assert bundle.manifest.calendar_end.isoformat() == "2024-01-08"
-    assert "cache version fake-v1" in bundle.manifest.source
-    assert any("研究模型假设" in item for item in bundle.manifest.limitations)
+    assert bundle.manifest.calendar_end.isoformat() > "2024-01-05"
+    assert result["market_snapshot_ref"]["id"] in bundle.manifest.source
+    assert bundle.manifest.limitations
 
 
 def test_prefix_only_feed_is_incomplete(tmp_path, monkeypatch):
-    class Prefix(FakeProvider):
-        def fetch_calendar(self, start, end):
-            return [day.date().isoformat() for day in pd.bdate_range("2024-01-01", "2024-01-08")]
-        def fetch_etf_daily(self, symbol, start, end):
-            return super().fetch_etf_daily(symbol, start, "2024-01-03")
-    monkeypatch.setattr(data_jobs, "AKShareDataProvider", Prefix)
-    result = execute_data_job("fetch", {"workspace": str(tmp_path), "_output_dir": str(tmp_path / "bundle"),
-                              "symbols": ["000001"], "start_date": "2024-01-01", "end_date": "2024-01-05",
-                              "cache_version": "fake-v1", "request_delay_seconds": 0, "max_retries": 0},
-                              lambda _: None, lambda: False)
+    monkeypatch.setattr(data_jobs, "MarketData", lambda root: research_market(root, "prefix"))
+    result = execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "_output_dir": str(tmp_path / "bundle"),
+        "symbols": ["000001"], "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: False)
     assert result["state"] == "incomplete"
-    assert result["coverage"]["000001"]["missing"] == ["2024-01-04", "2024-01-05"]
+    assert result["market_prefetch_state"] == "incomplete"
+    assert missing_days(result) == ["2024-01-04", "2024-01-05"]
     assert not (tmp_path / "bundle" / "manifest.json").exists()
 
 

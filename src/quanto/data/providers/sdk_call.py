@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os
+from pathlib import Path
 import subprocess
 import sys
 
@@ -19,8 +21,10 @@ def run_sdk_call(function: str, kwargs: dict, context: FetchContext) -> pd.DataF
     if function not in FUNCTIONS:
         raise ValueError("unsupported SDK function")
     context.remaining()
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join([str(Path(__file__).resolve().parents[3]), *sys.path])
     process = subprocess.Popen([sys.executable, "-m", "quanto.data.providers.sdk_call"], stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
     data = json.dumps({"function": function, "kwargs": kwargs}).encode()
     try:
         while True:

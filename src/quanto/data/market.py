@@ -164,6 +164,14 @@ class MarketData:
             raise MarketDataError("INTEGRITY_ERROR", "snapshot digest differs from catalog")
         return committed
 
+    def resolve_snapshot(self, identity):
+        ref = self.catalog.resolve_snapshot(identity)
+        self.store.verify_snapshot(ref)
+        return ref.model_copy(deep=True)
+
+    async def resolve_snapshot_async(self, identity):
+        return await self._async(self.resolve_snapshot, identity)
+
     def read_bars(self, snapshot, query):
         query = DataQuery.model_validate(query.model_dump())
         return self.reader.read_bars(self._snapshot(snapshot), query)

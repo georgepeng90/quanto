@@ -7,7 +7,6 @@ import hashlib
 import io
 import json
 import math
-import re
 from threading import Lock
 import zipfile
 from pathlib import Path
@@ -431,23 +430,12 @@ class WorkbenchService:
         if not isinstance(payload, dict) or any(key in payload for key in ("path", "host_path", "source_root", "handler", "workspace", "_output_dir")):
             raise ValueError("host paths and handlers are not accepted")
         if kind == "fetch":
-            if "calendar" in payload:
-                raise ValueError("calendar must come from the provider")
-            symbols = payload.get("symbols")
-            if not isinstance(symbols, list) or not symbols or not all(isinstance(symbol, str) and symbol.isdigit() for symbol in symbols):
-                raise ValueError("invalid ETF symbols")
-            try:
-                start, end = date.fromisoformat(payload["start_date"]), date.fromisoformat(payload["end_date"])
-            except (KeyError, TypeError, ValueError) as exc:
-                raise ValueError("invalid fetch dates") from exc
-            if start > end or type(payload.get("max_retries", 3)) is not int or not 0 <= payload.get("max_retries", 3) <= 10:
-                raise ValueError("invalid fetch range or retries")
-            delay = payload.get("request_delay_seconds", 1.0)
-            if isinstance(delay, bool) or not isinstance(delay, (int, float)) or not math.isfinite(delay) or delay < 0:
-                raise ValueError("invalid request delay")
-            payload = {**payload, "cache_version": payload.get("cache_version") or uuid4().hex}
-            if not isinstance(payload["cache_version"], str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", payload["cache_version"]):
-                raise ValueError("invalid cache version")
+            allowed = {"symbols", "start_date", "end_date", "historical_start", "price_mode", "auxiliary", "research_assumptions", "refresh"}
+            if set(payload) - allowed or type(payload.get("refresh", False)) is not bool:
+                raise ValueError("fetch accepts data requirements and refresh only")
+            from quanto.backtest.market_dataset import build_data_requirement
+            build_data_requirement(payload)
+            payload = {**payload, "refresh": payload.get("refresh", False)}
         if kind == "demo" and (type(payload.get("years", 1)) is not int or not 1 <= payload.get("years", 1) <= 20
                                or type(payload.get("seed", 7)) is not int):
             raise ValueError("invalid demo settings")
@@ -462,6 +450,8 @@ class WorkbenchService:
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         frozen_input = dict(payload)
         frozen_input["workspace"] = str(self.store.root)
+        if kind == "fetch":
+            frozen_input["market_root"] = str(self.store.market_root)
         if kind == "import":
             from uuid import UUID
             upload_id = frozen_input.get("upload_id", "")

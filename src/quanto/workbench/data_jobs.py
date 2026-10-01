@@ -11,7 +11,9 @@ import zipfile
 
 import pandas as pd
 
-from quanto.data.fetcher import AKShareDataProvider, build_processed_dataset
+from quanto.data import MarketData
+from quanto.data.contracts import MarketDataError, SnapshotRef
+from quanto.backtest.market_dataset import build_data_requirement, assemble_dataset
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.backtest.dataset_storage import write_parquet_dataset
 from quanto.backtest.dataset_schemas import DatasetManifest
@@ -56,32 +58,49 @@ def _publish_import(upload: Path, destination: Path) -> None:
             path.write_bytes(archive.read(item))
 
 
-def _publish_research(result, calendar: list[str], sessions: list[str], symbols: list[str], payload: dict, destination: Path) -> None:
-    prices = pd.read_csv(result.prices_path, dtype={"symbol": str})
-    benchmark = pd.read_csv(result.benchmark_path)
-    prices.to_csv(destination / "prices.csv", index=False)
-    benchmark.to_csv(destination / "benchmark.csv", index=False)
-    pd.DataFrame({"date": calendar}).to_csv(destination / "calendar.csv", index=False)
-    first = sessions[0]
-    instruments = payload.get("instruments")
-    if instruments is None:
-        instruments = [{"symbol": symbol, "lot_size": 100, "settlement_sessions": 1,
-                        "listing_date": first, "group": "research"} for symbol in symbols]
-    pd.DataFrame(instruments).to_csv(destination / "instruments.csv", index=False)
-    pd.DataFrame([{"date": day, "symbol": symbol, "status": "trading", "can_buy": True, "can_sell": True}
-                  for symbol in symbols for day in sessions]).to_csv(destination / "status.csv", index=False)
-    pd.DataFrame(columns=["symbol", "event_type", "record_date", "ex_date", "pay_date", "cash_per_share", "split_ratio"]).to_csv(destination / "events.csv", index=False)
-    manifest = {"source": f"AKShare qfq research feed; cache version {payload['cache_version']}", "is_demo": False, "price_mode": "adjusted_research",
-                "currency": "CNY", "calendar_start": first, "calendar_end": calendar[-1],
-                "data_start": first, "data_end": sessions[-1], "volume_unit": "unknown", "amount_unit": "unknown",
-                "event_coverage": "unknown", "benchmark_type": "other",
-                "field_semantics": {"amount": "AKShare ETF amount, unit unverified", "turnover": "selected index feed amount, not market-wide turnover"},
-                "universe_rule": {"min_history_days": 1, "min_avg_turnover_20d": 0},
-                "limitations": ["qfq 前复权研究模式不模拟真实分红和拆分现金流。",
-                                "交易标志、每手数量和结算周期为研究模型假设，不是真实可交易状态证据。",
-                                "首次观测日期仅是研究覆盖边界，未核实真实上市日。",
-                                "成交量和成交额单位未核实；不得使用依赖绝对单位的筛选。"]}
-    (destination / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+def validate_market_result(payload: dict, result: dict, bundle=None) -> SnapshotRef:
+    if result.get("market_prefetch_state") != "ready" or not result.get("market_snapshot_ref"):
+        raise ValueError("INVALID_OUTPUT: market snapshot is not ready")
+    claimed = SnapshotRef.model_validate(result["market_snapshot_ref"])
+    try:
+        with MarketData(Path(payload["market_root"]), providers=()) as market:
+            ref = market.resolve_snapshot(claimed.id)
+    except MarketDataError as exc:
+        raise ValueError(f"INVALID_OUTPUT: {exc}") from exc
+    if ref.manifest_digest != claimed.manifest_digest or ref.quality["requirement_key"] != build_data_requirement(payload).key:
+        raise ValueError("INVALID_OUTPUT: market snapshot differs from frozen requirement")
+    if bundle is not None and bundle.manifest.source != f"market snapshot {ref.id}":
+        raise ValueError("INVALID_OUTPUT: assembled dataset differs from market source")
+    return ref
+
+
+def _fetch_dataset(payload, destination, emit, cancelled):
+    requirement = build_data_requirement(payload)
+    with MarketData(Path(payload["market_root"])) as market:
+        task = market.prefetch(requirement, refresh=payload.get("refresh", False))
+        while True:
+            if cancelled():
+                market.cancel_prefetch(task.id)
+                raise RuntimeError("CANCELLED: 数据任务已取消")
+            try:
+                ref = market.wait_ready(task.id, timeout=.2)
+                break
+            except MarketDataError as exc:
+                status = market.get_prefetch(task.id)
+                if exc.code == "WAIT_TIMEOUT":
+                    _emit(emit, "MARKET_PREPARING", "行情预缓存准备中", status.model_dump(mode="json"))
+                    continue
+                if status.state == "cancelled":
+                    raise RuntimeError("CANCELLED: 数据任务已取消") from exc
+                _emit(emit, "MARKET_NOT_READY", "行情预缓存未就绪", status.model_dump(mode="json"))
+                return {"state": "incomplete", "dataset_version_id": None, "market_prefetch_state": status.state,
+                    "market_snapshot_ref": None, "coverage": status.coverage.model_dump(mode="json"),
+                    "limitations": list(status.limitations), "reason": status.reason}
+        _emit(emit, "MARKET_READY", "行情快照已就绪", {"snapshot_id": ref.id})
+        assumptions = {**payload.get("research_assumptions", {}), "price_mode": payload.get("price_mode", "adjusted_research")}
+        bundle = assemble_dataset(market, ref, requirement, assumptions)
+        write_parquet_dataset(bundle, destination)
+        return {"market_prefetch_state": "ready", "market_snapshot_ref": ref.model_dump(mode="json")}
 
 
 def execute_data_job(kind: str, payload: dict, emit, cancelled) -> dict:
@@ -89,7 +108,7 @@ def execute_data_job(kind: str, payload: dict, emit, cancelled) -> dict:
     if cancelled():
         raise RuntimeError("CANCELLED: 数据任务已取消")
     _emit(emit, "DATA_JOB_STARTED", "数据任务已开始")
-    workspace = Path(payload["workspace"])
+    market_result = {}
     destination = Path(payload.get("_output_dir") or tempfile.mkdtemp(prefix="quanto-data-"))
     destination.mkdir(parents=True, exist_ok=True)
     if kind == "demo":
@@ -103,43 +122,9 @@ def execute_data_job(kind: str, payload: dict, emit, cancelled) -> dict:
             raise ValueError("UPLOAD_NOT_FOUND: 上传文件不存在")
         _publish_import(frozen, destination)
     elif kind == "fetch":
-        symbols = payload.get("symbols", [])
-        if not symbols or not all(isinstance(symbol, str) and symbol.isdigit() for symbol in symbols):
-            raise ValueError("INVALID_SYMBOLS: 请提供 ETF 代码")
-        start, end = payload["start_date"], payload["end_date"]
-        if "calendar" in payload and not payload["calendar"]:
-            _emit(emit, "CALENDAR_INCOMPLETE", "交易日历覆盖不足")
-            return {"state": "incomplete", "dataset_version_id": None, "coverage": {}, "reason": "CALENDAR_INCOMPLETE"}
-        provider = AKShareDataProvider()
-        try:
-            calendar = payload["calendar"] if "calendar" in payload else provider.fetch_calendar(start, end)
-        except Exception as exc:
-            if cancelled():
-                raise RuntimeError("CANCELLED: 数据任务已取消") from exc
-            _emit(emit, "CALENDAR_INCOMPLETE", "交易日历覆盖不足")
-            return {"state": "incomplete", "dataset_version_id": None, "coverage": {},
-                    "reason": "CALENDAR_INCOMPLETE", "error": type(exc).__name__}
-        calendar = sorted(set(calendar))
-        sessions = [day for day in calendar if start <= day <= end]
-        if not sessions or not any(day > end for day in calendar):
-            _emit(emit, "CALENDAR_INCOMPLETE", "交易日历缺少后续交易日")
-            return {"state": "incomplete", "dataset_version_id": None, "coverage": {}, "reason": "CALENDAR_INCOMPLETE"}
-        processed = destination / "processed"
-        try:
-            result = build_processed_dataset(symbols, start, end, processed, workspace / "raw-cache",
-                provider=provider, expected_sessions=sessions, cache_version=payload.get("cache_version"),
-                request_delay_seconds=payload.get("request_delay_seconds", 1.0), max_retries=payload.get("max_retries", 3),
-                cancelled=cancelled)
-            if not result.complete:
-                _emit(emit, "COVERAGE_INCOMPLETE", "行情或基准覆盖不足",
-                      {"missing_sessions": {name: len(item["missing"]) for name, item in result.coverage.items()},
-                       "failed_symbols": list(result.failed_symbols)})
-                return {"state": "incomplete", "dataset_version_id": None, "coverage": result.coverage,
-                        "failed_symbols": list(result.failed_symbols), "reason": "COVERAGE_INCOMPLETE"}
-            _publish_research(result, calendar, sessions, symbols, payload, destination)
-        finally:
-            if processed.exists():
-                shutil.rmtree(processed)
+        market_result = _fetch_dataset(payload, destination, emit, cancelled)
+        if market_result.get("state") == "incomplete":
+            return market_result
     else:
         raise ValueError("UNSUPPORTED_JOB: 未注册的数据任务")
     if cancelled():
@@ -162,7 +147,7 @@ def execute_data_job(kind: str, payload: dict, emit, cancelled) -> dict:
                 target.parent.mkdir(parents=True, exist_ok=True)
                 path.replace(target)
     _emit(emit, "DATA_VALIDATED", "数据集结构及覆盖已验证")
-    return {"state": "complete", "dataset_version_id": None,
+    return {**market_result, "state": "complete", "dataset_version_id": None,
             "coverage": {"data_start": bundle.manifest.data_start.isoformat(), "data_end": bundle.manifest.data_end.isoformat()},
             "price_mode": bundle.manifest.price_mode, "limitations": bundle.manifest.limitations}
 

@@ -54,8 +54,11 @@ class WorkbenchStore:
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         config_path = self.root / "workspace.json"
+        config = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
+        market_root = Path(config.get("market_root", "market"))
+        self.market_root = (market_root if market_root.is_absolute() else self.root / market_root).resolve()
         if artifact_root is None and config_path.exists():
-            artifact_root = Path(json.loads(config_path.read_text(encoding="utf-8"))["artifact_root"])
+            artifact_root = Path(config["artifact_root"])
             if not artifact_root.is_absolute():
                 artifact_root = self.root / artifact_root
         if artifact_root is None:
@@ -63,12 +66,13 @@ class WorkbenchStore:
         self.artifact_root = Path(artifact_root).resolve()
         self.artifact_root.mkdir(parents=True, exist_ok=True)
         if not config_path.exists():
-            config_path.write_text(json.dumps({"artifact_root": str(self.artifact_root)}, ensure_ascii=False), encoding="utf-8")
+            config_path.write_text(json.dumps({"artifact_root": str(self.artifact_root), "market_root": str(self.market_root)}, ensure_ascii=False), encoding="utf-8")
         self.db_path = self.root / "workbench.sqlite3"
         with self.transaction() as db:
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS datasets (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS dataset_market_sources (dataset_version_id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, manifest_digest TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS strategies (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS experiments (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload_json TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, job_id TEXT NOT NULL UNIQUE, experiment_id TEXT NOT NULL, experiment_revision INTEGER NOT NULL, manifest_path TEXT NOT NULL, manifest_hash TEXT NOT NULL, source TEXT NOT NULL, parent_run_id TEXT, group_id TEXT);
@@ -279,13 +283,34 @@ class WorkbenchStore:
 
     def finish_data_job(self, identity: str, bundle_path: Path, result: dict) -> bool:
         """Publish a verified data version and success in one conditional commit."""
-        manifest = json.loads((bundle_path / "manifest.json").read_text(encoding="utf-8")) if result.get("state") == "complete" else None
-        hashes = {name: digest(content) for name, content in source_files(bundle_path).items()} if manifest else None
+        job = self.get_job(identity)
+        if job.state != "running":
+            return False
+        manifest, hashes, market_ref = None, None, None
+        if result.get("state") == "complete":
+            bundle = load_dataset(bundle_path)
+            manifest = bundle.manifest.model_dump(mode="json")
+            hashes = {name: digest(content) for name, content in source_files(bundle_path).items()}
+            if job.kind == "fetch":
+                from quanto.workbench.data_jobs import validate_market_result
+                frozen = json.loads(Path(job.input_path).read_text(encoding="utf-8"))
+                market_ref = validate_market_result(frozen["input"], result, bundle)
+        elif result.get("state") != "incomplete":
+            raise ValueError("invalid data result state")
         with self.transaction() as db:
             row = db.execute("SELECT state FROM jobs WHERE id=?", (identity,)).fetchone()
             if row is None or row["state"] != "running":
                 return False
             if manifest is not None:
                 db.execute("INSERT INTO datasets VALUES (?,?,?,?)", (identity, str(bundle_path), digest(json_bytes(hashes)), json_bytes(manifest).decode()))
+                if market_ref is not None:
+                    db.execute("INSERT INTO dataset_market_sources VALUES (?,?,?)", (identity, market_ref.id, market_ref.manifest_digest))
             db.execute("UPDATE jobs SET state='succeeded', finished_at=? WHERE id=? AND state='running'", (utc_now(), identity))
             return True
+
+    def dataset_market_source(self, identity: str, db=None) -> dict | None:
+        if db is None:
+            with self.transaction() as connection:
+                return self.dataset_market_source(identity, connection)
+        row = db.execute("SELECT snapshot_id, manifest_digest FROM dataset_market_sources WHERE dataset_version_id=?", (identity,)).fetchone()
+        return {"id": row["snapshot_id"], "manifest_digest": row["manifest_digest"]} if row else None

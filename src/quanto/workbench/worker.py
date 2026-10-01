@@ -312,9 +312,15 @@ def validate_job_output(kind: str, root: Path, receipt: dict) -> None:
             if not (final / name).is_file() or hashlib.sha256((final / name).read_bytes()).hexdigest() != expected:
                 raise ValueError("INVALID_OUTPUT: 数据任务哈希无效")
         result = read_json(final / "result.json")
+        if {key: value for key, value in receipt["result"].items() if key != "hashes"} != result:
+            raise ValueError("INVALID_OUTPUT: receipt differs from hashed result")
         if result.get("state") == "complete" and kind in ("demo", "fetch", "import"):
             from quanto.backtest.dataset_loaders import load_dataset
-            load_dataset(final)
+            bundle = load_dataset(final)
+            if kind == "fetch":
+                from quanto.workbench.data_jobs import validate_market_result
+                frozen = read_json(root / "control" / "job.json")
+                validate_market_result(frozen["input"], result, bundle)
         elif result.get("state") not in ("incomplete", None) and kind != "validate_strategy":
             raise ValueError("INVALID_OUTPUT: 数据任务状态无效")
 

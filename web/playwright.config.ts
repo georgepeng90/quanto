@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test'
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 
@@ -7,6 +7,9 @@ const root = resolve(import.meta.dirname, '..')
 const workspace = process.env.QUANTO_E2E_WORKSPACE || mkdtempSync(join(tmpdir(), 'quanto-e2e-'))
 if (!process.env.QUANTO_E2E_WORKSPACE) console.log(`E2E workspace: ${workspace}`)
 process.env.QUANTO_E2E_WORKSPACE = workspace
+const marketConfig = join(workspace, 'test-market-config.json')
+writeFileSync(marketConfig, JSON.stringify({ root: join(workspace, 'shared-market') }))
+process.env.QUANTO_MARKET_CONFIG = marketConfig
 
 export default defineConfig({
   testDir: './e2e', timeout: 120_000, workers: 1,

@@ -13,6 +13,7 @@ from quanto.data.contracts import DataRequest, SourceRecord
 from quanto.data.imports import import_table
 from quanto.data.providers.base import daily_bars
 from quanto.data.storage import MarketStore
+from quanto.data.settings import get_market_root
 
 
 def import_file(root: Path, path: Path, metadata: dict):
@@ -55,11 +56,10 @@ def import_file(root: Path, path: Path, metadata: dict):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--metadata", type=Path, required=True)
     args = parser.parse_args()
-    refs = import_file(args.root, args.input, json.loads(args.metadata.read_text(encoding="utf-8")))
+    refs = import_file(get_market_root(), args.input, json.loads(args.metadata.read_text(encoding="utf-8")))
     print(json.dumps([ref.model_dump(mode="json") for ref in refs], ensure_ascii=False))
 
 

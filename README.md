@@ -66,8 +66,8 @@ with MarketData(Path("data/market")) as market:
 ```
 
 ```python
-async def consume(root, requirement, query):
-    async with MarketData(root) as market:
+async def consume(requirement, query):
+    async with MarketData() as market:
         task = await market.prefetch_async(requirement)
         snapshot = await market.wait_ready_async(task.id)
         async for batch in market.iter_batches_async(snapshot, query):
@@ -78,12 +78,12 @@ async def consume(root, requirement, query):
 
 ## 行情管理、导入与备份
 
-工作台在可信 `workspace.json` 中读取 `market_root`；默认 `<workspace>/market`。管理员可设为绝对路径或相对工作区的路径，例如 `{"artifact_root":"artifacts","market_root":"D:/MarketData/quanto"}`。任务提交时冻结该配置。独立管理脚本显式指定根，所有来源写入 `catalog.sqlite`、`objects/`、`evidence/`、`snapshots/`；目录不包含供应商名称。
+实际 A 股行情由数据模块维护一份共享库，与研究工作区、项目目录和供应商无关。模块读取用户配置 `~/.quanto/market.json` 的绝对 `root`；没有配置时使用 `~/.quanto/market`。本机配置为 `D:/Projects/quanto/data/market`。可用 `configure_market_root(Path(...))` 一次设置，全体工作台、预缓存、回测和训练随后使用同一位置；`workspace.json` 只管理研究产物路径。任务提交时冻结共享库路径。所有来源统一写入 `catalog.sqlite`、`objects/`、`evidence/`、`snapshots/`，目录不包含供应商名称。测试通过 `QUANTO_MARKET_CONFIG` 指向临时配置，避免写入实际行情库。
 
 ```powershell
-uv run --no-sync python -m scripts.import_market_data --root data/market --input old.csv --metadata import.json
-uv run --no-sync python -m scripts.prefetch_market_data --root data/market --requirement requirement.json
-uv run --no-sync python -m scripts.prepare_strategy_research_data --root data/market --snapshot <snapshot-id> --requirement requirement.json --output outputs/new-research
+uv run --no-sync python -m scripts.import_market_data --input old.csv --metadata import.json
+uv run --no-sync python -m scripts.prefetch_market_data --requirement requirement.json
+uv run --no-sync python -m scripts.prepare_strategy_research_data --snapshot <snapshot-id> --requirement requirement.json --output outputs/new-research
 uv run --no-sync python -m scripts.benchmark_market_data --symbols 32 --daily-days 2520 --minute-days 20 --output benchmark.json
 ```
 

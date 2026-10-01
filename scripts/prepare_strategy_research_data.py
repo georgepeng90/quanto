@@ -11,7 +11,7 @@ from pathlib import Path
 
 from quanto.backtest.market_dataset import assemble_dataset
 from quanto.backtest.dataset_storage import write_parquet_dataset
-from quanto.data import MarketData
+from quanto.data import MarketData, get_market_root
 from quanto.data.contracts import DataRequirement
 
 
@@ -36,14 +36,13 @@ def prepare_from_snapshot(root, snapshot_id, requirement, output, assumptions):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--snapshot", required=True)
     parser.add_argument("--requirement", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--assumptions", type=Path)
     args = parser.parse_args()
     assumptions = json.loads(args.assumptions.read_text(encoding="utf-8")) if args.assumptions else {}
-    result = prepare_from_snapshot(args.root, args.snapshot, json.loads(args.requirement.read_text(encoding="utf-8")), args.output, assumptions)
+    result = prepare_from_snapshot(get_market_root(), args.snapshot, json.loads(args.requirement.read_text(encoding="utf-8")), args.output, assumptions)
     print(json.dumps(result, ensure_ascii=False))
     return 0
 

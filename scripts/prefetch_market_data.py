@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-from quanto.data import MarketData
+from quanto.data import MarketData, get_market_root
 from quanto.data.contracts import DataRequirement, MarketDataError
 
 
@@ -22,11 +22,10 @@ def prepare(root, requirement, refresh=False, providers=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--requirement", type=Path, required=True)
     parser.add_argument("--refresh", action="store_true")
     args = parser.parse_args()
-    result = prepare(args.root, json.loads(args.requirement.read_text(encoding="utf-8")), args.refresh)
+    result = prepare(get_market_root(), json.loads(args.requirement.read_text(encoding="utf-8")), args.refresh)
     print(json.dumps(result, ensure_ascii=False))
     return 0 if result["state"] == "ready" else 2
 

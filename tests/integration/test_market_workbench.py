@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 import quanto.workbench.data_jobs as jobs
+from quanto.data.settings import configure_market_root
 from quanto.workbench.service import WorkbenchService
 from tests.fixtures.market_dataset_cases import research_market
 
@@ -73,9 +74,9 @@ def test_claimed_ready_with_unknown_snapshot_cannot_register(tmp_path, monkeypat
 
 def test_registration_uses_frozen_market_root(tmp_path, monkeypatch):
     service, identity, output, result = prepared_job(tmp_path, monkeypatch)
-    service.store.market_root = tmp_path / "changed_after_submission"
+    configure_market_root(tmp_path / "changed_after_submission")
     assert service.store.finish_data_job(identity, output, result)
-    assert not service.store.market_root.exists()
+    assert not (tmp_path / "changed_after_submission").exists()
 
 
 @pytest.mark.parametrize("key", ["cache_version", "provider", "root", "market_root", "max_retries", "request_delay_seconds", "calendar"])

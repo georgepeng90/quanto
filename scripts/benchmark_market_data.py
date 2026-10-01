@@ -140,6 +140,7 @@ def measure(count=32, days=20, frequency="1d"):
         if frequency == "1d":
             from quanto.workbench.service import WorkbenchService
             service = WorkbenchService(root / "workspace")
+            service.store.market_root = root / "workspace/market"
             start = time.perf_counter()
             identity = service.submit_job("fetch", payload)["id"]
             service.scheduler.start(background=False)

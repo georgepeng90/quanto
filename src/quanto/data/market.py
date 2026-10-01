@@ -12,6 +12,7 @@ from quanto.data.catalog import MarketCatalog
 from quanto.data.contracts import DataQuery, DataRequirement, MarketDataError, PrefetchStatus, PrefetchTaskRef, SnapshotRef, TableQuery
 from quanto.data.coverage import evaluate_coverage
 from quanto.data.readers import MarketReader
+from quanto.data.settings import get_market_root
 from quanto.data.storage import MarketStore
 
 
@@ -30,7 +31,8 @@ class _Work:
 
 
 class MarketData:
-    def __init__(self, root: Path, config: MarketConfig | None = None, providers=None):
+    def __init__(self, root: Path | None = None, config: MarketConfig | None = None, providers=None):
+        root = get_market_root() if root is None else root
         self.config = config or MarketConfig()
         self.store, self.catalog = MarketStore(root), MarketCatalog(root)
         self.reader = MarketReader(self.store)

@@ -10,6 +10,7 @@ import tempfile
 from uuid import uuid4
 
 from quanto.config import validate_parameters
+from quanto.data.settings import get_market_root
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.backtest.dataset_storage import write_parquet_dataset
 from quanto.workbench.models import DatasetVersion, ExperimentDraft, JobRecord, RunRecord, StrategyRevision
@@ -55,8 +56,7 @@ class WorkbenchStore:
         self.root.mkdir(parents=True, exist_ok=True)
         config_path = self.root / "workspace.json"
         config = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
-        market_root = Path(config.get("market_root", "market"))
-        self.market_root = (market_root if market_root.is_absolute() else self.root / market_root).resolve()
+        self.market_root = get_market_root()
         if artifact_root is None and config_path.exists():
             artifact_root = Path(config["artifact_root"])
             if not artifact_root.is_absolute():
@@ -66,7 +66,7 @@ class WorkbenchStore:
         self.artifact_root = Path(artifact_root).resolve()
         self.artifact_root.mkdir(parents=True, exist_ok=True)
         if not config_path.exists():
-            config_path.write_text(json.dumps({"artifact_root": str(self.artifact_root), "market_root": str(self.market_root)}, ensure_ascii=False), encoding="utf-8")
+            config_path.write_text(json.dumps({"artifact_root": str(self.artifact_root)}, ensure_ascii=False), encoding="utf-8")
         self.db_path = self.root / "workbench.sqlite3"
         with self.transaction() as db:
             db.executescript("""

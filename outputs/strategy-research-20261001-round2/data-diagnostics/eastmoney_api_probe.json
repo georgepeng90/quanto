@@ -1,0 +1,88 @@
+{
+  "retrieved_utc": "2026-10-01T11:01:25.115857+00:00",
+  "akshare_version": "1.18.97",
+  "endpoint": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+  "python_resolved_addresses": [
+    "140.207.67.156"
+  ],
+  "proxy_environment_present": false,
+  "probes": [
+    {
+      "name": "eastmoney_home",
+      "transport": "requests",
+      "url": "https://www.eastmoney.com/",
+      "status": 200,
+      "bytes": 349955
+    },
+    {
+      "name": "quote_page",
+      "transport": "requests",
+      "url": "https://quote.eastmoney.com/sz159611.html",
+      "status": 200,
+      "bytes": 37069
+    },
+    {
+      "name": "push2his_root",
+      "transport": "requests",
+      "url": "https://push2his.eastmoney.com/",
+      "status": 404,
+      "bytes": 0
+    },
+    {
+      "name": "push2his_api_no_query",
+      "transport": "requests",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get",
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    {
+      "name": "etf_full",
+      "transport": "curl -4",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=1&beg=20100101&end=20260930&secid=0.159611",
+      "return_code": 56,
+      "status_ip_bytes": "000|140.207.67.156|0",
+      "stderr": "curl: (56) schannel: server closed abruptly (missing close_notify)"
+    },
+    {
+      "name": "etf_full",
+      "transport": "curl -6",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=1&beg=20100101&end=20260930&secid=0.159611",
+      "return_code": 56,
+      "status_ip_bytes": "000|2409:8c1e:5b70:2:5000:1000:0:150|0",
+      "stderr": "curl: (56) schannel: server closed abruptly (missing close_notify)"
+    },
+    {
+      "name": "etf_short",
+      "transport": "curl -4",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=1&beg=20260925&end=20260930&secid=0.159611",
+      "return_code": 56,
+      "status_ip_bytes": "000|140.207.67.156|0",
+      "stderr": "curl: (56) schannel: server closed abruptly (missing close_notify)"
+    },
+    {
+      "name": "etf_short",
+      "transport": "curl -6",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=1&beg=20260925&end=20260930&secid=0.159611",
+      "return_code": 56,
+      "status_ip_bytes": "000|2409:8c1e:5b70:2:5000:1000:0:150|0",
+      "stderr": "curl: (56) schannel: server closed abruptly (missing close_notify)"
+    },
+    {
+      "name": "index_full",
+      "transport": "curl -4",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58&klt=101&fqt=0&beg=19900101&end=20260930&secid=1.000300",
+      "return_code": 56,
+      "status_ip_bytes": "000|140.207.67.156|0",
+      "stderr": "curl: (56) schannel: server closed abruptly (missing close_notify)"
+    },
+    {
+      "name": "index_full",
+      "transport": "curl -6",
+      "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58&klt=101&fqt=0&beg=19900101&end=20260930&secid=1.000300",
+      "return_code": 56,
+      "status_ip_bytes": "000|2409:8c1e:5b70:2:5000:1000:0:150|0",
+      "stderr": "curl: (56) schannel: server closed abruptly (missing close_notify)"
+    }
+  ],
+  "prior_observation": "At 2026-10-01 10:59 UTC, curl IPv6 short-field query for 159611, 20260925-20260930 returned HTTP 200 and 3 kline rows dated 2026-09-28, 29, 30; not preserved as a raw file. Subsequent minimal and full curl IPv4/IPv6 probes closed with zero response.",
+  "conclusion": "DNS, TCP and TLS succeeded; EastMoney home and quote pages responded; historical API endpoint frequently closed without HTTP response. Exact upstream reason is undetermined; failure cannot be attributed conclusively to rate limiting or query length."
+}

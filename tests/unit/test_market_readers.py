@@ -28,6 +28,34 @@ def test_batches_are_bounded_and_globally_ordered(tmp_path):
     assert frame.instrument_id.iloc[0] == "SZSE:etf:000001"
 
 
+def test_mixed_timestamp_units_preserve_nanoseconds_across_months(tmp_path):
+    import pandas as pd
+    from quanto.data import MarketData
+    from quanto.data.imports import import_table
+    from tests.fixtures.market_data_cases import market_case
+    requirement, bars, calendar = market_case()
+    for column in ("bar_start", "bar_end"):
+        values = bars.frame[column].astype("datetime64[ns, UTC]")
+        bars.frame[column] = values + pd.to_timedelta((values.dt.month == 2).astype(int) * 123, unit="ns")
+    for column in ("session_start", "session_end"):
+        values = calendar.frame[column].astype("datetime64[ns, UTC]")
+        calendar.frame[column] = values + pd.to_timedelta((values.dt.month == 2).astype(int) * 123, unit="ns")
+    with MarketData(tmp_path, providers=()) as market:
+        # Preserve a real mixed-unit file set: January microseconds, February nanoseconds.
+        for month, unit in ((1, "us"), (2, "ns")):
+            frame = bars.frame.loc[bars.frame.bar_start.dt.month == month].copy()
+            for column in ("bar_start", "bar_end"):
+                frame[column] = frame[column].astype(f"datetime64[{unit}, UTC]")
+            import_table(market.store, market.catalog, bars.request, frame, bars.source, b"mixed timestamp units")
+        import_table(market.store, market.catalog, calendar.request, calendar.frame, calendar.source, calendar.evidence)
+        snapshot = market.wait_ready(market.prefetch(requirement).id, 10)
+        result = market.read_bars(snapshot, DataQuery(**bars.request.model_dump()))
+        february = result.loc[result.bar_start.dt.month == 2]
+        assert len(february) == 4
+        assert set(february.bar_start.dt.nanosecond) == {123}
+        assert set(february.bar_end.dt.nanosecond) == {123}
+
+
 def test_reference_and_auxiliary_queries_stay_within_prepared_bounds(tmp_path):
     from datetime import timedelta
 

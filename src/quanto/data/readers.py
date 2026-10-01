@@ -44,14 +44,22 @@ class MarketReader:
         ids = {item.key for item in query.instruments}
         output, previous = [], None
         schema = pq.ParquetFile(self.store.object_path(refs[0])).schema_arrow
-        schema = pa.schema([schema.field(name) for name in columns])
+        timestamps = ("bar_start", "bar_end")
+        schema = pa.schema([pa.field(name, pa.timestamp("ns", tz="UTC")) if name in timestamps else schema.field(name) for name in columns])
+        start_ns, end_ns = pd.Timestamp(query.start).value, pd.Timestamp(query.end).value
         for group in groups:
             input_size = max(1, batch_size // max(1, len(group)))
             def rows(ref):
                 with pq.ParquetFile(self.store.object_path(ref)) as parquet:
                     for batch in parquet.iter_batches(batch_size=input_size, columns=columns):
+                        # Arrow's scalar timezone conversion imports optional pytz per value.
+                        # Compare integer nanoseconds and construct timezone-aware output in Arrow.
+                        for name in timestamps:
+                            index = batch.schema.get_field_index(name)
+                            values = batch.column(index).cast(pa.timestamp("ns", tz="UTC")).cast(pa.int64())
+                            batch = batch.set_column(index, name, values)
                         for row in batch.to_pylist():
-                            if row["instrument_id"] in ids and row["bar_start"] >= query.start and row["bar_end"] <= query.end:
+                            if row["instrument_id"] in ids and row["bar_start"] >= start_ns and row["bar_end"] <= end_ns:
                                 yield row
             streams = [iter(rows(ref)) for ref in group]
             heap = []

@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from quanto.data import MarketData, MarketDataError
-from quanto.data.contracts import DataRequirement, FragmentRef
+from quanto.data.contracts import DataRequirement, FragmentRef, content_key
 from quanto.data.settings import get_market_root
 from scripts.migrate_raw_market_data import migrate, verify_report
 
@@ -75,6 +75,21 @@ def test_repeat_migration_is_idempotent_and_report_survives_raw_removal(tmp_path
     for path in (source / "data/raw").rglob("*.csv"):
         path.unlink()
     assert verify_report(get_market_root(), report_path)["validation"] == "passed"
+
+
+def test_frozen_migration_proof_survives_later_series_refresh(tmp_path):
+    source = tmp_path / "legacy"
+    legacy_files(source)
+    report_path = tmp_path / "report.json"
+    report = migrate(get_market_root(), source, report_path)
+    entry = next(entry for entry in report["sources"] if entry["active"])
+    ref = FragmentRef.model_validate(entry["fragments"][0])
+    with MarketData(providers=()) as market, market.catalog.connection() as db:
+        db.execute("UPDATE fragments SET active=0 WHERE id=?", (content_key(ref.model_dump(mode="json")),))
+    assert verify_report(get_market_root(), report_path) == report
+    assert migrate(get_market_root(), source, report_path) == report
+    with MarketData(providers=()) as market, market.catalog.connection() as db:
+        assert db.execute("SELECT active FROM fragments WHERE id=?", (content_key(ref.model_dump(mode="json")),)).fetchone()[0] == 0
 
 
 @pytest.mark.parametrize("damage", ["hash", "symbol", "extra"])

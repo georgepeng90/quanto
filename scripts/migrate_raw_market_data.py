@@ -99,7 +99,7 @@ def metadata(data, entry, requests, imported_at, audit_hashes):
     return request, source
 
 
-def verify_entries(market, entries, *, registered):
+def verify_entries(market, entries, *, registered, check_activity=False):
     for entry in entries:
         fragments = tuple(FragmentRef.model_validate(ref) for ref in entry["fragments"])
         if len(fragments) != 1 or fragments[0].source_evidence_hash != entry["input_sha256"]:
@@ -113,7 +113,7 @@ def verify_entries(market, entries, *, registered):
         if registered:
             with market.catalog.connection() as db:
                 row = db.execute("SELECT payload, active FROM fragments WHERE id=?", (content_key(fragment.model_dump(mode="json")),)).fetchone()
-            if not row or FragmentRef.model_validate_json(row[0]) != fragment or bool(row[1]) != entry["active"]:
+            if not row or FragmentRef.model_validate_json(row[0]) != fragment or check_activity and bool(row[1]) != entry["active"]:
                 raise ValueError("migration catalog registration differs from receipt")
 
 
@@ -133,7 +133,11 @@ def migrate(root, source_root, report_path):
     previous = verify_report(root, report_path) if report_path.exists() else None
     if previous and previous["audit_sha256"] != audit_hashes:
         raise ValueError("audit changed since migration")
-    imported_at = previous["imported_at"] if previous else datetime.now(timezone.utc).isoformat()
+    if previous:
+        if any(sha256((source / entry["original_path"]).read_bytes()) != entry["input_sha256"] for entry in entries):
+            raise ValueError("CSV hash differs from audit")
+        return previous
+    imported_at = datetime.now(timezone.utc).isoformat()
     fresh_codes = {Path(entry["original_path"]).stem for entry in entries if entry["group"] == "tencent"}
     with MarketData(root, providers=()) as market:
         all_fragments, inactive = [], []
@@ -153,7 +157,7 @@ def migrate(root, source_root, report_path):
         if any(sha256((source / entry["original_path"]).read_bytes()) != entry["input_sha256"] for entry in entries):
             raise ValueError("input changed during migration")
         market.catalog.register_fragments(tuple(all_fragments), inactive=tuple(inactive))
-        verify_entries(market, entries, registered=True)
+        verify_entries(market, entries, registered=True, check_activity=True)
     report = dict(validation="passed", imported_at=imported_at, market_root=str(Path(root).resolve()), audit_sha256=audit_hashes,
         source_count=len(entries), active_source_count=sum(entry["active"] for entry in entries), source_rows=sum(entry["rows"] for entry in entries),
         policy="Tencent frozen sequence active where available; overlapping old basis retained as evidence, never spliced",

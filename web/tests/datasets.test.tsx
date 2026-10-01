@@ -31,7 +31,7 @@ test('never presents an incomplete finished fetch as a usable data version', asy
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
     if (path === '/api/datasets') return Response.json({ items: [], next_cursor: null })
     if (path === '/api/jobs') return Response.json({ items: [{ id: 'j1', kind: 'fetch', state: 'succeeded', run_id: null, enqueue_seq: 1, heartbeat: null, completed_through: null, error: null }], next_cursor: null })
-    if (path === '/api/jobs/j1') return Response.json({ id: 'j1', kind: 'fetch', state: 'succeeded', run_id: null, enqueue_seq: 1, heartbeat: null, completed_through: null, error: null, result: { state: 'incomplete', dataset_version_id: null, reason: 'COVERAGE_INCOMPLETE', coverage: { '000001': { observed: ['2024-01-02'], missing: ['2024-01-03'] } }, failed_symbols: ['000001'] } })
+    if (path === '/api/jobs/j1') return Response.json({ id: 'j1', kind: 'fetch', state: 'succeeded', run_id: null, enqueue_seq: 1, heartbeat: null, completed_through: null, error: null, result: { state: 'incomplete', market_prefetch_state: 'incomplete', dataset_version_id: null, reason: 'COVERAGE_INCOMPLETE', coverage: { entries: [{ missing_by_instrument: { 'SZSE:etf:000001': ['2024-01-03'] } }] } } })
     throw new Error(`unexpected ${path}`)
   }))
   renderApp()
@@ -39,6 +39,38 @@ test('never presents an incomplete finished fetch as a usable data version', asy
   expect(screen.getByText(/覆盖不完整/)).toBeInTheDocument()
   expect(screen.getByText(/2024-01-03/)).toBeInTheDocument()
   expect(screen.queryByText(/已验证并登记数据版本/)).not.toBeInTheDocument()
+})
+
+test.each([false, true])('fetch submits requirements with explicit refresh=%s', async refresh => {
+  renderApp()
+  await screen.findByText('演示数据')
+  expect(screen.queryByLabelText('缓存版本（可选）')).not.toBeInTheDocument()
+  await userEvent.type(screen.getByLabelText('ETF 代码（逗号分隔）'), '512480')
+  fireEvent.change(screen.getByLabelText('起始日'), { target: { value: '2024-01-01' } })
+  fireEvent.change(screen.getByLabelText('结束日'), { target: { value: '2024-01-05' } })
+  if (refresh) await userEvent.click(screen.getByLabelText('更新已有行情'))
+  await userEvent.click(screen.getByRole('button', { name: '发起获取' }))
+  await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => url === '/api/jobs/data')).toBe(true))
+  const [, init] = vi.mocked(fetch).mock.calls.find(([url]) => url === '/api/jobs/data')!
+  expect(JSON.parse(init!.body as string)).toEqual({ kind: 'fetch', payload: { symbols: ['512480'], start_date: '2024-01-01', end_date: '2024-01-05', refresh } })
+})
+
+test.each([
+  ['ready', 'd1', true], ['ready', null, false], ['incomplete', 'forged', false], ['failed', null, false], ['cancelled', null, false],
+])('fetch readiness %s and dataset %s gates usable result', async (state, version, usable) => {
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets') return Response.json({ items: [], next_cursor: null })
+    const job = { id: 'j-ready', kind: 'fetch', state: 'succeeded', result: { state: 'complete', market_prefetch_state: state, dataset_version_id: version, limitations: ['source limitation'] } }
+    if (path === '/api/jobs') return Response.json({ items: [job], next_cursor: null })
+    if (path === '/api/jobs/j-ready') return Response.json(job)
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await screen.findByText('j-ready')
+  expect(Boolean(screen.queryByText(/已验证并登记数据版本/))).toBe(usable)
+  expect(screen.getByText(/source limitation/)).toBeInTheDocument()
 })
 
 test('labels ZIP preflight as metadata-only before queuing import', async () => {

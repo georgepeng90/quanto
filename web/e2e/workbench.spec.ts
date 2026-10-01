@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
+import { resolve } from 'node:path'
 
 test('edits runs compares and exports a backtest', async ({ page }, testInfo) => {
   const errors: string[] = []
@@ -146,4 +148,52 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   await page.screenshot({ path: testInfo.outputPath('desktop-error.png') })
   expect(errors).toEqual([])
   testInfo.annotations.push({ type: 'runs', description: `${first},${second}` })
+})
+
+test('offline market outcomes distinguish ready versions from incomplete jobs', async ({ page }) => {
+  const root = resolve(import.meta.dirname, '../..')
+  const python = resolve(root, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python')
+  const script = `
+import json, sys
+from pathlib import Path
+from uuid import uuid4
+from quanto.workbench.store import WorkbenchStore, utc_now
+from quanto.workbench.worker import atomic_json
+import quanto.workbench.data_jobs as jobs
+from tests.fixtures.market_dataset_cases import research_market
+store = WorkbenchStore(Path(sys.argv[1]))
+ids = []
+for mode in ('complete', 'prefix'):
+    identity = str(uuid4())
+    payload = dict(symbols=['000001'], start_date='2024-01-01', end_date='2024-01-05',
+        workspace=str(store.root), market_root=str(store.market_root), refresh=mode == 'prefix')
+    input_path = store.root / 'job-inputs' / identity / 'input.json'
+    input_path.parent.mkdir(parents=True)
+    atomic_json(input_path, {'input': payload})
+    final = store.artifact_root / identity / 'final'
+    jobs.MarketData = lambda root, **kwargs: research_market(root, mode)
+    result = jobs.execute_data_job('fetch', {**payload, '_output_dir': str(final)}, lambda _: None, lambda: False)
+    with store.transaction() as db:
+        seq = db.execute('SELECT COALESCE(MAX(enqueue_seq),0)+1 FROM jobs').fetchone()[0]
+        db.execute("INSERT INTO jobs (id,kind,state,enqueue_seq,artifact_root,input_path,created_at) VALUES (?,'fetch','running',?,?,?,?)",
+            (identity, seq, str(store.artifact_root), str(input_path), utc_now()))
+    assert store.finish_data_job(identity, final, result)
+    control = final.parent / 'control'
+    control.mkdir()
+    atomic_json(control / 'receipt.json', {'result': result})
+    ids.append(identity)
+print(json.dumps(ids))
+`
+  const [ready, incomplete] = JSON.parse(execFileSync(python, ['-c', script, process.env.QUANTO_E2E_WORKSPACE!], { cwd: root, encoding: 'utf8' })) as string[]
+  await page.goto('/datasets')
+  const readyCard = page.locator('article').filter({ has: page.getByText(ready, { exact: true }) })
+  await expect(readyCard).toContainText('行情：已就绪')
+  await expect(readyCard).toContainText(`已验证并登记数据版本 ${ready}`)
+  const incompleteCard = page.locator('article').filter({ has: page.getByText(incomplete, { exact: true }) })
+  await expect(incompleteCard).toContainText('行情：数据不完整')
+  await expect(incompleteCard).toContainText('2024-01-04')
+  await expect(incompleteCard).not.toContainText('已验证并登记数据版本')
+  await expect(page.getByLabel('更新已有行情')).not.toBeChecked()
+  await page.getByLabel('更新已有行情').check()
+  await expect(page.getByLabel('更新已有行情')).toBeChecked()
 })

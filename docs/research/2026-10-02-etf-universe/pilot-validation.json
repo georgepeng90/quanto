@@ -1,0 +1,356 @@
+{
+  "validation": "15 runner tests +13 selector tests passed; live pilot preserves incomplete state",
+  "market_root": "D:\\Projects\\quanto\\data\\market",
+  "pilot_progress_sha256": "9e0cb9552e4cf47145013635742a1725d5f729c2c6439ad6e18acc974945e667",
+  "unit_evidence_sha256": "95a67fe82cb28033b660e7a0cfdd6acc981a120d00b4c7c2f0707503ff677930",
+  "symbols": {
+    "512480": {
+      "state": "incomplete",
+      "listing_date": "2019-06-12",
+      "reason": "INCOMPLETE: refresh response is incomplete; previous cache retained",
+      "snapshot_id": null,
+      "coverage": {
+        "entries": [
+          {
+            "request": {
+              "kind": "bars",
+              "instruments": [
+                {
+                  "exchange": "SSE",
+                  "instrument_type": "etf",
+                  "code": "512480"
+                }
+              ],
+              "start": "2019-06-12T00:00:00Z",
+              "end": "2026-10-01T00:00:00Z",
+              "columns": [
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "amount"
+              ],
+              "frequency": "1d",
+              "price_basis": {
+                "mode": "vendor_research",
+                "basis_id": null
+              },
+              "currency": "CNY"
+            },
+            "missing": [
+              "2021-03-26T01:30:00Z"
+            ],
+            "missing_by_instrument": {
+              "SSE:etf:512480": [
+                "2021-03-26T01:30:00Z"
+              ]
+            },
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          }
+        ],
+        "limitations": [
+          "unknown_availability",
+          "unverified_price_basis"
+        ]
+      }
+    },
+    "159928": {
+      "state": "ready",
+      "listing_date": "2013-09-16",
+      "reason": null,
+      "snapshot_id": "9919ef0c473ae486961cc369a2f15341107af89b6d6498e637dcb738b44bd31e",
+      "coverage": {
+        "entries": [
+          {
+            "request": {
+              "kind": "calendar",
+              "instruments": [],
+              "start": "2022-10-01T00:00:00Z",
+              "end": "2026-10-15T00:00:00Z",
+              "columns": [
+                "session_end",
+                "session_start",
+                "trading_date"
+              ],
+              "frequency": null,
+              "price_basis": null,
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          },
+          {
+            "request": {
+              "kind": "bars",
+              "instruments": [
+                {
+                  "exchange": "SZSE",
+                  "instrument_type": "etf",
+                  "code": "159928"
+                }
+              ],
+              "start": "2022-10-01T00:00:00Z",
+              "end": "2026-10-01T00:00:00Z",
+              "columns": [
+                "amount",
+                "close",
+                "high",
+                "low",
+                "open",
+                "volume"
+              ],
+              "frequency": "1d",
+              "price_basis": {
+                "mode": "vendor_research",
+                "basis_id": null
+              },
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          },
+          {
+            "request": {
+              "kind": "bars",
+              "instruments": [
+                {
+                  "exchange": "SSE",
+                  "instrument_type": "index",
+                  "code": "000300"
+                }
+              ],
+              "start": "2022-10-01T00:00:00Z",
+              "end": "2026-10-01T00:00:00Z",
+              "columns": [
+                "amount",
+                "close"
+              ],
+              "frequency": "1d",
+              "price_basis": {
+                "mode": "vendor_research",
+                "basis_id": null
+              },
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          }
+        ],
+        "limitations": [
+          "unknown_availability",
+          "unknown_units",
+          "unverified_price_basis"
+        ]
+      }
+    },
+    "159995": {
+      "state": "ready",
+      "listing_date": "2020-02-10",
+      "reason": null,
+      "snapshot_id": "0922a190afe0799a4cb56460ef2f824ac71af84ae713bf72c752c766b9eb49e1",
+      "coverage": {
+        "entries": [
+          {
+            "request": {
+              "kind": "calendar",
+              "instruments": [],
+              "start": "2022-10-01T00:00:00Z",
+              "end": "2026-10-15T00:00:00Z",
+              "columns": [
+                "session_end",
+                "session_start",
+                "trading_date"
+              ],
+              "frequency": null,
+              "price_basis": null,
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          },
+          {
+            "request": {
+              "kind": "bars",
+              "instruments": [
+                {
+                  "exchange": "SSE",
+                  "instrument_type": "index",
+                  "code": "000300"
+                }
+              ],
+              "start": "2022-10-01T00:00:00Z",
+              "end": "2026-10-01T00:00:00Z",
+              "columns": [
+                "amount",
+                "close"
+              ],
+              "frequency": "1d",
+              "price_basis": {
+                "mode": "vendor_research",
+                "basis_id": null
+              },
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          },
+          {
+            "request": {
+              "kind": "bars",
+              "instruments": [
+                {
+                  "exchange": "SZSE",
+                  "instrument_type": "etf",
+                  "code": "159995"
+                }
+              ],
+              "start": "2022-10-01T00:00:00Z",
+              "end": "2026-10-01T00:00:00Z",
+              "columns": [
+                "amount",
+                "close",
+                "high",
+                "low",
+                "open",
+                "volume"
+              ],
+              "frequency": "1d",
+              "price_basis": {
+                "mode": "vendor_research",
+                "basis_id": null
+              },
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          }
+        ],
+        "limitations": [
+          "unknown_availability",
+          "unknown_units",
+          "unverified_price_basis"
+        ]
+      }
+    },
+    "159160": {
+      "state": "ready",
+      "listing_date": "2026-03-27",
+      "reason": null,
+      "snapshot_id": "52eb62b2ebfda3e162cad61f7cab7213830875f2ccdfe6d8913f7e86359e7d89",
+      "coverage": {
+        "entries": [
+          {
+            "request": {
+              "kind": "calendar",
+              "instruments": [],
+              "start": "2022-10-01T00:00:00Z",
+              "end": "2026-10-15T00:00:00Z",
+              "columns": [
+                "session_end",
+                "session_start",
+                "trading_date"
+              ],
+              "frequency": null,
+              "price_basis": null,
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          },
+          {
+            "request": {
+              "kind": "bars",
+              "instruments": [
+                {
+                  "exchange": "SZSE",
+                  "instrument_type": "etf",
+                  "code": "159160"
+                }
+              ],
+              "start": "2026-03-27T00:00:00Z",
+              "end": "2026-10-01T00:00:00Z",
+              "columns": [
+                "amount",
+                "close",
+                "high",
+                "low",
+                "open",
+                "volume"
+              ],
+              "frequency": "1d",
+              "price_basis": {
+                "mode": "vendor_research",
+                "basis_id": null
+              },
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          },
+          {
+            "request": {
+              "kind": "bars",
+              "instruments": [
+                {
+                  "exchange": "SSE",
+                  "instrument_type": "index",
+                  "code": "000300"
+                }
+              ],
+              "start": "2022-10-01T00:00:00Z",
+              "end": "2026-10-01T00:00:00Z",
+              "columns": [
+                "amount",
+                "close"
+              ],
+              "frequency": "1d",
+              "price_basis": {
+                "mode": "vendor_research",
+                "basis_id": null
+              },
+              "currency": "CNY"
+            },
+            "missing": [],
+            "missing_by_instrument": {},
+            "missing_fields": [],
+            "missing_evidence": [],
+            "reason": null
+          }
+        ],
+        "limitations": [
+          "unknown_availability",
+          "unknown_units",
+          "unverified_price_basis"
+        ]
+      }
+    }
+  },
+  "note": "512480 refresh expands to old2019history and lacks2021-03-26; no ready snapshot, prior activecache retained."
+}

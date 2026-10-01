@@ -1,0 +1,71 @@
+[
+  {
+    "symbol": "159995",
+    "overlap_rows": 1523,
+    "hypothesis": "old OHLC times 0.5",
+    "fields": {
+      "open": {
+        "max_abs_residual": 0.000500000000000167,
+        "within_0p0011": 1523
+      },
+      "high": {
+        "max_abs_residual": 0.000500000000000167,
+        "within_0p0011": 1523
+      },
+      "low": {
+        "max_abs_residual": 0.000500000000000167,
+        "within_0p0011": 1523
+      },
+      "close": {
+        "max_abs_residual": 0.000500000000000167,
+        "within_0p0011": 1523
+      }
+    }
+  },
+  {
+    "symbol": "515880",
+    "overlap_rows": 1621,
+    "hypothesis": "old OHLC times 0.5",
+    "fields": {
+      "open": {
+        "max_abs_residual": 0.000500000000000056,
+        "within_0p0011": 1621
+      },
+      "high": {
+        "max_abs_residual": 0.000500000000000056,
+        "within_0p0011": 1621
+      },
+      "low": {
+        "max_abs_residual": 0.000500000000000056,
+        "within_0p0011": 1621
+      },
+      "close": {
+        "max_abs_residual": 0.000500000000000056,
+        "within_0p0011": 1621
+      }
+    }
+  },
+  {
+    "symbol": "512400",
+    "overlap_rows": 2031,
+    "hypothesis": "old OHLC minus 0.08",
+    "fields": {
+      "open": {
+        "max_abs_residual": 0.001000000000000112,
+        "within_0p0011": 2031
+      },
+      "high": {
+        "max_abs_residual": 0.001000000000000112,
+        "within_0p0011": 2031
+      },
+      "low": {
+        "max_abs_residual": 0.001000000000000112,
+        "within_0p0011": 2031
+      },
+      "close": {
+        "max_abs_residual": 0.001000000000000112,
+        "within_0p0011": 2031
+      }
+    }
+  }
+]

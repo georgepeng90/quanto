@@ -1,0 +1,72 @@
+{
+  "retrieved_utc": "2026-10-01T11:03:15.154570+00:00",
+  "items": [
+    {
+      "symbol": "sz159928",
+      "source": "Sina CN_MarketData.getKLineData",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159928&scale=240&ma=no&datalen=10",
+      "status": 200,
+      "file": "sina-sz159928-daily-last10.json",
+      "sha256": "3796b51d5f1bab871c81a15344961b585b4c696d258574a8b0d2b30e3962e607",
+      "rows": 10,
+      "first_date": "2026-09-16",
+      "last_date": "2026-09-30",
+      "last_bar": {
+        "day": "2026-09-30",
+        "open": "0.648",
+        "high": "0.660",
+        "low": "0.647",
+        "close": "0.658",
+        "volume": "300003978"
+      }
+    },
+    {
+      "symbol": "sh515050",
+      "source": "Sina CN_MarketData.getKLineData",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh515050&scale=240&ma=no&datalen=10",
+      "status": 200,
+      "file": "sina-sh515050-daily-last10.json",
+      "sha256": "e9012f772a02db80b7886c3195667e793849dd72aefb4e3d16c68423909137ed",
+      "rows": 10,
+      "first_date": "2026-09-16",
+      "last_date": "2026-09-30",
+      "last_bar": {
+        "day": "2026-09-30",
+        "open": "0.982",
+        "high": "0.986",
+        "low": "0.961",
+        "close": "0.965",
+        "volume": "497601711"
+      }
+    },
+    {
+      "symbol": "sz159611",
+      "source": "Sina CN_MarketData.getKLineData",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159611&scale=240&ma=no&datalen=10",
+      "status": 200,
+      "file": "sina-sz159611-daily-last10.json",
+      "sha256": "7aa4daa09577f9845c2ba21dc3295f3fc93a4fdd2910e1b096742dfa666c877e",
+      "rows": 10,
+      "first_date": "2026-09-16",
+      "last_date": "2026-09-30",
+      "last_bar": {
+        "day": "2026-09-30",
+        "open": "1.027",
+        "high": "1.035",
+        "low": "1.025",
+        "close": "1.033",
+        "volume": "188707468"
+      }
+    },
+    {
+      "source": "Sina hq.sinajs.cn quote",
+      "url": "https://hq.sinajs.cn/list=sz159928,sh515050,sz159611",
+      "status": 200,
+      "file": "sina-quote-20260930-gbk.txt",
+      "sha256": "c2b295e4662aa756d63c727a71a5dcfb99a8a49c2c35e108c10ee77766ca38f6",
+      "encoding": "GBK",
+      "note": "As received. Each quote has 2026-09-30 date; positions 8 and 9 after the instrument name are volume in shares and transaction amount in CNY."
+    }
+  ],
+  "comparison_guidance": "Daily OHLC and volume are trading price/quantity evidence. Sina daily bars have no transaction amount; compare amount through the same-day quote response. Sina quote volume is shares; repository AKShare volume is lots of 100 shares. Compare prices on same date directly only when adjustment bases align; for older dates inspect cash distributions and qfq basis. Never substitute ETF NAV."
+}

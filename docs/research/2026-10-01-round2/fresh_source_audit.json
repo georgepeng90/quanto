@@ -1,0 +1,531 @@
+{
+  "benchmark_returned_keys": [
+    "day"
+  ],
+  "benchmark_rows": 3170,
+  "calendar_rows": 4067,
+  "coverage_check": "Each ETF has exactly every observed benchmark session from its first quote through 2026-09-30; no gap filling or suspension inference",
+  "data_start": "2013-09-16",
+  "limitations": [
+    "Qfq was requested, but Tencent returned day for some responses and qfqday for others; adjusted-price semantics are not independently confirmed for every observation.",
+    "Observed historical changes in 159995 and 515880 are consistent with 2:1 splits, and 512400 with a CNY 0.08 distribution; these events are not a complete corporate-action ledger.",
+    "The selected historical universe has survivorship and availability-sample bias; listing dates are first observations.",
+    "Lot size 100, T+1 settlement, and trading eligibility on every observed quote session are research assumptions.",
+    "No prices or trading statuses are imputed; unknown gaps cause preparation to fail.",
+    "Price limits, market impact, and execution slippage are not modeled by this dataset."
+  ],
+  "price_rows": 45774,
+  "provenance": [
+    {
+      "path": "docs/research/2026-10-01/source_audit.json",
+      "sha256": "56742584f1e88d1d3cce3fa69bf2ab730b5301609adb84492e2744e722f6b2b7"
+    },
+    {
+      "path": "outputs/strategy-research-20261001/dataset/instruments.parquet",
+      "sha256": "0708f4e7585e5a491544310a6ba6e1cae1f2b333d095264288e237249b92316c"
+    },
+    {
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_requests.json",
+      "sha256": "107fee44b0bbcebc053cc9587884861ed237fc8cc27c79c3f1081c50f7affee2"
+    },
+    {
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_audit.json",
+      "sha256": "433f8aa44a11986a23c9d7220ec643ff1aab6313d1ebc7740c3cd256b33a19fe"
+    },
+    {
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/unit_check.json",
+      "sha256": "e14597a7240cee0725a2b3d52e347feedcba16bab3a3b917b4d91e4c6ae9d96b"
+    },
+    {
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/adjustment_check.json",
+      "sha256": "0a15a7de742c96b24aa1e01053f9cd5749c0d5ed3e4761e15dd0474909f8e0a7"
+    }
+  ],
+  "research_cutoff": "2026-09-30",
+  "selected_count": 27,
+  "selected_symbols": [
+    "159995",
+    "159819",
+    "512720",
+    "159998",
+    "516510",
+    "515050",
+    "515880",
+    "159869",
+    "516010",
+    "515030",
+    "159755",
+    "512660",
+    "512880",
+    "512000",
+    "512800",
+    "159928",
+    "515170",
+    "159996",
+    "512400",
+    "515210",
+    "516120",
+    "159611",
+    "562550",
+    "512580",
+    "516950",
+    "159745",
+    "159766"
+  ],
+  "source_files": [
+    {
+      "first_date": "2010-01-04",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/benchmark_sh000300.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/benchmark/sh000300.csv",
+      "raw_copy_sha256": "ced0db25464d8a898d17b6ee809113c3f0c7ff5d833efc130808e113c084a087",
+      "rows": 4067,
+      "sha256": "ced0db25464d8a898d17b6ee809113c3f0c7ff5d833efc130808e113c084a087"
+    },
+    {
+      "first_date": "2020-02-10",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159995.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159995.csv",
+      "raw_copy_sha256": "650bd57133cd8918a4c55e76d8533b5fa9180c13951dc6a75ddc8ac28ce44298",
+      "rows": 1615,
+      "sha256": "650bd57133cd8918a4c55e76d8533b5fa9180c13951dc6a75ddc8ac28ce44298"
+    },
+    {
+      "first_date": "2020-09-23",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159819.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159819.csv",
+      "raw_copy_sha256": "46fc7789e9b57c96e05a1f58fdd34fb3e1375bc52ffec179a35dd16c3361cb4b",
+      "rows": 1459,
+      "sha256": "46fc7789e9b57c96e05a1f58fdd34fb3e1375bc52ffec179a35dd16c3361cb4b"
+    },
+    {
+      "first_date": "2019-08-16",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/512720.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/512720.csv",
+      "raw_copy_sha256": "458057e83bf00f1c1b46f4e8ca97a94281256293a607447a8d5359d2ac0cfaa3",
+      "rows": 1728,
+      "sha256": "458057e83bf00f1c1b46f4e8ca97a94281256293a607447a8d5359d2ac0cfaa3"
+    },
+    {
+      "first_date": "2020-04-13",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159998.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159998.csv",
+      "raw_copy_sha256": "8705eab98ac0bd25218d945364b7baf7017366f18c64659f803d3b3b96819bca",
+      "rows": 1571,
+      "sha256": "8705eab98ac0bd25218d945364b7baf7017366f18c64659f803d3b3b96819bca"
+    },
+    {
+      "first_date": "2021-04-07",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/516510.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/516510.csv",
+      "raw_copy_sha256": "fdb5d383c4e7109d3d9bab35e27c98fdd0aa860e9016ecfa922de44da98ad6d8",
+      "rows": 1332,
+      "sha256": "fdb5d383c4e7109d3d9bab35e27c98fdd0aa860e9016ecfa922de44da98ad6d8"
+    },
+    {
+      "first_date": "2019-10-16",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/515050.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/515050.csv",
+      "raw_copy_sha256": "56e2952bbe121ce5bdade89638807980555cb695f58d3971a7bd0c6399001e49",
+      "rows": 1691,
+      "sha256": "56e2952bbe121ce5bdade89638807980555cb695f58d3971a7bd0c6399001e49"
+    },
+    {
+      "first_date": "2019-09-06",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/515880.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/515880.csv",
+      "raw_copy_sha256": "7ce8cc23c21d455907863d14bed0d9638c65b7c954f1373050f986b71b99470b",
+      "rows": 1713,
+      "sha256": "7ce8cc23c21d455907863d14bed0d9638c65b7c954f1373050f986b71b99470b"
+    },
+    {
+      "first_date": "2021-03-05",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159869.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159869.csv",
+      "raw_copy_sha256": "62e6f374a633939f55cc9b744247438a54ff37c5d5e774e7e2c471188850fda9",
+      "rows": 1354,
+      "sha256": "62e6f374a633939f55cc9b744247438a54ff37c5d5e774e7e2c471188850fda9"
+    },
+    {
+      "first_date": "2021-03-05",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/516010.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/516010.csv",
+      "raw_copy_sha256": "272c004b2b74779891d53a90e8951b2965340a071f8318a7be01942ae9aae291",
+      "rows": 1354,
+      "sha256": "272c004b2b74779891d53a90e8951b2965340a071f8318a7be01942ae9aae291"
+    },
+    {
+      "first_date": "2020-03-04",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/515030.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/515030.csv",
+      "raw_copy_sha256": "bf9cd688d10b7e4e0d39eb8cc4d48dd912189159d7f56d75479c03f478aedb48",
+      "rows": 1598,
+      "sha256": "bf9cd688d10b7e4e0d39eb8cc4d48dd912189159d7f56d75479c03f478aedb48"
+    },
+    {
+      "first_date": "2021-06-24",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159755.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159755.csv",
+      "raw_copy_sha256": "a86febbc70097600e26342f025b252a9ca06bd9118fb2dba0c9f388f9abcfc7e",
+      "rows": 1280,
+      "sha256": "a86febbc70097600e26342f025b252a9ca06bd9118fb2dba0c9f388f9abcfc7e"
+    },
+    {
+      "first_date": "2016-08-08",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/512660.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/512660.csv",
+      "raw_copy_sha256": "0816fa0690cf023ecea2518ec6840c40b213488370cb1e1ad9405411af11d4d1",
+      "rows": 2465,
+      "sha256": "0816fa0690cf023ecea2518ec6840c40b213488370cb1e1ad9405411af11d4d1"
+    },
+    {
+      "first_date": "2016-08-08",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/512880.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/512880.csv",
+      "raw_copy_sha256": "27d8caec852f01c99325809330504322690cea4f02a3af298b18844fe929eee5",
+      "rows": 2465,
+      "sha256": "27d8caec852f01c99325809330504322690cea4f02a3af298b18844fe929eee5"
+    },
+    {
+      "first_date": "2016-09-14",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/512000.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/512000.csv",
+      "raw_copy_sha256": "433c14392e5be410aa252f807384ca3bed25f658210e6cd6bc9d5a4050980a34",
+      "rows": 2438,
+      "sha256": "433c14392e5be410aa252f807384ca3bed25f658210e6cd6bc9d5a4050980a34"
+    },
+    {
+      "first_date": "2017-08-03",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/512800.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/512800.csv",
+      "raw_copy_sha256": "960088bfd13e162c6bff9efb856f838067e4b02834999d038948576299f8eebb",
+      "rows": 2225,
+      "sha256": "960088bfd13e162c6bff9efb856f838067e4b02834999d038948576299f8eebb"
+    },
+    {
+      "first_date": "2013-09-16",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159928.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159928.csv",
+      "raw_copy_sha256": "0fefc48b7657832f77c2d2ca81537a064cc240f2f7b7ca44b29930e4795adddd",
+      "rows": 3170,
+      "sha256": "0fefc48b7657832f77c2d2ca81537a064cc240f2f7b7ca44b29930e4795adddd"
+    },
+    {
+      "first_date": "2021-01-13",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/515170.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/515170.csv",
+      "raw_copy_sha256": "9d14117e24dc628939a815ee11106878292ab0c871846be820c0ebefa8cacaf9",
+      "rows": 1386,
+      "sha256": "9d14117e24dc628939a815ee11106878292ab0c871846be820c0ebefa8cacaf9"
+    },
+    {
+      "first_date": "2020-03-16",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159996.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159996.csv",
+      "raw_copy_sha256": "1ddd8efbc4ff7a72b033df55ad274c0b338d701c455c1fc8eb6db058b7eab16c",
+      "rows": 1590,
+      "sha256": "1ddd8efbc4ff7a72b033df55ad274c0b338d701c455c1fc8eb6db058b7eab16c"
+    },
+    {
+      "first_date": "2017-09-01",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/512400.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/512400.csv",
+      "raw_copy_sha256": "177256ede72a83257ac46e19054fcaef756ec358877b1d2739efe7f5ec03d9de",
+      "rows": 2204,
+      "sha256": "177256ede72a83257ac46e19054fcaef756ec358877b1d2739efe7f5ec03d9de"
+    },
+    {
+      "first_date": "2020-03-02",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/515210.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/515210.csv",
+      "raw_copy_sha256": "76f6e38460176961c0adc2cb1ffdb82f2dfa2bcbbdfebc84e5f766e594e31dd8",
+      "rows": 1600,
+      "sha256": "76f6e38460176961c0adc2cb1ffdb82f2dfa2bcbbdfebc84e5f766e594e31dd8"
+    },
+    {
+      "first_date": "2021-03-09",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/516120.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/516120.csv",
+      "raw_copy_sha256": "eb64c545a5bf7ba0088676c6f90151bbe2a2ebee6e933b01844833340f452c14",
+      "rows": 1352,
+      "sha256": "eb64c545a5bf7ba0088676c6f90151bbe2a2ebee6e933b01844833340f452c14"
+    },
+    {
+      "first_date": "2022-01-07",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159611.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159611.csv",
+      "raw_copy_sha256": "656d31b1732e7eb6265672be5ecbc4dac86b866c96dc782cd7e9a00775e8f8b6",
+      "rows": 1147,
+      "sha256": "656d31b1732e7eb6265672be5ecbc4dac86b866c96dc782cd7e9a00775e8f8b6"
+    },
+    {
+      "first_date": "2023-03-27",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/562550.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/562550.csv",
+      "raw_copy_sha256": "cb0efece59fe9c02c635c233d50ede267efed417b30b777ebb43c041f4af11c4",
+      "rows": 854,
+      "sha256": "cb0efece59fe9c02c635c233d50ede267efed417b30b777ebb43c041f4af11c4"
+    },
+    {
+      "first_date": "2017-02-28",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/512580.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/512580.csv",
+      "raw_copy_sha256": "c71abc93f43009fd34a183b3629ce479d4d373ba906a1aae13d1c73ee77a154c",
+      "rows": 2332,
+      "sha256": "c71abc93f43009fd34a183b3629ce479d4d373ba906a1aae13d1c73ee77a154c"
+    },
+    {
+      "first_date": "2021-05-14",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/516950.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/516950.csv",
+      "raw_copy_sha256": "6453f8477bbfc7f2d9f08fcd66024f71dc675faf8e4359c8dacbb452f3a600e2",
+      "rows": 1308,
+      "sha256": "6453f8477bbfc7f2d9f08fcd66024f71dc675faf8e4359c8dacbb452f3a600e2"
+    },
+    {
+      "first_date": "2021-06-18",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159745.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159745.csv",
+      "raw_copy_sha256": "dda47cd435917974b628ffd255bbb175a50bcf370c205adb16be186984517486",
+      "rows": 1284,
+      "sha256": "dda47cd435917974b628ffd255bbb175a50bcf370c205adb16be186984517486"
+    },
+    {
+      "first_date": "2021-07-23",
+      "last_date": "2026-09-30",
+      "path": "outputs/strategy-research-20261001-round2/alternate-data/tencent_qfq/159766.csv",
+      "raw_copy_path": "data/raw/tencent-20261001/etf/159766.csv",
+      "raw_copy_sha256": "e76783c2d1d14adaa6097ca3fc748963be75617e097ccaecd5f1687f1e1867b5",
+      "rows": 1259,
+      "sha256": "e76783c2d1d14adaa6097ca3fc748963be75617e097ccaecd5f1687f1e1867b5"
+    }
+  ],
+  "tencent_requests_by_symbol": {
+    "159611": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "159745": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "159755": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "159766": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "159819": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "159869": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "159928": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "159995": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "159996": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "159998": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "512000": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "512400": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "512580": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "512660": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "512720": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "512800": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "512880": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "515030": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "515050": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "515170": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "515210": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "515880": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day",
+        "qfqday"
+      ]
+    },
+    "516010": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "516120": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "516510": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "516950": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    },
+    "562550": {
+      "requested_adjustment": "qfq",
+      "response_count": 9,
+      "returned_keys": [
+        "day"
+      ]
+    }
+  },
+  "unit_check": "27/27 sampled ETF observations passed; not full-history independent verification",
+  "validation": "validate_dataset and exact Parquet roundtrip passed"
+}

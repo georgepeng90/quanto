@@ -1,0 +1,1402 @@
+[
+  {
+    "path": "tencent_raw/sh000300_2010.txt",
+    "bytes": 70287,
+    "sha256": "e14fbfd78bbe8f9a92337ed40d30dc101a13d1001b5aeff97fc034cbbfef79df"
+  },
+  {
+    "path": "tencent_raw/sh000300_2012.txt",
+    "bytes": 70049,
+    "sha256": "ea29e5763226a9a430917503ff5ce8730a8685b198e1f5932333e8810012d866"
+  },
+  {
+    "path": "tencent_raw/sh000300_2014.txt",
+    "bytes": 70672,
+    "sha256": "6e5bf7bf804b35d53fb0beff553d4a9eca9b5a3aec250035b663efac41de40bd"
+  },
+  {
+    "path": "tencent_raw/sh000300_2016.txt",
+    "bytes": 70899,
+    "sha256": "2c328731fcd34c46a66a9ce46bdc55ea4a9e6330fa992e0ca935e30cfbb69318"
+  },
+  {
+    "path": "tencent_raw/sh000300_2018.txt",
+    "bytes": 70813,
+    "sha256": "fb56fc2da4cfb20fb92f3f7910ec5186fee1e2baaeda62f1777782eeae032650"
+  },
+  {
+    "path": "tencent_raw/sh000300_2020.txt",
+    "bytes": 71149,
+    "sha256": "bb3d03558f0947c2e01a68255d3a1b39823f4196a3d44ddb9b4b073a33403c25"
+  },
+  {
+    "path": "tencent_raw/sh000300_2022.txt",
+    "bytes": 71163,
+    "sha256": "af3b4f077ab21b34f08bdfd1fdffdffaf0a007ddbeb112cf3d9516ed5759b13f"
+  },
+  {
+    "path": "tencent_raw/sh000300_2024.txt",
+    "bytes": 71197,
+    "sha256": "980cc22e30568c3c182412e4e558fab695b0ceddfb20749d8328c76d670cb3bd"
+  },
+  {
+    "path": "tencent_raw/sh000300_2026.txt",
+    "bytes": 71272,
+    "sha256": "35907fddd20cb883163298b3a827f4bd6b97ed761bc3b48de9baebc3a62120f3"
+  },
+  {
+    "path": "tencent_raw/sh512000_2010.txt",
+    "bytes": 1818,
+    "sha256": "a4cef97b978b9dde32e34e847c5df2f38cc50c5d2a3f7ff7572f61f5bf11b070"
+  },
+  {
+    "path": "tencent_raw/sh512000_2012.txt",
+    "bytes": 1818,
+    "sha256": "bc6f723deaab3fe75252d1644df5007567596488bc9eacac029411e3d6f52800"
+  },
+  {
+    "path": "tencent_raw/sh512000_2014.txt",
+    "bytes": 1818,
+    "sha256": "cfd4c9f2e2538e1cb015b48b200f0d6939e22541b26ec0e6a09d92ea7e6b1d0d"
+  },
+  {
+    "path": "tencent_raw/sh512000_2016.txt",
+    "bytes": 27177,
+    "sha256": "c3efb4d9ac6a5b92c853d161fda5ab5a073c9f6b8feae15e9d93b9bf700bbad1"
+  },
+  {
+    "path": "tencent_raw/sh512000_2018.txt",
+    "bytes": 54567,
+    "sha256": "fa8fb24d3147542c618151cafd032db0a79d6e8bfa5ea3e2db079c6e24a9b572"
+  },
+  {
+    "path": "tencent_raw/sh512000_2020.txt",
+    "bytes": 55947,
+    "sha256": "2ad6ae6badb006199c685ac09d8f2fa0387715c759d331c2bcc474473d88b1dc"
+  },
+  {
+    "path": "tencent_raw/sh512000_2022.txt",
+    "bytes": 55842,
+    "sha256": "3037e2d2641a9212fa5ad01ff131ebc422a4974bf2ccbf8f8c5d54977caf7423"
+  },
+  {
+    "path": "tencent_raw/sh512000_2024.txt",
+    "bytes": 56008,
+    "sha256": "ca7e3671a8f150a49eb4fd04e15ca3c8e3788094b3ef618151527eeac5dbc81c"
+  },
+  {
+    "path": "tencent_raw/sh512000_2026.txt",
+    "bytes": 56235,
+    "sha256": "35d7e925d01db2d107e5db374688a1886be36a1f0322d7450948c551f087d8ac"
+  },
+  {
+    "path": "tencent_raw/sh512400_2010.txt",
+    "bytes": 1805,
+    "sha256": "975c374a94a920506a4731a93191cea2a8d8217b213f6891e406b9f476c62d29"
+  },
+  {
+    "path": "tencent_raw/sh512400_2012.txt",
+    "bytes": 1805,
+    "sha256": "38db720825eb135643f0034fbb573df878696b9d9d701cb3bb0014cfca114ac7"
+  },
+  {
+    "path": "tencent_raw/sh512400_2014.txt",
+    "bytes": 1805,
+    "sha256": "ebe6b230e204aec3b148fef5e81a3694fc38611bbdf9ae609824956f8f0fc322"
+  },
+  {
+    "path": "tencent_raw/sh512400_2016.txt",
+    "bytes": 8386,
+    "sha256": "685269ffbab024877f8485f98ac82306c0b8b413a8384824259003f0b359c74d"
+  },
+  {
+    "path": "tencent_raw/sh512400_2018.txt",
+    "bytes": 47525,
+    "sha256": "6739640870c7116be9f5696e9ecaa3bc9b9ebf60c3b3d62790aa2b472c3f318c"
+  },
+  {
+    "path": "tencent_raw/sh512400_2020.txt",
+    "bytes": 54916,
+    "sha256": "6889361868010613f883a6d388419378fb7298d8eed66e455f6fbeaac0590f9e"
+  },
+  {
+    "path": "tencent_raw/sh512400_2022.txt",
+    "bytes": 55135,
+    "sha256": "fa83fcfbaec0dee8a94f2a96e6eae8bd900be020b8b05b5f9cc944888ae9475d"
+  },
+  {
+    "path": "tencent_raw/sh512400_2024.txt",
+    "bytes": 55280,
+    "sha256": "04b5e728322922a8a44d738a6686b3b9ab0a66e49369d7562da5728bed7ce452"
+  },
+  {
+    "path": "tencent_raw/sh512400_2026.txt",
+    "bytes": 55669,
+    "sha256": "e1de6f7c3c62d427c763191ce94b389f46997f8771235cdd92141812d668db47"
+  },
+  {
+    "path": "tencent_raw/sh512580_2010.txt",
+    "bytes": 1749,
+    "sha256": "37533558c34663901860ae828aabc2ff787cc5124167e09ab47731ce4541d079"
+  },
+  {
+    "path": "tencent_raw/sh512580_2012.txt",
+    "bytes": 1749,
+    "sha256": "d6c50e33b034ebcd06c708f5de1e85d49bc87885e8bf4b17034764d313511b67"
+  },
+  {
+    "path": "tencent_raw/sh512580_2014.txt",
+    "bytes": 1749,
+    "sha256": "3fdc1a2d8409fdb50a09f13ee6312759517fa6b9132c949fe6374186569fd7a5"
+  },
+  {
+    "path": "tencent_raw/sh512580_2016.txt",
+    "bytes": 21133,
+    "sha256": "1d79b1260f1130a27e4f8dc9d2ad7e715634dcac1cd059828359f1762d750489"
+  },
+  {
+    "path": "tencent_raw/sh512580_2018.txt",
+    "bytes": 61564,
+    "sha256": "beb491d0b6b75737e72ffac242dc220ab1ad773a33bed8ea0c00ff0ed038a601"
+  },
+  {
+    "path": "tencent_raw/sh512580_2020.txt",
+    "bytes": 62210,
+    "sha256": "7fdac640ef09d91c70a8c3da4d862dc1661e033f38381a3197c3a8fe9a567940"
+  },
+  {
+    "path": "tencent_raw/sh512580_2022.txt",
+    "bytes": 62617,
+    "sha256": "8c529757f961d69b997aae1adcb8cc683844182db37039850bc765a083245ffb"
+  },
+  {
+    "path": "tencent_raw/sh512580_2024.txt",
+    "bytes": 61862,
+    "sha256": "71b464bebc4dbe52da2387ac28ca978678121b85894754205f77278946e154ce"
+  },
+  {
+    "path": "tencent_raw/sh512580_2026.txt",
+    "bytes": 61741,
+    "sha256": "fd7e399f445b05d38da53fd23a90f9d8ffc4a7d9ee76ad0117ebce6b2f7f74b0"
+  },
+  {
+    "path": "tencent_raw/sh512660_2010.txt",
+    "bytes": 1789,
+    "sha256": "dd63da09005f154eaf139f7e395841887d66e45eae455e6086f72daa0eeb7b7b"
+  },
+  {
+    "path": "tencent_raw/sh512660_2012.txt",
+    "bytes": 1789,
+    "sha256": "abdf75f3a88ad09dbfd1ba060c3cc0e9e7482aff2a7213939c839dbd937e61dd"
+  },
+  {
+    "path": "tencent_raw/sh512660_2014.txt",
+    "bytes": 1789,
+    "sha256": "b0ba972a98e2a3b6f90c8f46314f8408d34994aba9fa9dd1addf9b68c3e88eb3"
+  },
+  {
+    "path": "tencent_raw/sh512660_2016.txt",
+    "bytes": 34218,
+    "sha256": "07d4ec23417d7c991b1877c1299ef0270c7aec1ed1abdc2eafb6a5fd77e1fad2"
+  },
+  {
+    "path": "tencent_raw/sh512660_2018.txt",
+    "bytes": 62784,
+    "sha256": "980453a0b2a42a29633e5517e23779b94c727825ef0805cad7a77b72a7f455d9"
+  },
+  {
+    "path": "tencent_raw/sh512660_2020.txt",
+    "bytes": 63819,
+    "sha256": "d3bf22bf58f839d94ab422b7ece825f16187b921c0ce912fd180c0dd7f5e5953"
+  },
+  {
+    "path": "tencent_raw/sh512660_2022.txt",
+    "bytes": 63955,
+    "sha256": "f058b024f4a3a22028ceb4ed6152a064fe165cf7ca8b6812fac8c5966c9fece5"
+  },
+  {
+    "path": "tencent_raw/sh512660_2024.txt",
+    "bytes": 63994,
+    "sha256": "114269ef6840b4b683b62160a30cc6bf2963167a4825285d90af402ee3f95794"
+  },
+  {
+    "path": "tencent_raw/sh512660_2026.txt",
+    "bytes": 64008,
+    "sha256": "31372ef4c0e3ab25d615f46825bf15aee491694f0e11c6698f4bbe77a0765eb1"
+  },
+  {
+    "path": "tencent_raw/sh512720_2010.txt",
+    "bytes": 1768,
+    "sha256": "dbc5006564c0a27f12fef30e970eaf1751461d4aff1c3240d3bcb8bae1c57a1f"
+  },
+  {
+    "path": "tencent_raw/sh512720_2012.txt",
+    "bytes": 1768,
+    "sha256": "fc958b169eb1d388e7921e0cb25cca17c82a9d131b857296515bbbf8e9dd394a"
+  },
+  {
+    "path": "tencent_raw/sh512720_2014.txt",
+    "bytes": 1768,
+    "sha256": "bb56160e2d0c78cf202bdbb8c22c71521f258b9c39e530c8d91ea39dea54f6c1"
+  },
+  {
+    "path": "tencent_raw/sh512720_2016.txt",
+    "bytes": 1768,
+    "sha256": "c030cc91f558a8a2d372fef5753df4282081e135549fed844e083a280eaa07b9"
+  },
+  {
+    "path": "tencent_raw/sh512720_2018.txt",
+    "bytes": 9352,
+    "sha256": "1a6ff5cd5ce4dc5ef68147a10952ad67f71b6da4a123592a977a517e66e8d652"
+  },
+  {
+    "path": "tencent_raw/sh512720_2020.txt",
+    "bytes": 49279,
+    "sha256": "61d6d490a9b2ca95a88e29332c1d0547a46652e89070813f3758a16b944cec70"
+  },
+  {
+    "path": "tencent_raw/sh512720_2022.txt",
+    "bytes": 54554,
+    "sha256": "235da502ed3d364f66de583ac75581046c82d17820c7fc3c416f33b9fb8b4d02"
+  },
+  {
+    "path": "tencent_raw/sh512720_2024.txt",
+    "bytes": 54585,
+    "sha256": "8656cd3f115c989b20d7beae8ed086d27ca41e2fd41f819e86fcddf1e1cea777"
+  },
+  {
+    "path": "tencent_raw/sh512720_2026.txt",
+    "bytes": 54483,
+    "sha256": "6488bc9f9a526c51949aebdc9d2e695f288a6b4d363b2142707a27438643f345"
+  },
+  {
+    "path": "tencent_raw/sh512800_2010.txt",
+    "bytes": 1788,
+    "sha256": "f7c48f9ba07f4ba90d26d27e6184b0d36d1c47bff0a30e2e42c250c1dfd565a4"
+  },
+  {
+    "path": "tencent_raw/sh512800_2012.txt",
+    "bytes": 1788,
+    "sha256": "b05f0a1cd4ece4b493b250bffc4ebdcfc758e511fd245195ca06d95bbf5b1184"
+  },
+  {
+    "path": "tencent_raw/sh512800_2014.txt",
+    "bytes": 1788,
+    "sha256": "a3b9540fc0ef009180d9822bd1013eb6e7fc788beb95b480a95c21d219dd36e5"
+  },
+  {
+    "path": "tencent_raw/sh512800_2016.txt",
+    "bytes": 10047,
+    "sha256": "64af07bf060e3189d6f4a12ee181bb0d6f51f63a9f2f0ae04e20fe3f62d2f989"
+  },
+  {
+    "path": "tencent_raw/sh512800_2018.txt",
+    "bytes": 50143,
+    "sha256": "0e64c970ce2bc3205d9c7aa7d40aca3829c57b6c15eefee7bc0c55d4d5bb67de"
+  },
+  {
+    "path": "tencent_raw/sh512800_2020.txt",
+    "bytes": 55304,
+    "sha256": "363497ef14cb1d5fdb309308a48f079dd2df0608636f90940381773ce87b4b3c"
+  },
+  {
+    "path": "tencent_raw/sh512800_2022.txt",
+    "bytes": 55564,
+    "sha256": "7f7e025c064df7740ab352f32e4eadc17590469e31d5a08ac9c2bf1b78467848"
+  },
+  {
+    "path": "tencent_raw/sh512800_2024.txt",
+    "bytes": 55755,
+    "sha256": "e0e91ce841e0f1617d871134dbbfbac87ea89cba39038f6539880d3abc64ef2b"
+  },
+  {
+    "path": "tencent_raw/sh512800_2026.txt",
+    "bytes": 55953,
+    "sha256": "36b690c5e027718a15dba79df59887c10d1c75223003624113d731f4b46cc0d3"
+  },
+  {
+    "path": "tencent_raw/sh512880_2010.txt",
+    "bytes": 1807,
+    "sha256": "ff055ca80a6f86537f5b65cb66988895dc639043c2022b405c8060b2873178e8"
+  },
+  {
+    "path": "tencent_raw/sh512880_2012.txt",
+    "bytes": 1807,
+    "sha256": "5f48c9889c88608534632b4799a9c7ed6c1435eb237133df94132f4080653d6f"
+  },
+  {
+    "path": "tencent_raw/sh512880_2014.txt",
+    "bytes": 1807,
+    "sha256": "71c0dec5ed0e4c91830b6c2a6151317c1fc5b49d64aa9e3bdca687686d30d879"
+  },
+  {
+    "path": "tencent_raw/sh512880_2016.txt",
+    "bytes": 34188,
+    "sha256": "f014b48c79906d4bdf4c93ea87e675c3db4069e9c27a70477e3cbda1944f952b"
+  },
+  {
+    "path": "tencent_raw/sh512880_2018.txt",
+    "bytes": 63296,
+    "sha256": "1e0032bf726e8304d5fdcbf4ab5f51e5bcaea9a82a50d88cb62eb7ff4c14a9d8"
+  },
+  {
+    "path": "tencent_raw/sh512880_2020.txt",
+    "bytes": 64758,
+    "sha256": "96fbf2a5edd8a2ec9bea60f99e2235d62b81f20ad8c66baeb887b52659faaf46"
+  },
+  {
+    "path": "tencent_raw/sh512880_2022.txt",
+    "bytes": 64685,
+    "sha256": "a84fd1edbbf12f654f37a1315d78602b3c9d8abd9bb0237f01f869bfee9e0e9e"
+  },
+  {
+    "path": "tencent_raw/sh512880_2024.txt",
+    "bytes": 64748,
+    "sha256": "ebcc0f0c2c969514c2b25fcdff59d6e7784f5ce9e715ea6c8a042133ac376d44"
+  },
+  {
+    "path": "tencent_raw/sh512880_2026.txt",
+    "bytes": 64938,
+    "sha256": "c66dd2ef3052d89efa8fefffa5bb6c7ecf4e2001947911b82a3cbadeff38f6f5"
+  },
+  {
+    "path": "tencent_raw/sh515030_2010.txt",
+    "bytes": 1785,
+    "sha256": "1e2b1471ef2f9cbcb37a57088d17a41663b1bc84fade6c195b1f3f4685806f18"
+  },
+  {
+    "path": "tencent_raw/sh515030_2012.txt",
+    "bytes": 1785,
+    "sha256": "2af136e73704f92b8eb74ffcac95b7de43992218416d5e85c14560ad1e12e617"
+  },
+  {
+    "path": "tencent_raw/sh515030_2014.txt",
+    "bytes": 1785,
+    "sha256": "481d71d285fcd3d31c3ebb11288acd9922a20d8d3cd7425f868d3b61f1d46440"
+  },
+  {
+    "path": "tencent_raw/sh515030_2016.txt",
+    "bytes": 1785,
+    "sha256": "c3d0765d1e11d006f76b0b8c8a7d6ecb5e8f45365431f8fe9609cbf4708c2685"
+  },
+  {
+    "path": "tencent_raw/sh515030_2018.txt",
+    "bytes": 1785,
+    "sha256": "f8e4ba0d45fa3b39255c88e49ffd39c02559c1bdd4e6526a96aa13e8aaa21a0e"
+  },
+  {
+    "path": "tencent_raw/sh515030_2020.txt",
+    "bytes": 45248,
+    "sha256": "7ff93149eb3205ad91428b8aca163f4c3be92db312e038c8eb25f29956339512"
+  },
+  {
+    "path": "tencent_raw/sh515030_2022.txt",
+    "bytes": 63836,
+    "sha256": "fc9031953556b91dbe36e3603c44cba636fcc827e229adc5f53fd7b3828ef2bd"
+  },
+  {
+    "path": "tencent_raw/sh515030_2024.txt",
+    "bytes": 63365,
+    "sha256": "e89cb2434eaf77e59ee0fb8d3b0fcd9c284d67d5026577ae9356a67f0bf9250e"
+  },
+  {
+    "path": "tencent_raw/sh515030_2026.txt",
+    "bytes": 63314,
+    "sha256": "b7e6e562dc6e7307389de8af3b71f12aac998e6183fafd9010aacbf7605fa0fe"
+  },
+  {
+    "path": "tencent_raw/sh515050_2010.txt",
+    "bytes": 1798,
+    "sha256": "9a669644b5b840710876237b8444929f3cb553b2123d34b1348932eecaecfa1d"
+  },
+  {
+    "path": "tencent_raw/sh515050_2012.txt",
+    "bytes": 1798,
+    "sha256": "5d873cdbd992daefc1df80e5a831a4c18fe694ac09aa1444b719fee8ba44feb8"
+  },
+  {
+    "path": "tencent_raw/sh515050_2014.txt",
+    "bytes": 1798,
+    "sha256": "8409c0481a46eb5bd151d64b7bdfa85386cd6367a4fafc541ee53b0e18ebea03"
+  },
+  {
+    "path": "tencent_raw/sh515050_2016.txt",
+    "bytes": 1798,
+    "sha256": "7d2010690c4370a408176f72da95a502bb86776c980a6602af0fabb3880ad09f"
+  },
+  {
+    "path": "tencent_raw/sh515050_2018.txt",
+    "bytes": 6450,
+    "sha256": "c2f4d3cd1738eabb435e778bd664e2f4366f2e77cc97d4a72ed84b21c7533068"
+  },
+  {
+    "path": "tencent_raw/sh515050_2020.txt",
+    "bytes": 47404,
+    "sha256": "4b5a68dd1260a2433e368e62e31869eb1fd8f84df7191686a31e50845e57364c"
+  },
+  {
+    "path": "tencent_raw/sh515050_2022.txt",
+    "bytes": 55001,
+    "sha256": "9122eb6fc15388cfe35c969fbec5ca2350a55e06b8a81d509d1ccd44d2834142"
+  },
+  {
+    "path": "tencent_raw/sh515050_2024.txt",
+    "bytes": 54936,
+    "sha256": "86b74c82d7b7a48da7934de8383a198d3411bab3359f88f97a361fed61427a93"
+  },
+  {
+    "path": "tencent_raw/sh515050_2026.txt",
+    "bytes": 55377,
+    "sha256": "0902f796e45350823ddfaecde72ce4847c2956f3204a82fcb76226d17415e693"
+  },
+  {
+    "path": "tencent_raw/sh515170_2010.txt",
+    "bytes": 1801,
+    "sha256": "b5d947dfc18d809750fa407df5ab60f1434afed9a99e5bd52d890cef6e40d7fe"
+  },
+  {
+    "path": "tencent_raw/sh515170_2012.txt",
+    "bytes": 1801,
+    "sha256": "fd5033ed581b9b2e3781f033464ee34e529a039a99d4990aaa2e6e8c7fcddf92"
+  },
+  {
+    "path": "tencent_raw/sh515170_2014.txt",
+    "bytes": 1801,
+    "sha256": "4173cd04be468986f76fa5a5ca2ae95a1357a62ed67a11d32adc454bcbd59b7f"
+  },
+  {
+    "path": "tencent_raw/sh515170_2016.txt",
+    "bytes": 1801,
+    "sha256": "8caa8650957b37a83bd84570cf4f22a3e979a3c5d18f3603000d6b2f74efe674"
+  },
+  {
+    "path": "tencent_raw/sh515170_2018.txt",
+    "bytes": 1801,
+    "sha256": "a8595ad65f4f43326ab24e56b1d122442fa328add23a7bc2acd698e047888a70"
+  },
+  {
+    "path": "tencent_raw/sh515170_2020.txt",
+    "bytes": 24666,
+    "sha256": "39cbb274b1a6f92dc3fff0f0ddaa4914d9d3ce7f835ca4a32de58babade64b24"
+  },
+  {
+    "path": "tencent_raw/sh515170_2022.txt",
+    "bytes": 63513,
+    "sha256": "ed81dce8b45fb4284c4a25d872de8f1164ea0b616aa071b18ef248d34fe0aeda"
+  },
+  {
+    "path": "tencent_raw/sh515170_2024.txt",
+    "bytes": 63177,
+    "sha256": "0011080a35168d4fe50f81c41cd5d6e4beb0cfc2d5a4fcadde94951859ddad20"
+  },
+  {
+    "path": "tencent_raw/sh515170_2026.txt",
+    "bytes": 63291,
+    "sha256": "31f81056fb1222dca3c59c757d87a5a4da34f994d44b1f7afb3560f20a2aea1a"
+  },
+  {
+    "path": "tencent_raw/sh515210_2010.txt",
+    "bytes": 1773,
+    "sha256": "db135104b2d7493ef2d5422843b72d00199cf46b8671d5fc3927931c713bfbfc"
+  },
+  {
+    "path": "tencent_raw/sh515210_2012.txt",
+    "bytes": 1773,
+    "sha256": "63475b4f5b1dfaf9c1ac3876e9662f82a7b5734937f6bd2aae935f93da2a7e19"
+  },
+  {
+    "path": "tencent_raw/sh515210_2014.txt",
+    "bytes": 1773,
+    "sha256": "f617e2925b275e62c8c31437c3b00ab490c2bfd095d0b66a5fd755fe7ef9e041"
+  },
+  {
+    "path": "tencent_raw/sh515210_2016.txt",
+    "bytes": 1773,
+    "sha256": "e4804cebb24fe2ba42a5d6ff061639ec64d05f8473b580060ac6a8c7dc987d0d"
+  },
+  {
+    "path": "tencent_raw/sh515210_2018.txt",
+    "bytes": 1773,
+    "sha256": "39c1d999e8f4b7ddf72f087bdf709230977d7c04c8d36b5e3b8f41513d30912f"
+  },
+  {
+    "path": "tencent_raw/sh515210_2020.txt",
+    "bytes": 38910,
+    "sha256": "0de8173571de3ccd0d2f465ab388fc35b7ad18eac70145aa290525721340e963"
+  },
+  {
+    "path": "tencent_raw/sh515210_2022.txt",
+    "bytes": 54584,
+    "sha256": "045fa86d0a69f3899cb97a57afa1e24d74dc2e6e16b064fffe4a2515fa3977a6"
+  },
+  {
+    "path": "tencent_raw/sh515210_2024.txt",
+    "bytes": 54612,
+    "sha256": "a09a02e5ef77e743bf5e4cd2935d559fc02454cefbc8e9d799fb2d235baaf377"
+  },
+  {
+    "path": "tencent_raw/sh515210_2026.txt",
+    "bytes": 54752,
+    "sha256": "5b4b0394f3013d4df2c4dfca12cb252203198e52f1bb9327713fb4b703c701d1"
+  },
+  {
+    "path": "tencent_raw/sh515880_2010.txt",
+    "bytes": 1819,
+    "sha256": "f9151b24e348c3ee94ab37b110e348f825be3ce60bf6c9defd9169a9345e8553"
+  },
+  {
+    "path": "tencent_raw/sh515880_2012.txt",
+    "bytes": 1819,
+    "sha256": "356c2df43b06a2175ad4ea63054a7bf091a30bb00bc7e1a38d8d66a82c8b2028"
+  },
+  {
+    "path": "tencent_raw/sh515880_2014.txt",
+    "bytes": 1819,
+    "sha256": "07a9ec17b22e482c67cf7a8f945544e4e4d17180ec4e0fc7cbd6372011d81f7d"
+  },
+  {
+    "path": "tencent_raw/sh515880_2016.txt",
+    "bytes": 1819,
+    "sha256": "11cf681f80d30299f36efd354c0c18fcc0e40d583dcfe56c1649c1929c350b0f"
+  },
+  {
+    "path": "tencent_raw/sh515880_2018.txt",
+    "bytes": 8263,
+    "sha256": "f6c3cc37e5ca82c9480827e0f7ee395f16f0ef9349cc6c26d441d2782deff561"
+  },
+  {
+    "path": "tencent_raw/sh515880_2020.txt",
+    "bytes": 48491,
+    "sha256": "413b84429be6a016c0a754aef1247729e15b381296a6ce7b00a11c8dc9d1b17b"
+  },
+  {
+    "path": "tencent_raw/sh515880_2022.txt",
+    "bytes": 54811,
+    "sha256": "f24606ce2508dfe042d99e1f32906bbeb97fc9a9e66d7c6b694aa0f5780f45a3"
+  },
+  {
+    "path": "tencent_raw/sh515880_2024.txt",
+    "bytes": 55800,
+    "sha256": "69d06ab394fbaaeb213b64f707267b9cee247a8587cbebecbc68bdb3d8fb1bbf"
+  },
+  {
+    "path": "tencent_raw/sh515880_2026.txt",
+    "bytes": 56257,
+    "sha256": "7cc3d5ab95fb63634327355a054591fced6a9dd837a5c4c84b2ea34c5a06080f"
+  },
+  {
+    "path": "tencent_raw/sh516010_2010.txt",
+    "bytes": 1777,
+    "sha256": "8e1cced393f3ddb50568596fd69d2cb19b3a1c27d18c3a812dd2295e026de26c"
+  },
+  {
+    "path": "tencent_raw/sh516010_2012.txt",
+    "bytes": 1777,
+    "sha256": "232e2c935586d85f3582d2abc5ae4378c4460581f9218cae4103f32b23b6d72a"
+  },
+  {
+    "path": "tencent_raw/sh516010_2014.txt",
+    "bytes": 1777,
+    "sha256": "e00ce3080fba8a1388b4962f637e34f2d051b582ce3f26846943c96e882449de"
+  },
+  {
+    "path": "tencent_raw/sh516010_2016.txt",
+    "bytes": 1777,
+    "sha256": "fa562b0a9cd4412947d9466b6cb993e6bddb79c565701e58f9ee3f09a4102a93"
+  },
+  {
+    "path": "tencent_raw/sh516010_2018.txt",
+    "bytes": 1777,
+    "sha256": "0e55f00803a831589be8b83cc25566dafe22a12a50dc2102b42c63991477a76c"
+  },
+  {
+    "path": "tencent_raw/sh516010_2020.txt",
+    "bytes": 21160,
+    "sha256": "2e2f3ad513a13511ed9ea7362c5c127b800de6286990ce38c5dc44eecfe87fc7"
+  },
+  {
+    "path": "tencent_raw/sh516010_2022.txt",
+    "bytes": 63026,
+    "sha256": "3055d6517ee3f00266d7c1e527925ca3f96aaa5c085f758ec36a3d5b8fe0d40c"
+  },
+  {
+    "path": "tencent_raw/sh516010_2024.txt",
+    "bytes": 63401,
+    "sha256": "aec60ca4d218e47c16c3da386323b521896d82151722c68d0a67531972f06dcf"
+  },
+  {
+    "path": "tencent_raw/sh516010_2026.txt",
+    "bytes": 63281,
+    "sha256": "b88c87e17b25b886807cf55b3776e3bb0db0eda175551b25a54975cb4b143cd8"
+  },
+  {
+    "path": "tencent_raw/sh516120_2010.txt",
+    "bytes": 1775,
+    "sha256": "a2fc0e108d0187086b30e5aa3b15c915dfdd3a00fa2daae2045856fc624b1df9"
+  },
+  {
+    "path": "tencent_raw/sh516120_2012.txt",
+    "bytes": 1775,
+    "sha256": "420e400b88a6a379e7d054817674a7ecf4be05ac33d91079444a87954507d999"
+  },
+  {
+    "path": "tencent_raw/sh516120_2014.txt",
+    "bytes": 1775,
+    "sha256": "e3656c7ec5c2d821d0acd03edea7d18f23734d445772b5e04871b73c44f504f9"
+  },
+  {
+    "path": "tencent_raw/sh516120_2016.txt",
+    "bytes": 1775,
+    "sha256": "b856246cd5971010b34844f3f618815bdf1388184c997a13d665a47163e150ee"
+  },
+  {
+    "path": "tencent_raw/sh516120_2018.txt",
+    "bytes": 1775,
+    "sha256": "eb502d78e1c1d0ea85b35f044390dfde19d29d71c9b6c66684f7584731a0a595"
+  },
+  {
+    "path": "tencent_raw/sh516120_2020.txt",
+    "bytes": 20971,
+    "sha256": "0268e3001fadcea48556e007d2fb2ba2d4456cc0fbb36ff1211ecf470a6c852b"
+  },
+  {
+    "path": "tencent_raw/sh516120_2022.txt",
+    "bytes": 62690,
+    "sha256": "8c8627834d39a643f263aab567d568d44dd076451dd9010f5215e8145165f001"
+  },
+  {
+    "path": "tencent_raw/sh516120_2024.txt",
+    "bytes": 62472,
+    "sha256": "3692121d9e3c6c33db3fe14f3ce6956aad5ee5a9ea13c89d4e6837039213c160"
+  },
+  {
+    "path": "tencent_raw/sh516120_2026.txt",
+    "bytes": 62715,
+    "sha256": "b2f780bd00d12d9b318eeb7e4144d0c700719a5be0ccf36fa26a6cb5059ea52c"
+  },
+  {
+    "path": "tencent_raw/sh516510_2010.txt",
+    "bytes": 1786,
+    "sha256": "c6367c214a26f42ffd978273efa1ae592a4ebee521a7cf6af202b53eb5a56381"
+  },
+  {
+    "path": "tencent_raw/sh516510_2012.txt",
+    "bytes": 1786,
+    "sha256": "4c630fa1c2c65fdbc99b113d156849532e8a7c88368b78f2f87203b121c8eed3"
+  },
+  {
+    "path": "tencent_raw/sh516510_2014.txt",
+    "bytes": 1786,
+    "sha256": "a87584475d77c75bfcb5a74188e369175ab596b494e1a11d0cb0c90763668232"
+  },
+  {
+    "path": "tencent_raw/sh516510_2016.txt",
+    "bytes": 1786,
+    "sha256": "9da47025e5972baf0525093a199758c231fa951a54556c149bca46bf135901e8"
+  },
+  {
+    "path": "tencent_raw/sh516510_2018.txt",
+    "bytes": 1786,
+    "sha256": "cdbf32b058705d5de36cb7fe252364a8386a9c3d97355684b352e1a3c5923cd0"
+  },
+  {
+    "path": "tencent_raw/sh516510_2020.txt",
+    "bytes": 18890,
+    "sha256": "4694c1bbff4364a652cfb81b90086887edac4aed33554c8e0f31acf413db8fb4"
+  },
+  {
+    "path": "tencent_raw/sh516510_2022.txt",
+    "bytes": 62918,
+    "sha256": "11632cfad4c7187e5e409d2ad0c541f2b29d7119cfaede158803d507a7735719"
+  },
+  {
+    "path": "tencent_raw/sh516510_2024.txt",
+    "bytes": 63425,
+    "sha256": "cd67366a61575133ca44a8917d6264d8c36fbe11d7cf047f591386bf77599353"
+  },
+  {
+    "path": "tencent_raw/sh516510_2026.txt",
+    "bytes": 63461,
+    "sha256": "211de30770f7e89f8317409793c2016d47c40d6e4db7f0793a54aae6ca0b13e5"
+  },
+  {
+    "path": "tencent_raw/sh516950_2010.txt",
+    "bytes": 1757,
+    "sha256": "7b6424e7f30a8a53e3a4a75a19bb07779c5d64349c620e9faa6f4d76f5eec9c3"
+  },
+  {
+    "path": "tencent_raw/sh516950_2012.txt",
+    "bytes": 1757,
+    "sha256": "dc666c17fad9abae260b967b3bc6a9d79ce37751551b5832c0ea6a1b15e906a0"
+  },
+  {
+    "path": "tencent_raw/sh516950_2014.txt",
+    "bytes": 1757,
+    "sha256": "ec70babe89aa6cfe7d8264aec9a87c6de5a60a85dfa035761e387cac54637099"
+  },
+  {
+    "path": "tencent_raw/sh516950_2016.txt",
+    "bytes": 1757,
+    "sha256": "0746ad2f3f0c318fe3aa5d0cc8d54ce2e35e249474fb893ad9b1f8386bb693ef"
+  },
+  {
+    "path": "tencent_raw/sh516950_2018.txt",
+    "bytes": 1757,
+    "sha256": "83e8b9b0d21f6644ccd9d0e31bac391d8f167b0b16780f180cb8d6987cf9a636"
+  },
+  {
+    "path": "tencent_raw/sh516950_2020.txt",
+    "bytes": 16718,
+    "sha256": "82afd15270a920619793d89bf081606958f1a3bb03f589532571aca64006b925"
+  },
+  {
+    "path": "tencent_raw/sh516950_2022.txt",
+    "bytes": 62839,
+    "sha256": "16fbeb05a30ffec9077c8154d6f6bfc9cb0daa528b4468cac3259590ba3ffa66"
+  },
+  {
+    "path": "tencent_raw/sh516950_2024.txt",
+    "bytes": 62654,
+    "sha256": "25b73883d17172bc89ba7962aca4abd5bd149a3049cd6f769b5faeee997691fb"
+  },
+  {
+    "path": "tencent_raw/sh516950_2026.txt",
+    "bytes": 62496,
+    "sha256": "e0c639b7bb83904143c89df78d61da006f8410e772f4ca34c2096fe7864e3d40"
+  },
+  {
+    "path": "tencent_raw/sh562550_2010.txt",
+    "bytes": 1771,
+    "sha256": "7d53ba8bdc6ca8e9caf4c15e45c90efc32a4cb5fb342c9442416116622580e7a"
+  },
+  {
+    "path": "tencent_raw/sh562550_2012.txt",
+    "bytes": 1771,
+    "sha256": "37f262d5a7b0451560f5115286734f38392df1d721fdbace75f4200a836c41f2"
+  },
+  {
+    "path": "tencent_raw/sh562550_2014.txt",
+    "bytes": 1771,
+    "sha256": "5e62e24b6f9c0414ee6565f61a01c239245a226c4847f4332a7709d8e8c2ff97"
+  },
+  {
+    "path": "tencent_raw/sh562550_2016.txt",
+    "bytes": 1771,
+    "sha256": "a9387efccf8568de7ef3d33ca1a4ce85c5eda856ec4ad967ae58691c8c839007"
+  },
+  {
+    "path": "tencent_raw/sh562550_2018.txt",
+    "bytes": 1771,
+    "sha256": "8a8dfdd56b7c33eb9bd9676f19345f4a4f8a6bc914b4d20e3c05110d2369ac11"
+  },
+  {
+    "path": "tencent_raw/sh562550_2020.txt",
+    "bytes": 1771,
+    "sha256": "389776be7dbb209aeeabf121e33a07c1eae7f7a23c6c7f899efca09f8872de3c"
+  },
+  {
+    "path": "tencent_raw/sh562550_2022.txt",
+    "bytes": 19295,
+    "sha256": "69b80655f1b8b186ab0b3cbcc122c5f6527eb4c9bf4a72b1f663ec9cd2a3e606"
+  },
+  {
+    "path": "tencent_raw/sh562550_2024.txt",
+    "bytes": 61443,
+    "sha256": "17f9ec4f55e22b3ea4c94c742f4df138906bc1024c2a6170b261bf7e519ea245"
+  },
+  {
+    "path": "tencent_raw/sh562550_2026.txt",
+    "bytes": 62049,
+    "sha256": "7dbb18e26d95b86c6c3df0d898d3026db808dd40b6e8499db6c6960fa42172cc"
+  },
+  {
+    "path": "tencent_raw/sz159611_2010.txt",
+    "bytes": 1778,
+    "sha256": "81a1a061eecfaabebc4105fe88d933cc6fd27f60033562639053535166393c14"
+  },
+  {
+    "path": "tencent_raw/sz159611_2012.txt",
+    "bytes": 1778,
+    "sha256": "dc356f0cb8cb69df5731e47affcfad86af55467c800b8c3afefd2bf9ab566777"
+  },
+  {
+    "path": "tencent_raw/sz159611_2014.txt",
+    "bytes": 1778,
+    "sha256": "d62bcdad746cbb3060996595684250c118ca94fea0d34f9a18aa3ef8b6b5da65"
+  },
+  {
+    "path": "tencent_raw/sz159611_2016.txt",
+    "bytes": 1778,
+    "sha256": "a98ed635f7a9798ff2a2a8a0a46e7485d5fff6289d9b0c8e6821f3d75384239f"
+  },
+  {
+    "path": "tencent_raw/sz159611_2018.txt",
+    "bytes": 1778,
+    "sha256": "b19fff7b572fd07ca1bbc7d92b2848b77ca41203ffa348ee5e7276147639d64f"
+  },
+  {
+    "path": "tencent_raw/sz159611_2020.txt",
+    "bytes": 1778,
+    "sha256": "a4edf5df75bd377b11a9f98194a29996f921d48a69d0d788a7bd861a368e8bd2"
+  },
+  {
+    "path": "tencent_raw/sz159611_2022.txt",
+    "bytes": 47897,
+    "sha256": "e683317de12a9a182601e7d4c7baaf1afc92c2e705ae1e9a052b0822b69c77de"
+  },
+  {
+    "path": "tencent_raw/sz159611_2024.txt",
+    "bytes": 63504,
+    "sha256": "996e2df5fcbdd281ec7b5c62a6ef40523cc5e90fd5eea6d7255df568c50d9935"
+  },
+  {
+    "path": "tencent_raw/sz159611_2026.txt",
+    "bytes": 63750,
+    "sha256": "a1a93a5b0a11aaf78b6b840fc0cc5842198e904b6e9037c8c20fb5b2dfbaab68"
+  },
+  {
+    "path": "tencent_raw/sz159745_2010.txt",
+    "bytes": 1767,
+    "sha256": "1a2cc6becbb49425a21706caea7ddc4fcf62a2dac0a625221eb18d0ed81c527f"
+  },
+  {
+    "path": "tencent_raw/sz159745_2012.txt",
+    "bytes": 1767,
+    "sha256": "bd91ac0598d9d46c885e65ac04904e7b839ce418967f6fbdf7872873b3ae56b2"
+  },
+  {
+    "path": "tencent_raw/sz159745_2014.txt",
+    "bytes": 1767,
+    "sha256": "54616cbbf03907956888f0ec4703539f9cd497126960fc58471108ac595f29dc"
+  },
+  {
+    "path": "tencent_raw/sz159745_2016.txt",
+    "bytes": 1767,
+    "sha256": "35562434b283d79565aa4a0f0eb01f54db297d6d824dca38e12395d19386c603"
+  },
+  {
+    "path": "tencent_raw/sz159745_2018.txt",
+    "bytes": 1767,
+    "sha256": "54f65dde69d9cb435eea9ab3f7d192cecfb92ad4218bd0ffd22b09e866aeffbe"
+  },
+  {
+    "path": "tencent_raw/sz159745_2020.txt",
+    "bytes": 14498,
+    "sha256": "694b1965427bb3f975c4a5107f02dc8c864d668654309b273e71e17f43232dfd"
+  },
+  {
+    "path": "tencent_raw/sz159745_2022.txt",
+    "bytes": 60605,
+    "sha256": "3e6441ac49f9fc8e88d4a40490356655a0e6ec588e6d86e8918e6079d3c9a6d4"
+  },
+  {
+    "path": "tencent_raw/sz159745_2024.txt",
+    "bytes": 62800,
+    "sha256": "d197529f548a2c1ce28146407aca675bc2074b99190cf995ff403a1683fca177"
+  },
+  {
+    "path": "tencent_raw/sz159745_2026.txt",
+    "bytes": 62938,
+    "sha256": "4cfa5f052852d99c2bbab531b31582ccd86d2fe4a1c671cf8991f23b5cd5a827"
+  },
+  {
+    "path": "tencent_raw/sz159755_2010.txt",
+    "bytes": 1779,
+    "sha256": "ef59bf4f1ea09f11de49fadd1f0dfa214a582dd0378a4d1b3aeaa1295dd34492"
+  },
+  {
+    "path": "tencent_raw/sz159755_2012.txt",
+    "bytes": 1779,
+    "sha256": "16dae92ceff5d071bc42c03bb91d48819e72df16c79bbebd6eb209d260fbf5a1"
+  },
+  {
+    "path": "tencent_raw/sz159755_2014.txt",
+    "bytes": 1779,
+    "sha256": "f118ebfd296e28446adf54ab09d47ed30942cfc2a2c711ac268587a42c4b7901"
+  },
+  {
+    "path": "tencent_raw/sz159755_2016.txt",
+    "bytes": 1779,
+    "sha256": "d6fbd85f7428d75f66346358c20746b932db9b28834487d1ebca5d53e71e8ff6"
+  },
+  {
+    "path": "tencent_raw/sz159755_2018.txt",
+    "bytes": 1779,
+    "sha256": "e2ac7c68584f5bca2999ac2e4a6df363acd274aaca07a8a50d8ff68b23b62c66"
+  },
+  {
+    "path": "tencent_raw/sz159755_2020.txt",
+    "bytes": 14350,
+    "sha256": "aa1012a94727fedefcdf0f37b425162beca83b2f36ade7dac188369168675afa"
+  },
+  {
+    "path": "tencent_raw/sz159755_2022.txt",
+    "bytes": 61209,
+    "sha256": "c26cdab7a5103e9def2244bb3b46dc5ba9d9551cce2fd7163c44fb9264c5bb56"
+  },
+  {
+    "path": "tencent_raw/sz159755_2024.txt",
+    "bytes": 63680,
+    "sha256": "8a5f94a64d01bf24ec118858fa2d252cf7cf8b1378ac10e77a016715c5e25ba1"
+  },
+  {
+    "path": "tencent_raw/sz159755_2026.txt",
+    "bytes": 63777,
+    "sha256": "1b50911a52c243f247641d4b9170e0947ae739ff846d2f217fbda821ad602141"
+  },
+  {
+    "path": "tencent_raw/sz159766_2010.txt",
+    "bytes": 1785,
+    "sha256": "c011975b1810ebf877c8c7358d9c70592e1a539e72ba630f45a39284ff4ad42c"
+  },
+  {
+    "path": "tencent_raw/sz159766_2012.txt",
+    "bytes": 1785,
+    "sha256": "0f150725c7c7490ff69d85d8d1b4690137783be98b83febb838725bc035d8218"
+  },
+  {
+    "path": "tencent_raw/sz159766_2014.txt",
+    "bytes": 1785,
+    "sha256": "c8fd14a08f95d7cf33ed0897d3ef84c44411b627e3f7bd82ea9802e403ae53e7"
+  },
+  {
+    "path": "tencent_raw/sz159766_2016.txt",
+    "bytes": 1785,
+    "sha256": "544510515cc9cd8b0ba81077803e4f8b3a27d924a9834b35c11bbe9c5eb29741"
+  },
+  {
+    "path": "tencent_raw/sz159766_2018.txt",
+    "bytes": 1785,
+    "sha256": "d1725256839395ae2b0e43e3d6156e76f08bdf5adec501f52fc2a465cb2fd990"
+  },
+  {
+    "path": "tencent_raw/sz159766_2020.txt",
+    "bytes": 12116,
+    "sha256": "23025099561104a9dd59d6aae60fd020cc3a4c7d030e114fd180dc67b60b5b66"
+  },
+  {
+    "path": "tencent_raw/sz159766_2022.txt",
+    "bytes": 59004,
+    "sha256": "7ce14e467f787b1bb14fba373b3033493b262422d538a1316b7998d2a81ce636"
+  },
+  {
+    "path": "tencent_raw/sz159766_2024.txt",
+    "bytes": 63530,
+    "sha256": "6f0c22483425efbe9d62ad8ba5ee8a9659f30085cf7a54b55eae79d977cfe3a8"
+  },
+  {
+    "path": "tencent_raw/sz159766_2026.txt",
+    "bytes": 63632,
+    "sha256": "829b977d6d35b7f003a743c84941692cd7b2e5a668e2c33cc6647c39cb0cc792"
+  },
+  {
+    "path": "tencent_raw/sz159819_2010.txt",
+    "bytes": 1793,
+    "sha256": "23f12d62e2252533b4529354696612965210d7fc6485dee3ba81a610b4e9e898"
+  },
+  {
+    "path": "tencent_raw/sz159819_2012.txt",
+    "bytes": 1793,
+    "sha256": "3fcde381e2d0fbd50737760169bedb147b029a086c473ab7f30f78c6e57595e9"
+  },
+  {
+    "path": "tencent_raw/sz159819_2014.txt",
+    "bytes": 1793,
+    "sha256": "a1b8366f444539f93186c55afdd29db19296706de4340d91918c657fa2075f3a"
+  },
+  {
+    "path": "tencent_raw/sz159819_2016.txt",
+    "bytes": 1793,
+    "sha256": "526bc1eb8c09fb898763523ee36720796a82571ed086e4e7f12d6aa1c24c077b"
+  },
+  {
+    "path": "tencent_raw/sz159819_2018.txt",
+    "bytes": 1793,
+    "sha256": "a3c435a3d657114121eb12568239211ab893b59eefe0fe972f62c7e8637149f5"
+  },
+  {
+    "path": "tencent_raw/sz159819_2020.txt",
+    "bytes": 31211,
+    "sha256": "7d5b2065df212f8a83a6859fc4c115dec78fed1b1dd21ae40fa4cf308ffe040e"
+  },
+  {
+    "path": "tencent_raw/sz159819_2022.txt",
+    "bytes": 63067,
+    "sha256": "97a3d7178fbf17766c5700e7decbb053fb2dc05047dda4f6e014cb7b1494f3c7"
+  },
+  {
+    "path": "tencent_raw/sz159819_2024.txt",
+    "bytes": 64017,
+    "sha256": "3ad69ab1736bc329d5d604204d99547ee5e446e37a61839e36ad703ff8362a8d"
+  },
+  {
+    "path": "tencent_raw/sz159819_2026.txt",
+    "bytes": 64030,
+    "sha256": "35edf8e52346dc68207eed5255900d0f5e8aea3ae07b05ed2ad47591ab75f6cb"
+  },
+  {
+    "path": "tencent_raw/sz159869_2010.txt",
+    "bytes": 1783,
+    "sha256": "24db80044faac1492865e448c54d34f5b17828c4400f96267b32646c1e5ce0fb"
+  },
+  {
+    "path": "tencent_raw/sz159869_2012.txt",
+    "bytes": 1783,
+    "sha256": "5c65c09fbdad1e5ee685e5b938bae0c364d9cc9f7d64fd3fe815d5cb49fec4c0"
+  },
+  {
+    "path": "tencent_raw/sz159869_2014.txt",
+    "bytes": 1783,
+    "sha256": "6db27b3246211b45b1d01b65167862bb3df6a7548959c312c4b8eed63f75d2cd"
+  },
+  {
+    "path": "tencent_raw/sz159869_2016.txt",
+    "bytes": 1783,
+    "sha256": "983d8ea985cffd850093641f8405da74aa62451d675a3e9741c8114603278abc"
+  },
+  {
+    "path": "tencent_raw/sz159869_2018.txt",
+    "bytes": 1783,
+    "sha256": "c0fd38c4c2a6c0ae4607e0372e3fabe8be6aa58c9a5003ec6a399dc4364ec05f"
+  },
+  {
+    "path": "tencent_raw/sz159869_2020.txt",
+    "bytes": 21126,
+    "sha256": "4a15c66c9c9ae4ab0723426ffb633aa5492eb68fc7c4483839b719bc19010a20"
+  },
+  {
+    "path": "tencent_raw/sz159869_2022.txt",
+    "bytes": 63126,
+    "sha256": "ff6ac271cbaadd4ed2048690ae3540344eda150b4ce2b4183365f129a04ac667"
+  },
+  {
+    "path": "tencent_raw/sz159869_2024.txt",
+    "bytes": 64056,
+    "sha256": "de7ecefb36e429da969ead2b417238fd5c5455ad9cc843a63a3cf0f24dea372c"
+  },
+  {
+    "path": "tencent_raw/sz159869_2026.txt",
+    "bytes": 64034,
+    "sha256": "a478ee51ffd2657d62787d628df36d78f94776a13020ab7d9ce5e673f640b115"
+  },
+  {
+    "path": "tencent_raw/sz159928_2010.txt",
+    "bytes": 1793,
+    "sha256": "97678f0dd6427762c9da131615990d53eec9c352f68b06df52cfc4a6909472a3"
+  },
+  {
+    "path": "tencent_raw/sz159928_2012.txt",
+    "bytes": 7467,
+    "sha256": "9f5986a9c43765677f6b5b1115985a6406e6ff05570d80b64a0db58de21df845"
+  },
+  {
+    "path": "tencent_raw/sz159928_2014.txt",
+    "bytes": 46081,
+    "sha256": "1548e09463ebbb1c0f6f357b852cb295b60d7335a7bae93a5e3bf411eb1c82c9"
+  },
+  {
+    "path": "tencent_raw/sz159928_2016.txt",
+    "bytes": 51498,
+    "sha256": "d00d685db3bb686ebfbe8f68086548e8bcc4f5c6bdd43cc6554f982fe6dff24b"
+  },
+  {
+    "path": "tencent_raw/sz159928_2018.txt",
+    "bytes": 53081,
+    "sha256": "dab303692a5409d9fd8242f4ba4c549f8988ff2c44bc9ba50cfc1808fd2603f2"
+  },
+  {
+    "path": "tencent_raw/sz159928_2020.txt",
+    "bytes": 54678,
+    "sha256": "a0323dafa2e5d0cf6e27d0aa5ca3cea7e8319dddad35fcf6345ad27e5b8e16fa"
+  },
+  {
+    "path": "tencent_raw/sz159928_2022.txt",
+    "bytes": 55414,
+    "sha256": "e879bd9d54427f34009c6f0084cfab66993a8ab2465f598cfb89781095df38bd"
+  },
+  {
+    "path": "tencent_raw/sz159928_2024.txt",
+    "bytes": 55383,
+    "sha256": "f081e8279240e5151db46015ce21346f53ff75ee11621e387058023b384a02f7"
+  },
+  {
+    "path": "tencent_raw/sz159928_2026.txt",
+    "bytes": 55449,
+    "sha256": "5c10f45639a28201e6c436f4a4451cb8b5cb4efb4064f5c7e1367390304e6e7d"
+  },
+  {
+    "path": "tencent_raw/sz159995_2010.txt",
+    "bytes": 1786,
+    "sha256": "d2607ef3d21f2118e7d1fb0b15c702b617ac00a0be8165b24b9e781fb4557020"
+  },
+  {
+    "path": "tencent_raw/sz159995_2012.txt",
+    "bytes": 1786,
+    "sha256": "cbbbcccf5dae5b3a417c10b90fa49858d318c57c0814c54119697c76bf1fe7f8"
+  },
+  {
+    "path": "tencent_raw/sz159995_2014.txt",
+    "bytes": 1786,
+    "sha256": "46c5a5c5070914cbce65c7b707f46eb800e70ba311bab5f13ef62712c8428885"
+  },
+  {
+    "path": "tencent_raw/sz159995_2016.txt",
+    "bytes": 1786,
+    "sha256": "d7a08e627b7747d9a46a9f766b1dc751689ffb89176fd69b8ab497bf1f97ec69"
+  },
+  {
+    "path": "tencent_raw/sz159995_2018.txt",
+    "bytes": 1786,
+    "sha256": "192def10bfbaa9888bfbf3e2e8d85d505d62c37682d640b0015843ad3a239b9a"
+  },
+  {
+    "path": "tencent_raw/sz159995_2020.txt",
+    "bytes": 41306,
+    "sha256": "4c7f45be788a4ddb84d0f681c3e00a8c9f7f1f1e7d1d959465094efd69840e09"
+  },
+  {
+    "path": "tencent_raw/sz159995_2022.txt",
+    "bytes": 55670,
+    "sha256": "89a7ae8962a157bf9771927efe5051a196f4851a47139549e75b8de56a8a3331"
+  },
+  {
+    "path": "tencent_raw/sz159995_2024.txt",
+    "bytes": 55738,
+    "sha256": "5f798b474f833a9dd71f84af026b796f68cbed2a5c171080c6b29548eee78a14"
+  },
+  {
+    "path": "tencent_raw/sz159995_2026.txt",
+    "bytes": 55840,
+    "sha256": "609eb3a15fef955d5e9f4cf36dbe55aea4ca7fd590a13b7cfa67ec7a5915886f"
+  },
+  {
+    "path": "tencent_raw/sz159996_2010.txt",
+    "bytes": 1744,
+    "sha256": "ccb62aea967cf8e23c47a4aaeb3985a179472bd2ff7d5420de30a0d3bf4d3542"
+  },
+  {
+    "path": "tencent_raw/sz159996_2012.txt",
+    "bytes": 1744,
+    "sha256": "e946126ba1fdf6b5ae00a142634723c2b2194a4834042d3f988a2e69460b7e61"
+  },
+  {
+    "path": "tencent_raw/sz159996_2014.txt",
+    "bytes": 1744,
+    "sha256": "0b411381132567f03718bf0547cb2076a15f7ab64fccee7b7e88ebaa31cf5e54"
+  },
+  {
+    "path": "tencent_raw/sz159996_2016.txt",
+    "bytes": 1744,
+    "sha256": "d2646be05df257a3d16e6e602dc57a10e735270f86de7c50922344522ab0f42b"
+  },
+  {
+    "path": "tencent_raw/sz159996_2018.txt",
+    "bytes": 1744,
+    "sha256": "e8e80bdb761a60dc01c9c50f631fede8180d57e7a1435cf53e87a57e7577c548"
+  },
+  {
+    "path": "tencent_raw/sz159996_2020.txt",
+    "bytes": 43605,
+    "sha256": "c2d0541ef3b848c457d0c1403b0a6ac021596f2c145a3809c9efb095ce076910"
+  },
+  {
+    "path": "tencent_raw/sz159996_2022.txt",
+    "bytes": 62975,
+    "sha256": "31fa6711c37bcbda2d9d1422347cf7410a7616025dbc2134f9bdea9b767d741d"
+  },
+  {
+    "path": "tencent_raw/sz159996_2024.txt",
+    "bytes": 62834,
+    "sha256": "1910ad25dfe748d2d4a36cc66eeecf39174de3ccc378f868e6fdfa08e5f799c1"
+  },
+  {
+    "path": "tencent_raw/sz159996_2026.txt",
+    "bytes": 62793,
+    "sha256": "86606f5db329a637d9138d5c579e2b11910ecae6625d4c743ce1c2d439bd9bd5"
+  },
+  {
+    "path": "tencent_raw/sz159998_2010.txt",
+    "bytes": 1763,
+    "sha256": "db8370eda34181f9130c4d87b3b8f506cb6d138ed4ba36020a30b7406f0a1d4c"
+  },
+  {
+    "path": "tencent_raw/sz159998_2012.txt",
+    "bytes": 1763,
+    "sha256": "5458fe610a805f9a39f2e9e786296312e9afdcb35a8a60b7fc4baef38faa7105"
+  },
+  {
+    "path": "tencent_raw/sz159998_2014.txt",
+    "bytes": 1763,
+    "sha256": "1d4b1f2a3609d824fec3991a4ce30f37d9452d847f2eebd2ad0b6e354f95bcee"
+  },
+  {
+    "path": "tencent_raw/sz159998_2016.txt",
+    "bytes": 1763,
+    "sha256": "816a38d4ca62391c871fc9d2785084da92e7f9649d975e80dffef7cbcab7a847"
+  },
+  {
+    "path": "tencent_raw/sz159998_2018.txt",
+    "bytes": 1763,
+    "sha256": "9b261d841ed2a26e803bdd50dde5d3778abc7da14ecdcfff55dbbba03dd30a48"
+  },
+  {
+    "path": "tencent_raw/sz159998_2020.txt",
+    "bytes": 41541,
+    "sha256": "92a60c4c9f3f7a6b479db5dceae077ac09da82f95c469ef36394cfecf3acfedb"
+  },
+  {
+    "path": "tencent_raw/sz159998_2022.txt",
+    "bytes": 62300,
+    "sha256": "02f4082aac81ec6d04ed3b2cb31585130115c097de9d9011d641021b94bf154d"
+  },
+  {
+    "path": "tencent_raw/sz159998_2024.txt",
+    "bytes": 62912,
+    "sha256": "a0ba8371468874824e5c44d51e1a9cbd30506c5916b65543d36b7608eb89fa3d"
+  },
+  {
+    "path": "tencent_raw/sz159998_2026.txt",
+    "bytes": 63036,
+    "sha256": "ea4f837e7f8ce94dfe647ec79a16d65d64da30bc653ac53f32ccb29bdc77f511"
+  },
+  {
+    "path": "tencent_qfq/159611.csv",
+    "bytes": 84150,
+    "sha256": "656d31b1732e7eb6265672be5ecbc4dac86b866c96dc782cd7e9a00775e8f8b6"
+  },
+  {
+    "path": "tencent_qfq/159745.csv",
+    "bytes": 92858,
+    "sha256": "dda47cd435917974b628ffd255bbb175a50bcf370c205adb16be186984517486"
+  },
+  {
+    "path": "tencent_qfq/159755.csv",
+    "bytes": 94459,
+    "sha256": "a86febbc70097600e26342f025b252a9ca06bd9118fb2dba0c9f388f9abcfc7e"
+  },
+  {
+    "path": "tencent_qfq/159766.csv",
+    "bytes": 92531,
+    "sha256": "e76783c2d1d14adaa6097ca3fc748963be75617e097ccaecd5f1687f1e1867b5"
+  },
+  {
+    "path": "tencent_qfq/159819.csv",
+    "bytes": 107039,
+    "sha256": "46fc7789e9b57c96e05a1f58fdd34fb3e1375bc52ffec179a35dd16c3361cb4b"
+  },
+  {
+    "path": "tencent_qfq/159869.csv",
+    "bytes": 99338,
+    "sha256": "62e6f374a633939f55cc9b744247438a54ff37c5d5e774e7e2c471188850fda9"
+  },
+  {
+    "path": "tencent_qfq/159928.csv",
+    "bytes": 226262,
+    "sha256": "0fefc48b7657832f77c2d2ca81537a064cc240f2f7b7ca44b29930e4795adddd"
+  },
+  {
+    "path": "tencent_qfq/159995.csv",
+    "bytes": 120287,
+    "sha256": "650bd57133cd8918a4c55e76d8533b5fa9180c13951dc6a75ddc8ac28ce44298"
+  },
+  {
+    "path": "tencent_qfq/159996.csv",
+    "bytes": 115159,
+    "sha256": "1ddd8efbc4ff7a72b033df55ad274c0b338d701c455c1fc8eb6db058b7eab16c"
+  },
+  {
+    "path": "tencent_qfq/159998.csv",
+    "bytes": 113316,
+    "sha256": "8705eab98ac0bd25218d945364b7baf7017366f18c64659f803d3b3b96819bca"
+  },
+  {
+    "path": "tencent_qfq/512000.csv",
+    "bytes": 179874,
+    "sha256": "433c14392e5be410aa252f807384ca3bed25f658210e6cd6bc9d5a4050980a34"
+  },
+  {
+    "path": "tencent_qfq/512400.csv",
+    "bytes": 160388,
+    "sha256": "177256ede72a83257ac46e19054fcaef756ec358877b1d2739efe7f5ec03d9de"
+  },
+  {
+    "path": "tencent_qfq/512580.csv",
+    "bytes": 165885,
+    "sha256": "c71abc93f43009fd34a183b3629ce479d4d373ba906a1aae13d1c73ee77a154c"
+  },
+  {
+    "path": "tencent_qfq/512660.csv",
+    "bytes": 181178,
+    "sha256": "0816fa0690cf023ecea2518ec6840c40b213488370cb1e1ad9405411af11d4d1"
+  },
+  {
+    "path": "tencent_qfq/512720.csv",
+    "bytes": 124928,
+    "sha256": "458057e83bf00f1c1b46f4e8ca97a94281256293a607447a8d5359d2ac0cfaa3"
+  },
+  {
+    "path": "tencent_qfq/512800.csv",
+    "bytes": 163757,
+    "sha256": "960088bfd13e162c6bff9efb856f838067e4b02834999d038948576299f8eebb"
+  },
+  {
+    "path": "tencent_qfq/512880.csv",
+    "bytes": 183759,
+    "sha256": "27d8caec852f01c99325809330504322690cea4f02a3af298b18844fe929eee5"
+  },
+  {
+    "path": "tencent_qfq/515030.csv",
+    "bytes": 117711,
+    "sha256": "bf9cd688d10b7e4e0d39eb8cc4d48dd912189159d7f56d75479c03f478aedb48"
+  },
+  {
+    "path": "tencent_qfq/515050.csv",
+    "bytes": 124452,
+    "sha256": "56e2952bbe121ce5bdade89638807980555cb695f58d3971a7bd0c6399001e49"
+  },
+  {
+    "path": "tencent_qfq/515170.csv",
+    "bytes": 101588,
+    "sha256": "9d14117e24dc628939a815ee11106878292ab0c871846be820c0ebefa8cacaf9"
+  },
+  {
+    "path": "tencent_qfq/515210.csv",
+    "bytes": 115961,
+    "sha256": "76f6e38460176961c0adc2cb1ffdb82f2dfa2bcbbdfebc84e5f766e594e31dd8"
+  },
+  {
+    "path": "tencent_qfq/515880.csv",
+    "bytes": 125889,
+    "sha256": "7ce8cc23c21d455907863d14bed0d9638c65b7c954f1373050f986b71b99470b"
+  },
+  {
+    "path": "tencent_qfq/516010.csv",
+    "bytes": 98531,
+    "sha256": "272c004b2b74779891d53a90e8951b2965340a071f8318a7be01942ae9aae291"
+  },
+  {
+    "path": "tencent_qfq/516120.csv",
+    "bytes": 97508,
+    "sha256": "eb64c545a5bf7ba0088676c6f90151bbe2a2ebee6e933b01844833340f452c14"
+  },
+  {
+    "path": "tencent_qfq/516510.csv",
+    "bytes": 96704,
+    "sha256": "fdb5d383c4e7109d3d9bab35e27c98fdd0aa860e9016ecfa922de44da98ad6d8"
+  },
+  {
+    "path": "tencent_qfq/516950.csv",
+    "bytes": 94307,
+    "sha256": "6453f8477bbfc7f2d9f08fcd66024f71dc675faf8e4359c8dacbb452f3a600e2"
+  },
+  {
+    "path": "tencent_qfq/562550.csv",
+    "bytes": 60523,
+    "sha256": "cb0efece59fe9c02c635c233d50ede267efed417b30b777ebb43c041f4af11c4"
+  },
+  {
+    "path": "tencent_qfq/benchmark_sh000300.csv",
+    "bytes": 367113,
+    "sha256": "ced0db25464d8a898d17b6ee809113c3f0c7ff5d833efc130808e113c084a087"
+  }
+]

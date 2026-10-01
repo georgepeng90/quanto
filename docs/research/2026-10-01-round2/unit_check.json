@@ -1,0 +1,224 @@
+{
+  "assumption": "Tencent ETF volume raw unit is hands (100 shares); amount raw unit is 10,000 CNY",
+  "test": "normalized amount/(normalized volume*100) should lie within latest raw unadjusted daily low/high, allowing 0.005 rounding",
+  "passed": 27,
+  "total": 27,
+  "rows": [
+    {
+      "symbol": "159995",
+      "date": "2026-09-30",
+      "low": 1.05,
+      "high": 1.093,
+      "implied_price": 1.064664,
+      "within_bar": true
+    },
+    {
+      "symbol": "159819",
+      "date": "2026-09-30",
+      "low": 1.654,
+      "high": 1.699,
+      "implied_price": 1.669159,
+      "within_bar": true
+    },
+    {
+      "symbol": "512720",
+      "date": "2026-09-30",
+      "low": 1.08,
+      "high": 1.097,
+      "implied_price": 1.086846,
+      "within_bar": true
+    },
+    {
+      "symbol": "159998",
+      "date": "2026-09-30",
+      "low": 0.898,
+      "high": 0.911,
+      "implied_price": 0.902934,
+      "within_bar": true
+    },
+    {
+      "symbol": "516510",
+      "date": "2026-09-30",
+      "low": 1.56,
+      "high": 1.587,
+      "implied_price": 1.56968,
+      "within_bar": true
+    },
+    {
+      "symbol": "515050",
+      "date": "2026-09-30",
+      "low": 0.961,
+      "high": 0.986,
+      "implied_price": 0.971229,
+      "within_bar": true
+    },
+    {
+      "symbol": "515880",
+      "date": "2026-09-30",
+      "low": 0.624,
+      "high": 0.639,
+      "implied_price": 0.630562,
+      "within_bar": true
+    },
+    {
+      "symbol": "159869",
+      "date": "2026-09-30",
+      "low": 1.034,
+      "high": 1.046,
+      "implied_price": 1.040537,
+      "within_bar": true
+    },
+    {
+      "symbol": "516010",
+      "date": "2026-09-30",
+      "low": 1.026,
+      "high": 1.039,
+      "implied_price": 1.032697,
+      "within_bar": true
+    },
+    {
+      "symbol": "515030",
+      "date": "2026-09-30",
+      "low": 1.438,
+      "high": 1.469,
+      "implied_price": 1.455052,
+      "within_bar": true
+    },
+    {
+      "symbol": "159755",
+      "date": "2026-09-30",
+      "low": 0.836,
+      "high": 0.855,
+      "implied_price": 0.846814,
+      "within_bar": true
+    },
+    {
+      "symbol": "512660",
+      "date": "2026-09-30",
+      "low": 1.098,
+      "high": 1.112,
+      "implied_price": 1.104826,
+      "within_bar": true
+    },
+    {
+      "symbol": "512880",
+      "date": "2026-09-30",
+      "low": 1.024,
+      "high": 1.031,
+      "implied_price": 1.027401,
+      "within_bar": true
+    },
+    {
+      "symbol": "512000",
+      "date": "2026-09-30",
+      "low": 0.49,
+      "high": 0.493,
+      "implied_price": 0.491597,
+      "within_bar": true
+    },
+    {
+      "symbol": "512800",
+      "date": "2026-09-30",
+      "low": 0.838,
+      "high": 0.853,
+      "implied_price": 0.847443,
+      "within_bar": true
+    },
+    {
+      "symbol": "159928",
+      "date": "2026-09-30",
+      "low": 0.647,
+      "high": 0.66,
+      "implied_price": 0.654599,
+      "within_bar": true
+    },
+    {
+      "symbol": "515170",
+      "date": "2026-09-30",
+      "low": 0.451,
+      "high": 0.461,
+      "implied_price": 0.456497,
+      "within_bar": true
+    },
+    {
+      "symbol": "159996",
+      "date": "2026-09-30",
+      "low": 1.389,
+      "high": 1.4,
+      "implied_price": 1.394433,
+      "within_bar": true
+    },
+    {
+      "symbol": "512400",
+      "date": "2026-09-30",
+      "low": 1.612,
+      "high": 1.629,
+      "implied_price": 1.620673,
+      "within_bar": true
+    },
+    {
+      "symbol": "515210",
+      "date": "2026-09-30",
+      "low": 1.111,
+      "high": 1.129,
+      "implied_price": 1.123031,
+      "within_bar": true
+    },
+    {
+      "symbol": "516120",
+      "date": "2026-09-30",
+      "low": 0.802,
+      "high": 0.814,
+      "implied_price": 0.810162,
+      "within_bar": true
+    },
+    {
+      "symbol": "159611",
+      "date": "2026-09-30",
+      "low": 1.025,
+      "high": 1.035,
+      "implied_price": 1.032283,
+      "within_bar": true
+    },
+    {
+      "symbol": "562550",
+      "date": "2026-09-30",
+      "low": 1.118,
+      "high": 1.131,
+      "implied_price": 1.127542,
+      "within_bar": true
+    },
+    {
+      "symbol": "512580",
+      "date": "2026-09-30",
+      "low": 1.088,
+      "high": 1.101,
+      "implied_price": 1.096837,
+      "within_bar": true
+    },
+    {
+      "symbol": "516950",
+      "date": "2026-09-30",
+      "low": 0.979,
+      "high": 0.991,
+      "implied_price": 0.985006,
+      "within_bar": true
+    },
+    {
+      "symbol": "159745",
+      "date": "2026-09-30",
+      "low": 0.512,
+      "high": 0.531,
+      "implied_price": 0.524444,
+      "within_bar": true
+    },
+    {
+      "symbol": "159766",
+      "date": "2026-09-30",
+      "low": 0.534,
+      "high": 0.544,
+      "implied_price": 0.539301,
+      "within_bar": true
+    }
+  ]
+}

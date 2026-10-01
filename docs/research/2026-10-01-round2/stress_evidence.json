@@ -1,0 +1,1328 @@
+[
+  {
+    "candidate": "buy_hold",
+    "period": "full",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "buy_hold",
+      "params": {}
+    },
+    "spec": {
+      "start": "2020-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.3975719278766001,
+      "annual_return": 0.05622792713194169,
+      "volatility": 0.16761809929121357,
+      "sharpe": 0.41029220269884953,
+      "max_drawdown": 0.3242802576989735,
+      "calmar": 0.17339300126046395,
+      "final_equity": 1397571.9278766,
+      "fill_count": 287,
+      "round_trip_count": 0,
+      "open_lot_count": 7,
+      "realized_pnl": 24449.964462200005,
+      "unrealized_pnl": 373121.9634144001,
+      "turnover": 0.7541740231054442,
+      "commission_paid": 3120.3434234,
+      "slippage_cost": 910.1286999999,
+      "execution_cost": 4030.4721233999003,
+      "average_invested_ratio": 0.7670071575777443,
+      "average_holding_sessions": 339.375,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.22883408998669008
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.2917398027766005
+      },
+      {
+        "period": "2021",
+        "return": 0.09561806118732652
+      },
+      {
+        "period": "2022",
+        "return": -0.16870504615529947
+      },
+      {
+        "period": "2023",
+        "return": -0.09220156399299018
+      },
+      {
+        "period": "2024",
+        "return": 0.10167107973780753
+      },
+      {
+        "period": "2025",
+        "return": 0.20652008729582416
+      },
+      {
+        "period": "2026",
+        "return": -0.015515543238628027
+      }
+    ],
+    "risk_event_count": 41,
+    "elapsed_seconds": 13.444617000001017,
+    "curves_sha256": "e10fe7bd815d626e65ab4786b3d02b59d122e7003237bdb7a194cf304fa93980"
+  },
+  {
+    "candidate": "diversified_120_inverse_vol",
+    "period": "full",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "diversified_trend",
+      "params": {
+        "trend_window": 120,
+        "gross_target": 0.8,
+        "weighting": "inverse_vol"
+      }
+    },
+    "spec": {
+      "start": "2020-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.0774427086471281,
+      "annual_return": 0.01226446529758407,
+      "volatility": 0.11168904534671599,
+      "sharpe": 0.16518252388255214,
+      "max_drawdown": 0.18485276515480442,
+      "calmar": 0.06634721037206681,
+      "final_equity": 1077442.7086471282,
+      "fill_count": 4319,
+      "round_trip_count": 390,
+      "open_lot_count": 72,
+      "realized_pnl": 30186.533852417153,
+      "unrealized_pnl": 47256.17479470457,
+      "turnover": 35.3509829004212,
+      "commission_paid": 47136.05755288,
+      "slippage_cost": 34334.63379999821,
+      "execution_cost": 81470.6913528782,
+      "average_invested_ratio": 0.40007995458983653,
+      "average_holding_sessions": 33.21959108564816,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": -0.09129512924278194
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.05075152517547954
+      },
+      {
+        "period": "2021",
+        "return": -0.004563697314488913
+      },
+      {
+        "period": "2022",
+        "return": -0.13181210658745268
+      },
+      {
+        "period": "2023",
+        "return": 0.01937286385707271
+      },
+      {
+        "period": "2024",
+        "return": 0.002764148742793626
+      },
+      {
+        "period": "2025",
+        "return": 0.12399175043695054
+      },
+      {
+        "period": "2026",
+        "return": 0.03269474353541946
+      }
+    ],
+    "risk_event_count": 25,
+    "elapsed_seconds": 41.33531970001059,
+    "curves_sha256": "c3eaefcd9dadbfbf6e36dd2475bb3cc4db5639849ece3ae76a60410bf1dbb30f"
+  },
+  {
+    "candidate": "diversified_200_equal",
+    "period": "full",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "diversified_trend",
+      "params": {
+        "trend_window": 200,
+        "gross_target": 0.8,
+        "weighting": "equal"
+      }
+    },
+    "spec": {
+      "start": "2020-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.29278738782456104,
+      "annual_return": 0.04286050377970496,
+      "volatility": 0.12823691925255545,
+      "sharpe": 0.39163285670390113,
+      "max_drawdown": 0.18492448654607252,
+      "calmar": 0.23177300410687687,
+      "final_equity": 1292787.387824561,
+      "fill_count": 4355,
+      "round_trip_count": 255,
+      "open_lot_count": 294,
+      "realized_pnl": 142130.45432415674,
+      "unrealized_pnl": 150656.93350040447,
+      "turnover": 24.247143034706564,
+      "commission_paid": 47053.839575440004,
+      "slippage_cost": 25886.572599998733,
+      "execution_cost": 72940.41217543875,
+      "average_invested_ratio": 0.4378381722455492,
+      "average_holding_sessions": 46.56086006049172,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.124049549934651
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.10543693611607963
+      },
+      {
+        "period": "2021",
+        "return": 0.032325647178852446
+      },
+      {
+        "period": "2022",
+        "return": -0.11828217194076007
+      },
+      {
+        "period": "2023",
+        "return": 0.009806271845696601
+      },
+      {
+        "period": "2024",
+        "return": 0.017648271153221318
+      },
+      {
+        "period": "2025",
+        "return": 0.17881079937614808
+      },
+      {
+        "period": "2026",
+        "return": 0.060637375136552096
+      }
+    ],
+    "risk_event_count": 32,
+    "elapsed_seconds": 37.09720020001987,
+    "curves_sha256": "f85085f71b4211c21bc6ffada199b1dec5afd14cf3b4c0c3714daf9996c150d1"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "full",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "diversified_trend",
+      "params": {
+        "trend_window": 200,
+        "gross_target": 0.8,
+        "weighting": "inverse_vol"
+      }
+    },
+    "spec": {
+      "start": "2020-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.25088857171519874,
+      "annual_return": 0.03726056885984641,
+      "volatility": 0.11599142043859041,
+      "sharpe": 0.3736364935069119,
+      "max_drawdown": 0.16177791473866998,
+      "calmar": 0.23031925538189651,
+      "final_equity": 1250888.5717151987,
+      "fill_count": 4350,
+      "round_trip_count": 255,
+      "open_lot_count": 213,
+      "realized_pnl": 176343.74869837155,
+      "unrealized_pnl": 74544.82301682964,
+      "turnover": 28.015812928378903,
+      "commission_paid": 47654.1795848,
+      "slippage_cost": 29815.948699998546,
+      "execution_cost": 77470.12828479854,
+      "average_invested_ratio": 0.4185163503352566,
+      "average_holding_sessions": 40.90607105521836,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.0821507338252887
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.11660112375240006
+      },
+      {
+        "period": "2021",
+        "return": 0.010480635966865881
+      },
+      {
+        "period": "2022",
+        "return": -0.10969115686967046
+      },
+      {
+        "period": "2023",
+        "return": 0.012579646462368421
+      },
+      {
+        "period": "2024",
+        "return": 0.02473113685474715
+      },
+      {
+        "period": "2025",
+        "return": 0.13650969577780692
+      },
+      {
+        "period": "2026",
+        "return": 0.05594089640561206
+      }
+    ],
+    "risk_event_count": 32,
+    "elapsed_seconds": 38.484780800004955,
+    "curves_sha256": "edd44be8fc318aed1544f6812a4badf004876f34f498a1d2457a23f18e67120b"
+  },
+  {
+    "candidate": "trend_20_20_k3",
+    "period": "full",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 20,
+        "momentum_window": 20,
+        "entry_rank": 3,
+        "retain_rank": 5,
+        "evaluation": "weekly"
+      }
+    },
+    "spec": {
+      "start": "2020-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": -0.030412813157154606,
+      "annual_return": -0.005034617865223634,
+      "volatility": 0.23175823738663778,
+      "sharpe": 0.09406895955804401,
+      "max_drawdown": 0.5407386375743912,
+      "calmar": -0.009310630895191033,
+      "final_equity": 969587.1868428454,
+      "fill_count": 2115,
+      "round_trip_count": 266,
+      "open_lot_count": 7,
+      "realized_pnl": -153529.69650439348,
+      "unrealized_pnl": 123116.88334723999,
+      "turnover": 142.3904317312179,
+      "commission_paid": 63896.46685716,
+      "slippage_cost": 124579.84629999285,
+      "execution_cost": 188476.31315715285,
+      "average_invested_ratio": 0.7181963759214433,
+      "average_holding_sessions": 14.826823211598295,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": -0.19915065104706464
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.026179902104363162
+      },
+      {
+        "period": "2021",
+        "return": 0.015914200804938883
+      },
+      {
+        "period": "2022",
+        "return": -0.19579234519967958
+      },
+      {
+        "period": "2023",
+        "return": -0.022991018747411496
+      },
+      {
+        "period": "2024",
+        "return": -0.11014111806812832
+      },
+      {
+        "period": "2025",
+        "return": 0.16971261190388187
+      },
+      {
+        "period": "2026",
+        "return": 0.13720631084098178
+      }
+    ],
+    "risk_event_count": 768,
+    "elapsed_seconds": 28.772221699997317,
+    "curves_sha256": "57aea41ac32219b8ee9e95ca89ba1688486d919af6ab5dd4c8f312860ab82ea4"
+  },
+  {
+    "candidate": "buy_hold",
+    "period": "recent",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "buy_hold",
+      "params": {}
+    },
+    "spec": {
+      "start": "2025-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.3842131701889604,
+      "annual_return": 0.2818220200391217,
+      "volatility": 0.16203384050126618,
+      "sharpe": 1.6145135924703713,
+      "max_drawdown": 0.11076802585102608,
+      "calmar": 2.5442542455180095,
+      "final_equity": 1384213.1701889604,
+      "fill_count": 810,
+      "round_trip_count": 0,
+      "open_lot_count": 27,
+      "realized_pnl": 10960.0062708,
+      "unrealized_pnl": 373253.1639181601,
+      "turnover": 0.7582862671353309,
+      "commission_paid": 8149.89061104,
+      "slippage_cost": 892.739199999908,
+      "execution_cost": 9042.629811039908,
+      "average_invested_ratio": 0.7911237408378593,
+      "average_holding_sessions": 150.75452488687782,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.1139587465683971
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.29022657288896103
+      },
+      {
+        "period": "2026",
+        "return": 0.07284503301583212
+      }
+    ],
+    "risk_event_count": 30,
+    "elapsed_seconds": 4.7696038000285625,
+    "curves_sha256": "04dd9edc5229aaa301b6a925c87d5eccea1efd1a6e4b4d0a89505b3f520befd0"
+  },
+  {
+    "candidate": "diversified_120_inverse_vol",
+    "period": "recent",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "diversified_trend",
+      "params": {
+        "trend_window": 120,
+        "gross_target": 0.8,
+        "weighting": "inverse_vol"
+      }
+    },
+    "spec": {
+      "start": "2025-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.211136711987562,
+      "annual_return": 0.1575221993114,
+      "volatility": 0.09818047765532056,
+      "sharpe": 1.539490606535866,
+      "max_drawdown": 0.060695997754205866,
+      "calmar": 2.5952650115300995,
+      "final_equity": 1211136.711987562,
+      "fill_count": 1441,
+      "round_trip_count": 98,
+      "open_lot_count": 70,
+      "realized_pnl": 157962.50266144602,
+      "unrealized_pnl": 53174.209326114375,
+      "turnover": 8.1388280769783,
+      "commission_paid": 15230.25101244,
+      "slippage_cost": 9031.83699999952,
+      "execution_cost": 24262.08801243952,
+      "average_invested_ratio": 0.5169401631461763,
+      "average_holding_sessions": 36.731080103359176,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": -0.05911771163300128
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.17242221796192192
+      },
+      {
+        "period": "2026",
+        "return": 0.03302094879516959
+      }
+    ],
+    "risk_event_count": 4,
+    "elapsed_seconds": 7.642759400012437,
+    "curves_sha256": "b975033fb61d42921e327931d7094c47ac4da33b20ec0fa82a419878430e79a2"
+  },
+  {
+    "candidate": "diversified_200_equal",
+    "period": "recent",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "diversified_trend",
+      "params": {
+        "trend_window": 200,
+        "gross_target": 0.8,
+        "weighting": "equal"
+      }
+    },
+    "spec": {
+      "start": "2025-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.30567387435916094,
+      "annual_return": 0.22590156645042336,
+      "volatility": 0.13602967549492223,
+      "sharpe": 1.5663386646221718,
+      "max_drawdown": 0.10571894650075786,
+      "calmar": 2.1368125007640324,
+      "final_equity": 1305673.874359161,
+      "fill_count": 1828,
+      "round_trip_count": 60,
+      "open_lot_count": 275,
+      "realized_pnl": 153040.66467276023,
+      "unrealized_pnl": 152633.20968640002,
+      "turnover": 4.760945641416322,
+      "commission_paid": 18635.64204084,
+      "slippage_cost": 5463.38359999976,
+      "execution_cost": 24099.02564083976,
+      "average_invested_ratio": 0.6568171522320213,
+      "average_holding_sessions": 60.57687100532099,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.035419450738597646
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.23108777207208164
+      },
+      {
+        "period": "2026",
+        "return": 0.060585527676503936
+      }
+    ],
+    "risk_event_count": 11,
+    "elapsed_seconds": 8.022280299977865,
+    "curves_sha256": "0f92111aced99e11dcf9b57f9e74217da6599f76b427209c678b099914965a08"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "recent",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "diversified_trend",
+      "params": {
+        "trend_window": 200,
+        "gross_target": 0.8,
+        "weighting": "inverse_vol"
+      }
+    },
+    "spec": {
+      "start": "2025-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.24955344932499868,
+      "annual_return": 0.1854562000987987,
+      "volatility": 0.11394166338540125,
+      "sharpe": 1.5509443658187094,
+      "max_drawdown": 0.08902302359824765,
+      "calmar": 2.083238611797154,
+      "final_equity": 1249553.4493249988,
+      "fill_count": 1777,
+      "round_trip_count": 60,
+      "open_lot_count": 213,
+      "realized_pnl": 174911.59992844256,
+      "unrealized_pnl": 74641.84939655766,
+      "turnover": 6.343314895203552,
+      "commission_paid": 18352.466075,
+      "slippage_cost": 7102.284599999686,
+      "execution_cost": 25454.750674999686,
+      "average_invested_ratio": 0.6212790312231601,
+      "average_holding_sessions": 50.72025526920632,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": -0.02070097429556461
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.1833491717737581
+      },
+      {
+        "period": "2026",
+        "return": 0.05594652798210498
+      }
+    ],
+    "risk_event_count": 8,
+    "elapsed_seconds": 8.232740700012073,
+    "curves_sha256": "7f8e1f7b4f683d7f3a17f6fe07f0dae842d55abbb8affe36e80a585ddab69424"
+  },
+  {
+    "candidate": "trend_20_20_k3",
+    "period": "recent",
+    "cost_multiplier": 2.0,
+    "parameters": {
+      "kind": "trend_rotation",
+      "params": {
+        "trend_window": 20,
+        "momentum_window": 20,
+        "entry_rank": 3,
+        "retain_rank": 5,
+        "evaluation": "weekly"
+      }
+    },
+    "spec": {
+      "start": "2025-01-02",
+      "end": "2026-05-19",
+      "symbols": [
+        "159611",
+        "159745",
+        "159755",
+        "159766",
+        "159819",
+        "159869",
+        "159928",
+        "159995",
+        "159996",
+        "159998",
+        "512000",
+        "512400",
+        "512580",
+        "512660",
+        "512720",
+        "512800",
+        "512880",
+        "515030",
+        "515050",
+        "515170",
+        "515210",
+        "515880",
+        "516010",
+        "516120",
+        "516510",
+        "516950",
+        "562550"
+      ],
+      "initial_cash": 1000000.0,
+      "seed": 7,
+      "execution": {
+        "commission_rate": 0.0004,
+        "minimum_commission": 10.0,
+        "slippage_rate": 0.001,
+        "max_stale_sessions": 0,
+        "model": "next_open"
+      },
+      "risk": {
+        "max_total_weight": 0.8,
+        "max_symbol_weight": 0.35,
+        "group_caps": {
+          "communication": 0.5,
+          "consumer": 0.5,
+          "cyclical": 0.5,
+          "defense": 0.5,
+          "financials": 0.5,
+          "infrastructure": 0.5,
+          "media": 0.5,
+          "new_energy": 0.5,
+          "semiconductor": 0.5,
+          "services": 0.5,
+          "technology": 0.5,
+          "utilities": 0.5
+        },
+        "stress_scenarios": [],
+        "max_stress_loss": null,
+        "drawdown_pause": null,
+        "pause_action": "block_new",
+        "pause_target_weight": null,
+        "recovery_mode": "never"
+      },
+      "metrics": {
+        "annual_sessions": 252,
+        "risk_free_rate": 0.0,
+        "cash_rate": 0.0,
+        "definition_version": "1"
+      }
+    },
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+    "metrics": {
+      "total_return": 0.3925897257829227,
+      "annual_return": 0.2877412728799096,
+      "volatility": 0.25116097691982847,
+      "sharpe": 1.1331972709587892,
+      "max_drawdown": 0.19424803375014166,
+      "calmar": 1.481308548276102,
+      "final_equity": 1392589.7257829227,
+      "fill_count": 470,
+      "round_trip_count": 56,
+      "open_lot_count": 7,
+      "realized_pnl": 215751.10303396196,
+      "unrealized_pnl": 176838.62274896013,
+      "turnover": 31.08816463398392,
+      "commission_paid": 16498.07451708,
+      "slippage_cost": 33682.69969999782,
+      "execution_cost": 50180.77421707782,
+      "average_invested_ratio": 0.7419935376370457,
+      "average_holding_sessions": 16.441344154955,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.12233530216235944
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.22423436445152212
+      },
+      {
+        "period": "2026",
+        "return": 0.13751889852138377
+      }
+    ],
+    "risk_event_count": 188,
+    "elapsed_seconds": 5.7641517000156455,
+    "curves_sha256": "e9a1b8a62a6b45d185111fec9401189259431ab35fa3e8c42fea02c0a62af98f"
+  }
+]

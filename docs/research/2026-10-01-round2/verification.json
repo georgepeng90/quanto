@@ -419,5 +419,98 @@
       "current_sha256": "33c0938715ed4f43a3a9594f6568a13be1e9615ebcffe3003f5e10c809f389e0",
       "reason": "Concurrent change adds strategy_name metadata; service is not imported by offline runner. All numerical engine/strategy/data code matches frozen hashes."
     }
-  ]
+  ],
+  "post_grid_validation": [
+    {
+      "run": "full__buy_hold__cost2",
+      "sessions": 1542,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "full__diversified_120_inverse_vol__cost2",
+      "sessions": 1542,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "full__diversified_200_equal__cost2",
+      "sessions": 1542,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "full__diversified_200_inverse_vol__cost2",
+      "sessions": 1542,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "full__trend_20_20_k3__cost2",
+      "sessions": 1542,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "recent__buy_hold__cost2",
+      "sessions": 330,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "recent__diversified_120_inverse_vol__cost2",
+      "sessions": 330,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "recent__diversified_200_equal__cost2",
+      "sessions": 330,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "recent__diversified_200_inverse_vol__cost2",
+      "sessions": 330,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "recent__trend_20_20_k3__cost2",
+      "sessions": 330,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "post_selection__buy_hold__cost1",
+      "sessions": 94,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "post_selection__cash_buy_hold_40__cost1",
+      "sessions": 94,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "post_selection__cash_buy_hold_60__cost1",
+      "sessions": 94,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "post_selection__diversified_120_inverse_vol__cost1",
+      "sessions": 94,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "post_selection__diversified_200_equal__cost1",
+      "sessions": 94,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "post_selection__diversified_200_inverse_vol__cost1",
+      "sessions": 94,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "post_selection__guarded_momentum_200_v0.1__cost1",
+      "sessions": 94,
+      "curve_metrics_recomputed": true
+    },
+    {
+      "run": "post_selection__trend_20_20_k3__cost1",
+      "sessions": 94,
+      "curve_metrics_recomputed": true
+    }
+  ],
+  "workbench_exact_metric_replays": 10
 }

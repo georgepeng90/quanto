@@ -1,0 +1,122 @@
+[
+  {
+    "candidate": "buy_hold",
+    "period": "post_selection",
+    "dataset_version_id": "be1ead6f-dcf6-40ab-9dde-2f69caec2db1",
+    "strategy_revision_id": "5918efc0-458b-4ea9-a74d-a1fc2df41201",
+    "experiment_id": "97126358-5665-4fe3-90ac-a09c7c7049da",
+    "expected_revision": 1,
+    "idempotency_key": "d8f4e238-be65-4042-9f03-71c8fd833d47",
+    "run_id": "e16e224f-97d0-4ec8-af6f-ebc5ee2e2393",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/e16e224f-97d0-4ec8-af6f-ebc5ee2e2393"
+  },
+  {
+    "candidate": "cash_buy_hold_40",
+    "period": "post_selection",
+    "dataset_version_id": "be1ead6f-dcf6-40ab-9dde-2f69caec2db1",
+    "strategy_revision_id": "c7d63c16-7b3a-4246-a49e-2713796560d1",
+    "experiment_id": "d4e027ab-2d90-43a3-8d17-7326f1064824",
+    "expected_revision": 1,
+    "idempotency_key": "076ac31d-743a-48d7-ab8e-5be0d1993751",
+    "run_id": "89e895f0-e705-4106-b813-5d3fef7f6139",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/89e895f0-e705-4106-b813-5d3fef7f6139"
+  },
+  {
+    "candidate": "cash_buy_hold_60",
+    "period": "post_selection",
+    "dataset_version_id": "be1ead6f-dcf6-40ab-9dde-2f69caec2db1",
+    "strategy_revision_id": "1e78b2f8-adbe-4849-9842-7eefb75798fb",
+    "experiment_id": "89e219c9-69c1-4d47-93c7-3cc77f87160e",
+    "expected_revision": 1,
+    "idempotency_key": "075fc7bb-792e-4037-97c9-a445172ad4bf",
+    "run_id": "28784839-fa50-4689-8571-a53f857d486d",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/28784839-fa50-4689-8571-a53f857d486d"
+  },
+  {
+    "candidate": "diversified_120_inverse_vol",
+    "period": "post_selection",
+    "dataset_version_id": "be1ead6f-dcf6-40ab-9dde-2f69caec2db1",
+    "strategy_revision_id": "266eecd8-6ae4-4eee-8f7d-14c69fbc6780",
+    "experiment_id": "6abea6ab-5863-4f11-bf1f-a79a3e6af6e1",
+    "expected_revision": 1,
+    "idempotency_key": "c9ab4534-95e8-47ad-a9e4-6171ce29c09b",
+    "run_id": "6135799c-e8ca-4bc2-aa63-f0a11aa1d5db",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/6135799c-e8ca-4bc2-aa63-f0a11aa1d5db"
+  },
+  {
+    "candidate": "diversified_200_equal",
+    "period": "post_selection",
+    "dataset_version_id": "be1ead6f-dcf6-40ab-9dde-2f69caec2db1",
+    "strategy_revision_id": "a5a50973-fa38-499e-83f1-a45145681878",
+    "experiment_id": "72bacdd1-23bc-41ff-b0ad-363d00699c51",
+    "expected_revision": 1,
+    "idempotency_key": "6c34286f-5de7-4ad6-bc10-ea16a7d1dfb1",
+    "run_id": "5e60592d-a556-4efa-b17d-4dc36a383525",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/5e60592d-a556-4efa-b17d-4dc36a383525"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "post_selection",
+    "dataset_version_id": "be1ead6f-dcf6-40ab-9dde-2f69caec2db1",
+    "strategy_revision_id": "fe2ea7d7-d411-4188-b0ed-564175203b4d",
+    "experiment_id": "656e2f74-1311-471d-a86b-f4348bceb1ab",
+    "expected_revision": 1,
+    "idempotency_key": "eecfdbce-a0ed-415f-808a-71c6063b12c1",
+    "run_id": "b8953fbc-33dd-4963-8098-81ebfdf6b5ee",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/b8953fbc-33dd-4963-8098-81ebfdf6b5ee"
+  },
+  {
+    "candidate": "guarded_momentum_200_v0.1",
+    "period": "post_selection",
+    "dataset_version_id": "be1ead6f-dcf6-40ab-9dde-2f69caec2db1",
+    "strategy_revision_id": "bbf3262d-2623-4e9e-9f72-0eeb430a590d",
+    "experiment_id": "7963358a-bf79-4076-b491-9df2923dd441",
+    "expected_revision": 1,
+    "idempotency_key": "2d08edb7-191b-4371-8d0b-cf37e582bee9",
+    "run_id": "407a7999-b615-4156-a08b-826432efc2fc",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/407a7999-b615-4156-a08b-826432efc2fc"
+  },
+  {
+    "candidate": "trend_20_20_k3",
+    "period": "post_selection",
+    "dataset_version_id": "be1ead6f-dcf6-40ab-9dde-2f69caec2db1",
+    "strategy_revision_id": "69d7d862-a1aa-4bc5-967f-7abb30a1f18f",
+    "experiment_id": "5a767b39-1cc0-428f-acba-b34842adbcdf",
+    "expected_revision": 1,
+    "idempotency_key": "fc6645eb-05c4-43ef-9d1c-de04ab65d103",
+    "run_id": "6ad4bd00-8ac6-4e0b-94c5-428bdabf029a",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/6ad4bd00-8ac6-4e0b-94c5-428bdabf029a"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "recent",
+    "dataset_version_id": "acc8a941-75f8-4e27-ac8b-0594d62a43d1",
+    "strategy_revision_id": "fe2ea7d7-d411-4188-b0ed-564175203b4d",
+    "experiment_id": "b1269f0b-a2bb-4760-9029-e75847121aa4",
+    "expected_revision": 1,
+    "idempotency_key": "eb8a27bc-01f9-47f8-a5e9-6e525b949ec9",
+    "run_id": "0b0697f9-1a25-480c-bcad-68bb23c2a901",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/0b0697f9-1a25-480c-bcad-68bb23c2a901"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "full",
+    "dataset_version_id": "acc8a941-75f8-4e27-ac8b-0594d62a43d1",
+    "strategy_revision_id": "fe2ea7d7-d411-4188-b0ed-564175203b4d",
+    "experiment_id": "e3ef97ee-a796-46c1-9e6f-631fd91b795d",
+    "expected_revision": 1,
+    "idempotency_key": "3ad9b0b0-1767-42fd-ad58-d09b31f39134",
+    "run_id": "415a058f-60f9-488f-a5a8-a6c4d1fb9d9a",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/415a058f-60f9-488f-a5a8-a6c4d1fb9d9a"
+  }
+]

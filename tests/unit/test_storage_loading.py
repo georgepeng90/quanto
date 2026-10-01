@@ -8,7 +8,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from quanto.backtest.engine import run_backtest
-from quanto.data.loaders import load_dataset, validate_dataset
+from quanto.backtest.dataset_loaders import load_dataset, validate_dataset
 from quanto.strategies.base import Hold, TargetPortfolio
 from quanto.strategies.buy_hold import BuyHold
 from tests.fixtures.backtest_cases import dataset_case
@@ -16,7 +16,7 @@ from tests.fixtures.engine_cases import bundle_case, spec_case
 
 
 def test_parquet_roundtrip_preserves_columns_symbols_empty_events_and_utc_auxiliary(tmp_path):
-    from quanto.data.storage import write_parquet_dataset
+    from quanto.backtest.dataset_storage import write_parquet_dataset
     source = dataset_case(tmp_path / "source")
     prices = pd.read_csv(source / "prices.csv", dtype={"symbol": str})
     prices["vendor_note"] = ["first", "second", "third"]
@@ -47,8 +47,8 @@ def test_parquet_roundtrip_preserves_columns_symbols_empty_events_and_utc_auxili
 
 
 def test_selective_load_keeps_long_history_calendar_and_cross_boundary_events(tmp_path):
-    from quanto.data.loaders import load_dataset_for_run
-    from quanto.data.storage import write_parquet_dataset
+    from quanto.backtest.dataset_loaders import load_dataset_for_run
+    from quanto.backtest.dataset_storage import write_parquet_dataset
     base = bundle_case(symbols=("A", "B"))
     dates = pd.bdate_range("2024-01-01", periods=25)
     prices = pd.DataFrame([
@@ -97,7 +97,7 @@ def test_selective_load_keeps_long_history_calendar_and_cross_boundary_events(tm
 
 
 def test_selective_load_accepts_legacy_csv_dataset(tmp_path):
-    from quanto.data.loaders import load_dataset_for_run
+    from quanto.backtest.dataset_loaders import load_dataset_for_run
 
     source = dataset_case(tmp_path / "source")
     full = load_dataset(source)
@@ -112,7 +112,7 @@ def test_selective_load_accepts_legacy_csv_dataset(tmp_path):
 
 @pytest.mark.parametrize("legacy_column", ["string_dates", "numeric_symbols"])
 def test_selective_load_accepts_legacy_parquet_physical_types(tmp_path, legacy_column):
-    from quanto.data.loaders import load_dataset_for_run
+    from quanto.backtest.dataset_loaders import load_dataset_for_run
 
     source = dataset_case(tmp_path / "source")
     legacy = tmp_path / "legacy"
@@ -143,7 +143,7 @@ def test_selective_load_accepts_legacy_parquet_physical_types(tmp_path, legacy_c
 
 
 def test_selective_load_normalizes_legacy_instrument_numbers_before_backtest(tmp_path):
-    from quanto.data.loaders import load_dataset_for_run
+    from quanto.backtest.dataset_loaders import load_dataset_for_run
 
     source = dataset_case(tmp_path / "source")
     legacy = tmp_path / "legacy"

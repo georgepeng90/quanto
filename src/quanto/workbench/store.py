@@ -10,8 +10,8 @@ import tempfile
 from uuid import uuid4
 
 from quanto.config import validate_parameters
-from quanto.data.loaders import load_dataset
-from quanto.data.storage import write_parquet_dataset
+from quanto.backtest.dataset_loaders import load_dataset
+from quanto.backtest.dataset_storage import write_parquet_dataset
 from quanto.workbench.models import DatasetVersion, ExperimentDraft, JobRecord, RunRecord, StrategyRevision
 from quanto.workbench.revisions import digest, json_bytes, publish_files, safe_name, source_files
 

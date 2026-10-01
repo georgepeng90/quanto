@@ -13,7 +13,7 @@ from datetime import date
 from jsonschema import Draft202012Validator, ValidationError
 
 if TYPE_CHECKING:
-    from quanto.data.schemas import DatasetBundle
+    from quanto.backtest.dataset_schemas import DatasetBundle
 
 try:
     import yaml

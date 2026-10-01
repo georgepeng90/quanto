@@ -21,7 +21,7 @@ import pandas as pd
 
 from quanto.backtest.engine import run_backtest
 from quanto.config import BacktestSpec
-from quanto.data.loaders import load_dataset_for_run
+from quanto.backtest.dataset_loaders import load_dataset_for_run
 from quanto.reports.backtest_report import build_report, write_backtest_outputs
 from quanto.strategies.buy_hold import BuyHold
 from quanto.strategies.trend_rotation import TrendRotation

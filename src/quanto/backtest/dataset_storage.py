@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from quanto.data.schemas import DatasetBundle
+from quanto.backtest.dataset_schemas import DatasetBundle
 
 
 def write_parquet_dataset(bundle: DatasetBundle, destination: Path) -> None:

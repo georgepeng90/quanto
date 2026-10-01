@@ -7,7 +7,7 @@ import pytest
 
 from tests.fixtures.backtest_cases import dataset_case
 from quanto.config import BacktestSpec, validate_parameters
-from quanto.data.loaders import load_dataset, validate_dataset
+from quanto.backtest.dataset_loaders import load_dataset, validate_dataset
 from quanto.sample_data import generate_sample_data
 
 

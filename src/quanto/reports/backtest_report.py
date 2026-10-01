@@ -13,7 +13,7 @@ import pandas as pd
 from quanto.backtest.metrics import MATCH_COLUMNS, OPEN_COLUMNS, compute_metrics, match_trades
 from quanto.backtest.models import BacktestResult, TABLE_COLUMNS
 from quanto.config import BacktestSpec
-from quanto.data.schemas import DatasetBundle
+from quanto.backtest.dataset_schemas import DatasetBundle
 
 
 SCHEMA_VERSION = "2"

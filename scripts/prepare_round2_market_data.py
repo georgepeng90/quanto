@@ -63,9 +63,9 @@ def copy_unchanged(source: Path, destination: Path) -> None:
 
 def main() -> None:
     sys.path.insert(0, str(ROOT / "src"))
-    from quanto.data.loaders import load_dataset, validate_benchmark, validate_dataset, validate_prices
-    from quanto.data.schemas import DatasetBundle, DatasetManifest
-    from quanto.data.storage import write_parquet_dataset
+    from quanto.backtest.dataset_loaders import load_dataset, validate_benchmark, validate_dataset, validate_prices
+    from quanto.backtest.dataset_schemas import DatasetBundle, DatasetManifest
+    from quanto.backtest.dataset_storage import write_parquet_dataset
 
     selection_path = ROOT / "docs/research/2026-10-01/source_audit.json"
     instruments_path = ROOT / "outputs/strategy-research-20261001/dataset/instruments.parquet"

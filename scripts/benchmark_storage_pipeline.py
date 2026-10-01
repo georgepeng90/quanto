@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from quanto.config import BacktestSpec
-from quanto.data import loaders
+from quanto.backtest import dataset_loaders as loaders
 from quanto.workbench.models import FrozenRun
 from quanto.workbench.snapshots import SnapshotBuilder
 from quanto.workbench.store import WorkbenchStore

@@ -9,7 +9,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from quanto.config import BacktestSpec
-from quanto.data.schemas import BENCHMARK_COLUMNS, INSTRUMENT_COLUMNS, PRICE_COLUMNS, DatasetBundle, DatasetManifest
+from quanto.backtest.dataset_schemas import BENCHMARK_COLUMNS, INSTRUMENT_COLUMNS, PRICE_COLUMNS, DatasetBundle, DatasetManifest
 from quanto.universe import build_eligibility
 
 

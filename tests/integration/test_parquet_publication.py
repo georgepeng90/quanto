@@ -4,7 +4,7 @@ import zipfile
 import pandas as pd
 import pytest
 
-from quanto.data.loaders import load_dataset
+from quanto.backtest.dataset_loaders import load_dataset
 from quanto.workbench.data_jobs import execute_data_job
 from quanto.workbench.store import WorkbenchStore
 from tests.fixtures.backtest_cases import dataset_case

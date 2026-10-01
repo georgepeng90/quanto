@@ -16,7 +16,7 @@ from typing import Literal
 from uuid import uuid4
 
 from quanto.config import BacktestSpec, validate_parameters
-from quanto.data.loaders import load_dataset
+from quanto.backtest.dataset_loaders import load_dataset
 from quanto.workbench.models import ExperimentDraft, FrozenRun
 from quanto.workbench.dataset_objects import ensure_dataset_object, verify_dataset_object
 from quanto.workbench.revisions import digest, json_bytes, publish_files, source_files, verify_files

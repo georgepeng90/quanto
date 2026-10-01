@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from quanto.config import BacktestSpec
-from quanto.data.schemas import DatasetBundle
+from quanto.backtest.dataset_schemas import DatasetBundle
 from quanto.risk.policy import RiskPolicy
 from quanto.strategies.base import Hold, Strategy, StrategyContext, TargetPortfolio, is_week_end, validate_intent, validate_warmup_window
 from .ledger import PortfolioLedger

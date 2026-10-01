@@ -9,7 +9,7 @@ import time
 import pandas as pd
 import zipfile
 
-from quanto.data.loaders import load_dataset
+from quanto.backtest.dataset_loaders import load_dataset
 import quanto.workbench.data_jobs as data_jobs
 from tests.unit.test_fetcher_cache import FakeProvider
 from tests.fixtures.backtest_cases import dataset_case

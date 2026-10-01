@@ -219,7 +219,7 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
     import numpy as np
     from quanto.backtest import engine
     from quanto.config import BacktestSpec
-    from quanto.data.loaders import load_dataset, load_dataset_for_run
+    from quanto.backtest.dataset_loaders import load_dataset, load_dataset_for_run
     from quanto.reports.backtest_report import build_report, write_backtest_outputs
     from quanto.strategies.base import validate_warmup_window
     from quanto.workbench.snapshots import _environment, _metadata_files
@@ -313,7 +313,7 @@ def validate_job_output(kind: str, root: Path, receipt: dict) -> None:
                 raise ValueError("INVALID_OUTPUT: 数据任务哈希无效")
         result = read_json(final / "result.json")
         if result.get("state") == "complete" and kind in ("demo", "fetch", "import"):
-            from quanto.data.loaders import load_dataset
+            from quanto.backtest.dataset_loaders import load_dataset
             load_dataset(final)
         elif result.get("state") not in ("incomplete", None) and kind != "validate_strategy":
             raise ValueError("INVALID_OUTPUT: 数据任务状态无效")

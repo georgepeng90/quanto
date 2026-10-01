@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from quanto.data.loaders import load_benchmark, load_prices, validate_benchmark, validate_prices
+from quanto.backtest.dataset_loaders import load_benchmark, load_prices, validate_benchmark, validate_prices
 
 
 def _first_existing(paths: list[Path]) -> Path:

@@ -56,9 +56,9 @@ def main() -> int:
     args = parser.parse_args()
 
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
-    from quanto.data.loaders import load_dataset, validate_dataset
-    from quanto.data.schemas import DatasetBundle, DatasetManifest
-    from quanto.data.storage import write_parquet_dataset
+    from quanto.backtest.dataset_loaders import load_dataset, validate_dataset
+    from quanto.backtest.dataset_schemas import DatasetBundle, DatasetManifest
+    from quanto.backtest.dataset_storage import write_parquet_dataset
 
     config = yaml.safe_load(UNIVERSE_PATH.read_text(encoding="utf-8"))
     configured = {

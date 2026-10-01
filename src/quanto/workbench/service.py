@@ -14,8 +14,8 @@ from pathlib import Path
 import shutil
 from uuid import uuid4
 
-from quanto.data.schemas import DatasetManifest
-from quanto.data.loaders import load_dataset
+from quanto.backtest.dataset_schemas import DatasetManifest
+from quanto.backtest.dataset_loaders import load_dataset
 from quanto.workbench.models import BatchItem, FrozenRun
 from quanto.workbench.results import LogPage, Page, TablePage, compare_runs
 from quanto.workbench.result_index import PartialResultIndex, ResultIndex

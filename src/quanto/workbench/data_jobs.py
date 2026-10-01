@@ -12,9 +12,9 @@ import zipfile
 import pandas as pd
 
 from quanto.data.fetcher import AKShareDataProvider, build_processed_dataset
-from quanto.data.loaders import load_dataset
-from quanto.data.storage import write_parquet_dataset
-from quanto.data.schemas import DatasetManifest
+from quanto.backtest.dataset_loaders import load_dataset
+from quanto.backtest.dataset_storage import write_parquet_dataset
+from quanto.backtest.dataset_schemas import DatasetManifest
 from quanto.config import validate_parameters
 from quanto.sample_data import generate_sample_data
 from quanto.workbench.store import WorkbenchStore

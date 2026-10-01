@@ -1,6 +1,6 @@
 import pandas as pd
 from quanto.config import BacktestSpec
-from quanto.data.schemas import DatasetBundle, DatasetManifest
+from quanto.backtest.dataset_schemas import DatasetBundle, DatasetManifest
 from quanto.strategies.base import Hold, TargetPortfolio
 
 

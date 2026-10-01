@@ -1,0 +1,98 @@
+{
+  "validation": "passed",
+  "market_root": "D:\\Projects\\quanto\\data\\market",
+  "candidate_count": 327,
+  "states": {
+    "incomplete": 13,
+    "ready": 314
+  },
+  "qualified_count": 305,
+  "decision_reasons": {
+    "passed": 305,
+    "cache not ready": 13,
+    "below liquidity threshold": 9
+  },
+  "groups": {
+    "semiconductor": 28,
+    "communications": 7,
+    "financials": 17,
+    "healthcare": 29,
+    "consumer": 12,
+    "cyclical": 29,
+    "advanced_manufacturing": 18,
+    "technology": 30,
+    "real_estate": 4,
+    "new_energy": 29,
+    "media": 5,
+    "utilities": 11,
+    "defense": 10,
+    "agriculture": 8,
+    "electronics": 5,
+    "services": 2,
+    "infrastructure": 2,
+    "automotive": 3,
+    "broad_market": 29,
+    "factor": 27
+  },
+  "exchanges": {
+    "SSE": 164,
+    "SZSE": 141
+  },
+  "ready_price_modes": {
+    "qfqday": 107,
+    "day": 207
+  },
+  "price_rows": 238070,
+  "instrument_count": 305,
+  "dataset_start": "2022-10-10",
+  "dataset_end": "2026-09-30",
+  "independent_preview_verified_ETFs": 175,
+  "independent_preview_mean_tolerance_CNY": 1e-05,
+  "original27": {
+    "count": 27,
+    "price_rows": 26022,
+    "all_ready": true,
+    "max_OHLC_difference_vs_old_frozen": {
+      "open": 0.0,
+      "high": 0.0,
+      "low": 0.0,
+      "close": 0.0
+    },
+    "median_volume_ratio_vs_old": 100.0,
+    "median_amount_ratio_vs_old": 1.0
+  },
+  "artifacts": {
+    "outputs\\etf-expansion-20261002\\shared-cache\\cache_progress.json": "1593a5b553c39cddbf80bf7e09f7a5a6277e63756b2606487bcf8767da3b5147",
+    "outputs\\etf-expansion-20261002\\shared-cache\\qualified_selection.json": "17aefe2cb2ea67188bf36694274fe99488dc34239f5cbbfbd9cb478a5ef004e1",
+    "outputs\\etf-expansion-20261002\\shared-cache\\source_audit.json": "447e6dacd22e66629a889ffe4c81a73fc4f2f9dff439af7d878ec36194132e33",
+    "outputs\\etf-expansion-20261002\\original27\\cache_progress.json": "80fcd62627b1166e57f666e7608c10e3e8f4ef7cb33a60bf53425783e108d464",
+    "outputs\\etf-expansion-20261002\\original27\\source_audit.json": "30103cadd55ddd229305f7f59bd0967a2984d31576115ceac4fa5c722d6c95e2",
+    "outputs\\etf-expansion-20261002\\liquidity-preview.json": "faa0d59fedebc6af7feea653d3f9a9572b6817eef7ac7b36acdff068d6846402"
+  },
+  "data_files": {
+    "expanded": {
+      "benchmark.parquet": "b19a85aba7c852fc88835a2f9b61f580f64c1e1ed94599605c37947f0b3b726a",
+      "calendar.parquet": "e762ccd52b1f4fc6fa2ccc284043c27dc56e1a27212d8d8a2429b5900549d948",
+      "events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d",
+      "instruments.parquet": "8b660fd97289b2afba5794dfe19a312a98d5b68a805061b53d79fccab0b09c84",
+      "manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+      "prices.parquet": "7c3d13eda441150a0bf8a86ea3ed3985b6b7b34d0806504ba7985609666cae82",
+      "status.parquet": "bb814801a31d8209427fb114a0579136b798345fca26dcb860ded7d396c45e9f"
+    },
+    "original27": {
+      "benchmark.parquet": "b19a85aba7c852fc88835a2f9b61f580f64c1e1ed94599605c37947f0b3b726a",
+      "calendar.parquet": "e762ccd52b1f4fc6fa2ccc284043c27dc56e1a27212d8d8a2429b5900549d948",
+      "events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d",
+      "instruments.parquet": "d932e1e67f96a55a31e1da4b988636bfc74a73ef209504c1c137143e221ffeba",
+      "manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+      "prices.parquet": "8b0f3dc7a3c8f3c2d0b85d5ab547e30bc940bb063acf1262d59b4480e7742918",
+      "status.parquet": "59d427eaf8f53aee7e007f6aefdb2aa28959ed72dbbc02828021c6812b0eb144"
+    }
+  },
+  "limitations": [
+    "Current catalog and 60-session liquidity are retrospective selection.",
+    "Unit convention history is inferred from 2026-09-30 per-ETF spot checks.",
+    "Adjustment anchor, historical availability and real trading status/actions remain unverified.",
+    "20 research labels do not prove complete independent industry exposure; original six dedicated industry gaps remain."
+  ]
+}

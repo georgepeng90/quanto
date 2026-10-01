@@ -1,0 +1,5949 @@
+{
+  "symbols": [
+    {
+      "symbol": "588170",
+      "name": "科创半导体ETF华夏",
+      "category": "semiconductor",
+      "listing_date": "2025-04-08",
+      "scale_cny": 41881340000.0,
+      "latest_turnover_cny": 4264303178.0,
+      "rank": 3,
+      "source": "SSE",
+      "tracking_index": "上证科创板半导体材料设备主题指数",
+      "selection_reason": "rank 3; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "588200",
+      "name": "科创芯片ETF嘉实",
+      "category": "semiconductor",
+      "listing_date": "2022-10-26",
+      "scale_cny": 47582300000.0,
+      "latest_turnover_cny": 2237722078.0,
+      "rank": 5,
+      "source": "SSE",
+      "tracking_index": "上证科创板芯片指数",
+      "selection_reason": "rank 5; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159516",
+      "name": "半导体设备ETF国泰",
+      "category": "semiconductor",
+      "listing_date": "2023-07-27",
+      "scale_cny": 40597419437.25,
+      "latest_turnover_cny": 2677879866.0,
+      "rank": 7,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 7; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "515880",
+      "name": "通信ETF国泰",
+      "category": "communications",
+      "listing_date": "2019-09-06",
+      "scale_cny": 41821670000.0,
+      "latest_turnover_cny": 1965845582.0,
+      "rank": 8,
+      "source": "SSE",
+      "tracking_index": "中证全指通信设备指数",
+      "selection_reason": "rank 8; size/turnover rank average; category communications"
+    },
+    {
+      "symbol": "515050",
+      "name": "通信ETF华夏",
+      "category": "communications",
+      "listing_date": "2019-10-16",
+      "scale_cny": 17039200000.0,
+      "latest_turnover_cny": 483285064.0,
+      "rank": 36,
+      "source": "SSE",
+      "tracking_index": "中证5G通信主题指数",
+      "selection_reason": "rank 36; size/turnover rank average; category communications"
+    },
+    {
+      "symbol": "159994",
+      "name": "通信ETF银华",
+      "category": "communications",
+      "listing_date": "2020-02-28",
+      "scale_cny": 4468708615.5,
+      "latest_turnover_cny": 117337356.0,
+      "rank": 132,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 132; size/turnover rank average; category communications"
+    },
+    {
+      "symbol": "512880",
+      "name": "证券ETF国泰",
+      "category": "financials",
+      "listing_date": "2016-08-08",
+      "scale_cny": 58274630000.0,
+      "latest_turnover_cny": 988006776.0,
+      "rank": 14,
+      "source": "SSE",
+      "tracking_index": "中证全指证券公司指数",
+      "selection_reason": "rank 14; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "512000",
+      "name": "券商ETF华宝",
+      "category": "financials",
+      "listing_date": "2016-09-14",
+      "scale_cny": 35242760000.0,
+      "latest_turnover_cny": 520153899.0,
+      "rank": 27,
+      "source": "SSE",
+      "tracking_index": "中证全指证券公司指数",
+      "selection_reason": "rank 27; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "512800",
+      "name": "银行ETF华宝",
+      "category": "financials",
+      "listing_date": "2017-08-03",
+      "scale_cny": 9953730000.0,
+      "latest_turnover_cny": 724861050.0,
+      "rank": 41,
+      "source": "SSE",
+      "tracking_index": "中证银行指数",
+      "selection_reason": "rank 41; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "512070",
+      "name": "证券保险ETF易方达",
+      "category": "financials",
+      "listing_date": "2014-07-18",
+      "scale_cny": 12740830000.0,
+      "latest_turnover_cny": 269901260.0,
+      "rank": 58,
+      "source": "SSE",
+      "tracking_index": "沪深300非银行金融指数",
+      "selection_reason": "rank 58; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "159992",
+      "name": "创新药ETF银华",
+      "category": "healthcare",
+      "listing_date": "2020-04-10",
+      "scale_cny": 15854851333.44,
+      "latest_turnover_cny": 1097486072.0,
+      "rank": 28,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 28; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "512010",
+      "name": "医药ETF易方达",
+      "category": "healthcare",
+      "listing_date": "2013-10-28",
+      "scale_cny": 14930510000.0,
+      "latest_turnover_cny": 515480275.0,
+      "rank": 37,
+      "source": "SSE",
+      "tracking_index": "沪深300医药卫生指数",
+      "selection_reason": "rank 37; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "515120",
+      "name": "创新药ETF广发",
+      "category": "healthcare",
+      "listing_date": "2021-01-04",
+      "scale_cny": 10840700000.0,
+      "latest_turnover_cny": 684583688.0,
+      "rank": 38,
+      "source": "SSE",
+      "tracking_index": "中证创新药产业指数",
+      "selection_reason": "rank 38; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159928",
+      "name": "消费ETF汇添富",
+      "category": "consumer",
+      "listing_date": "2013-09-16",
+      "scale_cny": 14624867051.78,
+      "latest_turnover_cny": 196382215.0,
+      "rank": 73,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 73; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "515170",
+      "name": "食品饮料ETF华夏",
+      "category": "consumer",
+      "listing_date": "2021-01-13",
+      "scale_cny": 3942470000.0,
+      "latest_turnover_cny": 58150953.0,
+      "rank": 187,
+      "source": "SSE",
+      "tracking_index": "中证细分食品饮料产业主题指数",
+      "selection_reason": "rank 187; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "515650",
+      "name": "消费50ETF富国",
+      "category": "consumer",
+      "listing_date": "2019-11-11",
+      "scale_cny": 3051370000.0,
+      "latest_turnover_cny": 50526694.0,
+      "rank": 212,
+      "source": "SSE",
+      "tracking_index": "中证消费50指数",
+      "selection_reason": "rank 212; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "512400",
+      "name": "有色金属ETF南方",
+      "category": "cyclical",
+      "listing_date": "2017-09-01",
+      "scale_cny": 22730540000.0,
+      "latest_turnover_cny": 336196291.0,
+      "rank": 40,
+      "source": "SSE",
+      "tracking_index": "中证申万有色金属指数",
+      "selection_reason": "rank 40; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "515220",
+      "name": "煤炭ETF国泰",
+      "category": "cyclical",
+      "listing_date": "2020-03-02",
+      "scale_cny": 9842870000.0,
+      "latest_turnover_cny": 449849285.0,
+      "rank": 53,
+      "source": "SSE",
+      "tracking_index": "中证煤炭指数",
+      "selection_reason": "rank 53; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159870",
+      "name": "化工ETF鹏华",
+      "category": "cyclical",
+      "listing_date": "2021-03-03",
+      "scale_cny": 11822782398.26,
+      "latest_turnover_cny": 181052769.0,
+      "rank": 78,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 78; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "516650",
+      "name": "有色金属ETF华夏",
+      "category": "cyclical",
+      "listing_date": "2021-06-21",
+      "scale_cny": 8766620000.0,
+      "latest_turnover_cny": 138672424.0,
+      "rank": 92,
+      "source": "SSE",
+      "tracking_index": "中证细分有色金属产业主题指数",
+      "selection_reason": "rank 92; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159530",
+      "name": "机器人ETF易方达",
+      "category": "advanced_manufacturing",
+      "listing_date": "2024-01-18",
+      "scale_cny": 15523796569.9,
+      "latest_turnover_cny": 384695900.0,
+      "rank": 47,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 47; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "562500",
+      "name": "机器人ETF华夏",
+      "category": "advanced_manufacturing",
+      "listing_date": "2021-12-29",
+      "scale_cny": 16420200000.0,
+      "latest_turnover_cny": 213473534.0,
+      "rank": 64,
+      "source": "SSE",
+      "tracking_index": "中证机器人指数",
+      "selection_reason": "rank 64; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159770",
+      "name": "机器人ETF天弘",
+      "category": "advanced_manufacturing",
+      "listing_date": "2021-11-08",
+      "scale_cny": 5713598899.5,
+      "latest_turnover_cny": 65689581.0,
+      "rank": 161,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 161; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159272",
+      "name": "机器人ETF富国",
+      "category": "advanced_manufacturing",
+      "listing_date": "2025-09-19",
+      "scale_cny": 2842205566.64,
+      "latest_turnover_cny": 94318916.0,
+      "rank": 169,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 169; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159819",
+      "name": "人工智能ETF易方达",
+      "category": "technology",
+      "listing_date": "2020-09-23",
+      "scale_cny": 19757432670.73,
+      "latest_turnover_cny": 291355743.0,
+      "rank": 49,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 49; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159363",
+      "name": "创业板人工智能ETF华宝",
+      "category": "technology",
+      "listing_date": "2024-12-16",
+      "scale_cny": 6991713812.27,
+      "latest_turnover_cny": 577023788.0,
+      "rank": 54,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 54; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159852",
+      "name": "软件ETF嘉实",
+      "category": "technology",
+      "listing_date": "2021-02-09",
+      "scale_cny": 9082458208.58,
+      "latest_turnover_cny": 300368817.0,
+      "rank": 63,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 63; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159851",
+      "name": "金融科技ETF华宝",
+      "category": "technology",
+      "listing_date": "2021-03-19",
+      "scale_cny": 6156250255.34,
+      "latest_turnover_cny": 126040909.0,
+      "rank": 112,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 112; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "512200",
+      "name": "房地产ETF南方",
+      "category": "real_estate",
+      "listing_date": "2017-09-25",
+      "scale_cny": 5355480000.0,
+      "latest_turnover_cny": 907000580.0,
+      "rank": 65,
+      "source": "SSE",
+      "tracking_index": "中证全指房地产指数",
+      "selection_reason": "rank 65; size/turnover rank average; category real_estate"
+    },
+    {
+      "symbol": "159707",
+      "name": "地产ETF华宝",
+      "category": "real_estate",
+      "listing_date": "2021-11-12",
+      "scale_cny": 876873020.38,
+      "latest_turnover_cny": 438893016.0,
+      "rank": 200,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 200; size/turnover rank average; category real_estate"
+    },
+    {
+      "symbol": "515060",
+      "name": "房地产ETF华夏",
+      "category": "real_estate",
+      "listing_date": "2020-01-03",
+      "scale_cny": 807210000.0,
+      "latest_turnover_cny": 165989662.0,
+      "rank": 240,
+      "source": "SSE",
+      "tracking_index": "中证全指房地产指数",
+      "selection_reason": "rank 240; size/turnover rank average; category real_estate"
+    },
+    {
+      "symbol": "159768",
+      "name": "房地产ETF银华",
+      "category": "real_estate",
+      "listing_date": "2022-02-16",
+      "scale_cny": 437634044.0,
+      "latest_turnover_cny": 153427611.0,
+      "rank": 313,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 313; size/turnover rank average; category real_estate"
+    },
+    {
+      "symbol": "159755",
+      "name": "电池ETF广发",
+      "category": "new_energy",
+      "listing_date": "2021-06-24",
+      "scale_cny": 6352706901.97,
+      "latest_turnover_cny": 279948024.0,
+      "rank": 80,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 80; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159796",
+      "name": "电池ETF汇添富",
+      "category": "new_energy",
+      "listing_date": "2022-03-14",
+      "scale_cny": 4347439228.86,
+      "latest_turnover_cny": 149304638.0,
+      "rank": 118,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 118; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159566",
+      "name": "储能电池ETF易方达",
+      "category": "new_energy",
+      "listing_date": "2024-02-08",
+      "scale_cny": 3769923868.3,
+      "latest_turnover_cny": 162119866.0,
+      "rank": 125,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 125; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "515790",
+      "name": "光伏ETF华泰柏瑞",
+      "category": "new_energy",
+      "listing_date": "2020-12-18",
+      "scale_cny": 4661820000.0,
+      "latest_turnover_cny": 86021716.0,
+      "rank": 148,
+      "source": "SSE",
+      "tracking_index": "中证光伏产业指数",
+      "selection_reason": "rank 148; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159869",
+      "name": "游戏ETF华夏",
+      "category": "media",
+      "listing_date": "2021-03-05",
+      "scale_cny": 8286351721.74,
+      "latest_turnover_cny": 212738526.0,
+      "rank": 82,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 82; size/turnover rank average; category media"
+    },
+    {
+      "symbol": "512980",
+      "name": "传媒ETF广发",
+      "category": "media",
+      "listing_date": "2018-01-19",
+      "scale_cny": 4681880000.0,
+      "latest_turnover_cny": 231035836.0,
+      "rank": 93,
+      "source": "SSE",
+      "tracking_index": "中证传媒指数",
+      "selection_reason": "rank 93; size/turnover rank average; category media"
+    },
+    {
+      "symbol": "516010",
+      "name": "游戏ETF国泰",
+      "category": "media",
+      "listing_date": "2021-03-05",
+      "scale_cny": 2497120000.0,
+      "latest_turnover_cny": 37468276.0,
+      "rank": 251,
+      "source": "SSE",
+      "tracking_index": "中证动漫游戏指数",
+      "selection_reason": "rank 251; size/turnover rank average; category media"
+    },
+    {
+      "symbol": "159805",
+      "name": "传媒ETF鹏华",
+      "category": "media",
+      "listing_date": "2020-04-17",
+      "scale_cny": 326465884.0,
+      "latest_turnover_cny": 19259446.0,
+      "rank": 487,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 487; size/turnover rank average; category media"
+    },
+    {
+      "symbol": "159611",
+      "name": "电力ETF广发",
+      "category": "utilities",
+      "listing_date": "2022-01-07",
+      "scale_cny": 8972947535.4,
+      "latest_turnover_cny": 194799596.0,
+      "rank": 83,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 83; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "561560",
+      "name": "电力ETF华泰柏瑞",
+      "category": "utilities",
+      "listing_date": "2022-05-16",
+      "scale_cny": 1935370000.0,
+      "latest_turnover_cny": 185920027.0,
+      "rank": 153,
+      "source": "SSE",
+      "tracking_index": "中证全指电力公用事业指数",
+      "selection_reason": "rank 153; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "159625",
+      "name": "绿色电力ETF嘉实",
+      "category": "utilities",
+      "listing_date": "2022-04-29",
+      "scale_cny": 1842239049.74,
+      "latest_turnover_cny": 120334600.0,
+      "rank": 185,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 185; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "562550",
+      "name": "绿电ETF华夏",
+      "category": "utilities",
+      "listing_date": "2023-03-27",
+      "scale_cny": 1582770000.0,
+      "latest_turnover_cny": 69776835.0,
+      "rank": 239,
+      "source": "SSE",
+      "tracking_index": "中证绿色电力指数",
+      "selection_reason": "rank 239; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "512660",
+      "name": "军工ETF国泰",
+      "category": "defense",
+      "listing_date": "2016-08-08",
+      "scale_cny": 7519920000.0,
+      "latest_turnover_cny": 133252229.0,
+      "rank": 98,
+      "source": "SSE",
+      "tracking_index": "中证军工指数",
+      "selection_reason": "rank 98; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "159227",
+      "name": "航空航天ETF华夏",
+      "category": "defense",
+      "listing_date": "2025-05-16",
+      "scale_cny": 4294279507.83,
+      "latest_turnover_cny": 82570880.0,
+      "rank": 155,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 155; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "159241",
+      "name": "航空航天ETF天弘",
+      "category": "defense",
+      "listing_date": "2025-05-29",
+      "scale_cny": 1252946395.22,
+      "latest_turnover_cny": 138635478.0,
+      "rank": 216,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 216; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "159865",
+      "name": "养殖ETF国泰",
+      "category": "agriculture",
+      "listing_date": "2021-03-08",
+      "scale_cny": 6458462350.03,
+      "latest_turnover_cny": 131321025.0,
+      "rank": 106,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 106; size/turnover rank average; category agriculture"
+    },
+    {
+      "symbol": "159698",
+      "name": "粮食ETF鹏华",
+      "category": "agriculture",
+      "listing_date": "2023-08-18",
+      "scale_cny": 1569496052.34,
+      "latest_turnover_cny": 99152256.0,
+      "rank": 217,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 217; size/turnover rank average; category agriculture"
+    },
+    {
+      "symbol": "159825",
+      "name": "农业ETF富国",
+      "category": "agriculture",
+      "listing_date": "2020-12-29",
+      "scale_cny": 1596686098.93,
+      "latest_turnover_cny": 75254788.0,
+      "rank": 232,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 232; size/turnover rank average; category agriculture"
+    },
+    {
+      "symbol": "159732",
+      "name": "消费电子ETF华夏",
+      "category": "electronics",
+      "listing_date": "2021-08-23",
+      "scale_cny": 2821955730.65,
+      "latest_turnover_cny": 160520313.0,
+      "rank": 139,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 139; size/turnover rank average; category electronics"
+    },
+    {
+      "symbol": "562950",
+      "name": "消费电子ETF易方达",
+      "category": "electronics",
+      "listing_date": "2022-01-20",
+      "scale_cny": 1507100000.0,
+      "latest_turnover_cny": 89200414.0,
+      "rank": 227,
+      "source": "SSE",
+      "tracking_index": "中证消费电子主题指数",
+      "selection_reason": "rank 227; size/turnover rank average; category electronics"
+    },
+    {
+      "symbol": "159997",
+      "name": "电子ETF天弘",
+      "category": "electronics",
+      "listing_date": "2020-03-20",
+      "scale_cny": 1344159435.08,
+      "latest_turnover_cny": 56719948.0,
+      "rank": 265,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 265; size/turnover rank average; category electronics"
+    },
+    {
+      "symbol": "561100",
+      "name": "消费电子ETF富国",
+      "category": "electronics",
+      "listing_date": "2022-02-08",
+      "scale_cny": 874350000.0,
+      "latest_turnover_cny": 87712045.0,
+      "rank": 272,
+      "source": "SSE",
+      "tracking_index": "中证消费电子主题指数",
+      "selection_reason": "rank 272; size/turnover rank average; category electronics"
+    },
+    {
+      "symbol": "159766",
+      "name": "旅游ETF富国",
+      "category": "services",
+      "listing_date": "2021-07-23",
+      "scale_cny": 2938085624.0,
+      "latest_turnover_cny": 110636681.0,
+      "rank": 158,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 158; size/turnover rank average; category services"
+    },
+    {
+      "symbol": "562510",
+      "name": "旅游ETF华夏",
+      "category": "services",
+      "listing_date": "2021-12-30",
+      "scale_cny": 632960000.0,
+      "latest_turnover_cny": 28872598.0,
+      "rank": 395,
+      "source": "SSE",
+      "tracking_index": "中证旅游主题指数",
+      "selection_reason": "rank 395; size/turnover rank average; category services"
+    },
+    {
+      "symbol": "159745",
+      "name": "建材ETF国泰",
+      "category": "infrastructure",
+      "listing_date": "2021-06-18",
+      "scale_cny": 736818209.53,
+      "latest_turnover_cny": 178846147.0,
+      "rank": 246,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 246; size/turnover rank average; category infrastructure"
+    },
+    {
+      "symbol": "516970",
+      "name": "基建ETF广发",
+      "category": "infrastructure",
+      "listing_date": "2021-07-05",
+      "scale_cny": 1163670000.0,
+      "latest_turnover_cny": 47370141.0,
+      "rank": 297,
+      "source": "SSE",
+      "tracking_index": "中证基建工程指数",
+      "selection_reason": "rank 297; size/turnover rank average; category infrastructure"
+    },
+    {
+      "symbol": "516520",
+      "name": "智能驾驶ETF华泰柏瑞",
+      "category": "automotive",
+      "listing_date": "2021-03-01",
+      "scale_cny": 776690000.0,
+      "latest_turnover_cny": 25409027.0,
+      "rank": 385,
+      "source": "SSE",
+      "tracking_index": "中证智能汽车主题指数",
+      "selection_reason": "rank 385; size/turnover rank average; category automotive"
+    },
+    {
+      "symbol": "516110",
+      "name": "汽车ETF国泰",
+      "category": "automotive",
+      "listing_date": "2021-05-07",
+      "scale_cny": 256990000.0,
+      "latest_turnover_cny": 14291079.0,
+      "rank": 546,
+      "source": "SSE",
+      "tracking_index": "中证800汽车与零部件指数",
+      "selection_reason": "rank 546; size/turnover rank average; category automotive"
+    },
+    {
+      "symbol": "515250",
+      "name": "智能汽车ETF富国",
+      "category": "automotive",
+      "listing_date": "2021-01-08",
+      "scale_cny": 297990000.0,
+      "latest_turnover_cny": 10160855.0,
+      "rank": 571,
+      "source": "SSE",
+      "tracking_index": "中证智能汽车主题指数",
+      "selection_reason": "rank 571; size/turnover rank average; category automotive"
+    },
+    {
+      "symbol": "588000",
+      "name": "科创50ETF华夏",
+      "category": "broad_market",
+      "listing_date": "2020-11-16",
+      "scale_cny": 94113690000.0,
+      "latest_turnover_cny": 6849531379.0,
+      "rank": 1,
+      "source": "SSE",
+      "tracking_index": "上证科创板50成份指数",
+      "selection_reason": "rank 1; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159915",
+      "name": "创业板ETF易方达",
+      "category": "broad_market",
+      "listing_date": "2011-12-09",
+      "scale_cny": 65173279344.11,
+      "latest_turnover_cny": 4142874903.0,
+      "rank": 2,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 2; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "510300",
+      "name": "沪深300ETF华泰柏瑞",
+      "category": "broad_market",
+      "listing_date": "2012-05-28",
+      "scale_cny": 106898010000.0,
+      "latest_turnover_cny": 2196229027.0,
+      "rank": 4,
+      "source": "SSE",
+      "tracking_index": "沪深300指数",
+      "selection_reason": "rank 4; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "563360",
+      "name": "A500ETF华泰柏瑞",
+      "category": "broad_market",
+      "listing_date": "2024-10-15",
+      "scale_cny": 36426900000.0,
+      "latest_turnover_cny": 3393506435.0,
+      "rank": 6,
+      "source": "SSE",
+      "tracking_index": "中证A500指数",
+      "selection_reason": "rank 6; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159352",
+      "name": "A500ETF南方",
+      "category": "broad_market",
+      "listing_date": "2024-10-15",
+      "scale_cny": 31656104298.39,
+      "latest_turnover_cny": 3294917075.0,
+      "rank": 9,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 9; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "510310",
+      "name": "沪深300ETF易方达",
+      "category": "broad_market",
+      "listing_date": "2013-03-25",
+      "scale_cny": 51607240000.0,
+      "latest_turnover_cny": 1351886974.0,
+      "rank": 10,
+      "source": "SSE",
+      "tracking_index": "沪深300指数",
+      "selection_reason": "rank 10; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "510500",
+      "name": "中证500ETF南方",
+      "category": "broad_market",
+      "listing_date": "2013-03-15",
+      "scale_cny": 41928150000.0,
+      "latest_turnover_cny": 1669869400.0,
+      "rank": 11,
+      "source": "SSE",
+      "tracking_index": "中证小盘500指数",
+      "selection_reason": "rank 11; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "588080",
+      "name": "科创50ETF易方达",
+      "category": "broad_market",
+      "listing_date": "2020-11-16",
+      "scale_cny": 42525590000.0,
+      "latest_turnover_cny": 1662179078.0,
+      "rank": 12,
+      "source": "SSE",
+      "tracking_index": "上证科创板50成份指数",
+      "selection_reason": "rank 12; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159338",
+      "name": "中证A500ETF国泰",
+      "category": "broad_market",
+      "listing_date": "2024-10-15",
+      "scale_cny": 24259269107.6,
+      "latest_turnover_cny": 2625900077.0,
+      "rank": 13,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 13; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159361",
+      "name": "A500ETF易方达",
+      "category": "broad_market",
+      "listing_date": "2024-11-19",
+      "scale_cny": 26504282143.79,
+      "latest_turnover_cny": 1607635978.0,
+      "rank": 15,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 15; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "512100",
+      "name": "中证1000ETF南方",
+      "category": "broad_market",
+      "listing_date": "2016-11-04",
+      "scale_cny": 20652070000.0,
+      "latest_turnover_cny": 1824097897.0,
+      "rank": 16,
+      "source": "SSE",
+      "tracking_index": "中证1000指数",
+      "selection_reason": "rank 16; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "512890",
+      "name": "红利低波ETF华泰柏瑞",
+      "category": "factor",
+      "listing_date": "2019-01-18",
+      "scale_cny": 31254000000.0,
+      "latest_turnover_cny": 990179269.0,
+      "rank": 19,
+      "source": "SSE",
+      "tracking_index": "中证红利低波动指数",
+      "selection_reason": "rank 19; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "510050",
+      "name": "上证50ETF华夏",
+      "category": "broad_market",
+      "listing_date": "2005-02-23",
+      "scale_cny": 20386100000.0,
+      "latest_turnover_cny": 1296541861.0,
+      "rank": 20,
+      "source": "SSE",
+      "tracking_index": "上证50指数",
+      "selection_reason": "rank 20; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159919",
+      "name": "沪深300ETF嘉实",
+      "category": "broad_market",
+      "listing_date": "2012-05-28",
+      "scale_cny": 31668139141.38,
+      "latest_turnover_cny": 861998360.0,
+      "rank": 21,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 21; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159949",
+      "name": "创业板50ETF华安",
+      "category": "broad_market",
+      "listing_date": "2016-07-22",
+      "scale_cny": 23765275114.56,
+      "latest_turnover_cny": 955721125.0,
+      "rank": 23,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 23; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "512050",
+      "name": "A500ETF华夏",
+      "category": "broad_market",
+      "listing_date": "2024-11-15",
+      "scale_cny": 18263670000.0,
+      "latest_turnover_cny": 1151905746.0,
+      "rank": 24,
+      "source": "SSE",
+      "tracking_index": "中证A500指数",
+      "selection_reason": "rank 24; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159995",
+      "name": "芯片ETF华夏",
+      "category": "semiconductor",
+      "listing_date": "2020-02-10",
+      "scale_cny": 26806643975.04,
+      "latest_turnover_cny": 730439861.0,
+      "rank": 25,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 25; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159558",
+      "name": "半导体设备ETF易方达",
+      "category": "semiconductor",
+      "listing_date": "2024-06-18",
+      "scale_cny": 20068470465.03,
+      "latest_turnover_cny": 929075262.0,
+      "rank": 26,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 26; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "510330",
+      "name": "沪深300ETF华夏",
+      "category": "broad_market",
+      "listing_date": "2013-01-16",
+      "scale_cny": 39311080000.0,
+      "latest_turnover_cny": 340976637.0,
+      "rank": 30,
+      "source": "SSE",
+      "tracking_index": "沪深300指数",
+      "selection_reason": "rank 30; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "510880",
+      "name": "红利ETF华泰柏瑞",
+      "category": "factor",
+      "listing_date": "2007-01-18",
+      "scale_cny": 18863080000.0,
+      "latest_turnover_cny": 515613641.0,
+      "rank": 31,
+      "source": "SSE",
+      "tracking_index": "上证红利指数",
+      "selection_reason": "rank 31; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159845",
+      "name": "中证1000ETF华夏",
+      "category": "broad_market",
+      "listing_date": "2021-03-31",
+      "scale_cny": 8002345226.33,
+      "latest_turnover_cny": 2256844533.0,
+      "rank": 32,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 32; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "588710",
+      "name": "科创半导体设备ETF华泰柏瑞",
+      "category": "semiconductor",
+      "listing_date": "2025-06-04",
+      "scale_cny": 10457390000.0,
+      "latest_turnover_cny": 969498100.0,
+      "rank": 33,
+      "source": "SSE",
+      "tracking_index": "上证科创板半导体材料设备主题指数",
+      "selection_reason": "rank 33; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "510210",
+      "name": "上证指数ETF富国",
+      "category": "broad_market",
+      "listing_date": "2011-03-25",
+      "scale_cny": 14858250000.0,
+      "latest_turnover_cny": 549671455.0,
+      "rank": 34,
+      "source": "SSE",
+      "tracking_index": "上证综合指数",
+      "selection_reason": "rank 34; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "560010",
+      "name": "中证1000ETF广发",
+      "category": "broad_market",
+      "listing_date": "2022-08-04",
+      "scale_cny": 7331960000.0,
+      "latest_turnover_cny": 1792619513.0,
+      "rank": 39,
+      "source": "SSE",
+      "tracking_index": "中证1000指数",
+      "selection_reason": "rank 39; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "515180",
+      "name": "红利ETF易方达",
+      "category": "factor",
+      "listing_date": "2019-12-20",
+      "scale_cny": 18111580000.0,
+      "latest_turnover_cny": 388330671.0,
+      "rank": 42,
+      "source": "SSE",
+      "tracking_index": "中证红利指数",
+      "selection_reason": "rank 42; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "563800",
+      "name": "A500ETF广发",
+      "category": "broad_market",
+      "listing_date": "2024-11-18",
+      "scale_cny": 11524940000.0,
+      "latest_turnover_cny": 505919960.0,
+      "rank": 45,
+      "source": "SSE",
+      "tracking_index": "中证A500指数",
+      "selection_reason": "rank 45; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "560780",
+      "name": "半导体设备ETF广发",
+      "category": "semiconductor",
+      "listing_date": "2023-12-12",
+      "scale_cny": 11888290000.0,
+      "latest_turnover_cny": 450501571.0,
+      "rank": 46,
+      "source": "SSE",
+      "tracking_index": "中证半导体材料设备主题指数",
+      "selection_reason": "rank 46; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159781",
+      "name": "科创创业ETF易方达",
+      "category": "broad_market",
+      "listing_date": "2021-07-05",
+      "scale_cny": 16237558449.03,
+      "latest_turnover_cny": 342405661.0,
+      "rank": 48,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 48; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "588050",
+      "name": "科创50ETF工银",
+      "category": "broad_market",
+      "listing_date": "2020-11-16",
+      "scale_cny": 10747030000.0,
+      "latest_turnover_cny": 412239953.0,
+      "rank": 51,
+      "source": "SSE",
+      "tracking_index": "上证科创板50成份指数",
+      "selection_reason": "rank 51; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159351",
+      "name": "A500ETF嘉实",
+      "category": "broad_market",
+      "listing_date": "2024-10-15",
+      "scale_cny": 8289978676.83,
+      "latest_turnover_cny": 541352062.0,
+      "rank": 52,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 52; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "588060",
+      "name": "科创50ETF广发",
+      "category": "broad_market",
+      "listing_date": "2021-07-29",
+      "scale_cny": 8218400000.0,
+      "latest_turnover_cny": 473324958.0,
+      "rank": 55,
+      "source": "SSE",
+      "tracking_index": "上证科创板50成份指数",
+      "selection_reason": "rank 55; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159259",
+      "name": "成长ETF易方达",
+      "category": "factor",
+      "listing_date": "2025-08-28",
+      "scale_cny": 9029199404.62,
+      "latest_turnover_cny": 362509800.0,
+      "rank": 56,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 56; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "563020",
+      "name": "红利低波ETF易方达",
+      "category": "factor",
+      "listing_date": "2023-12-14",
+      "scale_cny": 12454910000.0,
+      "latest_turnover_cny": 255890454.0,
+      "rank": 59,
+      "source": "SSE",
+      "tracking_index": "中证红利低波动指数",
+      "selection_reason": "rank 59; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "562590",
+      "name": "半导体设备ETF华夏",
+      "category": "semiconductor",
+      "listing_date": "2023-10-18",
+      "scale_cny": 8250770000.0,
+      "latest_turnover_cny": 359468695.0,
+      "rank": 66,
+      "source": "SSE",
+      "tracking_index": "中证半导体材料设备主题指数",
+      "selection_reason": "rank 66; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159922",
+      "name": "中证500ETF嘉实",
+      "category": "broad_market",
+      "listing_date": "2013-03-15",
+      "scale_cny": 8491269794.92,
+      "latest_turnover_cny": 300742446.0,
+      "rank": 67,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 67; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159967",
+      "name": "创业板成长ETF华夏",
+      "category": "factor",
+      "listing_date": "2019-07-15",
+      "scale_cny": 5314450953.1,
+      "latest_turnover_cny": 686128995.0,
+      "rank": 68,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 68; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "512500",
+      "name": "中证500ETF华夏",
+      "category": "broad_market",
+      "listing_date": "2015-05-29",
+      "scale_cny": 7671570000.0,
+      "latest_turnover_cny": 328466105.0,
+      "rank": 70,
+      "source": "SSE",
+      "tracking_index": "中证小盘500指数",
+      "selection_reason": "rank 70; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "588220",
+      "name": "科创100ETF鹏华",
+      "category": "broad_market",
+      "listing_date": "2023-09-15",
+      "scale_cny": 6523800000.0,
+      "latest_turnover_cny": 404913605.0,
+      "rank": 71,
+      "source": "SSE",
+      "tracking_index": "上证科创板100指数",
+      "selection_reason": "rank 71; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "589020",
+      "name": "科创半导体设备ETF鹏华",
+      "category": "semiconductor",
+      "listing_date": "2025-09-04",
+      "scale_cny": 5070390000.0,
+      "latest_turnover_cny": 619773738.0,
+      "rank": 72,
+      "source": "SSE",
+      "tracking_index": "上证科创板半导体材料设备主题指数",
+      "selection_reason": "rank 72; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "515080",
+      "name": "中证红利ETF招商",
+      "category": "factor",
+      "listing_date": "2019-12-27",
+      "scale_cny": 11276950000.0,
+      "latest_turnover_cny": 210889985.0,
+      "rank": 74,
+      "source": "SSE",
+      "tracking_index": "中证红利指数",
+      "selection_reason": "rank 74; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "563300",
+      "name": "中证2000ETF华泰柏瑞",
+      "category": "broad_market",
+      "listing_date": "2023-09-14",
+      "scale_cny": 5476660000.0,
+      "latest_turnover_cny": 411273511.0,
+      "rank": 76,
+      "source": "SSE",
+      "tracking_index": "中证2000指数",
+      "selection_reason": "rank 76; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "589720",
+      "name": "科创创新药ETF国泰",
+      "category": "healthcare",
+      "listing_date": "2025-08-01",
+      "scale_cny": 4207890000.0,
+      "latest_turnover_cny": 891574167.0,
+      "rank": 77,
+      "source": "SSE",
+      "tracking_index": "上证科创板创新药指数",
+      "selection_reason": "rank 77; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159263",
+      "name": "价值ETF易方达",
+      "category": "factor",
+      "listing_date": "2025-07-08",
+      "scale_cny": 8692601467.53,
+      "latest_turnover_cny": 207558663.0,
+      "rank": 79,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 79; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159813",
+      "name": "半导体ETF鹏华",
+      "category": "semiconductor",
+      "listing_date": "2020-05-25",
+      "scale_cny": 6454037082.09,
+      "latest_turnover_cny": 272596773.0,
+      "rank": 81,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 81; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159842",
+      "name": "券商ETF银华",
+      "category": "financials",
+      "listing_date": "2021-03-19",
+      "scale_cny": 8593154416.36,
+      "latest_turnover_cny": 201455669.0,
+      "rank": 84,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 84; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "588750",
+      "name": "科创芯片ETF汇添富",
+      "category": "semiconductor",
+      "listing_date": "2024-12-26",
+      "scale_cny": 6572970000.0,
+      "latest_turnover_cny": 209715368.0,
+      "rank": 86,
+      "source": "SSE",
+      "tracking_index": "上证科创板芯片指数",
+      "selection_reason": "rank 86; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "561980",
+      "name": "半导体设备ETF招商",
+      "category": "semiconductor",
+      "listing_date": "2023-09-01",
+      "scale_cny": 5398010000.0,
+      "latest_turnover_cny": 243482651.0,
+      "rank": 89,
+      "source": "SSE",
+      "tracking_index": "中证半导体产业指数",
+      "selection_reason": "rank 89; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159633",
+      "name": "中证1000ETF易方达",
+      "category": "broad_market",
+      "listing_date": "2022-08-04",
+      "scale_cny": 3435889578.65,
+      "latest_turnover_cny": 803495968.0,
+      "rank": 90,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 90; size/turnover rank average; category broad_market"
+    },
+    {
+      "symbol": "159859",
+      "name": "生物医药ETF天弘",
+      "category": "healthcare",
+      "listing_date": "2021-07-07",
+      "scale_cny": 4065242709.29,
+      "latest_turnover_cny": 267471995.0,
+      "rank": 97,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 97; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "589130",
+      "name": "科创芯片ETF易方达",
+      "category": "semiconductor",
+      "listing_date": "2026-01-08",
+      "scale_cny": 4202540000.0,
+      "latest_turnover_cny": 221490744.0,
+      "rank": 100,
+      "source": "SSE",
+      "tracking_index": "上证科创板芯片指数",
+      "selection_reason": "rank 100; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159841",
+      "name": "证券ETF天弘",
+      "category": "financials",
+      "listing_date": "2021-02-09",
+      "scale_cny": 11447965581.68,
+      "latest_turnover_cny": 103724075.0,
+      "rank": 103,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 103; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "516080",
+      "name": "创新药ETF易方达",
+      "category": "healthcare",
+      "listing_date": "2021-02-23",
+      "scale_cny": 3415000000.0,
+      "latest_turnover_cny": 241945201.0,
+      "rank": 109,
+      "source": "SSE",
+      "tracking_index": "中证创新药产业指数",
+      "selection_reason": "rank 109; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "512040",
+      "name": "价值ETF富国",
+      "category": "factor",
+      "listing_date": "2018-11-29",
+      "scale_cny": 5829050000.0,
+      "latest_turnover_cny": 135676912.0,
+      "rank": 110,
+      "source": "SSE",
+      "tracking_index": "中证国信价值指数",
+      "selection_reason": "rank 110; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159801",
+      "name": "芯片ETF广发",
+      "category": "semiconductor",
+      "listing_date": "2020-02-18",
+      "scale_cny": 4920202489.62,
+      "latest_turnover_cny": 146024389.0,
+      "rank": 111,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 111; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "515070",
+      "name": "人工智能ETF华夏",
+      "category": "technology",
+      "listing_date": "2019-12-24",
+      "scale_cny": 7939820000.0,
+      "latest_turnover_cny": 105171017.0,
+      "rank": 113,
+      "source": "SSE",
+      "tracking_index": "中证人工智能主题指数",
+      "selection_reason": "rank 113; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "588290",
+      "name": "科创芯片ETF华安",
+      "category": "semiconductor",
+      "listing_date": "2022-10-26",
+      "scale_cny": 4919370000.0,
+      "latest_turnover_cny": 135542087.0,
+      "rank": 116,
+      "source": "SSE",
+      "tracking_index": "上证科创板芯片指数",
+      "selection_reason": "rank 116; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "588760",
+      "name": "科创人工智能ETF广发",
+      "category": "technology",
+      "listing_date": "2025-01-23",
+      "scale_cny": 2097900000.0,
+      "latest_turnover_cny": 454870868.0,
+      "rank": 117,
+      "source": "SSE",
+      "tracking_index": "上证科创板人工智能指数",
+      "selection_reason": "rank 117; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "515980",
+      "name": "人工智能ETF华富",
+      "category": "technology",
+      "listing_date": "2020-02-10",
+      "scale_cny": 5934420000.0,
+      "latest_turnover_cny": 105903689.0,
+      "rank": 126,
+      "source": "SSE",
+      "tracking_index": "中证人工智能产业指数",
+      "selection_reason": "rank 126; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "512290",
+      "name": "生物医药ETF国泰",
+      "category": "healthcare",
+      "listing_date": "2019-05-20",
+      "scale_cny": 3324660000.0,
+      "latest_turnover_cny": 171586734.0,
+      "rank": 130,
+      "source": "SSE",
+      "tracking_index": "中证生物医药指数",
+      "selection_reason": "rank 130; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "515230",
+      "name": "软件ETF国泰",
+      "category": "technology",
+      "listing_date": "2021-03-02",
+      "scale_cny": 5241000000.0,
+      "latest_turnover_cny": 92378049.0,
+      "rank": 136,
+      "source": "SSE",
+      "tracking_index": "中证全指软件指数",
+      "selection_reason": "rank 136; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "589070",
+      "name": "科创芯片设计ETF天弘",
+      "category": "semiconductor",
+      "listing_date": "2026-01-23",
+      "scale_cny": 2045190000.0,
+      "latest_turnover_cny": 240099698.0,
+      "rank": 138,
+      "source": "SSE",
+      "tracking_index": "上证科创板芯片设计主题指数",
+      "selection_reason": "rank 138; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "516510",
+      "name": "云计算ETF易方达",
+      "category": "technology",
+      "listing_date": "2021-04-07",
+      "scale_cny": 2957350000.0,
+      "latest_turnover_cny": 142538080.0,
+      "rank": 141,
+      "source": "SSE",
+      "tracking_index": "中证云计算与大数据主题指数",
+      "selection_reason": "rank 141; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159307",
+      "name": "红利低波100ETF博时",
+      "category": "factor",
+      "listing_date": "2024-04-25",
+      "scale_cny": 6935404024.08,
+      "latest_turnover_cny": 72254486.0,
+      "rank": 145,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 145; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "560860",
+      "name": "工业有色ETF万家",
+      "category": "cyclical",
+      "listing_date": "2023-03-13",
+      "scale_cny": 7669620000.0,
+      "latest_turnover_cny": 67283594.0,
+      "rank": 146,
+      "source": "SSE",
+      "tracking_index": "中证工业有色金属主题指数",
+      "selection_reason": "rank 146; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159327",
+      "name": "半导体设备ETF万家",
+      "category": "semiconductor",
+      "listing_date": "2024-08-05",
+      "scale_cny": 2882963645.96,
+      "latest_turnover_cny": 127357035.0,
+      "rank": 149,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 149; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "515100",
+      "name": "红利低波100ETF景顺",
+      "category": "factor",
+      "listing_date": "2020-07-03",
+      "scale_cny": 4969440000.0,
+      "latest_turnover_cny": 79432749.0,
+      "rank": 150,
+      "source": "SSE",
+      "tracking_index": "中证红利低波动100指数",
+      "selection_reason": "rank 150; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159381",
+      "name": "创业板人工智能ETF华夏",
+      "category": "technology",
+      "listing_date": "2025-03-24",
+      "scale_cny": 1892569552.83,
+      "latest_turnover_cny": 205846473.0,
+      "rank": 151,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 151; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "515300",
+      "name": "300红利低波ETF嘉实",
+      "category": "factor",
+      "listing_date": "2019-09-19",
+      "scale_cny": 3571720000.0,
+      "latest_turnover_cny": 98069897.0,
+      "rank": 152,
+      "source": "SSE",
+      "tracking_index": "沪深300红利低波动指数",
+      "selection_reason": "rank 152; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "512570",
+      "name": "证券ETF易方达",
+      "category": "financials",
+      "listing_date": "2017-08-11",
+      "scale_cny": 4162450000.0,
+      "latest_turnover_cny": 84863748.0,
+      "rank": 154,
+      "source": "SSE",
+      "tracking_index": "中证全指证券公司指数",
+      "selection_reason": "rank 154; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "588790",
+      "name": "科创AIETF博时",
+      "category": "technology",
+      "listing_date": "2025-01-09",
+      "scale_cny": 2528880000.0,
+      "latest_turnover_cny": 130399352.0,
+      "rank": 156,
+      "source": "SSE",
+      "tracking_index": "上证科创板人工智能指数",
+      "selection_reason": "rank 156; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "562800",
+      "name": "稀有金属ETF嘉实",
+      "category": "cyclical",
+      "listing_date": "2021-09-27",
+      "scale_cny": 4752630000.0,
+      "latest_turnover_cny": 74890195.0,
+      "rank": 160,
+      "source": "SSE",
+      "tracking_index": "中证稀有金属主题指数",
+      "selection_reason": "rank 160; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "588020",
+      "name": "科创成长ETF易方达",
+      "category": "factor",
+      "listing_date": "2023-08-31",
+      "scale_cny": 1994610000.0,
+      "latest_turnover_cny": 160844083.0,
+      "rank": 162,
+      "source": "SSE",
+      "tracking_index": "上证科创板成长指数",
+      "selection_reason": "rank 162; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "516160",
+      "name": "新能源ETF南方",
+      "category": "new_energy",
+      "listing_date": "2021-02-04",
+      "scale_cny": 3508160000.0,
+      "latest_turnover_cny": 88242519.0,
+      "rank": 165,
+      "source": "SSE",
+      "tracking_index": "中证新能源指数",
+      "selection_reason": "rank 165; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "515000",
+      "name": "科技ETF华宝",
+      "category": "technology",
+      "listing_date": "2019-08-16",
+      "scale_cny": 3959070000.0,
+      "latest_turnover_cny": 81788431.0,
+      "rank": 166,
+      "source": "SSE",
+      "tracking_index": "中证科技龙头指数",
+      "selection_reason": "rank 166; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159141",
+      "name": "科创创业人工智能ETF永赢",
+      "category": "technology",
+      "listing_date": "2025-12-11",
+      "scale_cny": 1781078673.48,
+      "latest_turnover_cny": 178449245.0,
+      "rank": 167,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 167; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "516150",
+      "name": "稀土ETF嘉实",
+      "category": "cyclical",
+      "listing_date": "2021-03-17",
+      "scale_cny": 5910120000.0,
+      "latest_turnover_cny": 51773956.0,
+      "rank": 170,
+      "source": "SSE",
+      "tracking_index": "中证稀土产业指数",
+      "selection_reason": "rank 170; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "512930",
+      "name": "AI人工智能ETF平安",
+      "category": "technology",
+      "listing_date": "2019-08-23",
+      "scale_cny": 2820350000.0,
+      "latest_turnover_cny": 92280891.0,
+      "rank": 172,
+      "source": "SSE",
+      "tracking_index": "中证人工智能主题指数",
+      "selection_reason": "rank 172; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159157",
+      "name": "有色金属ETF天弘",
+      "category": "cyclical",
+      "listing_date": "2026-02-06",
+      "scale_cny": 6200675072.02,
+      "latest_turnover_cny": 48025941.0,
+      "rank": 173,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 173; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159599",
+      "name": "芯片ETF东财",
+      "category": "semiconductor",
+      "listing_date": "2024-05-08",
+      "scale_cny": 1955053625.22,
+      "latest_turnover_cny": 130972112.0,
+      "rank": 174,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 174; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "512900",
+      "name": "证券ETF南方",
+      "category": "financials",
+      "listing_date": "2017-03-31",
+      "scale_cny": 7554770000.0,
+      "latest_turnover_cny": 42275385.0,
+      "rank": 175,
+      "source": "SSE",
+      "tracking_index": "中证全指证券公司指数",
+      "selection_reason": "rank 175; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "516350",
+      "name": "芯片ETF易方达",
+      "category": "semiconductor",
+      "listing_date": "2021-12-23",
+      "scale_cny": 2084010000.0,
+      "latest_turnover_cny": 108429703.0,
+      "rank": 177,
+      "source": "SSE",
+      "tracking_index": "中证芯片产业指数",
+      "selection_reason": "rank 177; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "516020",
+      "name": "化工ETF华宝",
+      "category": "cyclical",
+      "listing_date": "2021-03-08",
+      "scale_cny": 2799110000.0,
+      "latest_turnover_cny": 84693464.0,
+      "rank": 179,
+      "source": "SSE",
+      "tracking_index": "中证细分化工产业主题指数",
+      "selection_reason": "rank 179; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159883",
+      "name": "医疗器械ETF永赢",
+      "category": "healthcare",
+      "listing_date": "2021-04-30",
+      "scale_cny": 3790582518.47,
+      "latest_turnover_cny": 66409000.0,
+      "rank": 183,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 183; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159382",
+      "name": "创业板人工智能ETF南方",
+      "category": "technology",
+      "listing_date": "2025-05-09",
+      "scale_cny": 1987426197.57,
+      "latest_turnover_cny": 106677351.0,
+      "rank": 186,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 186; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "515030",
+      "name": "新能源车ETF华夏",
+      "category": "new_energy",
+      "listing_date": "2020-03-04",
+      "scale_cny": 2060800000.0,
+      "latest_turnover_cny": 97122763.0,
+      "rank": 189,
+      "source": "SSE",
+      "tracking_index": "中证新能源汽车指数",
+      "selection_reason": "rank 189; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "516310",
+      "name": "银行ETF易方达",
+      "category": "financials",
+      "listing_date": "2021-05-28",
+      "scale_cny": 2135000000.0,
+      "latest_turnover_cny": 89446252.0,
+      "rank": 190,
+      "source": "SSE",
+      "tracking_index": "中证银行指数",
+      "selection_reason": "rank 190; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "159667",
+      "name": "工业母机ETF国泰",
+      "category": "advanced_manufacturing",
+      "listing_date": "2022-10-26",
+      "scale_cny": 2071972599.61,
+      "latest_turnover_cny": 93044944.0,
+      "rank": 192,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 192; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159828",
+      "name": "医疗ETF国泰",
+      "category": "healthcare",
+      "listing_date": "2021-01-12",
+      "scale_cny": 1965908537.22,
+      "latest_turnover_cny": 103811352.0,
+      "rank": 193,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 193; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "515290",
+      "name": "银行ETF天弘",
+      "category": "financials",
+      "listing_date": "2020-12-28",
+      "scale_cny": 3681900000.0,
+      "latest_turnover_cny": 56364286.0,
+      "rank": 195,
+      "source": "SSE",
+      "tracking_index": "中证银行指数",
+      "selection_reason": "rank 195; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "561910",
+      "name": "电池ETF招商",
+      "category": "new_energy",
+      "listing_date": "2021-08-12",
+      "scale_cny": 3103760000.0,
+      "latest_turnover_cny": 67174354.0,
+      "rank": 196,
+      "source": "SSE",
+      "tracking_index": "中证电池主题指数",
+      "selection_reason": "rank 196; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159209",
+      "name": "红利质量ETF招商",
+      "category": "factor",
+      "listing_date": "2025-03-25",
+      "scale_cny": 2597240882.2,
+      "latest_turnover_cny": 75530972.0,
+      "rank": 197,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 197; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "516120",
+      "name": "化工ETF富国",
+      "category": "cyclical",
+      "listing_date": "2021-03-09",
+      "scale_cny": 3792510000.0,
+      "latest_turnover_cny": 52440026.0,
+      "rank": 198,
+      "source": "SSE",
+      "tracking_index": "中证细分化工产业主题指数",
+      "selection_reason": "rank 198; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "561580",
+      "name": "央企红利ETF华泰柏瑞",
+      "category": "factor",
+      "listing_date": "2023-05-30",
+      "scale_cny": 2491490000.0,
+      "latest_turnover_cny": 76934847.0,
+      "rank": 199,
+      "source": "SSE",
+      "tracking_index": "中证中央企业红利指数",
+      "selection_reason": "rank 199; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159652",
+      "name": "有色ETF汇添富",
+      "category": "cyclical",
+      "listing_date": "2023-02-08",
+      "scale_cny": 2548342151.05,
+      "latest_turnover_cny": 74747262.0,
+      "rank": 203,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 203; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "516640",
+      "name": "芯片ETF富国",
+      "category": "semiconductor",
+      "listing_date": "2021-08-27",
+      "scale_cny": 1781400000.0,
+      "latest_turnover_cny": 94803838.0,
+      "rank": 205,
+      "source": "SSE",
+      "tracking_index": "中证芯片产业指数",
+      "selection_reason": "rank 205; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159929",
+      "name": "医药ETF汇添富",
+      "category": "healthcare",
+      "listing_date": "2013-09-16",
+      "scale_cny": 2084018312.99,
+      "latest_turnover_cny": 78967644.0,
+      "rank": 206,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 206; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "510720",
+      "name": "红利国企ETF国泰",
+      "category": "factor",
+      "listing_date": "2024-05-15",
+      "scale_cny": 1883970000.0,
+      "latest_turnover_cny": 87044251.0,
+      "rank": 208,
+      "source": "SSE",
+      "tracking_index": "上证国有企业红利指数",
+      "selection_reason": "rank 208; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159938",
+      "name": "医药ETF广发",
+      "category": "healthcare",
+      "listing_date": "2015-01-08",
+      "scale_cny": 4562138853.29,
+      "latest_turnover_cny": 41395890.0,
+      "rank": 209,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 209; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "589120",
+      "name": "科创创新药ETF汇添富",
+      "category": "healthcare",
+      "listing_date": "2025-09-19",
+      "scale_cny": 1094480000.0,
+      "latest_turnover_cny": 194411111.0,
+      "rank": 210,
+      "source": "SSE",
+      "tracking_index": "上证科创板创新药指数",
+      "selection_reason": "rank 210; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159246",
+      "name": "创业板人工智能ETF富国",
+      "category": "technology",
+      "listing_date": "2025-07-10",
+      "scale_cny": 3455713033.87,
+      "latest_turnover_cny": 43600376.0,
+      "rank": 219,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 219; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159387",
+      "name": "创业板新能源ETF国泰",
+      "category": "new_energy",
+      "listing_date": "2025-06-10",
+      "scale_cny": 880038486.64,
+      "latest_turnover_cny": 220681877.0,
+      "rank": 221,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 221; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "560280",
+      "name": "工程机械ETF广发",
+      "category": "advanced_manufacturing",
+      "listing_date": "2023-10-30",
+      "scale_cny": 1718680000.0,
+      "latest_turnover_cny": 82026523.0,
+      "rank": 222,
+      "source": "SSE",
+      "tracking_index": "中证工程机械主题指数",
+      "selection_reason": "rank 222; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159325",
+      "name": "半导体ETF南方",
+      "category": "semiconductor",
+      "listing_date": "2024-11-08",
+      "scale_cny": 1146402816.57,
+      "latest_turnover_cny": 111778814.0,
+      "rank": 234,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 234; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159622",
+      "name": "创新药ETF东财",
+      "category": "healthcare",
+      "listing_date": "2023-05-09",
+      "scale_cny": 1129521460.1,
+      "latest_turnover_cny": 112806892.0,
+      "rank": 237,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 237; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "588780",
+      "name": "科创芯片设计ETF国联安",
+      "category": "semiconductor",
+      "listing_date": "2024-12-26",
+      "scale_cny": 941990000.0,
+      "latest_turnover_cny": 120892557.0,
+      "rank": 245,
+      "source": "SSE",
+      "tracking_index": "上证科创板芯片设计主题指数",
+      "selection_reason": "rank 245; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "515210",
+      "name": "钢铁ETF国泰",
+      "category": "cyclical",
+      "listing_date": "2020-03-02",
+      "scale_cny": 1089500000.0,
+      "latest_turnover_cny": 99580194.0,
+      "rank": 247,
+      "source": "SSE",
+      "tracking_index": "中证钢铁指数",
+      "selection_reason": "rank 247; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159147",
+      "name": "电池ETF南方",
+      "category": "new_energy",
+      "listing_date": "2026-01-23",
+      "scale_cny": 1650101623.85,
+      "latest_turnover_cny": 55431168.0,
+      "rank": 248,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 248; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159278",
+      "name": "机器人ETF鹏华",
+      "category": "advanced_manufacturing",
+      "listing_date": "2025-08-12",
+      "scale_cny": 1774849096.53,
+      "latest_turnover_cny": 51560414.0,
+      "rank": 249,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 249; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "560080",
+      "name": "中药ETF汇添富",
+      "category": "healthcare",
+      "listing_date": "2022-10-17",
+      "scale_cny": 2119270000.0,
+      "latest_turnover_cny": 40314499.0,
+      "rank": 250,
+      "source": "SSE",
+      "tracking_index": "中证中药指数",
+      "selection_reason": "rank 250; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "512700",
+      "name": "银行ETF南方",
+      "category": "financials",
+      "listing_date": "2017-07-26",
+      "scale_cny": 1080640000.0,
+      "latest_turnover_cny": 92883246.0,
+      "rank": 253,
+      "source": "SSE",
+      "tracking_index": "中证银行指数",
+      "selection_reason": "rank 253; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "589010",
+      "name": "科创人工智能ETF华夏",
+      "category": "technology",
+      "listing_date": "2025-04-09",
+      "scale_cny": 1239210000.0,
+      "latest_turnover_cny": 78252898.0,
+      "rank": 255,
+      "source": "SSE",
+      "tracking_index": "上证科创板人工智能指数",
+      "selection_reason": "rank 255; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159993",
+      "name": "证券ETF鹏华",
+      "category": "financials",
+      "listing_date": "2020-02-07",
+      "scale_cny": 3527060874.15,
+      "latest_turnover_cny": 26715935.0,
+      "rank": 256,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 256; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "159608",
+      "name": "稀有金属ETF广发",
+      "category": "cyclical",
+      "listing_date": "2021-12-23",
+      "scale_cny": 3220330621.35,
+      "latest_turnover_cny": 27587404.0,
+      "rank": 260,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 260; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159748",
+      "name": "创新药ETF富国",
+      "category": "healthcare",
+      "listing_date": "2021-12-03",
+      "scale_cny": 1069038308.8,
+      "latest_turnover_cny": 83131817.0,
+      "rank": 261,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 261; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "516820",
+      "name": "医疗创新ETF平安",
+      "category": "healthcare",
+      "listing_date": "2021-07-01",
+      "scale_cny": 1603060000.0,
+      "latest_turnover_cny": 45460969.0,
+      "rank": 263,
+      "source": "SSE",
+      "tracking_index": "中证医药及医疗器械创新指数",
+      "selection_reason": "rank 263; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "589030",
+      "name": "科创芯片设计ETF易方达",
+      "category": "semiconductor",
+      "listing_date": "2026-01-19",
+      "scale_cny": 971960000.0,
+      "latest_turnover_cny": 84774320.0,
+      "rank": 264,
+      "source": "SSE",
+      "tracking_index": "上证科创板芯片设计主题指数",
+      "selection_reason": "rank 264; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159158",
+      "name": "电力ETF景顺",
+      "category": "utilities",
+      "listing_date": "2026-01-27",
+      "scale_cny": 648130485.56,
+      "latest_turnover_cny": 143975980.0,
+      "rank": 269,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 269; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "159839",
+      "name": "生物医药ETF汇添富",
+      "category": "healthcare",
+      "listing_date": "2021-02-22",
+      "scale_cny": 931504235.01,
+      "latest_turnover_cny": 82599899.0,
+      "rank": 271,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 271; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159142",
+      "name": "科创创业人工智能ETF景顺",
+      "category": "technology",
+      "listing_date": "2025-12-12",
+      "scale_cny": 1292921082.62,
+      "latest_turnover_cny": 52795775.0,
+      "rank": 273,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 273; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "512680",
+      "name": "军工ETF广发",
+      "category": "defense",
+      "listing_date": "2016-10-14",
+      "scale_cny": 3540730000.0,
+      "latest_turnover_cny": 21030731.0,
+      "rank": 277,
+      "source": "SSE",
+      "tracking_index": "中证军工指数",
+      "selection_reason": "rank 277; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "159692",
+      "name": "证券ETF东财",
+      "category": "financials",
+      "listing_date": "2023-05-23",
+      "scale_cny": 1654928331.08,
+      "latest_turnover_cny": 37778365.0,
+      "rank": 279,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 279; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "159368",
+      "name": "创业板新能源ETF华夏",
+      "category": "new_energy",
+      "listing_date": "2025-03-24",
+      "scale_cny": 625494313.58,
+      "latest_turnover_cny": 135380068.0,
+      "rank": 280,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 280; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "512670",
+      "name": "国防ETF鹏华",
+      "category": "defense",
+      "listing_date": "2019-08-01",
+      "scale_cny": 1564470000.0,
+      "latest_turnover_cny": 39880168.0,
+      "rank": 282,
+      "source": "SSE",
+      "tracking_index": "中证国防指数",
+      "selection_reason": "rank 282; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "159840",
+      "name": "锂电池ETF工银",
+      "category": "new_energy",
+      "listing_date": "2021-08-20",
+      "scale_cny": 1279889111.25,
+      "latest_turnover_cny": 49681481.0,
+      "rank": 284,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 284; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159837",
+      "name": "生物科技ETF易方达",
+      "category": "technology",
+      "listing_date": "2021-01-27",
+      "scale_cny": 1459100008.89,
+      "latest_turnover_cny": 42827043.0,
+      "rank": 285,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 285; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159876",
+      "name": "有色ETF华宝",
+      "category": "cyclical",
+      "listing_date": "2021-03-24",
+      "scale_cny": 1450228774.91,
+      "latest_turnover_cny": 42028395.0,
+      "rank": 291,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 291; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159559",
+      "name": "机器人ETF景顺",
+      "category": "advanced_manufacturing",
+      "listing_date": "2023-12-12",
+      "scale_cny": 2040322545.95,
+      "latest_turnover_cny": 27901363.0,
+      "rank": 292,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 292; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "561160",
+      "name": "电池ETF富国",
+      "category": "new_energy",
+      "listing_date": "2022-07-08",
+      "scale_cny": 1489230000.0,
+      "latest_turnover_cny": 39360017.0,
+      "rank": 294,
+      "source": "SSE",
+      "tracking_index": "中证电池主题指数",
+      "selection_reason": "rank 294; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159998",
+      "name": "计算机ETF天弘",
+      "category": "technology",
+      "listing_date": "2020-04-13",
+      "scale_cny": 1509901823.94,
+      "latest_turnover_cny": 37950580.0,
+      "rank": 295,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 295; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159736",
+      "name": "食品饮料ETF天弘",
+      "category": "consumer",
+      "listing_date": "2021-09-27",
+      "scale_cny": 4296454716.61,
+      "latest_turnover_cny": 16303241.0,
+      "rank": 298,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 298; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "159847",
+      "name": "医疗ETF易方达",
+      "category": "healthcare",
+      "listing_date": "2021-07-19",
+      "scale_cny": 1590859284.15,
+      "latest_turnover_cny": 33064431.0,
+      "rank": 299,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 299; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159857",
+      "name": "光伏ETF天弘",
+      "category": "new_energy",
+      "listing_date": "2021-02-24",
+      "scale_cny": 1479025958.38,
+      "latest_turnover_cny": 36189418.0,
+      "rank": 301,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 301; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159930",
+      "name": "能源ETF汇添富",
+      "category": "cyclical",
+      "listing_date": "2013-09-16",
+      "scale_cny": 863852041.08,
+      "latest_turnover_cny": 65818674.0,
+      "rank": 302,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 302; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159242",
+      "name": "创业板人工智能ETF大成",
+      "category": "technology",
+      "listing_date": "2025-07-24",
+      "scale_cny": 818177550.22,
+      "latest_turnover_cny": 71605588.0,
+      "rank": 303,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 303; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159582",
+      "name": "半导体ETF博时",
+      "category": "semiconductor",
+      "listing_date": "2024-04-16",
+      "scale_cny": 776209795.07,
+      "latest_turnover_cny": 74809478.0,
+      "rank": 304,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 304; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "510230",
+      "name": "金融ETF国泰",
+      "category": "financials",
+      "listing_date": "2011-05-23",
+      "scale_cny": 894830000.0,
+      "latest_turnover_cny": 54697234.0,
+      "rank": 306,
+      "source": "SSE",
+      "tracking_index": "上证180金融股指数",
+      "selection_reason": "rank 306; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "159388",
+      "name": "创业板人工智能ETF国泰",
+      "category": "technology",
+      "listing_date": "2025-04-07",
+      "scale_cny": 838221337.23,
+      "latest_turnover_cny": 61421108.0,
+      "rank": 308,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 308; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "515400",
+      "name": "大数据ETF富国",
+      "category": "technology",
+      "listing_date": "2021-01-20",
+      "scale_cny": 1331250000.0,
+      "latest_turnover_cny": 35159097.0,
+      "rank": 309,
+      "source": "SSE",
+      "tracking_index": "中证大数据产业指数",
+      "selection_reason": "rank 309; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "516780",
+      "name": "稀土ETF华泰柏瑞",
+      "category": "cyclical",
+      "listing_date": "2021-03-08",
+      "scale_cny": 1763740000.0,
+      "latest_turnover_cny": 25411938.0,
+      "rank": 310,
+      "source": "SSE",
+      "tracking_index": "中证稀土产业指数",
+      "selection_reason": "rank 310; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159758",
+      "name": "红利质量ETF华夏",
+      "category": "factor",
+      "listing_date": "2021-12-28",
+      "scale_cny": 1327899923.58,
+      "latest_turnover_cny": 34557142.0,
+      "rank": 312,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 312; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "512940",
+      "name": "有色ETF华安",
+      "category": "cyclical",
+      "listing_date": "2026-02-26",
+      "scale_cny": 1632660000.0,
+      "latest_turnover_cny": 25748593.0,
+      "rank": 314,
+      "source": "SSE",
+      "tracking_index": "中证有色金属矿业主题指数",
+      "selection_reason": "rank 314; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159133",
+      "name": "化工ETF天弘",
+      "category": "cyclical",
+      "listing_date": "2025-11-25",
+      "scale_cny": 1548842093.01,
+      "latest_turnover_cny": 28190985.0,
+      "rank": 315,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 315; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "589210",
+      "name": "科创芯片设计ETF广发",
+      "category": "semiconductor",
+      "listing_date": "2025-12-23",
+      "scale_cny": 824720000.0,
+      "latest_turnover_cny": 49206199.0,
+      "rank": 322,
+      "source": "SSE",
+      "tracking_index": "上证科创板芯片设计主题指数",
+      "selection_reason": "rank 322; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "159309",
+      "name": "油气ETF汇添富",
+      "category": "cyclical",
+      "listing_date": "2024-06-18",
+      "scale_cny": 1321556014.12,
+      "latest_turnover_cny": 30275933.0,
+      "rank": 323,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 323; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159697",
+      "name": "石油ETF鹏华",
+      "category": "cyclical",
+      "listing_date": "2023-05-04",
+      "scale_cny": 1245264396.54,
+      "latest_turnover_cny": 31816048.0,
+      "rank": 324,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 324; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "588730",
+      "name": "科创人工智能ETF易方达",
+      "category": "technology",
+      "listing_date": "2025-01-24",
+      "scale_cny": 1020230000.0,
+      "latest_turnover_cny": 39041503.0,
+      "rank": 325,
+      "source": "SSE",
+      "tracking_index": "上证科创板人工智能指数",
+      "selection_reason": "rank 325; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159887",
+      "name": "银行ETF富国",
+      "category": "financials",
+      "listing_date": "2021-05-20",
+      "scale_cny": 760413318.19,
+      "latest_turnover_cny": 52701624.0,
+      "rank": 326,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 326; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "516860",
+      "name": "金融科技ETF博时",
+      "category": "technology",
+      "listing_date": "2021-10-11",
+      "scale_cny": 1187520000.0,
+      "latest_turnover_cny": 32296619.0,
+      "rank": 327,
+      "source": "SSE",
+      "tracking_index": "中证金融科技主题指数",
+      "selection_reason": "rank 327; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "562930",
+      "name": "软件ETF易方达",
+      "category": "technology",
+      "listing_date": "2023-06-05",
+      "scale_cny": 1138000000.0,
+      "latest_turnover_cny": 31230393.0,
+      "rank": 330,
+      "source": "SSE",
+      "tracking_index": "中证软件服务指数",
+      "selection_reason": "rank 330; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159549",
+      "name": "红利低波ETF天弘",
+      "category": "factor",
+      "listing_date": "2023-12-11",
+      "scale_cny": 5709804811.16,
+      "latest_turnover_cny": 9932795.0,
+      "rank": 331,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 331; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "510150",
+      "name": "消费ETF招商",
+      "category": "consumer",
+      "listing_date": "2011-02-25",
+      "scale_cny": 1387020000.0,
+      "latest_turnover_cny": 23576626.0,
+      "rank": 332,
+      "source": "SSE",
+      "tracking_index": "上证消费80指数",
+      "selection_reason": "rank 332; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "159140",
+      "name": "科创创业人工智能ETF易方达",
+      "category": "technology",
+      "listing_date": "2025-12-18",
+      "scale_cny": 579786251.18,
+      "latest_turnover_cny": 60556829.0,
+      "rank": 336,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 336; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "516630",
+      "name": "云计算ETF华夏",
+      "category": "technology",
+      "listing_date": "2021-09-03",
+      "scale_cny": 685680000.0,
+      "latest_turnover_cny": 43060858.0,
+      "rank": 337,
+      "source": "SSE",
+      "tracking_index": "中证云计算与大数据主题指数",
+      "selection_reason": "rank 337; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "561330",
+      "name": "矿业ETF国泰",
+      "category": "cyclical",
+      "listing_date": "2022-11-01",
+      "scale_cny": 1539420000.0,
+      "latest_turnover_cny": 19447128.0,
+      "rank": 338,
+      "source": "SSE",
+      "tracking_index": "中证有色金属矿业主题指数",
+      "selection_reason": "rank 338; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "516670",
+      "name": "畜牧养殖ETF招商",
+      "category": "agriculture",
+      "listing_date": "2021-03-26",
+      "scale_cny": 2053530000.0,
+      "latest_turnover_cny": 14301168.0,
+      "rank": 342,
+      "source": "SSE",
+      "tracking_index": "中证畜牧养殖指数",
+      "selection_reason": "rank 342; size/turnover rank average; category agriculture"
+    },
+    {
+      "symbol": "588130",
+      "name": "科创医药ETF华夏",
+      "category": "healthcare",
+      "listing_date": "2025-05-28",
+      "scale_cny": 460820000.0,
+      "latest_turnover_cny": 78037979.0,
+      "rank": 344,
+      "source": "SSE",
+      "tracking_index": "上证科创板生物医药指数",
+      "selection_reason": "rank 344; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "588830",
+      "name": "科创新能源ETF鹏华",
+      "category": "new_energy",
+      "listing_date": "2024-08-09",
+      "scale_cny": 709470000.0,
+      "latest_turnover_cny": 39543180.0,
+      "rank": 345,
+      "source": "SSE",
+      "tracking_index": "上证科创板新能源指数",
+      "selection_reason": "rank 345; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159858",
+      "name": "创新药ETF南方",
+      "category": "healthcare",
+      "listing_date": "2021-03-25",
+      "scale_cny": 651581003.72,
+      "latest_turnover_cny": 42581926.0,
+      "rank": 346,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 346; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "516090",
+      "name": "新能源ETF易方达",
+      "category": "new_energy",
+      "listing_date": "2021-03-19",
+      "scale_cny": 779090000.0,
+      "latest_turnover_cny": 35014162.0,
+      "rank": 348,
+      "source": "SSE",
+      "tracking_index": "中证新能源指数",
+      "selection_reason": "rank 348; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159875",
+      "name": "新能源ETF嘉实",
+      "category": "new_energy",
+      "listing_date": "2021-08-17",
+      "scale_cny": 1234112411.8,
+      "latest_turnover_cny": 21451986.0,
+      "rank": 352,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 352; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159695",
+      "name": "通信ETF嘉实",
+      "category": "communications",
+      "listing_date": "2023-05-10",
+      "scale_cny": 778190363.9,
+      "latest_turnover_cny": 33649440.0,
+      "rank": 356,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 356; size/turnover rank average; category communications"
+    },
+    {
+      "symbol": "159581",
+      "name": "红利ETF万家",
+      "category": "factor",
+      "listing_date": "2024-03-15",
+      "scale_cny": 1214226194.62,
+      "latest_turnover_cny": 20035795.0,
+      "rank": 361,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 361; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "515700",
+      "name": "新能源车ETF平安",
+      "category": "new_energy",
+      "listing_date": "2020-02-10",
+      "scale_cny": 1131990000.0,
+      "latest_turnover_cny": 21476086.0,
+      "rank": 362,
+      "source": "SSE",
+      "tracking_index": "中证新能源汽车产业指数",
+      "selection_reason": "rank 362; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "561360",
+      "name": "石油ETF国泰",
+      "category": "cyclical",
+      "listing_date": "2023-10-31",
+      "scale_cny": 1716190000.0,
+      "latest_turnover_cny": 14802614.0,
+      "rank": 363,
+      "source": "SSE",
+      "tracking_index": "中证油气产业指数",
+      "selection_reason": "rank 363; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159310",
+      "name": "芯片ETF天弘",
+      "category": "semiconductor",
+      "listing_date": "2024-04-30",
+      "scale_cny": 1343714355.5,
+      "latest_turnover_cny": 17525444.0,
+      "rank": 365,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 365; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "588110",
+      "name": "科创成长ETF广发",
+      "category": "factor",
+      "listing_date": "2023-08-31",
+      "scale_cny": 592640000.0,
+      "latest_turnover_cny": 42127095.0,
+      "rank": 366,
+      "source": "SSE",
+      "tracking_index": "上证科创板成长指数",
+      "selection_reason": "rank 366; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159258",
+      "name": "机器人ETF南方",
+      "category": "advanced_manufacturing",
+      "listing_date": "2025-08-01",
+      "scale_cny": 1356338871.01,
+      "latest_turnover_cny": 17369380.0,
+      "rank": 368,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 368; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159807",
+      "name": "科技ETF易方达",
+      "category": "technology",
+      "listing_date": "2020-03-30",
+      "scale_cny": 840201815.51,
+      "latest_turnover_cny": 27522240.0,
+      "rank": 369,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 369; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "159671",
+      "name": "稀有金属ETF工银",
+      "category": "cyclical",
+      "listing_date": "2023-03-10",
+      "scale_cny": 1078124023.79,
+      "latest_turnover_cny": 21371274.0,
+      "rank": 370,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 370; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "515260",
+      "name": "电子ETF华宝",
+      "category": "electronics",
+      "listing_date": "2020-07-31",
+      "scale_cny": 703750000.0,
+      "latest_turnover_cny": 32721634.0,
+      "rank": 371,
+      "source": "SSE",
+      "tracking_index": "中证电子50指数",
+      "selection_reason": "rank 371; size/turnover rank average; category electronics"
+    },
+    {
+      "symbol": "516920",
+      "name": "芯片ETF汇添富",
+      "category": "semiconductor",
+      "listing_date": "2021-08-16",
+      "scale_cny": 647730000.0,
+      "latest_turnover_cny": 34366287.0,
+      "rank": 374,
+      "source": "SSE",
+      "tracking_index": "中证芯片产业指数",
+      "selection_reason": "rank 374; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "516810",
+      "name": "农业ETF华夏",
+      "category": "agriculture",
+      "listing_date": "2022-01-11",
+      "scale_cny": 382540000.0,
+      "latest_turnover_cny": 74628072.0,
+      "rank": 376,
+      "source": "SSE",
+      "tracking_index": "中证农业主题指数",
+      "selection_reason": "rank 376; size/turnover rank average; category agriculture"
+    },
+    {
+      "symbol": "515630",
+      "name": "证券保险ETF鹏华",
+      "category": "financials",
+      "listing_date": "2020-04-03",
+      "scale_cny": 1141150000.0,
+      "latest_turnover_cny": 18453552.0,
+      "rank": 377,
+      "source": "SSE",
+      "tracking_index": "中证800证券保险指数",
+      "selection_reason": "rank 377; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "560570",
+      "name": "A500红利ETF国联安",
+      "category": "factor",
+      "listing_date": "2025-09-18",
+      "scale_cny": 1204830000.0,
+      "latest_turnover_cny": 17457407.0,
+      "rank": 379,
+      "source": "SSE",
+      "tracking_index": "中证A500红利低波动指数",
+      "selection_reason": "rank 379; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159638",
+      "name": "航空航天ETF嘉实",
+      "category": "defense",
+      "listing_date": "2022-08-12",
+      "scale_cny": 1139873505.59,
+      "latest_turnover_cny": 18221923.0,
+      "rank": 382,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 382; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "159905",
+      "name": "红利ETF工银",
+      "category": "factor",
+      "listing_date": "2011-01-11",
+      "scale_cny": 1546307257.4,
+      "latest_turnover_cny": 13977767.0,
+      "rank": 384,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 384; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "562960",
+      "name": "绿色电力ETF易方达",
+      "category": "utilities",
+      "listing_date": "2023-04-12",
+      "scale_cny": 1289210000.0,
+      "latest_turnover_cny": 16147631.0,
+      "rank": 386,
+      "source": "SSE",
+      "tracking_index": "中证绿色电力指数",
+      "selection_reason": "rank 386; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "561170",
+      "name": "绿色电力ETF富国",
+      "category": "utilities",
+      "listing_date": "2023-03-16",
+      "scale_cny": 566190000.0,
+      "latest_turnover_cny": 36457902.0,
+      "rank": 388,
+      "source": "SSE",
+      "tracking_index": "中证绿色电力指数",
+      "selection_reason": "rank 388; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "159665",
+      "name": "半导体龙头ETF工银",
+      "category": "semiconductor",
+      "listing_date": "2023-01-06",
+      "scale_cny": 579255720.15,
+      "latest_turnover_cny": 36262262.0,
+      "rank": 389,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 389; size/turnover rank average; category semiconductor"
+    },
+    {
+      "symbol": "516100",
+      "name": "金融科技ETF华夏",
+      "category": "technology",
+      "listing_date": "2021-07-23",
+      "scale_cny": 1137200000.0,
+      "latest_turnover_cny": 17405840.0,
+      "rank": 391,
+      "source": "SSE",
+      "tracking_index": "中证金融科技主题指数",
+      "selection_reason": "rank 391; size/turnover rank average; category technology"
+    },
+    {
+      "symbol": "515710",
+      "name": "食品饮料ETF华宝",
+      "category": "consumer",
+      "listing_date": "2021-01-07",
+      "scale_cny": 1141380000.0,
+      "latest_turnover_cny": 17247766.0,
+      "rank": 392,
+      "source": "SSE",
+      "tracking_index": "中证细分食品饮料产业主题指数",
+      "selection_reason": "rank 392; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "159597",
+      "name": "创业板成长ETF易方达",
+      "category": "factor",
+      "listing_date": "2024-05-27",
+      "scale_cny": 831771635.72,
+      "latest_turnover_cny": 22385792.0,
+      "rank": 394,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 394; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159871",
+      "name": "有色ETF银华",
+      "category": "cyclical",
+      "listing_date": "2021-03-31",
+      "scale_cny": 929759546.92,
+      "latest_turnover_cny": 18873003.0,
+      "rank": 396,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 396; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "563380",
+      "name": "航空航天ETF华泰柏瑞",
+      "category": "defense",
+      "listing_date": "2025-11-07",
+      "scale_cny": 741960000.0,
+      "latest_turnover_cny": 24068852.0,
+      "rank": 397,
+      "source": "SSE",
+      "tracking_index": "中证全指航空航天指数",
+      "selection_reason": "rank 397; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "516570",
+      "name": "石化ETF易方达",
+      "category": "cyclical",
+      "listing_date": "2021-06-18",
+      "scale_cny": 1089990000.0,
+      "latest_turnover_cny": 16672151.0,
+      "rank": 401,
+      "source": "SSE",
+      "tracking_index": "中证石化产业指数",
+      "selection_reason": "rank 401; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "560770",
+      "name": "机器人ETF招商",
+      "category": "advanced_manufacturing",
+      "listing_date": "2025-09-01",
+      "scale_cny": 1477180000.0,
+      "latest_turnover_cny": 12720095.0,
+      "rank": 402,
+      "source": "SSE",
+      "tracking_index": "中证机器人指数",
+      "selection_reason": "rank 402; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "512560",
+      "name": "军工ETF易方达",
+      "category": "defense",
+      "listing_date": "2017-07-28",
+      "scale_cny": 632060000.0,
+      "latest_turnover_cny": 24953109.0,
+      "rank": 408,
+      "source": "SSE",
+      "tracking_index": "中证军工指数",
+      "selection_reason": "rank 408; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "588700",
+      "name": "科创医药ETF嘉实",
+      "category": "healthcare",
+      "listing_date": "2024-01-05",
+      "scale_cny": 430830000.0,
+      "latest_turnover_cny": 39940438.0,
+      "rank": 409,
+      "source": "SSE",
+      "tracking_index": "上证科创板生物医药指数",
+      "selection_reason": "rank 409; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159867",
+      "name": "养殖ETF鹏华",
+      "category": "agriculture",
+      "listing_date": "2021-03-05",
+      "scale_cny": 874581609.98,
+      "latest_turnover_cny": 17447398.0,
+      "rank": 410,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 410; size/turnover rank average; category agriculture"
+    },
+    {
+      "symbol": "159996",
+      "name": "家电ETF国泰",
+      "category": "consumer",
+      "listing_date": "2020-03-16",
+      "scale_cny": 637304909.53,
+      "latest_turnover_cny": 23492348.0,
+      "rank": 411,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 411; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "515970",
+      "name": "工程机械ETF华夏",
+      "category": "advanced_manufacturing",
+      "listing_date": "2026-02-12",
+      "scale_cny": 339190000.0,
+      "latest_turnover_cny": 49321523.0,
+      "rank": 417,
+      "source": "SSE",
+      "tracking_index": "中证工程机械主题指数",
+      "selection_reason": "rank 417; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159663",
+      "name": "机床ETF华夏",
+      "category": "advanced_manufacturing",
+      "listing_date": "2022-10-26",
+      "scale_cny": 388900929.32,
+      "latest_turnover_cny": 39705680.0,
+      "rank": 418,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 418; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "512810",
+      "name": "军工ETF华宝",
+      "category": "defense",
+      "listing_date": "2016-08-22",
+      "scale_cny": 625950000.0,
+      "latest_turnover_cny": 21574973.0,
+      "rank": 419,
+      "source": "SSE",
+      "tracking_index": "中证军工指数",
+      "selection_reason": "rank 419; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "159129",
+      "name": "化工ETF嘉实",
+      "category": "cyclical",
+      "listing_date": "2025-11-14",
+      "scale_cny": 1093812771.34,
+      "latest_turnover_cny": 12649195.0,
+      "rank": 421,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 421; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "560260",
+      "name": "医疗ETF广发",
+      "category": "healthcare",
+      "listing_date": "2023-09-15",
+      "scale_cny": 1501470000.0,
+      "latest_turnover_cny": 9883525.0,
+      "rank": 425,
+      "source": "SSE",
+      "tracking_index": "中证医疗指数",
+      "selection_reason": "rank 425; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159880",
+      "name": "有色ETF鹏华",
+      "category": "cyclical",
+      "listing_date": "2021-03-25",
+      "scale_cny": 1142958074.62,
+      "latest_turnover_cny": 11619197.0,
+      "rank": 426,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 426; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "510810",
+      "name": "上海国企ETF汇添富",
+      "category": "factor",
+      "listing_date": "2016-08-29",
+      "scale_cny": 4800580000.0,
+      "latest_turnover_cny": 5383912.0,
+      "rank": 428,
+      "source": "SSE",
+      "tracking_index": "中证上海国企指数",
+      "selection_reason": "rank 428; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "510630",
+      "name": "消费ETF华夏",
+      "category": "consumer",
+      "listing_date": "2013-05-08",
+      "scale_cny": 430130000.0,
+      "latest_turnover_cny": 28737729.0,
+      "rank": 429,
+      "source": "SSE",
+      "tracking_index": "上证主要消费行业指数",
+      "selection_reason": "rank 429; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "159146",
+      "name": "电力ETF华宝",
+      "category": "utilities",
+      "listing_date": "2026-01-20",
+      "scale_cny": 678228557.14,
+      "latest_turnover_cny": 16035173.0,
+      "rank": 434,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 434; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "159715",
+      "name": "稀土ETF易方达",
+      "category": "cyclical",
+      "listing_date": "2021-09-10",
+      "scale_cny": 468321641.62,
+      "latest_turnover_cny": 23769596.0,
+      "rank": 435,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 435; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159713",
+      "name": "稀土ETF富国",
+      "category": "cyclical",
+      "listing_date": "2021-08-16",
+      "scale_cny": 600035698.05,
+      "latest_turnover_cny": 17224285.0,
+      "rank": 439,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 439; size/turnover rank average; category cyclical"
+    },
+    {
+      "symbol": "159647",
+      "name": "中药ETF鹏华",
+      "category": "healthcare",
+      "listing_date": "2022-07-28",
+      "scale_cny": 864968040.03,
+      "latest_turnover_cny": 11524545.0,
+      "rank": 445,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 445; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "515370",
+      "name": "光伏ETF华夏",
+      "category": "new_energy",
+      "listing_date": "2025-11-18",
+      "scale_cny": 731880000.0,
+      "latest_turnover_cny": 13062618.0,
+      "rank": 447,
+      "source": "SSE",
+      "tracking_index": "中证光伏产业指数",
+      "selection_reason": "rank 447; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159775",
+      "name": "电池ETF建信",
+      "category": "new_energy",
+      "listing_date": "2022-01-24",
+      "scale_cny": 482632644.99,
+      "latest_turnover_cny": 17730265.0,
+      "rank": 452,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 452; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "512950",
+      "name": "央企改革ETF华夏",
+      "category": "factor",
+      "listing_date": "2019-01-18",
+      "scale_cny": 5963880000.0,
+      "latest_turnover_cny": 4099046.0,
+      "rank": 453,
+      "source": "SSE",
+      "tracking_index": "中证央企结构调整指数",
+      "selection_reason": "rank 453; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "562880",
+      "name": "电池ETF嘉实",
+      "category": "new_energy",
+      "listing_date": "2021-07-20",
+      "scale_cny": 597180000.0,
+      "latest_turnover_cny": 14109732.0,
+      "rank": 455,
+      "source": "SSE",
+      "tracking_index": "中证电池主题指数",
+      "selection_reason": "rank 455; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159526",
+      "name": "机器人ETF嘉实",
+      "category": "advanced_manufacturing",
+      "listing_date": "2024-04-24",
+      "scale_cny": 753575368.05,
+      "latest_turnover_cny": 11380815.0,
+      "rank": 456,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 456; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159525",
+      "name": "红利低波ETF富国",
+      "category": "factor",
+      "listing_date": "2024-05-20",
+      "scale_cny": 477204863.85,
+      "latest_turnover_cny": 16931400.0,
+      "rank": 458,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 458; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159790",
+      "name": "碳中和ETF华夏",
+      "category": "utilities",
+      "listing_date": "2021-08-06",
+      "scale_cny": 1017466449.07,
+      "latest_turnover_cny": 8730825.0,
+      "rank": 459,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 459; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "515950",
+      "name": "医药50ETF富国",
+      "category": "healthcare",
+      "listing_date": "2020-04-01",
+      "scale_cny": 511440000.0,
+      "latest_turnover_cny": 15212137.0,
+      "rank": 463,
+      "source": "SSE",
+      "tracking_index": "中证医药50指数",
+      "selection_reason": "rank 463; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "516880",
+      "name": "光伏ETF银华",
+      "category": "new_energy",
+      "listing_date": "2021-01-18",
+      "scale_cny": 604200000.0,
+      "latest_turnover_cny": 12065196.0,
+      "rank": 471,
+      "source": "SSE",
+      "tracking_index": "中证光伏产业指数",
+      "selection_reason": "rank 471; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159606",
+      "name": "中证500成长ETF易方达",
+      "category": "factor",
+      "listing_date": "2021-12-29",
+      "scale_cny": 554004444.83,
+      "latest_turnover_cny": 13217436.0,
+      "rank": 472,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 472; size/turnover rank average; category factor"
+    },
+    {
+      "symbol": "159806",
+      "name": "新能源车ETF国泰",
+      "category": "new_energy",
+      "listing_date": "2020-03-20",
+      "scale_cny": 537224126.65,
+      "latest_turnover_cny": 13004033.0,
+      "rank": 478,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 478; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159213",
+      "name": "机器人ETF汇添富",
+      "category": "advanced_manufacturing",
+      "listing_date": "2025-04-30",
+      "scale_cny": 522190882.87,
+      "latest_turnover_cny": 12707667.0,
+      "rank": 485,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 485; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "562860",
+      "name": "疫苗ETF嘉实",
+      "category": "healthcare",
+      "listing_date": "2023-02-24",
+      "scale_cny": 225620000.0,
+      "latest_turnover_cny": 32244809.0,
+      "rank": 488,
+      "source": "SSE",
+      "tracking_index": "中证疫苗与生物技术指数",
+      "selection_reason": "rank 488; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159835",
+      "name": "创新药ETF建信",
+      "category": "healthcare",
+      "listing_date": "2021-03-29",
+      "scale_cny": 250081208.69,
+      "latest_turnover_cny": 24492889.0,
+      "rank": 492,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 492; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "159175",
+      "name": "电池ETF易方达",
+      "category": "new_energy",
+      "listing_date": "2026-03-05",
+      "scale_cny": 416724223.15,
+      "latest_turnover_cny": 13296652.0,
+      "rank": 494,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 494; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "512120",
+      "name": "医药ETF华安",
+      "category": "healthcare",
+      "listing_date": "2014-01-06",
+      "scale_cny": 354390000.0,
+      "latest_turnover_cny": 15870623.0,
+      "rank": 496,
+      "source": "SSE",
+      "tracking_index": "中证细分医药产业主题指数",
+      "selection_reason": "rank 496; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "562600",
+      "name": "医疗器械ETF华夏",
+      "category": "healthcare",
+      "listing_date": "2023-12-11",
+      "scale_cny": 339220000.0,
+      "latest_turnover_cny": 13572204.0,
+      "rank": 515,
+      "source": "SSE",
+      "tracking_index": "中证全指医疗器械指数",
+      "selection_reason": "rank 515; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "560880",
+      "name": "家电ETF广发",
+      "category": "consumer",
+      "listing_date": "2022-04-12",
+      "scale_cny": 279720000.0,
+      "latest_turnover_cny": 16477507.0,
+      "rank": 520,
+      "source": "SSE",
+      "tracking_index": "中证全指家用电器指数",
+      "selection_reason": "rank 520; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "516130",
+      "name": "消费龙头ETF华宝",
+      "category": "consumer",
+      "listing_date": "2021-10-13",
+      "scale_cny": 1045120000.0,
+      "latest_turnover_cny": 5522745.0,
+      "rank": 521,
+      "source": "SSE",
+      "tracking_index": "中证消费龙头指数",
+      "selection_reason": "rank 521; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "159511",
+      "name": "通信ETF南方",
+      "category": "communications",
+      "listing_date": "2023-08-07",
+      "scale_cny": 323438823.2,
+      "latest_turnover_cny": 13236037.0,
+      "rank": 524,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 524; size/turnover rank average; category communications"
+    },
+    {
+      "symbol": "516770",
+      "name": "游戏ETF华泰柏瑞",
+      "category": "media",
+      "listing_date": "2021-03-05",
+      "scale_cny": 274050000.0,
+      "latest_turnover_cny": 15714290.0,
+      "rank": 526,
+      "source": "SSE",
+      "tracking_index": "中证动漫游戏指数",
+      "selection_reason": "rank 526; size/turnover rank average; category media"
+    },
+    {
+      "symbol": "159155",
+      "name": "电池ETF大成",
+      "category": "new_energy",
+      "listing_date": "2026-01-21",
+      "scale_cny": 399147908.34,
+      "latest_turnover_cny": 10474878.0,
+      "rank": 528,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 528; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "512600",
+      "name": "消费ETF嘉实",
+      "category": "consumer",
+      "listing_date": "2014-07-25",
+      "scale_cny": 953560000.0,
+      "latest_turnover_cny": 5413420.0,
+      "rank": 532,
+      "source": "SSE",
+      "tracking_index": "中证主要消费指数",
+      "selection_reason": "rank 532; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "562970",
+      "name": "光伏ETF易方达",
+      "category": "new_energy",
+      "listing_date": "2024-11-07",
+      "scale_cny": 343320000.0,
+      "latest_turnover_cny": 10848495.0,
+      "rank": 543,
+      "source": "SSE",
+      "tracking_index": "中证光伏产业指数",
+      "selection_reason": "rank 543; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159898",
+      "name": "医疗器械ETF招商",
+      "category": "healthcare",
+      "listing_date": "2021-06-04",
+      "scale_cny": 422169794.6,
+      "latest_turnover_cny": 8357044.0,
+      "rank": 555,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 555; size/turnover rank average; category healthcare"
+    },
+    {
+      "symbol": "562360",
+      "name": "机器人ETF银华",
+      "category": "advanced_manufacturing",
+      "listing_date": "2021-10-15",
+      "scale_cny": 292790000.0,
+      "latest_turnover_cny": 11351722.0,
+      "rank": 557,
+      "source": "SSE",
+      "tracking_index": "中证机器人指数",
+      "selection_reason": "rank 557; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159637",
+      "name": "新能源车ETF东财",
+      "category": "new_energy",
+      "listing_date": "2022-09-01",
+      "scale_cny": 466629581.15,
+      "latest_turnover_cny": 7186728.0,
+      "rank": 563,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 563; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "512620",
+      "name": "农业ETF天弘",
+      "category": "agriculture",
+      "listing_date": "2025-11-21",
+      "scale_cny": 1230980000.0,
+      "latest_turnover_cny": 3696867.0,
+      "rank": 573,
+      "source": "SSE",
+      "tracking_index": "中证农业主题指数",
+      "selection_reason": "rank 573; size/turnover rank average; category agriculture"
+    },
+    {
+      "symbol": "512460",
+      "name": "电池ETF华夏",
+      "category": "new_energy",
+      "listing_date": "2026-03-20",
+      "scale_cny": 241600000.0,
+      "latest_turnover_cny": 11798277.0,
+      "rank": 574,
+      "source": "SSE",
+      "tracking_index": "中证电池主题指数",
+      "selection_reason": "rank 574; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159864",
+      "name": "光伏ETF国泰",
+      "category": "new_energy",
+      "listing_date": "2021-08-10",
+      "scale_cny": 326968459.34,
+      "latest_turnover_cny": 8536262.0,
+      "rank": 583,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 583; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159811",
+      "name": "5GETF博时",
+      "category": "communications",
+      "listing_date": "2020-04-22",
+      "scale_cny": 204941598.03,
+      "latest_turnover_cny": 12382001.0,
+      "rank": 601,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 601; size/turnover rank average; category communications"
+    },
+    {
+      "symbol": "159160",
+      "name": "电池ETF东财",
+      "category": "new_energy",
+      "listing_date": "2026-03-27",
+      "scale_cny": 209416729.69,
+      "latest_turnover_cny": 10687786.0,
+      "rank": 616,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 616; size/turnover rank average; category new_energy"
+    },
+    {
+      "symbol": "159138",
+      "name": "工程机械ETF易方达",
+      "category": "advanced_manufacturing",
+      "listing_date": "2026-01-13",
+      "scale_cny": 243670743.15,
+      "latest_turnover_cny": 8033689.0,
+      "rank": 629,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 629; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159551",
+      "name": "机器人ETF国泰",
+      "category": "advanced_manufacturing",
+      "listing_date": "2023-11-16",
+      "scale_cny": 340077242.68,
+      "latest_turnover_cny": 5963649.0,
+      "rank": 636,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 636; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159172",
+      "name": "养殖ETF汇添富",
+      "category": "agriculture",
+      "listing_date": "2026-03-20",
+      "scale_cny": 312578174.1,
+      "latest_turnover_cny": 6253027.0,
+      "rank": 640,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 640; size/turnover rank average; category agriculture"
+    },
+    {
+      "symbol": "560580",
+      "name": "电力ETF南方",
+      "category": "utilities",
+      "listing_date": "2023-05-12",
+      "scale_cny": 443630000.0,
+      "latest_turnover_cny": 4604859.0,
+      "rank": 642,
+      "source": "SSE",
+      "tracking_index": "中证全指电力公用事业指数",
+      "selection_reason": "rank 642; size/turnover rank average; category utilities"
+    },
+    {
+      "symbol": "563010",
+      "name": "电信ETF易方达",
+      "category": "communications",
+      "listing_date": "2023-07-13",
+      "scale_cny": 203810000.0,
+      "latest_turnover_cny": 9275281.0,
+      "rank": 643,
+      "source": "SSE",
+      "tracking_index": "中证电信主题指数",
+      "selection_reason": "rank 643; size/turnover rank average; category communications"
+    },
+    {
+      "symbol": "562910",
+      "name": "高端制造ETF易方达",
+      "category": "advanced_manufacturing",
+      "listing_date": "2022-01-10",
+      "scale_cny": 239440000.0,
+      "latest_turnover_cny": 6734232.0,
+      "rank": 662,
+      "source": "SSE",
+      "tracking_index": "中证装备产业指数",
+      "selection_reason": "rank 662; size/turnover rank average; category advanced_manufacturing"
+    },
+    {
+      "symbol": "159208",
+      "name": "航空航天ETF万家",
+      "category": "defense",
+      "listing_date": "2025-05-12",
+      "scale_cny": 310169310.5,
+      "latest_turnover_cny": 5094200.0,
+      "rank": 673,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 673; size/turnover rank average; category defense"
+    },
+    {
+      "symbol": "159260",
+      "name": "证券ETF博时",
+      "category": "financials",
+      "listing_date": "2025-11-04",
+      "scale_cny": 849420802.35,
+      "latest_turnover_cny": 2194291.0,
+      "rank": 678,
+      "source": "SZSE",
+      "tracking_index": null,
+      "selection_reason": "rank 678; size/turnover rank average; category financials"
+    },
+    {
+      "symbol": "560680",
+      "name": "消费ETF广发",
+      "category": "consumer",
+      "listing_date": "2022-10-31",
+      "scale_cny": 237270000.0,
+      "latest_turnover_cny": 5318066.0,
+      "rank": 706,
+      "source": "SSE",
+      "tracking_index": "中证主要消费指数",
+      "selection_reason": "rank 706; size/turnover rank average; category consumer"
+    },
+    {
+      "symbol": "561700",
+      "name": "电力ETF博时",
+      "category": "utilities",
+      "listing_date": "2022-07-15",
+      "scale_cny": 362570000.0,
+      "latest_turnover_cny": 2277183.0,
+      "rank": 762,
+      "source": "SSE",
+      "tracking_index": "中证全指电力公用事业指数",
+      "selection_reason": "rank 762; size/turnover rank average; category utilities"
+    }
+  ],
+  "metadata": {
+    "minimum_average_amount_60d_CNY": 10000000,
+    "source_selection_key": "712d7cc0469aba09635a69dfb29623bc23f44c1210a8e27b220f0968b2e501f9",
+    "candidate_count": 327,
+    "qualified_count": 305,
+    "rule": "Current trailing liquidity screen; not a point-in-time historical eligibility rule."
+  },
+  "decisions": [
+    {
+      "symbol": "588170",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 6655442915.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588200",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 4247873790.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159516",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 4603691110.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512480",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "515880",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 3987226691.6666665,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515050",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1262426598.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159583",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "159994",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 345969105.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512880",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1954654390.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512000",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1010202565.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512800",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1001814138.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512070",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 507438565.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159992",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1064175975.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512170",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "512010",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 496205825.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515120",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 744114490.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512690",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "159928",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 325712631.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515170",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 89624755.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515650",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 69642580.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512400",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1014272666.6666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515220",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 867142206.6666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159870",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 389157491.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516650",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 190050431.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159530",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 780088918.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562500",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 585789433.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159770",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 144647411.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159272",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 163054235.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159819",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 578002365.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159363",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1242313533.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159852",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 489118278.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159851",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 248285628.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512200",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 171526893.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159707",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 90558666.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515060",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 50506255.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159768",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 45451586.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159755",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 347805021.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159796",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 227507218.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159566",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 291291631.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515790",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 180612746.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159869",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 563912880.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512980",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 313087890.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516010",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 108149181.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159805",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 44374070.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159611",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 493601070.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561560",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 82740010.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159625",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 57365556.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562550",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 99071833.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512660",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 308331060.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512710",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "159227",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 224540598.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159241",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 105333981.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159865",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 209815225.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159698",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 122365131.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159825",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 96408698.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159587",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "159732",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 410691550.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562950",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 120957078.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159997",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 101424076.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561100",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 63004110.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159766",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 161673883.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562510",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 44424188.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159745",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 49824658.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516970",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 36304653.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516520",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 41587578.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516110",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 25053188.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515250",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 18781520.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588000",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 8155921126.666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159915",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 7225482631.666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510300",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 4690644693.333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "563360",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 4232242401.6666665,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159352",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 3478084753.3333335,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510310",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 936892258.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510500",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 3705864343.3333335,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588080",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1984103331.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159338",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 3291254511.6666665,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159361",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1525209151.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512100",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 4149275938.3333335,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512890",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 844648300.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510050",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1883618030.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159919",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 911075956.6666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159949",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 2153629490.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512050",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1573839525.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159995",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1002594248.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159558",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1923701665.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510330",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 617691700.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510880",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 673416716.6666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159845",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 2734237991.6666665,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588710",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1622335236.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510210",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1161207701.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560010",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 954253290.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515180",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 385448998.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159952",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "563800",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 434023788.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560780",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 919382138.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159781",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 543864626.6666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588050",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 424712895.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159351",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 514801860.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588060",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 566274698.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159259",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 570490290.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "563020",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 303837706.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512760",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "562590",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 651208153.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159922",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 638724273.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159967",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 919093250.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512500",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 565486200.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588220",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 571901635.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "589020",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1076589900.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515080",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 373012575.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "563300",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 809203480.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "589720",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 874070703.3333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159263",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 297238945.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159813",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 432803190.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159842",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 303347558.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588750",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 326771910.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561980",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 473959148.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159633",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 1070917385.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159859",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 203300545.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "589130",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 249466313.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159841",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 254300831.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516080",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 255086458.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512040",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 219228520.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159801",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 260124563.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515070",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 178660916.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588290",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 310440090.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588760",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 219414583.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515980",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 277323016.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512290",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 144525716.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515230",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 218015178.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "589070",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 250224761.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516510",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 194194500.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159307",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 108207000.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560860",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 313046940.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159327",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 289675108.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515100",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 145722071.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159381",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 523413676.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515300",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 124898130.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512570",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 162053421.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588790",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 269428131.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562800",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 226252301.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588020",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 272638738.3333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516160",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 152557206.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515000",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 182120488.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159141",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 114387371.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516150",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 148566960.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512930",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 168063270.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159157",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 102966621.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159599",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 228105791.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512900",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 66854208.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516350",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 213500086.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516020",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 106674586.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159547",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "159883",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 84098871.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159382",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 245633975.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515030",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 135254025.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516310",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 204043161.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159667",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 177286943.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159828",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 66911091.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515290",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 109069093.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561910",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 98688470.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159209",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 102666798.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516120",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 87148850.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561580",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 91115988.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159652",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 173543760.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516640",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 203935406.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159929",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 92602896.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510720",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 142258531.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159938",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 57002735.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "589120",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 195246125.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159246",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 168090980.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159387",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 271506421.6666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560280",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 137677660.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159325",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 180768731.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159622",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 139537108.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588780",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 229770421.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515210",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 82036985.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159147",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 36838240.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159278",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 159237258.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560080",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 72510021.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512700",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 107289998.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "589010",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 104440918.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159993",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 96136378.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159608",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 107352958.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159748",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 100166271.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516820",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 46455225.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "589030",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 102430666.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159158",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 38082566.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159839",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 63286571.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159142",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 114008388.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512680",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 70244881.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159692",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 93053525.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159368",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 178161126.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512670",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 80717650.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159840",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 74981631.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159837",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 43765231.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159876",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 81997070.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159559",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 108228411.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561160",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 53621736.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159998",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 97146423.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159736",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 22083073.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159847",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 29803788.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159857",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 63164923.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159930",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 106881720.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159242",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 133063705.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159582",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 127448638.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510230",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 88251646.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159388",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 160738146.66666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515400",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 138209638.33333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516780",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 76816218.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159758",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 49010745.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512940",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 43198213.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159133",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 35682713.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "589210",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 47638048.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159309",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 67892943.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159697",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 63074210.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588730",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 108156361.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159887",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 99111020.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516860",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 55913401.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562930",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 67249840.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159549",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 17040756.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510150",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 35351400.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159140",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 79375026.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516630",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 65066001.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561330",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 61300933.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516670",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 40416301.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588130",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 85906618.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588830",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 90351935.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159858",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 40460350.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516090",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 42952998.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159875",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 68127805.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159695",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 69003996.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159507",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "159581",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 30956820.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515700",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 46853928.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561360",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 78884436.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159310",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 28876340.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588110",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 57155645.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159258",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 32707080.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159807",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 45439785.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159671",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 47897668.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515260",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 67266328.33333333,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516920",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 49858968.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516810",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 80109590.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515630",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 53140966.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560570",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 21627986.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159638",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 38796731.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159905",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 47002863.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562960",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 35969573.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "561170",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 39568521.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159665",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 72999905.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516100",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 37405765.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515710",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 21404225.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159597",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 38973201.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159871",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 40295528.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "563380",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 48135600.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516570",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 31381810.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560770",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 24424243.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512560",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 53690825.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "588700",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 65880608.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159867",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 33322288.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159996",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 66682798.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159731",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "515970",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 77103141.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159663",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 93321421.66666667,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512810",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 34970973.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159129",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 20641000.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159305",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "560260",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 11439455.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159880",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 34230291.666666664,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510810",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 34391995.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "510630",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 46688283.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159146",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 28553903.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159715",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 59854010.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159713",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 55245078.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159647",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 34024620.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515370",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 16743488.333333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159775",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 18504248.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512950",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 12920276.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562880",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 22225446.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159526",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 27123158.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159525",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 22389631.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159790",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 23707930.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515950",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 12743550.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516880",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 15708998.333333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159606",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 16009526.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159806",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 13844145.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159213",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 34210115.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562860",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 16344771.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515900",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 6687188.333333333,
+      "reason": "below liquidity threshold"
+    },
+    {
+      "symbol": "159835",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 24208971.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159175",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 22681041.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512120",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 16840010.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562600",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 28122885.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560880",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 18634536.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516130",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 12698271.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159511",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 25862041.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "516770",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 42670888.333333336,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560150",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 7175345.0,
+      "reason": "below liquidity threshold"
+    },
+    {
+      "symbol": "159155",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 23605151.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512600",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 15519410.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562970",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 15578526.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159898",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 13270613.333333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562360",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 17919856.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159637",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 12427093.333333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512620",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 14311648.333333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512460",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 16373145.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159864",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 12309300.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159811",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 30921385.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "512580",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 8207120.0,
+      "reason": "below liquidity threshold"
+    },
+    {
+      "symbol": "159160",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 18141396.666666668,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159138",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 10996710.0,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159551",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 22257358.333333332,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159172",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 12621153.333333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560580",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 13910146.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "563010",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 12290781.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "515190",
+      "qualified": false,
+      "cache_state": "incomplete",
+      "reason": "cache not ready"
+    },
+    {
+      "symbol": "159253",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 7721068.333333333,
+      "reason": "below liquidity threshold"
+    },
+    {
+      "symbol": "562910",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 13763341.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159208",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 16681826.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159260",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 10905868.333333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "560680",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 14777916.666666666,
+      "reason": "passed"
+    },
+    {
+      "symbol": "159843",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 6999753.333333333,
+      "reason": "below liquidity threshold"
+    },
+    {
+      "symbol": "159940",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 5992235.0,
+      "reason": "below liquidity threshold"
+    },
+    {
+      "symbol": "561700",
+      "qualified": true,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 11153288.333333334,
+      "reason": "passed"
+    },
+    {
+      "symbol": "562990",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 5649408.333333333,
+      "reason": "below liquidity threshold"
+    },
+    {
+      "symbol": "516730",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 3568771.6666666665,
+      "reason": "below liquidity threshold"
+    },
+    {
+      "symbol": "159669",
+      "qualified": false,
+      "cache_state": "ready",
+      "average_amount_60d_CNY": 4711550.0,
+      "reason": "below liquidity threshold"
+    }
+  ]
+}

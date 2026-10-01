@@ -15,8 +15,8 @@ from quanto.data.validation import validate_chunk
 URL = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get"
 
 
-def transport(params: dict, timeout: float) -> bytes:
-    request = Request(URL + "?" + urlencode(params), headers={"User-Agent": "Mozilla/5.0", "Referer": "https://gu.qq.com/"})
+def transport(params: dict, timeout: float, url: str | None = None) -> bytes:
+    request = Request((url or URL) + "?" + urlencode(params), headers={"User-Agent": "Mozilla/5.0", "Referer": "https://gu.qq.com/"})
     with urlopen(request, timeout=timeout) as response:
         return response.read()
 
@@ -42,7 +42,11 @@ class TencentProvider:
         try:
             for year in range(start_day.year, end_day.year + 1, 2):
                 params = {"_var": f"kline_dayqfq{year}", "param": f"{symbol},day,{year}-01-01,{year+1}-12-31,640,qfq"}
-                raw = self.transport(params, context.remaining())
+                if self.transport is transport:
+                    from quanto.data.providers.sdk_call import run_http_call
+                    raw = run_http_call(params, context)
+                else:
+                    raw = self.transport(params, context.remaining())
                 context.remaining()
                 parsed = json.loads(raw.decode().split("=", 1)[-1].strip().rstrip(";"))
                 if parsed.get("code") != 0:

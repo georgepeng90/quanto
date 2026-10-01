@@ -135,3 +135,55 @@ def test_sdk_timeout_reaps_child_without_publishing(monkeypatch):
     with pytest.raises(MarketDataError):
         run_sdk_call("tool_trade_date_hist_sina", {}, FetchContext(time.monotonic() + .15, lambda: False))
     assert children[0].poll() is not None
+
+
+@pytest.mark.parametrize("mode", ["complete", "trickling", "cancelled"])
+def test_tencent_default_http_transport_obeys_total_deadline(monkeypatch, mode):
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    import threading
+    import quanto.data.providers.tencent as tencent
+    from quanto.data.providers.base import FetchContext
+    stopped, received, cancelled = threading.Event(), threading.Event(), threading.Event()
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            payload = response() if mode == "complete" else b" " * 500
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            received.set()
+            if mode == "cancelled":
+                cancelled.set()
+            try:
+                if mode == "complete":
+                    self.wfile.write(payload)
+                    return
+                for byte in payload:
+                    if stopped.wait(.01):
+                        break
+                    self.wfile.write(bytes([byte]))
+                    self.wfile.flush()
+            except OSError:
+                pass
+        def log_message(self, *args):
+            pass
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": .02}, daemon=True)
+    thread.start()
+    monkeypatch.setattr(tencent, "URL", f"http://127.0.0.1:{server.server_port}/")
+    started = time.monotonic()
+    try:
+        context = FetchContext(started + (2 if mode == "trickling" else 10), cancelled.is_set)
+        if mode == "complete":
+            chunk = tencent.TencentProvider().fetch(request(), context)
+            assert chunk.source.actual_mode == "day" and len(chunk.frame) == 1
+        else:
+            with pytest.raises(MarketDataError) as failure:
+                tencent.TencentProvider().fetch(request(), context)
+            assert failure.value.code == ("CANCELLED" if mode == "cancelled" else "FAILED")
+        assert received.is_set()
+        assert time.monotonic() - started < 3
+    finally:
+        stopped.set()
+        server.shutdown()
+        server.server_close()
+        thread.join(2)

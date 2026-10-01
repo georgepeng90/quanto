@@ -95,10 +95,16 @@ class MarketStore:
                 raise ValueError("snapshot identity mismatch")
             manifest = SnapshotManifest.model_validate_json(data)
             for fragment in manifest.fragments:
-                path = self.object_path(fragment)
-                evidence = self._path(f"evidence/{fragment.source_evidence_hash[:2]}/{fragment.source_evidence_hash}.bin")
-                if not path.is_file() or file_hash(path) != fragment.object_hash or not evidence.is_file() or file_hash(evidence) != fragment.source_evidence_hash:
-                    raise ValueError("market fragment or evidence hash mismatch")
+                self.verify_fragment(fragment)
             return manifest
+        except (ValueError, OSError) as exc:
+            raise MarketDataError("INTEGRITY_ERROR", str(exc)) from exc
+
+    def verify_fragment(self, fragment: FragmentRef) -> None:
+        try:
+            path = self.object_path(fragment)
+            evidence = self._path(f"evidence/{fragment.source_evidence_hash[:2]}/{fragment.source_evidence_hash}.bin")
+            if not path.is_file() or file_hash(path) != fragment.object_hash or not evidence.is_file() or file_hash(evidence) != fragment.source_evidence_hash:
+                raise ValueError("market fragment or evidence hash mismatch")
         except (ValueError, OSError) as exc:
             raise MarketDataError("INTEGRITY_ERROR", str(exc)) from exc

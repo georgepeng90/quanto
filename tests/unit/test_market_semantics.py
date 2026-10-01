@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from quanto.data import MarketData
-from quanto.data.contracts import MarketDataError
+from quanto.data.contracts import DataRequirement, MarketDataError, PriceBasis
 from quanto.data.imports import import_table
 from quanto.data.validation import validate_chunk
 from tests.fixtures.market_data_cases import market_case
@@ -28,3 +28,23 @@ def test_verified_units_must_be_normalized_to_declared_currency(units):
     _, bars, _ = market_case("1d")
     with pytest.raises(MarketDataError, match="verified units"):
         validate_chunk(replace(bars, source=bars.source.model_copy(update={"units": units})))
+
+
+def test_import_requires_resolved_research_basis(tmp_path):
+    _, bars, _ = market_case("1d")
+    request = bars.request.model_copy(update={"price_basis": PriceBasis(mode="vendor_research")})
+    with MarketData(tmp_path, providers=()) as market:
+        with pytest.raises(MarketDataError, match="resolved research basis"):
+            import_table(market.store, market.catalog, request, bars.frame, bars.source, bars.evidence)
+        assert not market.catalog.fragments(DataRequirement(requests=(request,)))
+
+
+def test_unresolved_persisted_research_basis_cannot_become_ready(tmp_path):
+    _, bars, calendar = market_case("1d")
+    request = bars.request.model_copy(update={"price_basis": PriceBasis(mode="vendor_research")})
+    with MarketData(tmp_path, providers=()) as market:
+        import_table(market.store, market.catalog, calendar.request, calendar.frame, calendar.source, calendar.evidence)
+        market.catalog.register_fragments(market.store.put_chunk(replace(bars, request=request)))
+        with pytest.raises(MarketDataError) as failure:
+            market.wait_ready(market.prefetch(DataRequirement(requests=(request, calendar.request))).id, 10)
+        assert failure.value.coverage.entries[0].reason == "UNRESOLVED_PRICE_BASIS"

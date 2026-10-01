@@ -83,6 +83,8 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                         bases_by_instrument.setdefault(instrument.key, set()).add(semantics)
                 if any(len(bases) > 1 for bases in bases_by_instrument.values()):
                     reason = "SEMANTIC_CONFLICT"
+                elif any(ref.request.price_basis.mode == "vendor_research" and not ref.request.price_basis.basis_id for ref in refs):
+                    reason = "UNRESOLVED_PRICE_BASIS"
                 elif calendar.empty:
                     reason = "CALENDAR_NOT_PREPARED"
                 else:

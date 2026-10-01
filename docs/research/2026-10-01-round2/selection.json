@@ -1,0 +1,164 @@
+{
+  "selected": [
+    "diversified_200_inverse_vol",
+    "diversified_200_equal",
+    "diversified_120_inverse_vol"
+  ],
+  "ranking": [
+    {
+      "candidate": "cash_buy_hold_40",
+      "baseline": true,
+      "worst_period_score": -0.056866332120180496,
+      "full_annual_return": 0.03141461363822384,
+      "full_max_drawdown": 0.208771648469803,
+      "full_sharpe": 0.36419774466135274,
+      "target_passed": false
+    },
+    {
+      "candidate": "diversified_200_inverse_vol",
+      "baseline": false,
+      "worst_period_score": -0.061844520673086434,
+      "full_annual_return": 0.043540475348262,
+      "full_max_drawdown": 0.14428928044683698,
+      "full_sharpe": 0.425555818492383,
+      "target_passed": false
+    },
+    {
+      "candidate": "diversified_200_equal",
+      "baseline": false,
+      "worst_period_score": -0.06982297235292106,
+      "full_annual_return": 0.04871482110876957,
+      "full_max_drawdown": 0.17146386201268193,
+      "full_sharpe": 0.4350851952500665,
+      "target_passed": false
+    },
+    {
+      "candidate": "guarded_momentum_200_v0.1",
+      "baseline": true,
+      "worst_period_score": -0.07999044000442895,
+      "full_annual_return": 0.032117284000805046,
+      "full_max_drawdown": 0.16646968356304648,
+      "full_sharpe": 0.4138072252620841,
+      "target_passed": false
+    },
+    {
+      "candidate": "cash_buy_hold_60",
+      "baseline": true,
+      "worst_period_score": -0.08188785898276346,
+      "full_annual_return": 0.04545351160309519,
+      "full_max_drawdown": 0.2858773667216822,
+      "full_sharpe": 0.3860050166869875,
+      "target_passed": false
+    },
+    {
+      "candidate": "buy_hold",
+      "baseline": true,
+      "worst_period_score": -0.10057188496024683,
+      "full_annual_return": 0.05653428927574011,
+      "full_max_drawdown": 0.32426031967290525,
+      "full_sharpe": 0.4120068729964232,
+      "target_passed": false
+    },
+    {
+      "candidate": "diversified_120_inverse_vol",
+      "baseline": false,
+      "worst_period_score": -0.10558256294613211,
+      "full_annual_return": 0.01926876050002324,
+      "full_max_drawdown": 0.16553481441427265,
+      "full_sharpe": 0.22684424304400796,
+      "target_passed": false
+    },
+    {
+      "candidate": "diversified_120_equal",
+      "baseline": false,
+      "worst_period_score": -0.10796544900267918,
+      "full_annual_return": 0.022943355787579778,
+      "full_max_drawdown": 0.1782991898427052,
+      "full_sharpe": 0.2459300295929293,
+      "target_passed": false
+    },
+    {
+      "candidate": "breadth_200_bear0",
+      "baseline": false,
+      "worst_period_score": -0.1205734023948381,
+      "full_annual_return": 0.03499505827939853,
+      "full_max_drawdown": 0.36693789735215077,
+      "full_sharpe": 0.2712897246466491,
+      "target_passed": false
+    },
+    {
+      "candidate": "core60_momentum60",
+      "baseline": false,
+      "worst_period_score": -0.133911808499325,
+      "full_annual_return": 0.07005566064233348,
+      "full_max_drawdown": 0.34109524454232754,
+      "full_sharpe": 0.45688359760495767,
+      "target_passed": false
+    },
+    {
+      "candidate": "core60_momentum20",
+      "baseline": false,
+      "worst_period_score": -0.13527330533985304,
+      "full_annual_return": 0.057885867372896804,
+      "full_max_drawdown": 0.37000106158003276,
+      "full_sharpe": 0.39656294179331264,
+      "target_passed": false
+    },
+    {
+      "candidate": "breadth_120_bear20",
+      "baseline": false,
+      "worst_period_score": -0.1592521970517205,
+      "full_annual_return": 0.03907377998870931,
+      "full_max_drawdown": 0.3319802570403778,
+      "full_sharpe": 0.29141201012022366,
+      "target_passed": false
+    },
+    {
+      "candidate": "breadth_200_bear20",
+      "baseline": false,
+      "worst_period_score": -0.17070326008690212,
+      "full_annual_return": 0.02912108298991245,
+      "full_max_drawdown": 0.42160200387315316,
+      "full_sharpe": 0.24272165323992925,
+      "target_passed": false
+    },
+    {
+      "candidate": "core40_momentum60",
+      "baseline": false,
+      "worst_period_score": -0.17450792784365882,
+      "full_annual_return": 0.0631264152748745,
+      "full_max_drawdown": 0.3764257960071775,
+      "full_sharpe": 0.4027920163701349,
+      "target_passed": false
+    },
+    {
+      "candidate": "breadth_120_bear0",
+      "baseline": false,
+      "worst_period_score": -0.1849007359253388,
+      "full_annual_return": 0.02388215828882867,
+      "full_max_drawdown": 0.3484452703145229,
+      "full_sharpe": 0.21807080326257516,
+      "target_passed": false
+    },
+    {
+      "candidate": "core40_momentum20",
+      "baseline": false,
+      "worst_period_score": -0.19284686995553252,
+      "full_annual_return": 0.043573731043530906,
+      "full_max_drawdown": 0.41975736524363316,
+      "full_sharpe": 0.3121151945922093,
+      "target_passed": false
+    },
+    {
+      "candidate": "trend_20_20_k3",
+      "baseline": true,
+      "worst_period_score": -0.2828308399809041,
+      "full_annual_return": 0.014583109236678604,
+      "full_max_drawdown": 0.507519420262287,
+      "full_sharpe": 0.17832024971586344,
+      "target_passed": false
+    }
+  ],
+  "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039",
+  "note": "Historical diagnostic shortlist; selection does not mean the target passed."
+}

@@ -1,0 +1,423 @@
+{
+  "completed_grid": 68,
+  "curve_recomputations": [
+    {
+      "candidate": "trend_20_20_k3",
+      "period": "early",
+      "summary_sha256": "44e8878af8f480914eb9de0ad09af39ec24c21c956b0cfa05547c11afa8c9491",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "guarded_momentum_200_v0.1",
+      "period": "early",
+      "summary_sha256": "01233653b039b08b8ca1a748e9cb873a059b5456dae8eedaf4fc66d4f94edcfd",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "buy_hold",
+      "period": "early",
+      "summary_sha256": "353f9ba06c753c0cbc5ace7648107d7e1459b54fd10a4f655a86d04da42c9fa6",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "cash_buy_hold_40",
+      "period": "early",
+      "summary_sha256": "bee43c66e752919d169a7554cd18c4dc2f489f6cb0059e18c987c7c220366226",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "cash_buy_hold_60",
+      "period": "early",
+      "summary_sha256": "b33bfcac6f688d522bf9e5f9c9d1c95dd72555c0d5bd0ec53ceae5ebb94f90eb",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_120_equal",
+      "period": "early",
+      "summary_sha256": "bfe12c5ee245f509178cf05ebb22d8e1ce080d8a9ea0ec3a77bb0f59c09fce76",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_120_inverse_vol",
+      "period": "early",
+      "summary_sha256": "4207479e7216990cdff64037a02d3ec407b9737404a75a6afbc266b37a66cf9a",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_120_bear0",
+      "period": "early",
+      "summary_sha256": "21e51262b1ddc4f0e9e08d9827c4f86c82dab26ce802c696075fd8573a1ff718",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_120_bear20",
+      "period": "early",
+      "summary_sha256": "586633321918f58617ad2bff4def91217816e01e05f49ebbf22c374d1cfff7fe",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_200_equal",
+      "period": "early",
+      "summary_sha256": "68924ccafcdd94355f442028c6cd6c282a268df8b534a3eeea46a7561332851a",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_200_inverse_vol",
+      "period": "early",
+      "summary_sha256": "1c6e329ee83044ad7ca0641ca9072b9bbf7db913cd44e7bc15ee44c043bd552e",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_200_bear0",
+      "period": "early",
+      "summary_sha256": "3cc5a7378c41aab96bec5cf4ae94322d31adedd01aa9bc9f0bb0e6cd21320986",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_200_bear20",
+      "period": "early",
+      "summary_sha256": "7dddd4abeb54393d3282993df410aaf150b220102a46796c784ba4e41e921aec",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core40_momentum20",
+      "period": "early",
+      "summary_sha256": "2e1b81dc2bbdec35ae826aff8cfc4dee399e5e303425442a41559fdde6e5a497",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core40_momentum60",
+      "period": "early",
+      "summary_sha256": "52b9dcbc2c05b999562b8efb5469fecd3c2c570b74fe91ee9ac1e07246cf448e",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core60_momentum20",
+      "period": "early",
+      "summary_sha256": "115277b18cf5814889c8f9c30b8ef05376ef34ffee662022d49e9cf244103f95",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core60_momentum60",
+      "period": "early",
+      "summary_sha256": "fb97e12cd86443453d14242ecc6fd5228b9f97bd361eb8b7aa3e9479d575c916",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "trend_20_20_k3",
+      "period": "middle",
+      "summary_sha256": "5dd56c680e73a04bfc1a60ed76b2a46043032fdfa95a5c8e24bf6e53072a0e57",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "guarded_momentum_200_v0.1",
+      "period": "middle",
+      "summary_sha256": "8d8f4a34bf7edfa4651ee0e7ee5cc6def80fa97651560a5d35f6e3f79d773da1",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "buy_hold",
+      "period": "middle",
+      "summary_sha256": "5a5be417071952fd5ce34dc14110ed04c5b8b1f9ade561b2ab15e1810c76a65c",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "cash_buy_hold_40",
+      "period": "middle",
+      "summary_sha256": "850b8221154621d1c092c30757d869651e99916994db253850f537449cdf29f2",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "cash_buy_hold_60",
+      "period": "middle",
+      "summary_sha256": "42f352daacd4cb8d50f9a26fafe8195262347fec789744085ce2a28827e7d92f",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_120_equal",
+      "period": "middle",
+      "summary_sha256": "f0952c7b5bfe13d4c3122c6027c25a314eef11ea8aae04d6b28e0a51b6d37c07",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_120_inverse_vol",
+      "period": "middle",
+      "summary_sha256": "4207f90496e9b13cfd7e0961f715d8aee7937445066c5a42f70019056a2133cc",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_120_bear0",
+      "period": "middle",
+      "summary_sha256": "6ee2581d8976abf27c807f479a955a509ad8b8bf545245689698f26f14a390b1",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_120_bear20",
+      "period": "middle",
+      "summary_sha256": "35bdb9ce6255ee67bccc1fcc08c5bfd60802c5216c14646e9525d42ebf331136",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_200_equal",
+      "period": "middle",
+      "summary_sha256": "a255c67d1a3f3607722ae033e42f10645bdc1be5911d8d58e73e69aa0531a6e3",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_200_inverse_vol",
+      "period": "middle",
+      "summary_sha256": "89b91911febefdfa5a4dcd9f84dce4e05619916034fc6fb5ceaaf91eddf778dd",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_200_bear0",
+      "period": "middle",
+      "summary_sha256": "553aa4f417641e3f8519ca64c09a026b847a423f6ee9e478cbf01acefca64e74",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_200_bear20",
+      "period": "middle",
+      "summary_sha256": "c31b8657c8d2c73082c5a3dbd1d9581d904a0d94331a7e517207ff9467b58a53",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core40_momentum20",
+      "period": "middle",
+      "summary_sha256": "bfbcb97093992723c83d2354f6a527d896aa7b7e31b66b0cfe552cb4e6a1bf33",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core40_momentum60",
+      "period": "middle",
+      "summary_sha256": "9db222d08f125508ab94509c6c1727890c8d6b36d58409a81a282f5caf2bec18",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core60_momentum20",
+      "period": "middle",
+      "summary_sha256": "4a722e1bcc821598f46199a09da6957f446bfa531495107f82f1616947b6da3b",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core60_momentum60",
+      "period": "middle",
+      "summary_sha256": "f905e6d4ae241c5ab6670b22da7afe2d06771cf9b18eee7ffd18dcdacad0d502",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "trend_20_20_k3",
+      "period": "recent",
+      "summary_sha256": "0ed58506d8495a099f907e453d1c807986c98eef571d4be94ce05b08811f9288",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "guarded_momentum_200_v0.1",
+      "period": "recent",
+      "summary_sha256": "047b64a0491c071fe9118b74634ffbaa6ad446a9daedf2d528c97741a0bcc20e",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "buy_hold",
+      "period": "recent",
+      "summary_sha256": "c2d2fb3533351b6b02d30edf0770eca4666880c75d1cfa4b60bdcb3610097df5",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "cash_buy_hold_40",
+      "period": "recent",
+      "summary_sha256": "685fb13fa580ce3c8502b2a0bc57c79ce6b20c19e623e7d4e528c63edf53b291",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "cash_buy_hold_60",
+      "period": "recent",
+      "summary_sha256": "8ac0c1b806cd5ed9757c447cf5d017ebb7ad2e5cb15f2f489570864f14eeddb0",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_120_equal",
+      "period": "recent",
+      "summary_sha256": "f50e1c4186127cea8e6985ada71c6d16f20a11ece168a8f76d4aa9a1553094f7",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_120_inverse_vol",
+      "period": "recent",
+      "summary_sha256": "ca1bb05601ba93ab603081b698086b691174b5b95f515469109f73354c7e8c08",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_120_bear0",
+      "period": "recent",
+      "summary_sha256": "08219cbcbc9a0c645d81ffe6217cb156eb7b23afe8785eee389c9cc0fb749102",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_120_bear20",
+      "period": "recent",
+      "summary_sha256": "7ea286148f81cc16c25ceaa159ae11c08ebe863ce9f287eaedcd7ec282392aa2",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_200_equal",
+      "period": "recent",
+      "summary_sha256": "96aa7ca2b2ee77e75c584aafc8833f0038f9c85b2fb9d1e75434dd8ca675ead2",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_200_inverse_vol",
+      "period": "recent",
+      "summary_sha256": "be4cf983e6d41dff2e493dc5b83d8c2d139da75c65299de92d636ff00144fdb2",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_200_bear0",
+      "period": "recent",
+      "summary_sha256": "31120d136397ad8609a074e75384ecf50569f2b07c5d4caa2a1dbe457c490be9",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_200_bear20",
+      "period": "recent",
+      "summary_sha256": "8fa374a3dedfd04cd7baf0bf7d96eecd4d408ee2dd67c843ea0dcde9e857b8fe",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core40_momentum20",
+      "period": "recent",
+      "summary_sha256": "df9b1d978d42025442e66d7bd720db5a7c4d079bf7da090595df9ae6f1008350",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core40_momentum60",
+      "period": "recent",
+      "summary_sha256": "f9bb928e593ea4844e66362af588add5947cddb340384816c99edcc9b4bfcee3",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core60_momentum20",
+      "period": "recent",
+      "summary_sha256": "364e89b8d7a01f64d357e3757b3510215a45aed29c8f33a005b9620b2f00d970",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core60_momentum60",
+      "period": "recent",
+      "summary_sha256": "7a35855f81aac6d12a800d411f68fa702d3c05bbeb654e9a931853dd087e217b",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "trend_20_20_k3",
+      "period": "full",
+      "summary_sha256": "1f9421ff1a7b112781dd1fc8dddc8630d852f0717566f356ee6ac0f86eb9fa08",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "guarded_momentum_200_v0.1",
+      "period": "full",
+      "summary_sha256": "f461de04c095c41331a0a7933d7eddb900bf8eae377e79b526bbec53a1db5e60",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "buy_hold",
+      "period": "full",
+      "summary_sha256": "40c22769b071c934cfc99620b6bd4abb3498ccca1156c2f9143b0654bc4946a4",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "cash_buy_hold_40",
+      "period": "full",
+      "summary_sha256": "09f974b4b2f696bf2fd4bbc9648d6fd6b5713f586b1fa4b2e9f87399a5afe723",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "cash_buy_hold_60",
+      "period": "full",
+      "summary_sha256": "ac82bdd57d85b0c1ee5625a43e30024a76ab02476db28ef419b78ee65455df25",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_120_equal",
+      "period": "full",
+      "summary_sha256": "acca9333292170a7375ed78ce68ff7fa727701ca2d31e8a7fc95f7a585feec02",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_120_inverse_vol",
+      "period": "full",
+      "summary_sha256": "1c25ca7b54cb9da8015cea251fb22cc16bdaf4c54aaa4473292abc470ddfc784",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_120_bear0",
+      "period": "full",
+      "summary_sha256": "7ab1cb889f22ced47be07eb8a7ffa08cc46a50733735f1aa8420ab7c61b49f34",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_120_bear20",
+      "period": "full",
+      "summary_sha256": "e9694e17a1177d4c26dd3e427fdb7dbb9147af2410e1c2940dd56196169f76f5",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_200_equal",
+      "period": "full",
+      "summary_sha256": "725daceedaaf5ca26ec4a83484b822d4630718c5777063ea86a817f254bf1ffa",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "diversified_200_inverse_vol",
+      "period": "full",
+      "summary_sha256": "19df09440ef9560608ba02fd275e57fe2fe41d014123054039b7c0e738696fa6",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_200_bear0",
+      "period": "full",
+      "summary_sha256": "f30e8c50d9c9b97af4330dfb4c2eb2f5c7680eae071db2bb73e1be8ac9329a18",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "breadth_200_bear20",
+      "period": "full",
+      "summary_sha256": "684f8df34a0671275fb08bec3bcabc22ab471f571710d0a036ec742fb92bb8b7",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core40_momentum20",
+      "period": "full",
+      "summary_sha256": "d0d807c963aac700be216dec64ccc3b4301b2a4205a867812eec50081c401e52",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core40_momentum60",
+      "period": "full",
+      "summary_sha256": "0bf4d21c5fc60c49fabef6fce858e8de383427fd3d2f0f58c0fd72d342a675f8",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core60_momentum20",
+      "period": "full",
+      "summary_sha256": "b076d6154efabc2a8227dfca44ca003e69bed0245ff3ff19e7ad93fca001cebf",
+      "curve_metrics_recomputed": true
+    },
+    {
+      "candidate": "core60_momentum60",
+      "period": "full",
+      "summary_sha256": "405c7981ecd602b7966f20ef16a8b9865cf051c881c70071332159f450b7055a",
+      "curve_metrics_recomputed": true
+    }
+  ],
+  "prior_runs_exactly_replayed": 12,
+  "behavior_tests_passed": 78,
+  "unrelated_source_drift": [
+    {
+      "path": "src/quanto/workbench/service.py",
+      "frozen_sha256": "66a26436718877e3ec65bd919ca770782185d3e7463491b6b2f7c477fc9ea13c",
+      "current_sha256": "33c0938715ed4f43a3a9594f6568a13be1e9615ebcffe3003f5e10c809f389e0",
+      "reason": "Concurrent change adds strategy_name metadata; service is not imported by offline runner. All numerical engine/strategy/data code matches frozen hashes."
+    }
+  ]
+}

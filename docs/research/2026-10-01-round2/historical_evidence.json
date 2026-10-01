@@ -1,0 +1,3130 @@
+[
+  {
+    "candidate": "trend_20_20_k3",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.1196593109916263,
+      "annual_return": -0.0431570684531859,
+      "volatility": 0.2194390926706202,
+      "sharpe": -0.09119743009472975,
+      "max_drawdown": 0.3662237811119313,
+      "calmar": -0.11784343529563288,
+      "final_equity": 880340.6890083737,
+      "fill_count": 988,
+      "round_trip_count": 113,
+      "open_lot_count": 6,
+      "realized_pnl": -121511.48703670688,
+      "unrealized_pnl": 1852.176045080007,
+      "turnover": 62.720301264644156,
+      "commission_paid": 15707.05039163,
+      "slippage_cost": 30914.460599996255,
+      "execution_cost": 46621.51099162626,
+      "average_invested_ratio": 0.7082996226664742,
+      "average_holding_sessions": 15.169558744785139,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": -0.052078920648100935
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.041696833551241985
+      },
+      {
+        "period": "2021",
+        "return": 0.03347110221735705
+      },
+      {
+        "period": "2022",
+        "return": -0.1822678105975839
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "guarded_momentum_200_v0.1",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.00940146332689018,
+      "annual_return": 0.0032444017770942857,
+      "volatility": 0.08477689473794993,
+      "sharpe": 0.08077900202332085,
+      "max_drawdown": 0.16646968356304648,
+      "calmar": 0.019489445210998702,
+      "final_equity": 1009401.4633268903,
+      "fill_count": 429,
+      "round_trip_count": 79,
+      "open_lot_count": 7,
+      "realized_pnl": 5681.670422461379,
+      "unrealized_pnl": 3719.792904430011,
+      "turnover": 20.05717823913141,
+      "commission_paid": 5359.32172311,
+      "slippage_cost": 10790.414949998763,
+      "execution_cost": 16149.736673108764,
+      "average_invested_ratio": 0.2512990139199599,
+      "average_holding_sessions": 15.992357308019958,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.07698185367041555
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.09978321895401066
+      },
+      {
+        "period": "2021",
+        "return": 0.06901902560799589
+      },
+      {
+        "period": "2022",
+        "return": -0.14143850592988416
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "buy_hold",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.1781452734441502,
+      "annual_return": 0.058390064045031886,
+      "volatility": 0.1866160534445696,
+      "sharpe": 0.3976554181579888,
+      "max_drawdown": 0.23776760611412573,
+      "calmar": 0.24557619517355667,
+      "final_equity": 1178145.27344415,
+      "fill_count": 245,
+      "round_trip_count": 0,
+      "open_lot_count": 7,
+      "realized_pnl": 19373.74121485,
+      "unrealized_pnl": 158771.5322293,
+      "turnover": 0.7301368827828214,
+      "commission_paid": 1350.09170585,
+      "slippage_cost": 446.034849999951,
+      "execution_cost": 1796.1265558499508,
+      "average_invested_ratio": 0.7815407412349583,
+      "average_holding_sessions": 183.73339940535183,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.24572566378767557
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.2932094992941485
+      },
+      {
+        "period": "2021",
+        "return": 0.09589209963094625
+      },
+      {
+        "period": "2022",
+        "return": -0.16869161103696662
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "cash_buy_hold_40",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.08729547313616015,
+      "annual_return": 0.029394526234483465,
+      "volatility": 0.10710530841281428,
+      "sharpe": 0.3241032190084872,
+      "max_drawdown": 0.1530463184427988,
+      "calmar": 0.19206294234035884,
+      "final_equity": 1087295.47313616,
+      "fill_count": 7,
+      "round_trip_count": 0,
+      "open_lot_count": 7,
+      "realized_pnl": 0.0,
+      "unrealized_pnl": 87295.47313616006,
+      "turnover": 0.3590662593444278,
+      "commission_paid": 80.00766383999999,
+      "slippage_cost": 199.91919999997697,
+      "execution_cost": 279.92686383997693,
+      "average_invested_ratio": 0.45881586117883255,
+      "average_holding_sessions": null,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.15487586347968552
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.15153587313615868
+      },
+      {
+        "period": "2021",
+        "return": 0.058192629134078855
+      },
+      {
+        "period": "2022",
+        "return": -0.10771133525075982
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "cash_buy_hold_60",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.13093237703528993,
+      "annual_return": 0.04351163944161307,
+      "volatility": 0.15394150882673646,
+      "sharpe": 0.3537803816972762,
+      "max_drawdown": 0.2095769542963628,
+      "calmar": 0.20761652724508656,
+      "final_equity": 1130932.37703529,
+      "fill_count": 7,
+      "round_trip_count": 0,
+      "open_lot_count": 7,
+      "realized_pnl": 0.0,
+      "unrealized_pnl": 130932.37703529009,
+      "turnover": 0.5125158036772485,
+      "commission_paid": 120.04941471000001,
+      "slippage_cost": 299.973549999963,
+      "execution_cost": 420.022964709963,
+      "average_invested_ratio": 0.6550493655660271,
+      "average_holding_sessions": null,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.1985127673788153
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.2273452770352904
+      },
+      {
+        "period": "2021",
+        "return": 0.08189455883416508
+      },
+      {
+        "period": "2022",
+        "return": -0.1483033379661658
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_120_equal",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.07820952535437908,
+      "annual_return": -0.02779621947920674,
+      "volatility": 0.13123711451707018,
+      "sharpe": -0.14876559727684666,
+      "max_drawdown": 0.16033845904694488,
+      "calmar": -0.1733596521036066,
+      "final_equity": 921790.4746456209,
+      "fill_count": 1549,
+      "round_trip_count": 174,
+      "open_lot_count": 14,
+      "realized_pnl": -82300.01442423907,
+      "unrealized_pnl": 4090.4890698600075,
+      "turnover": 17.73283204964853,
+      "commission_paid": 9139.965304379999,
+      "slippage_cost": 8801.76004999906,
+      "execution_cost": 17941.725354379058,
+      "average_invested_ratio": 0.40738869551013673,
+      "average_holding_sessions": 30.625571310324972,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": -0.010629135010853719
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.040606125369300416
+      },
+      {
+        "period": "2021",
+        "return": 0.022526535316262697
+      },
+      {
+        "period": "2022",
+        "return": -0.1336941423525133
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_120_inverse_vol",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.07472713359770955,
+      "annual_return": -0.02652641668639588,
+      "volatility": 0.12286711964809156,
+      "sharpe": -0.1569746367624278,
+      "max_drawdown": 0.15811229251947245,
+      "calmar": -0.16776947739929202,
+      "final_equity": 925272.8664022904,
+      "fill_count": 1557,
+      "round_trip_count": 174,
+      "open_lot_count": 11,
+      "realized_pnl": -78222.54666790721,
+      "unrealized_pnl": 3495.413070198174,
+      "turnover": 18.647145613838934,
+      "commission_paid": 9234.03634771,
+      "slippage_cost": 9317.197249999,
+      "execution_cost": 18551.233597709,
+      "average_invested_ratio": 0.38910973612702754,
+      "average_holding_sessions": 28.65042878464639,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": -0.007146743254184185
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.058390398722431236
+      },
+      {
+        "period": "2021",
+        "return": 0.0022280461194352785
+      },
+      {
+        "period": "2022",
+        "return": -0.12771705042301318
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_120_bear0",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.16328500995176753,
+      "annual_return": -0.05984400218422692,
+      "volatility": 0.18554879183720732,
+      "sharpe": -0.23958412183948852,
+      "max_drawdown": 0.25011346748222374,
+      "calmar": -0.23926741245343056,
+      "final_equity": 836714.9900482325,
+      "fill_count": 621,
+      "round_trip_count": 77,
+      "open_lot_count": 0,
+      "realized_pnl": -163285.00995176728,
+      "unrealized_pnl": 0.0,
+      "turnover": 41.26761485085628,
+      "commission_paid": 9410.22005177,
+      "slippage_cost": 18220.189899997826,
+      "execution_cost": 27630.409951767826,
+      "average_invested_ratio": 0.4187118664490065,
+      "average_holding_sessions": 13.65258493497357,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": -0.09570461960824217
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": -0.0972422173243489
+      },
+      {
+        "period": "2021",
+        "return": 0.03142640701337962
+      },
+      {
+        "period": "2022",
+        "return": -0.1013965901782592
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_120_bear20",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.12175262586909563,
+      "annual_return": -0.0439452595406401,
+      "volatility": 0.18662880648335298,
+      "sharpe": -0.1473018132824585,
+      "max_drawdown": 0.2306138750221608,
+      "calmar": -0.19055774305174478,
+      "final_equity": 878247.3741309043,
+      "fill_count": 841,
+      "round_trip_count": 120,
+      "open_lot_count": 5,
+      "realized_pnl": -121692.33257132725,
+      "unrealized_pnl": -60.293297769975,
+      "turnover": 49.16760942502459,
+      "commission_paid": 11598.3993191,
+      "slippage_cost": 22775.226549997322,
+      "execution_cost": 34373.62586909732,
+      "average_invested_ratio": 0.49954285077562305,
+      "average_holding_sessions": 13.71055041562955,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": -0.05417223552557027
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": -0.051387028614621855
+      },
+      {
+        "period": "2021",
+        "return": 0.05530933308013686
+      },
+      {
+        "period": "2022",
+        "return": -0.12270021682680876
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_200_equal",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.02036486239380042,
+      "annual_return": 0.007002962401623902,
+      "volatility": 0.13570252984391146,
+      "sharpe": 0.11954930485716589,
+      "max_drawdown": 0.15365186950908993,
+      "calmar": 0.045576812205396645,
+      "final_equity": 1020364.8623938004,
+      "fill_count": 1225,
+      "round_trip_count": 109,
+      "open_lot_count": 11,
+      "realized_pnl": 18968.3484346907,
+      "unrealized_pnl": 1396.513959110012,
+      "turnover": 13.598094541123427,
+      "commission_paid": 7514.7143062,
+      "slippage_cost": 7253.02329999926,
+      "execution_cost": 14767.73760619926,
+      "average_invested_ratio": 0.4128941766811475,
+      "average_holding_sessions": 38.9953166839135,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.08794525273732579
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.11208041570896121
+      },
+      {
+        "period": "2021",
+        "return": 0.03729443559625967
+      },
+      {
+        "period": "2022",
+        "return": -0.1154604546068142
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.019201610802420888,
+      "annual_return": 0.00660542315984336,
+      "volatility": 0.12649022026749102,
+      "sharpe": 0.11557664935073858,
+      "max_drawdown": 0.1368998876658596,
+      "calmar": 0.048250026150245234,
+      "final_equity": 1019201.6108024209,
+      "fill_count": 1227,
+      "round_trip_count": 109,
+      "open_lot_count": 9,
+      "realized_pnl": 18214.976779315373,
+      "unrealized_pnl": 986.634023105344,
+      "turnover": 14.629912523520595,
+      "commission_paid": 7593.73969758,
+      "slippage_cost": 7807.149499999206,
+      "execution_cost": 15400.889197579207,
+      "average_invested_ratio": 0.3928828335374277,
+      "average_holding_sessions": 35.15630399737434,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.08678200114594625
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.12368707990616179
+      },
+      {
+        "period": "2021",
+        "return": 0.015536361786206099
+      },
+      {
+        "period": "2022",
+        "return": -0.10686062560869658
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_200_bear0",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.06511792048596754,
+      "annual_return": -0.02303868775389417,
+      "volatility": 0.18532161594821522,
+      "sharpe": -0.03293559945957712,
+      "max_drawdown": 0.19506942928188786,
+      "calmar": -0.11810506566152806,
+      "final_equity": 934882.0795140325,
+      "fill_count": 598,
+      "round_trip_count": 65,
+      "open_lot_count": 0,
+      "realized_pnl": -65117.920485967545,
+      "unrealized_pnl": 0.0,
+      "turnover": 36.25340130417351,
+      "commission_paid": 8950.73018597,
+      "slippage_cost": 17199.590299997883,
+      "execution_cost": 26150.32048596788,
+      "average_invested_ratio": 0.42078291870327567,
+      "average_holding_sessions": 15.857156826528174,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.002462469857557825
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": -0.01378737717543932
+      },
+      {
+        "period": "2021",
+        "return": -0.012591613249526401
+      },
+      {
+        "period": "2022",
+        "return": -0.03995969456687776
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_200_bear20",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.08167281370527579,
+      "annual_return": -0.02906217114028664,
+      "volatility": 0.18888460126479922,
+      "sharpe": -0.06152304412688125,
+      "max_drawdown": 0.2529062807162378,
+      "calmar": -0.11491280903733093,
+      "final_equity": 918327.1862947242,
+      "fill_count": 838,
+      "round_trip_count": 121,
+      "open_lot_count": 5,
+      "realized_pnl": -81610.16086051693,
+      "unrealized_pnl": -62.65284475998499,
+      "turnover": 46.7224708737129,
+      "commission_paid": 11540.069905280001,
+      "slippage_cost": 22509.543799997205,
+      "execution_cost": 34049.61370527721,
+      "average_invested_ratio": 0.5037663874560211,
+      "average_holding_sessions": 14.771071957819242,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": -0.014092423361750428
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.009472342618621177
+      },
+      {
+        "period": "2021",
+        "return": 0.0006081209176465041
+      },
+      {
+        "period": "2022",
+        "return": -0.090842776985945
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core40_momentum20",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.06242787007101669,
+      "annual_return": -0.022066518172943916,
+      "volatility": 0.1972438604136615,
+      "sharpe": -0.014196653976492182,
+      "max_drawdown": 0.3069613971430263,
+      "calmar": -0.07188694858155793,
+      "final_equity": 937572.1299289833,
+      "fill_count": 4986,
+      "round_trip_count": 0,
+      "open_lot_count": 272,
+      "realized_pnl": -34952.49615966773,
+      "unrealized_pnl": -27475.373911349994,
+      "turnover": 46.65905276824891,
+      "commission_paid": 32656.23512102,
+      "slippage_cost": 24794.534949997214,
+      "execution_cost": 57450.770071017214,
+      "average_invested_ratio": 0.7768292511828144,
+      "average_holding_sessions": 23.216617831728758,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.005152520272508676
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.11928972814536087
+      },
+      {
+        "period": "2021",
+        "return": 0.09252717851085546
+      },
+      {
+        "period": "2022",
+        "return": -0.23329212975280778
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core40_momentum60",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.038031403987367374,
+      "annual_return": -0.013331919033140571,
+      "volatility": 0.1990991291126655,
+      "sharpe": 0.03250638109824638,
+      "max_drawdown": 0.3223520176210365,
+      "calmar": -0.04135826147926843,
+      "final_equity": 961968.5960126326,
+      "fill_count": 4699,
+      "round_trip_count": 0,
+      "open_lot_count": 442,
+      "realized_pnl": 11032.563704457862,
+      "unrealized_pnl": -49063.96769182592,
+      "turnover": 29.60046565933045,
+      "commission_paid": 28409.87888737,
+      "slippage_cost": 16370.825099998265,
+      "execution_cost": 44780.703987368266,
+      "average_invested_ratio": 0.7617786420126232,
+      "average_holding_sessions": 35.057621767718636,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.02954898635615799
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.18348312784445886
+      },
+      {
+        "period": "2021",
+        "return": 0.09384233673885145
+      },
+      {
+        "period": "2022",
+        "return": -0.2569054175613731
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core60_momentum20",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.02344432159023202,
+      "annual_return": 0.008053933738102259,
+      "volatility": 0.18879810827844898,
+      "sharpe": 0.13722321753299696,
+      "max_drawdown": 0.2695286543027744,
+      "calmar": 0.029881549176789535,
+      "final_equity": 1023444.3215902321,
+      "fill_count": 4881,
+      "round_trip_count": 0,
+      "open_lot_count": 274,
+      "realized_pnl": 66672.73890672141,
+      "unrealized_pnl": -43228.417316489984,
+      "turnover": 26.209092983651335,
+      "commission_paid": 27980.99425977,
+      "slippage_cost": 14657.684149998488,
+      "execution_cost": 42638.67840976849,
+      "average_invested_ratio": 0.7895977876856076,
+      "average_holding_sessions": 42.565395604528085,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.09102471193375739
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.16153877318928167
+      },
+      {
+        "period": "2021",
+        "return": 0.12132191987891128
+      },
+      {
+        "period": "2022",
+        "return": -0.21422139948170404
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core60_momentum60",
+    "period": "early",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.02288012794028038,
+      "annual_return": 0.007861538114156685,
+      "volatility": 0.18890939110750715,
+      "sharpe": 0.13625196667806835,
+      "max_drawdown": 0.28354669322696335,
+      "calmar": 0.02772572666846078,
+      "final_equity": 1022880.1279402805,
+      "fill_count": 4778,
+      "round_trip_count": 0,
+      "open_lot_count": 500,
+      "realized_pnl": 109947.83226052104,
+      "unrealized_pnl": -87067.70432023983,
+      "turnover": 17.31563290580827,
+      "commission_paid": 26115.69450972,
+      "slippage_cost": 9810.577549999001,
+      "execution_cost": 35926.272059719005,
+      "average_invested_ratio": 0.7804250564280077,
+      "average_holding_sessions": 60.39693406756958,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": -0.06758039034352537,
+      "relative_return_difference": 0.09046051828380575
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.19421088787158913
+      },
+      {
+        "period": "2021",
+        "return": 0.11299740072259912
+      },
+      {
+        "period": "2022",
+        "return": -0.23042745618172467
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "trend_20_20_k3",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.11841944716589758,
+      "annual_return": -0.06351667169366759,
+      "volatility": 0.2344123036681282,
+      "sharpe": -0.16312198954264118,
+      "max_drawdown": 0.438628336574473,
+      "calmar": -0.14480749736715504,
+      "final_equity": 881580.5528341024,
+      "fill_count": 634,
+      "round_trip_count": 94,
+      "open_lot_count": 3,
+      "realized_pnl": -103055.50916741817,
+      "unrealized_pnl": -15363.93799847993,
+      "turnover": 49.80997323749833,
+      "commission_paid": 11679.5020159,
+      "slippage_cost": 24288.045149997382,
+      "execution_cost": 35967.547165897384,
+      "average_invested_ratio": 0.7079625615708196,
+      "average_holding_sessions": 13.45774426842783,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": -0.1305108075403928
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.030971841790249588
+      },
+      {
+        "period": "2024",
+        "return": -0.09024258442314459
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "guarded_momentum_200_v0.1",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.06675295107584023,
+      "annual_return": 0.034217204614793495,
+      "volatility": 0.07964246904686553,
+      "sharpe": 0.46217701814966383,
+      "max_drawdown": 0.09318856323696323,
+      "calmar": 0.3671824462813613,
+      "final_equity": 1066752.9510758403,
+      "fill_count": 285,
+      "round_trip_count": 56,
+      "open_lot_count": 7,
+      "realized_pnl": 76541.88696134082,
+      "unrealized_pnl": -9788.935885499981,
+      "turnover": 15.603998612458945,
+      "commission_paid": 3987.1158241600006,
+      "slippage_cost": 8341.333099999127,
+      "execution_cost": 12328.448924159127,
+      "average_invested_ratio": 0.2752118590021817,
+      "average_holding_sessions": 18.607079197703435,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.05466159070134502
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": 0.06262582590729826
+      },
+      {
+        "period": "2024",
+        "return": 0.0038838931521509856
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "buy_hold",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.05818795218305972,
+      "annual_return": 0.02988540228426939,
+      "volatility": 0.17776397877129274,
+      "sharpe": 0.25396807414886974,
+      "max_drawdown": 0.26091457448903244,
+      "calmar": 0.11454094637218369,
+      "final_equity": 1058187.9521830596,
+      "fill_count": 286,
+      "round_trip_count": 0,
+      "open_lot_count": 26,
+      "realized_pnl": 1182.3756996900001,
+      "unrealized_pnl": 57005.576483369936,
+      "turnover": 0.8233127216615991,
+      "commission_paid": 1459.65366694,
+      "slippage_cost": 413.594149999955,
+      "execution_cost": 1873.247816939955,
+      "average_invested_ratio": 0.7705287854170426,
+      "average_holding_sessions": 33.125,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.04609659180856451
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.04059474781694139
+      },
+      {
+        "period": "2024",
+        "return": 0.10296243404466154
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "cash_buy_hold_40",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.028834879849999995,
+      "annual_return": 0.014910897495635567,
+      "volatility": 0.09160554353626073,
+      "sharpe": 0.20723530917545016,
+      "max_drawdown": 0.14355445923163213,
+      "calmar": 0.10386927424926666,
+      "final_equity": 1028834.8798499999,
+      "fill_count": 26,
+      "round_trip_count": 0,
+      "open_lot_count": 26,
+      "realized_pnl": 0.0,
+      "unrealized_pnl": 28834.879850000023,
+      "turnover": 0.39796314899766744,
+      "commission_paid": 130.0,
+      "slippage_cost": 199.220149999977,
+      "execution_cost": 329.220149999977,
+      "average_invested_ratio": 0.3980401301903498,
+      "average_holding_sessions": null,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.016743519475504787
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.0219652201499988
+      },
+      {
+        "period": "2024",
+        "return": 0.051940995398745304
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "cash_buy_hold_60",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.04337915190000019,
+      "annual_return": 0.02235591403663384,
+      "volatility": 0.13763687766736377,
+      "sharpe": 0.22912642772641575,
+      "max_drawdown": 0.2084875460387946,
+      "calmar": 0.10722901420919373,
+      "final_equity": 1043379.1519000002,
+      "fill_count": 26,
+      "round_trip_count": 0,
+      "open_lot_count": 26,
+      "realized_pnl": 0.0,
+      "unrealized_pnl": 43379.151900000026,
+      "turnover": 0.5970215214511151,
+      "commission_paid": 130.0,
+      "slippage_cost": 299.14809999996504,
+      "execution_cost": 429.14809999996504,
+      "average_invested_ratio": 0.5971433189912636,
+      "average_holding_sessions": null,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.03128779152550498
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.03289844810000053
+      },
+      {
+        "period": "2024",
+        "return": 0.07887237886253184
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_120_equal",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.014164208158560232,
+      "annual_return": 0.007349891070829839,
+      "volatility": 0.1104354158427436,
+      "sharpe": 0.12135810833619584,
+      "max_drawdown": 0.12311491400303998,
+      "calmar": 0.05969943715063111,
+      "final_equity": 1014164.2081585603,
+      "fill_count": 1295,
+      "round_trip_count": 113,
+      "open_lot_count": 182,
+      "realized_pnl": -15794.906809629701,
+      "unrealized_pnl": 29959.11496819002,
+      "turnover": 8.239595328237314,
+      "commission_paid": 6742.30069144,
+      "slippage_cost": 4216.891149999644,
+      "execution_cost": 10959.191841439644,
+      "average_invested_ratio": 0.3372101124517958,
+      "average_holding_sessions": 34.33081354962612,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.002072847784065024
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": 0.01605872023774757
+      },
+      {
+        "period": "2024",
+        "return": -0.0018645694795532686
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_120_inverse_vol",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.026000841895240656,
+      "annual_return": 0.01345433175033861,
+      "volatility": 0.10023964550379763,
+      "sharpe": 0.1833345576210718,
+      "max_drawdown": 0.08538407298117501,
+      "calmar": 0.1575742557198571,
+      "final_equity": 1026000.8418952407,
+      "fill_count": 1305,
+      "round_trip_count": 113,
+      "open_lot_count": 183,
+      "realized_pnl": 617.93879972582,
+      "unrealized_pnl": 25382.903095514503,
+      "turnover": 8.851730787475194,
+      "commission_paid": 6894.68890476,
+      "slippage_cost": 4535.669199999611,
+      "execution_cost": 11430.35810475961,
+      "average_invested_ratio": 0.3314959522476756,
+      "average_holding_sessions": 31.62893392338227,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.013909481520745448
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": 0.0161347787546382
+      },
+      {
+        "period": "2024",
+        "return": 0.009709404054344395
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_120_bear0",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.042367294691831425,
+      "annual_return": 0.021839574540150508,
+      "volatility": 0.18319339432246612,
+      "sharpe": 0.2088668684129145,
+      "max_drawdown": 0.2278117269386437,
+      "calmar": 0.09586677048470177,
+      "final_equity": 1042367.2946918313,
+      "fill_count": 318,
+      "round_trip_count": 48,
+      "open_lot_count": 3,
+      "realized_pnl": 60535.434077290985,
+      "unrealized_pnl": -18168.139385459886,
+      "turnover": 25.568014868365264,
+      "commission_paid": 6586.55910817,
+      "slippage_cost": 14062.846199998352,
+      "execution_cost": 20649.405308168352,
+      "average_invested_ratio": 0.3167382889889127,
+      "average_holding_sessions": 11.058498421713601,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.030275934317336217
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": 0.14333427582873992
+      },
+      {
+        "period": "2024",
+        "return": -0.08830924015089436
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_120_bear20",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.04556716032955066,
+      "annual_return": 0.02347161041840118,
+      "volatility": 0.18624268646918313,
+      "sharpe": 0.21697362678872867,
+      "max_drawdown": 0.26561022909713494,
+      "calmar": 0.0883686238221552,
+      "final_equity": 1045567.1603295507,
+      "fill_count": 509,
+      "round_trip_count": 97,
+      "open_lot_count": 3,
+      "realized_pnl": 63791.06193672151,
+      "unrealized_pnl": -18223.901607170003,
+      "turnover": 33.20435588567747,
+      "commission_paid": 8520.48257045,
+      "slippage_cost": 18222.157099997945,
+      "execution_cost": 26742.639670447945,
+      "average_invested_ratio": 0.4228823460166237,
+      "average_holding_sessions": 11.521822952028902,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.03347579995505545
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": 0.13504043466491944
+      },
+      {
+        "period": "2024",
+        "return": -0.07882827043230689
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_200_equal",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.031528843201079626,
+      "annual_return": 0.01629368936328479,
+      "volatility": 0.10747920435682345,
+      "sharpe": 0.20404901881810647,
+      "max_drawdown": 0.10230721427960976,
+      "calmar": 0.15926236950166073,
+      "final_equity": 1031528.8432010796,
+      "fill_count": 1331,
+      "round_trip_count": 80,
+      "open_lot_count": 190,
+      "realized_pnl": -3001.8617921597197,
+      "unrealized_pnl": 34530.70499324002,
+      "turnover": 6.355007221238443,
+      "commission_paid": 6872.83029892,
+      "slippage_cost": 3264.926499999702,
+      "execution_cost": 10137.756798919701,
+      "average_invested_ratio": 0.32095658495637436,
+      "average_holding_sessions": 40.534844307287585,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.019437482826584418
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": 0.008450832949151277
+      },
+      {
+        "period": "2024",
+        "return": 0.022884616183458384
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.042655108202070524,
+      "annual_return": 0.021986467019152967,
+      "volatility": 0.09737681950897606,
+      "sharpe": 0.27200464338228453,
+      "max_drawdown": 0.07983397450476515,
+      "calmar": 0.27540238545734225,
+      "final_equity": 1042655.1082020706,
+      "fill_count": 1344,
+      "round_trip_count": 80,
+      "open_lot_count": 184,
+      "realized_pnl": 12744.25829935218,
+      "unrealized_pnl": 29910.84990271816,
+      "turnover": 7.326948803834942,
+      "commission_paid": 7055.292197930001,
+      "slippage_cost": 3772.099599999659,
+      "execution_cost": 10827.39179792966,
+      "average_invested_ratio": 0.31397587625773,
+      "average_holding_sessions": 34.82231551823715,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.030563747827575316
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": 0.012011204919881724
+      },
+      {
+        "period": "2024",
+        "return": 0.030280201576046384
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_200_bear0",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.011033814215808846,
+      "annual_return": -0.005760153851443572,
+      "volatility": 0.18372142743129471,
+      "sharpe": 0.05989182047960069,
+      "max_drawdown": 0.21276500335389414,
+      "calmar": -0.027072844502827615,
+      "final_equity": 988966.1857841911,
+      "fill_count": 260,
+      "round_trip_count": 38,
+      "open_lot_count": 3,
+      "realized_pnl": 6202.50381005113,
+      "unrealized_pnl": -17236.318025859888,
+      "turnover": 21.003848836101778,
+      "commission_paid": 4954.20551581,
+      "slippage_cost": 10457.008699999016,
+      "execution_cost": 15411.214215809017,
+      "average_invested_ratio": 0.2796275255222138,
+      "average_holding_sessions": 11.873522339825117,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": -0.023125174590304054
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.04310595962484154
+      },
+      {
+        "period": "2024",
+        "return": 0.03351692460792788
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_200_bear20",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.04637829091807966,
+      "annual_return": -0.02442210454887983,
+      "volatility": 0.18482285165814596,
+      "sharpe": -0.04186305002958775,
+      "max_drawdown": 0.2925623110760446,
+      "calmar": -0.08347659156456379,
+      "final_equity": 953621.7090819203,
+      "fill_count": 501,
+      "round_trip_count": 102,
+      "open_lot_count": 3,
+      "realized_pnl": -29757.9443348887,
+      "unrealized_pnl": -16620.34658318988,
+      "turnover": 31.430586323388727,
+      "commission_paid": 7301.205118080001,
+      "slippage_cost": 15326.285799998439,
+      "execution_cost": 22627.490918078438,
+      "average_invested_ratio": 0.3909384230363735,
+      "average_holding_sessions": 11.574443196705971,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": -0.058469651292574865
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.05996442800474999
+      },
+      {
+        "period": "2024",
+        "return": 0.014452790395828474
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core40_momentum20",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": -0.027643193738806526,
+      "annual_return": -0.014489414920852206,
+      "volatility": 0.20603385672685565,
+      "sharpe": 0.031513150690913025,
+      "max_drawdown": 0.3567149100693606,
+      "calmar": -0.04061903360875733,
+      "final_equity": 972356.8062611935,
+      "fill_count": 4310,
+      "round_trip_count": 0,
+      "open_lot_count": 317,
+      "realized_pnl": -24777.92702573276,
+      "unrealized_pnl": -2865.2667130754244,
+      "turnover": 37.960517872181434,
+      "commission_paid": 27281.78293881,
+      "slippage_cost": 18547.810799998053,
+      "execution_cost": 45829.59373880805,
+      "average_invested_ratio": 0.7766697038979274,
+      "average_holding_sessions": 17.929337058048954,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": -0.039734554113301734
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.060225946893699644
+      },
+      {
+        "period": "2024",
+        "return": 0.034670837151965506
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core40_momentum60",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.13969705578914193,
+      "annual_return": 0.0704540963360214,
+      "volatility": 0.20748093684255442,
+      "sharpe": 0.43099658661191437,
+      "max_drawdown": 0.3196219409437614,
+      "calmar": 0.22042947404670835,
+      "final_equity": 1139697.055789142,
+      "fill_count": 4452,
+      "round_trip_count": 0,
+      "open_lot_count": 621,
+      "realized_pnl": 143602.40751979145,
+      "unrealized_pnl": -3905.3517306503436,
+      "turnover": 20.69309242212512,
+      "commission_paid": 25540.137410860003,
+      "slippage_cost": 10928.806799998893,
+      "execution_cost": 36468.9442108589,
+      "average_invested_ratio": 0.7701177740177731,
+      "average_holding_sessions": 32.16123087723404,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.12760569541464672
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.014919303303290499
+      },
+      {
+        "period": "2024",
+        "return": 0.15695806405598112
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core60_momentum20",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.026490351909340903,
+      "annual_return": 0.013706055141851747,
+      "volatility": 0.18802403349514263,
+      "sharpe": 0.16571815076071778,
+      "max_drawdown": 0.2979587209634096,
+      "calmar": 0.04599984554080194,
+      "final_equity": 1026490.3519093409,
+      "fill_count": 4356,
+      "round_trip_count": 0,
+      "open_lot_count": 320,
+      "realized_pnl": 20585.345812180945,
+      "unrealized_pnl": 5905.006097160094,
+      "turnover": 19.618301524591548,
+      "commission_paid": 23996.102290659997,
+      "slippage_cost": 9784.745799999,
+      "execution_cost": 33780.848090659,
+      "average_invested_ratio": 0.7849320179330739,
+      "average_holding_sessions": 34.721164901785784,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.014398991534845695
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.04602942745098815
+      },
+      {
+        "period": "2024",
+        "return": 0.07601888511776322
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core60_momentum60",
+    "period": "middle",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.09821160258792139,
+      "annual_return": 0.04998630420473593,
+      "volatility": 0.18793399477476638,
+      "sharpe": 0.352714451998179,
+      "max_drawdown": 0.28652243440337366,
+      "calmar": 0.17445860499134225,
+      "final_equity": 1098211.6025879213,
+      "fill_count": 4406,
+      "round_trip_count": 0,
+      "open_lot_count": 676,
+      "realized_pnl": 84644.96230964709,
+      "unrealized_pnl": 13566.640278273451,
+      "turnover": 11.852567415002778,
+      "commission_paid": 23324.052712080003,
+      "slippage_cost": 6107.644699999414,
+      "execution_cost": 29431.69741207942,
+      "average_invested_ratio": 0.7821607063440184,
+      "average_holding_sessions": 52.11090641608461,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.012091360374495208,
+      "relative_return_difference": 0.08612024221342618
+    },
+    "annual_returns": [
+      {
+        "period": "2023",
+        "return": -0.027149894951588482
+      },
+      {
+        "period": "2024",
+        "return": 0.1288600339240067
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "trend_20_20_k3",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.4245251448160716,
+      "annual_return": 0.3102316657664921,
+      "volatility": 0.2509643212768081,
+      "sharpe": 1.2029279189081756,
+      "max_drawdown": 0.18872968506639443,
+      "calmar": 1.6437883932109234,
+      "final_equity": 1424525.1448160717,
+      "fill_count": 465,
+      "round_trip_count": 57,
+      "open_lot_count": 7,
+      "realized_pnl": 242980.78625181178,
+      "unrealized_pnl": 181544.35856426,
+      "turnover": 31.556636516643962,
+      "commission_paid": 8401.61418393,
+      "slippage_cost": 17306.140999998042,
+      "execution_cost": 25707.755183928042,
+      "average_invested_ratio": 0.7404511500113095,
+      "average_holding_sessions": 16.059646099807807,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.15427072119550833
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.24527068802898166
+      },
+      {
+        "period": "2026",
+        "return": 0.14394818613358362
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "guarded_momentum_200_v0.1",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.13236235773601024,
+      "annual_return": 0.09957595132657748,
+      "volatility": 0.0926847500664776,
+      "sharpe": 1.0708006890990678,
+      "max_drawdown": 0.08683399939870418,
+      "calmar": 1.1467392037232764,
+      "final_equity": 1132362.3577360103,
+      "fill_count": 290,
+      "round_trip_count": 79,
+      "open_lot_count": 3,
+      "realized_pnl": 114141.28811347121,
+      "unrealized_pnl": 18221.069622540046,
+      "turnover": 19.415967546592615,
+      "commission_paid": 4655.14281399,
+      "slippage_cost": 10397.999449998802,
+      "execution_cost": 15053.142263988802,
+      "average_invested_ratio": 0.3442535385243491,
+      "average_holding_sessions": 11.508176724351664,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": -0.13789206588455305
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.14197358012614836
+      },
+      {
+        "period": "2026",
+        "return": -0.008416326399669494
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "buy_hold",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.3897139180372402,
+      "annual_return": 0.28571004827991486,
+      "volatility": 0.1619728446334134,
+      "sharpe": 1.6337759583477418,
+      "max_drawdown": 0.11071754212749585,
+      "calmar": 2.580530987139399,
+      "final_equity": 1389713.9180372402,
+      "fill_count": 756,
+      "round_trip_count": 0,
+      "open_lot_count": 27,
+      "realized_pnl": 14836.87014715,
+      "unrealized_pnl": 374877.04789009003,
+      "turnover": 0.7527089798439316,
+      "commission_paid": 3804.8654127600003,
+      "slippage_cost": 444.51654999995503,
+      "execution_cost": 4249.381962759955,
+      "average_invested_ratio": 0.7914708861626292,
+      "average_holding_sessions": 154.31855309218204,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.11945949441667691
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.2949361448872394
+      },
+      {
+        "period": "2026",
+        "return": 0.07319107859040619
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "cash_buy_hold_40",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.20421913429999994,
+      "annual_return": 0.15247011542480848,
+      "volatility": 0.09221319003758043,
+      "sharpe": 1.5855553182147186,
+      "max_drawdown": 0.058645127695601706,
+      "calmar": 2.5998769448709633,
+      "final_equity": 1204219.1343,
+      "fill_count": 27,
+      "round_trip_count": 0,
+      "open_lot_count": 27,
+      "realized_pnl": 0.0,
+      "unrealized_pnl": 204219.13430000003,
+      "turnover": 0.3645659296504218,
+      "commission_paid": 135.0,
+      "slippage_cost": 199.36569999997704,
+      "execution_cost": 334.36569999997704,
+      "average_invested_ratio": 0.44731786001650853,
+      "average_holding_sessions": null,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": -0.06603528932056335
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.15334833429999972
+      },
+      {
+        "period": "2026",
+        "return": 0.04410705637414725
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "cash_buy_hold_60",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.30675047889999973,
+      "annual_return": 0.22667339597075475,
+      "volatility": 0.13241991202715517,
+      "sharpe": 1.6099508568159804,
+      "max_drawdown": 0.08633316609473562,
+      "calmar": 2.6255656571429355,
+      "final_equity": 1306750.4788999998,
+      "fill_count": 27,
+      "round_trip_count": 0,
+      "open_lot_count": 27,
+      "realized_pnl": 0.0,
+      "unrealized_pnl": 306750.47890000005,
+      "turnover": 0.5248125980241861,
+      "commission_paid": 135.0,
+      "slippage_cost": 299.42109999996705,
+      "execution_cost": 434.42109999996705,
+      "average_invested_ratio": 0.6441010566081227,
+      "average_holding_sessions": null,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.036496055279436446
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.23036757889999926
+      },
+      {
+        "period": "2026",
+        "return": 0.062081366016072836
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_120_equal",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.27385740362192057,
+      "annual_return": 0.20302340673856456,
+      "volatility": 0.1190037702233966,
+      "sharpe": 1.6133468346923996,
+      "max_drawdown": 0.0769922587141022,
+      "calmar": 2.6369327271259544,
+      "final_equity": 1273857.4036219206,
+      "fill_count": 1451,
+      "round_trip_count": 98,
+      "open_lot_count": 81,
+      "realized_pnl": 183092.4228016904,
+      "unrealized_pnl": 90764.98082023003,
+      "turnover": 6.808801698317764,
+      "commission_paid": 7558.19557808,
+      "slippage_cost": 3884.200799999625,
+      "execution_cost": 11442.396378079626,
+      "average_invested_ratio": 0.5453694542647671,
+      "average_holding_sessions": 44.513360184684906,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.003602980001357281
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.22253329037450076
+      },
+      {
+        "period": "2026",
+        "return": 0.041981771499815634
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_120_inverse_vol",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.22410313195594078,
+      "annual_return": 0.16697358350536318,
+      "volatility": 0.09796155690995627,
+      "sharpe": 1.6257723364483838,
+      "max_drawdown": 0.06002535522151897,
+      "calmar": 2.781717540681933,
+      "final_equity": 1224103.1319559407,
+      "fill_count": 1442,
+      "round_trip_count": 98,
+      "open_lot_count": 71,
+      "realized_pnl": 169659.01002167392,
+      "unrealized_pnl": 54444.12193426659,
+      "turnover": 8.152992240091097,
+      "commission_paid": 7625.912894059999,
+      "slippage_cost": 4550.655149999583,
+      "execution_cost": 12176.568044059582,
+      "average_invested_ratio": 0.5168789011624563,
+      "average_holding_sessions": 36.61370256410257,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": -0.04615129166462251
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.18200789784939042
+      },
+      {
+        "period": "2026",
+        "return": 0.035613327273988915
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_120_bear0",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.37323799842331096,
+      "annual_return": 0.2740536344550897,
+      "volatility": 0.2395409774888323,
+      "sharpe": 1.1313719931178674,
+      "max_drawdown": 0.17278398524298277,
+      "calmar": 1.586105529801812,
+      "final_equity": 1373237.998423311,
+      "fill_count": 371,
+      "round_trip_count": 43,
+      "open_lot_count": 9,
+      "realized_pnl": 237727.99552979082,
+      "unrealized_pnl": 135510.00289352,
+      "turnover": 25.251352748343773,
+      "commission_paid": 6641.08822669,
+      "slippage_cost": 13582.71334999832,
+      "execution_cost": 20223.801576688318,
+      "average_invested_ratio": 0.5867016459840866,
+      "average_holding_sessions": 16.97567053356456,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.10298357480274767
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.21164786080222053
+      },
+      {
+        "period": "2026",
+        "return": 0.13336394413646135
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_120_bear20",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.3831530814506623,
+      "annual_return": 0.28107231075214534,
+      "volatility": 0.24231009399339198,
+      "sharpe": 1.1439389516391039,
+      "max_drawdown": 0.17390603069315658,
+      "calmar": 1.616230958937101,
+      "final_equity": 1383153.0814506623,
+      "fill_count": 436,
+      "round_trip_count": 58,
+      "open_lot_count": 12,
+      "realized_pnl": 218516.64391475136,
+      "unrealized_pnl": 164636.43753591005,
+      "turnover": 26.63318430179368,
+      "commission_paid": 7067.68309934,
+      "slippage_cost": 14329.235449998298,
+      "execution_cost": 21396.918549338297,
+      "average_invested_ratio": 0.6296392893301558,
+      "average_holding_sessions": 16.64397508094091,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.112898657830099
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.21108992773031265
+      },
+      {
+        "period": "2026",
+        "return": 0.1420729788768147
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_200_equal",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.3199066234204704,
+      "annual_return": 0.23609308581332455,
+      "volatility": 0.13607601566514066,
+      "sharpe": 1.6267383239327033,
+      "max_drawdown": 0.10484577996254718,
+      "calmar": 2.251812957065714,
+      "final_equity": 1319906.6234204704,
+      "fill_count": 1777,
+      "round_trip_count": 60,
+      "open_lot_count": 283,
+      "realized_pnl": 163914.87938032026,
+      "unrealized_pnl": 155991.74404015,
+      "turnover": 4.749727603571829,
+      "commission_paid": 9066.26392953,
+      "slippage_cost": 2742.212649999752,
+      "execution_cost": 11808.476579529752,
+      "average_invested_ratio": 0.6567752857675725,
+      "average_holding_sessions": 60.63147322829703,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.04965219979990709
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.24204855346273124
+      },
+      {
+        "period": "2026",
+        "return": 0.06268520642021547
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.26456704966413147,
+      "annual_return": 0.19631765588103578,
+      "volatility": 0.11398991733530144,
+      "sharpe": 1.6303981707563964,
+      "max_drawdown": 0.08850489221185287,
+      "calmar": 2.2181559795713106,
+      "final_equity": 1264567.0496641314,
+      "fill_count": 1744,
+      "round_trip_count": 60,
+      "open_lot_count": 214,
+      "realized_pnl": 188015.32782639534,
+      "unrealized_pnl": 76551.72183773507,
+      "turnover": 6.3321800603971905,
+      "commission_paid": 9015.43298587,
+      "slippage_cost": 3568.617349999693,
+      "execution_cost": 12584.050335869693,
+      "average_invested_ratio": 0.6205210524436671,
+      "average_holding_sessions": 50.6981495008522,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": -0.005687373956431818
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.19496123608597227
+      },
+      {
+        "period": "2026",
+        "return": 0.05824943226288548
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_200_bear0",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.3835996982651122,
+      "annual_return": 0.2813881808356371,
+      "volatility": 0.25367790300332865,
+      "sharpe": 1.1048740816413727,
+      "max_drawdown": 0.18872968506639443,
+      "calmar": 1.4909587791483134,
+      "final_equity": 1383599.6982651122,
+      "fill_count": 458,
+      "round_trip_count": 57,
+      "open_lot_count": 9,
+      "realized_pnl": 166057.46876704204,
+      "unrealized_pnl": 217542.22949807008,
+      "turnover": 30.93454914956135,
+      "commission_paid": 8059.111084889999,
+      "slippage_cost": 16471.59064999807,
+      "execution_cost": 24530.70173488807,
+      "average_invested_ratio": 0.7229329196446775,
+      "average_holding_sessions": 15.383796226980087,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.11334527464454891
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.19398722225263065
+      },
+      {
+        "period": "2026",
+        "return": 0.1588061182553937
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_200_bear20",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.4100589099438816,
+      "annual_return": 0.3000588030788156,
+      "volatility": 0.2536879894447642,
+      "sharpe": 1.1619248348509819,
+      "max_drawdown": 0.18872968506639443,
+      "calmar": 1.5898866305703632,
+      "final_equity": 1410058.9099438817,
+      "fill_count": 463,
+      "round_trip_count": 57,
+      "open_lot_count": 10,
+      "realized_pnl": 179955.19787788182,
+      "unrealized_pnl": 230103.7120660001,
+      "turnover": 30.991221312506415,
+      "commission_paid": 8126.53940612,
+      "slippage_cost": 16644.650649998053,
+      "execution_cost": 24771.190056118052,
+      "average_invested_ratio": 0.7285369705630043,
+      "average_holding_sessions": 15.495940346943957,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.13980448632331832
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.2072716999982518
+      },
+      {
+        "period": "2026",
+        "return": 0.16797147646708077
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core40_momentum20",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.3942436995267111,
+      "annual_return": 0.2889090493135038,
+      "volatility": 0.1988044872346861,
+      "sharpe": 1.3769858973030844,
+      "max_drawdown": 0.14682926731507562,
+      "calmar": 1.9676530067642735,
+      "final_equity": 1394243.6995267111,
+      "fill_count": 3458,
+      "round_trip_count": 0,
+      "open_lot_count": 441,
+      "realized_pnl": 323837.7962463469,
+      "unrealized_pnl": 70405.90328036438,
+      "turnover": 22.870826745538782,
+      "commission_paid": 21363.12792329,
+      "slippage_cost": 13041.272549998677,
+      "execution_cost": 34404.40047328868,
+      "average_invested_ratio": 0.7897095280448454,
+      "average_holding_sessions": 20.584745630340045,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.12398927590614783
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.28606679757567144
+      },
+      {
+        "period": "2026",
+        "return": 0.08411452823054133
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core40_momentum60",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.36733120409186104,
+      "annual_return": 0.2698666489657735,
+      "volatility": 0.20231292880084564,
+      "sharpe": 1.283142721070614,
+      "max_drawdown": 0.1562338366995064,
+      "calmar": 1.7273252367528018,
+      "final_equity": 1367331.2040918611,
+      "fill_count": 3520,
+      "round_trip_count": 0,
+      "open_lot_count": 561,
+      "realized_pnl": 256413.81354044518,
+      "unrealized_pnl": 110917.39055141583,
+      "turnover": 15.978927650134908,
+      "commission_paid": 20444.96420814,
+      "slippage_cost": 9437.731699999054,
+      "execution_cost": 29882.695908139056,
+      "average_invested_ratio": 0.793006179476538,
+      "average_holding_sessions": 29.3504482848973,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.09707678047129775
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.32353088907872896
+      },
+      {
+        "period": "2026",
+        "return": 0.033093534404488034
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core60_momentum20",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.38399595068977055,
+      "annual_return": 0.28166841048991076,
+      "volatility": 0.17148449598507665,
+      "sharpe": 1.534025570955242,
+      "max_drawdown": 0.125761751728522,
+      "calmar": 2.2396985301058754,
+      "final_equity": 1383995.9506897705,
+      "fill_count": 3596,
+      "round_trip_count": 0,
+      "open_lot_count": 419,
+      "realized_pnl": 348617.12013996195,
+      "unrealized_pnl": 35378.83054980863,
+      "turnover": 13.14113444482638,
+      "commission_paid": 19825.873510229998,
+      "slippage_cost": 7696.075799999231,
+      "execution_cost": 27521.94931022923,
+      "average_invested_ratio": 0.7934085861966323,
+      "average_holding_sessions": 34.12505268882997,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.11374152706920726
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.30102762545102
+      },
+      {
+        "period": "2026",
+        "return": 0.06377137857467696
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core60_momentum60",
+    "period": "recent",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.36705805456942264,
+      "annual_return": 0.2696729257397188,
+      "volatility": 0.1736830238533992,
+      "sharpe": 1.4626953067786153,
+      "max_drawdown": 0.13043243979182695,
+      "calmar": 2.067529566801961,
+      "final_equity": 1367058.0545694227,
+      "fill_count": 3580,
+      "round_trip_count": 0,
+      "open_lot_count": 595,
+      "realized_pnl": 285217.06382100016,
+      "unrealized_pnl": 81840.99074842011,
+      "turnover": 8.903113343530176,
+      "commission_paid": 19036.88228058,
+      "slippage_cost": 5275.4631499995085,
+      "execution_cost": 24312.34543057951,
+      "average_invested_ratio": 0.7932234952591113,
+      "average_holding_sessions": 46.47733085808581,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.2702544236205633,
+      "relative_return_difference": 0.09680363094885935
+    },
+    "annual_returns": [
+      {
+        "period": "2025",
+        "return": 0.30645181399171406
+      },
+      {
+        "period": "2026",
+        "return": 0.046389954783359055
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "trend_20_20_k3",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.09263295360602797,
+      "annual_return": 0.014583109236678604,
+      "volatility": 0.2318097078032832,
+      "sharpe": 0.17832024971586344,
+      "max_drawdown": 0.507519420262287,
+      "calmar": 0.02873409106028302,
+      "final_equity": 1092632.9536060279,
+      "fill_count": 2086,
+      "round_trip_count": 266,
+      "open_lot_count": 7,
+      "realized_pnl": -46625.126089283614,
+      "unrealized_pnl": 139258.07969531007,
+      "turnover": 142.93544915210703,
+      "commission_paid": 33196.15324398,
+      "slippage_cost": 65863.89314999248,
+      "execution_cost": 99060.04639397247,
+      "average_invested_ratio": 0.7183032888956139,
+      "average_holding_sessions": 14.832511867088607,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": -0.07610488428388207
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.041696833551241985
+      },
+      {
+        "period": "2021",
+        "return": 0.03347110221735705
+      },
+      {
+        "period": "2022",
+        "return": -0.1822678105975839
+      },
+      {
+        "period": "2023",
+        "return": -0.007011328528688132
+      },
+      {
+        "period": "2024",
+        "return": -0.09038708330118139
+      },
+      {
+        "period": "2025",
+        "return": 0.20132847738991133
+      },
+      {
+        "period": "2026",
+        "return": 0.1438282925381007
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "guarded_momentum_200_v0.1",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.21341320283267096,
+      "annual_return": 0.032117284000805046,
+      "volatility": 0.0851807057497304,
+      "sharpe": 0.4138072252620841,
+      "max_drawdown": 0.16646968356304648,
+      "calmar": 0.19293172975030845,
+      "final_equity": 1213413.2028326709,
+      "fill_count": 1012,
+      "round_trip_count": 218,
+      "open_lot_count": 3,
+      "realized_pnl": 193884.45478721365,
+      "unrealized_pnl": 19528.748045460045,
+      "turnover": 55.82883911709143,
+      "commission_paid": 14432.77651733,
+      "slippage_cost": 30577.32064999656,
+      "execution_cost": 45010.09716732656,
+      "average_invested_ratio": 0.27992873105333954,
+      "average_holding_sessions": 15.51344012327688,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.04467536494276092
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.09978321895401066
+      },
+      {
+        "period": "2021",
+        "return": 0.06901902560799589
+      },
+      {
+        "period": "2022",
+        "return": -0.14143850592988416
+      },
+      {
+        "period": "2023",
+        "return": 0.0721957524703325
+      },
+      {
+        "period": "2024",
+        "return": 0.003917719948505871
+      },
+      {
+        "period": "2025",
+        "return": 0.1262728892227718
+      },
+      {
+        "period": "2026",
+        "return": -0.008417271705637441
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "buy_hold",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.40005424854415006,
+      "annual_return": 0.05653428927574011,
+      "volatility": 0.16762881755228293,
+      "sharpe": 0.4120068729964232,
+      "max_drawdown": 0.32426031967290525,
+      "calmar": 0.17434846586461328,
+      "final_equity": 1400054.24854415,
+      "fill_count": 287,
+      "round_trip_count": 0,
+      "open_lot_count": 7,
+      "realized_pnl": 25746.97946973,
+      "unrealized_pnl": 374307.26907442,
+      "turnover": 0.751666318849116,
+      "commission_paid": 1560.09170585,
+      "slippage_cost": 454.35974999995096,
+      "execution_cost": 2014.451455849951,
+      "average_invested_ratio": 0.7669758076586748,
+      "average_holding_sessions": 341.4847958297133,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.23131641065424002
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.2932094992941485
+      },
+      {
+        "period": "2021",
+        "return": 0.09589209963094625
+      },
+      {
+        "period": "2022",
+        "return": -0.16869161103696662
+      },
+      {
+        "period": "2023",
+        "return": -0.0921046007193812
+      },
+      {
+        "period": "2024",
+        "return": 0.101722397512086
+      },
+      {
+        "period": "2025",
+        "return": 0.20664849868484736
+      },
+      {
+        "period": "2026",
+        "return": -0.01540585739713507
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "cash_buy_hold_40",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.2083670731361602,
+      "annual_return": 0.03141461363822384,
+      "volatility": 0.09817217536190444,
+      "sharpe": 0.36419774466135274,
+      "max_drawdown": 0.208771648469803,
+      "calmar": 0.15047356223164418,
+      "final_equity": 1208367.0731361602,
+      "fill_count": 7,
+      "round_trip_count": 0,
+      "open_lot_count": 7,
+      "realized_pnl": 0.0,
+      "unrealized_pnl": 208367.07313616003,
+      "turnover": 0.361829680042608,
+      "commission_paid": 80.00766383999999,
+      "slippage_cost": 199.91919999997697,
+      "execution_cost": 279.92686383997693,
+      "average_invested_ratio": 0.4549112486976634,
+      "average_holding_sessions": null,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.03962923524625017
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.15153587313615868
+      },
+      {
+        "period": "2021",
+        "return": 0.058192629134078855
+      },
+      {
+        "period": "2022",
+        "return": -0.10771133525075982
+      },
+      {
+        "period": "2023",
+        "return": -0.05484534928485951
+      },
+      {
+        "period": "2024",
+        "return": 0.05801749831323355
+      },
+      {
+        "period": "2025",
+        "return": 0.1229230862991797
+      },
+      {
+        "period": "2026",
+        "return": -0.010295451950005585
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "cash_buy_hold_60",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.31258227703528996,
+      "annual_return": 0.04545351160309519,
+      "volatility": 0.14089571221711883,
+      "sharpe": 0.3860050166869875,
+      "max_drawdown": 0.2858773667216822,
+      "calmar": 0.158996538006266,
+      "final_equity": 1312582.27703529,
+      "fill_count": 7,
+      "round_trip_count": 0,
+      "open_lot_count": 7,
+      "realized_pnl": 0.0,
+      "unrealized_pnl": 312582.27703529,
+      "turnover": 0.5181639750523797,
+      "commission_paid": 120.04941471000001,
+      "slippage_cost": 299.973549999963,
+      "execution_cost": 420.022964709963,
+      "average_invested_ratio": 0.6516820875563043,
+      "average_holding_sessions": null,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.14384443914537992
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.2273452770352904
+      },
+      {
+        "period": "2021",
+        "return": 0.08189455883416508
+      },
+      {
+        "period": "2022",
+        "return": -0.1483033379661658
+      },
+      {
+        "period": "2023",
+        "return": -0.07909792116351111
+      },
+      {
+        "period": "2024",
+        "return": 0.08590599318737824
+      },
+      {
+        "period": "2025",
+        "return": 0.17729855476153933
+      },
+      {
+        "period": "2026",
+        "return": -0.014180046622147446
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_120_equal",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.1489002475570511,
+      "annual_return": 0.022943355787579778,
+      "volatility": 0.12318051078857507,
+      "sharpe": 0.2459300295929293,
+      "max_drawdown": 0.1782991898427052,
+      "calmar": 0.12867896824332353,
+      "final_equity": 1148900.247557051,
+      "fill_count": 4269,
+      "round_trip_count": 390,
+      "open_lot_count": 79,
+      "realized_pnl": 66957.61555300147,
+      "unrealized_pnl": 81942.63200405001,
+      "turnover": 32.28091475880523,
+      "commission_paid": 23061.18159295,
+      "slippage_cost": 15941.770849998415,
+      "execution_cost": 39002.952442948415,
+      "average_invested_ratio": 0.41661854501049994,
+      "average_holding_sessions": 36.853172648730734,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": -0.019837590332858923
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.040606125369300416
+      },
+      {
+        "period": "2021",
+        "return": 0.022526535316262697
+      },
+      {
+        "period": "2022",
+        "return": -0.1336941423525133
+      },
+      {
+        "period": "2023",
+        "return": 0.024876243117989638
+      },
+      {
+        "period": "2024",
+        "return": -0.0020795435036706778
+      },
+      {
+        "period": "2025",
+        "return": 0.16967919516571373
+      },
+      {
+        "period": "2026",
+        "return": 0.04187589480021359
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_120_inverse_vol",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.1238776485955182,
+      "annual_return": 0.01926876050002324,
+      "volatility": 0.11176150182136715,
+      "sharpe": 0.22684424304400796,
+      "max_drawdown": 0.16553481441427265,
+      "calmar": 0.11640306945825084,
+      "final_equity": 1123877.6485955182,
+      "fill_count": 4318,
+      "round_trip_count": 390,
+      "open_lot_count": 71,
+      "realized_pnl": 74043.71823394077,
+      "unrealized_pnl": 49833.93036158096,
+      "turnover": 35.29529537540291,
+      "commission_paid": 23647.64895448,
+      "slippage_cost": 17494.002449998286,
+      "execution_cost": 41141.65140447828,
+      "average_invested_ratio": 0.4000339205311097,
+      "average_holding_sessions": 33.27308903841494,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": -0.04486018929439184
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.058390398722431236
+      },
+      {
+        "period": "2021",
+        "return": 0.0022280461194352785
+      },
+      {
+        "period": "2022",
+        "return": -0.12771705042301318
+      },
+      {
+        "period": "2023",
+        "return": 0.024522272039375848
+      },
+      {
+        "period": "2024",
+        "return": 0.009451933647375732
+      },
+      {
+        "period": "2025",
+        "return": 0.13424673801517728
+      },
+      {
+        "period": "2026",
+        "return": 0.035463084288094526
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_120_bear0",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.15536733971972438,
+      "annual_return": 0.02388215828882867,
+      "volatility": 0.19810159973055275,
+      "sharpe": 0.21807080326257516,
+      "max_drawdown": 0.3484452703145229,
+      "calmar": 0.06853919488495719,
+      "final_equity": 1155367.3397197244,
+      "fill_count": 1305,
+      "round_trip_count": 169,
+      "open_lot_count": 9,
+      "realized_pnl": 41392.8184758148,
+      "unrealized_pnl": 113974.5212439101,
+      "turnover": 91.7617095363669,
+      "commission_paid": 20814.85583028,
+      "slippage_cost": 41269.50444999508,
+      "execution_cost": 62084.36028027508,
+      "average_invested_ratio": 0.42392113887722427,
+      "average_holding_sessions": 13.512905618353884,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": -0.013370498170185652
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": -0.0972422173243489
+      },
+      {
+        "period": "2021",
+        "return": 0.03142640701337962
+      },
+      {
+        "period": "2022",
+        "return": -0.1013965901782592
+      },
+      {
+        "period": "2023",
+        "return": 0.14326652106964222
+      },
+      {
+        "period": "2024",
+        "return": -0.08840763986825229
+      },
+      {
+        "period": "2025",
+        "return": 0.1690956829609267
+      },
+      {
+        "period": "2026",
+        "return": 0.1332985090377916
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_120_bear20",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.26432879301905765,
+      "annual_return": 0.03907377998870931,
+      "volatility": 0.20024286431067004,
+      "sharpe": 0.29141201012022366,
+      "max_drawdown": 0.3319802570403778,
+      "calmar": 0.11769910758264422,
+      "final_equity": 1264328.7930190577,
+      "fill_count": 1769,
+      "round_trip_count": 275,
+      "open_lot_count": 12,
+      "realized_pnl": 113818.49823812548,
+      "unrealized_pnl": 150510.29478093015,
+      "turnover": 108.09261629483727,
+      "commission_paid": 25588.55418095,
+      "slippage_cost": 51474.45279999406,
+      "execution_cost": 77063.00698094406,
+      "average_invested_ratio": 0.5037064103330113,
+      "average_holding_sessions": 13.683240594123744,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.09559095512914761
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": -0.051387028614621855
+      },
+      {
+        "period": "2021",
+        "return": 0.05530933308013686
+      },
+      {
+        "period": "2022",
+        "return": -0.12270021682680876
+      },
+      {
+        "period": "2023",
+        "return": 0.13675546428837726
+      },
+      {
+        "period": "2024",
+        "return": -0.05729376969865363
+      },
+      {
+        "period": "2025",
+        "return": 0.17630643195166829
+      },
+      {
+        "period": "2026",
+        "return": 0.14203461852607413
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_200_equal",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.3378383761764885,
+      "annual_return": 0.04871482110876957,
+      "volatility": 0.1283223601711166,
+      "sharpe": 0.4350851952500665,
+      "max_drawdown": 0.17146386201268193,
+      "calmar": 0.2841113021539576,
+      "final_equity": 1337838.3761764886,
+      "fill_count": 4348,
+      "round_trip_count": 255,
+      "open_lot_count": 299,
+      "realized_pnl": 180712.8201004705,
+      "unrealized_pnl": 157125.55607602076,
+      "turnover": 24.192948691257723,
+      "commission_paid": 23552.16607351,
+      "slippage_cost": 13126.657749998732,
+      "execution_cost": 36678.823823508734,
+      "average_invested_ratio": 0.4378050863200796,
+      "average_holding_sessions": 46.6480130963075,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.16910053828657845
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.11208041570896121
+      },
+      {
+        "period": "2021",
+        "return": 0.03729443559625967
+      },
+      {
+        "period": "2022",
+        "return": -0.1154604546068142
+      },
+      {
+        "period": "2023",
+        "return": 0.01443410074814433
+      },
+      {
+        "period": "2024",
+        "return": 0.022882705216344723
+      },
+      {
+        "period": "2025",
+        "return": 0.18907003824222746
+      },
+      {
+        "period": "2026",
+        "return": 0.06265194970673749
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "diversified_200_inverse_vol",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.29795393382907265,
+      "annual_return": 0.043540475348262,
+      "volatility": 0.11603729065892136,
+      "sharpe": 0.425555818492383,
+      "max_drawdown": 0.14428928044683698,
+      "calmar": 0.30175821248415174,
+      "final_equity": 1297953.9338290726,
+      "fill_count": 4323,
+      "round_trip_count": 255,
+      "open_lot_count": 212,
+      "realized_pnl": 219199.32000787556,
+      "unrealized_pnl": 78754.61382119582,
+      "turnover": 27.99564593244189,
+      "commission_paid": 23756.050220930003,
+      "slippage_cost": 15155.115949998559,
+      "execution_cost": 38911.16617092856,
+      "average_invested_ratio": 0.4183357455324751,
+      "average_holding_sessions": 40.91545055147623,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.1292160959391626
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.12368707990616179
+      },
+      {
+        "period": "2021",
+        "return": 0.015536361786206099
+      },
+      {
+        "period": "2022",
+        "return": -0.10686062560869658
+      },
+      {
+        "period": "2023",
+        "return": 0.01764530375444795
+      },
+      {
+        "period": "2024",
+        "return": 0.030391466516752175
+      },
+      {
+        "period": "2025",
+        "return": 0.14756093730398812
+      },
+      {
+        "period": "2026",
+        "return": 0.05833884111952137
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_200_bear0",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.23426389027634542,
+      "annual_return": 0.03499505827939853,
+      "volatility": 0.20187150956410665,
+      "sharpe": 0.2712897246466491,
+      "max_drawdown": 0.36693789735215077,
+      "calmar": 0.09537052054836878,
+      "final_equity": 1234263.8902763454,
+      "fill_count": 1314,
+      "round_trip_count": 161,
+      "open_lot_count": 9,
+      "realized_pnl": 40192.25437457512,
+      "unrealized_pnl": 194071.63590177006,
+      "turnover": 88.00776389787403,
+      "commission_paid": 20933.661573660003,
+      "slippage_cost": 41516.248149995285,
+      "execution_cost": 62449.90972365529,
+      "average_invested_ratio": 0.44240982389650546,
+      "average_holding_sessions": 14.584930463656095,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.06552605238643538
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": -0.01378737717543932
+      },
+      {
+        "period": "2021",
+        "return": -0.012591613249526401
+      },
+      {
+        "period": "2022",
+        "return": -0.03995969456687776
+      },
+      {
+        "period": "2023",
+        "return": -0.04312700194051988
+      },
+      {
+        "period": "2024",
+        "return": 0.03350166983925451
+      },
+      {
+        "period": "2025",
+        "return": 0.15209126195081568
+      },
+      {
+        "period": "2026",
+        "return": 0.15877421736106268
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "breadth_200_bear20",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.19201839323131642,
+      "annual_return": 0.02912108298991245,
+      "volatility": 0.20378360195339584,
+      "sharpe": 0.24272165323992925,
+      "max_drawdown": 0.42160200387315316,
+      "calmar": 0.06907244918758515,
+      "final_equity": 1192018.3932313165,
+      "fill_count": 1797,
+      "round_trip_count": 283,
+      "open_lot_count": 10,
+      "realized_pnl": -2443.9756790243555,
+      "unrealized_pnl": 194462.36891034,
+      "turnover": 109.00840442892346,
+      "commission_paid": 25478.52361869,
+      "slippage_cost": 50731.48314999416,
+      "execution_cost": 76210.00676868416,
+      "average_invested_ratio": 0.5179412690193912,
+      "average_holding_sessions": 13.867269897380432,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.023280555341406384
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.009472342618621177
+      },
+      {
+        "period": "2021",
+        "return": 0.0006081209176465041
+      },
+      {
+        "period": "2022",
+        "return": -0.090842776985945
+      },
+      {
+        "period": "2023",
+        "return": -0.058581846852833075
+      },
+      {
+        "period": "2024",
+        "return": 0.014425463285782536
+      },
+      {
+        "period": "2025",
+        "return": 0.16376014272939976
+      },
+      {
+        "period": "2026",
+        "return": 0.16793675472877156
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core40_momentum20",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.2982070589626369,
+      "annual_return": 0.043573731043530906,
+      "volatility": 0.2020527519359477,
+      "sharpe": 0.3121151945922093,
+      "max_drawdown": 0.41975736524363316,
+      "calmar": 0.1038069481359549,
+      "final_equity": 1298207.0589626369,
+      "fill_count": 12649,
+      "round_trip_count": 0,
+      "open_lot_count": 463,
+      "realized_pnl": 233215.5074179886,
+      "unrealized_pnl": 64991.55154464652,
+      "turnover": 106.39141174095835,
+      "commission_paid": 80226.06543737,
+      "slippage_cost": 54622.575599994176,
+      "execution_cost": 134848.64103736417,
+      "average_invested_ratio": 0.7826182952738481,
+      "average_holding_sessions": 22.011894120521728,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.12946922107272685
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.11928972814536087
+      },
+      {
+        "period": "2021",
+        "return": 0.09252717851085546
+      },
+      {
+        "period": "2022",
+        "return": -0.23329212975280778
+      },
+      {
+        "period": "2023",
+        "return": -0.02407251121839593
+      },
+      {
+        "period": "2024",
+        "return": 0.045111635237032655
+      },
+      {
+        "period": "2025",
+        "return": 0.25262579066349544
+      },
+      {
+        "period": "2026",
+        "return": 0.08377142033085261
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core40_momentum60",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.45436804833211664,
+      "annual_return": 0.0631264152748745,
+      "volatility": 0.20328664148325043,
+      "sharpe": 0.4027920163701349,
+      "max_drawdown": 0.3764257960071775,
+      "calmar": 0.16769949335159495,
+      "final_equity": 1454368.0483321166,
+      "fill_count": 12739,
+      "round_trip_count": 0,
+      "open_lot_count": 575,
+      "realized_pnl": 336367.99026607693,
+      "unrealized_pnl": 118000.0580660371,
+      "turnover": 65.86021816678986,
+      "commission_paid": 74877.78706788999,
+      "slippage_cost": 36809.76459999626,
+      "execution_cost": 111687.55166788626,
+      "average_invested_ratio": 0.7741973328056444,
+      "average_holding_sessions": 36.44719325873469,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.2856302104422066
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.18348312784445886
+      },
+      {
+        "period": "2021",
+        "return": 0.09384233673885145
+      },
+      {
+        "period": "2022",
+        "return": -0.2569054175613731
+      },
+      {
+        "period": "2023",
+        "return": 0.009882816771903835
+      },
+      {
+        "period": "2024",
+        "return": 0.15582687677727503
+      },
+      {
+        "period": "2025",
+        "return": 0.2534507045501344
+      },
+      {
+        "period": "2026",
+        "return": 0.03333799838190643
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core60_momentum20",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.4110495823685447,
+      "annual_return": 0.057885867372896804,
+      "volatility": 0.1851582588948369,
+      "sharpe": 0.39656294179331264,
+      "max_drawdown": 0.37000106158003276,
+      "calmar": 0.15644784132700618,
+      "final_equity": 1411049.5823685448,
+      "fill_count": 12996,
+      "round_trip_count": 0,
+      "open_lot_count": 469,
+      "realized_pnl": 370137.5292137189,
+      "unrealized_pnl": 40912.053154824345,
+      "turnover": 57.26952837983012,
+      "commission_paid": 72668.47623146,
+      "slippage_cost": 31737.94139999681,
+      "execution_cost": 104406.4176314568,
+      "average_invested_ratio": 0.7920583882630523,
+      "average_holding_sessions": 42.0255525606469,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.24231174447863468
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.16153877318928167
+      },
+      {
+        "period": "2021",
+        "return": 0.12132191987891128
+      },
+      {
+        "period": "2022",
+        "return": -0.21422139948170404
+      },
+      {
+        "period": "2023",
+        "return": -0.03458020746245016
+      },
+      {
+        "period": "2024",
+        "return": 0.07889450967705036
+      },
+      {
+        "period": "2025",
+        "return": 0.24406028237034305
+      },
+      {
+        "period": "2026",
+        "return": 0.06399955765073684
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  },
+  {
+    "candidate": "core60_momentum60",
+    "period": "full",
+    "cost_multiplier": 1.0,
+    "metrics": {
+      "total_return": 0.5133485707274945,
+      "annual_return": 0.07005566064233348,
+      "volatility": 0.18614759456096377,
+      "sharpe": 0.45688359760495767,
+      "max_drawdown": 0.34109524454232754,
+      "calmar": 0.20538445423457102,
+      "final_equity": 1513348.5707274945,
+      "fill_count": 12953,
+      "round_trip_count": 0,
+      "open_lot_count": 624,
+      "realized_pnl": 421355.68410298706,
+      "unrealized_pnl": 91992.88662450516,
+      "turnover": 36.67221581166493,
+      "commission_paid": 69605.03602251,
+      "slippage_cost": 21177.39324999793,
+      "execution_cost": 90782.42927250793,
+      "average_invested_ratio": 0.7868450505855328,
+      "average_holding_sessions": 66.2054765675011,
+      "dividend_income": 0.0,
+      "interest_income": 0.0,
+      "benchmark_return": 0.16873783788991004,
+      "relative_return_difference": 0.3446107328375845
+    },
+    "annual_returns": [
+      {
+        "period": "2020",
+        "return": 0.19421088787158913
+      },
+      {
+        "period": "2021",
+        "return": 0.11299740072259912
+      },
+      {
+        "period": "2022",
+        "return": -0.23042745618172467
+      },
+      {
+        "period": "2023",
+        "return": -0.002415123228969862
+      },
+      {
+        "period": "2024",
+        "return": 0.13018764499154578
+      },
+      {
+        "period": "2025",
+        "return": 0.2537374841972393
+      },
+      {
+        "period": "2026",
+        "return": 0.04666380725117891
+      }
+    ],
+    "protocol_sha256": "7a61e00456c6fd13619ac4dd69be2f813de2db3d12ebfe5844b8fa0f2f531039"
+  }
+]

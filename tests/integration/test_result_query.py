@@ -243,6 +243,7 @@ def test_large_partial_table_uses_sql_page_and_updates_orders_in_place(tmp_path,
             db.execute("INSERT INTO rows VALUES (?,?,?)", ("signals", day, json.dumps({"date": day})))
             db.execute("INSERT INTO rows VALUES (?,?,?)", ("risk_events", day, json.dumps({"date": day})))
     monkeypatch.setattr(service_module, "read_partial", lambda _: (_ for _ in ()).throw(AssertionError("full partial read")))
+    service = WorkbenchService(store.root)
     parses = 0
     original_loads = json.loads
 
@@ -252,10 +253,9 @@ def test_large_partial_table_uses_sql_page_and_updates_orders_in_place(tmp_path,
         return original_loads(*args, **kwargs)
 
     monkeypatch.setattr(result_index_module.json, "loads", count_parse)
-    service = WorkbenchService(store.root)
     page = service.table(run.run_id, "positions", limit=100, date_from="2024-01-02", date_to="2024-01-02", symbol="A")
     assert page.total == 7500 and len(page.items) == 100 and page.next_cursor == "100"
-    assert parses <= 101
+    assert parses <= 100
     with sqlite3.connect(partial) as db:
         indices = {row[1] for row in db.execute("PRAGMA index_list(rows)")}
         assert "partial_symbol_date" in indices
@@ -282,6 +282,7 @@ def test_log_tail_reads_only_recent_complete_utf8_lines(tmp_path, monkeypatch):
             value = {"seq": seq, "code": "成交", "payload": {"tables": {"orders": [{"id": str(seq)}]}, "completed_through": "2024-01-02"}}
             stream.write(json.dumps(value, ensure_ascii=False).encode("utf-8") + b"\n")
         stream.write(b'{"seq":10001,"code":"unfinished"')
+    service = WorkbenchService(store.root)
     parses = 0
     original_loads = json.loads
 
@@ -291,8 +292,8 @@ def test_log_tail_reads_only_recent_complete_utf8_lines(tmp_path, monkeypatch):
         return original_loads(*args, **kwargs)
 
     monkeypatch.setattr(service_module.json, "loads", count_parse)
-    page = WorkbenchService(store.root).logs(run.job_id, None, limit=100, tail=True)
+    page = service.logs(run.job_id, None, limit=100, tail=True)
     assert [row["seq"] for row in page.items] == list(range(9901, 10001))
     assert page.items[-1]["code"] == "成交"
     assert page.items[-1]["payload"] == {"table_counts": {"orders": 1}, "completed_through": "2024-01-02"}
-    assert parses <= 101
+    assert parses <= 100

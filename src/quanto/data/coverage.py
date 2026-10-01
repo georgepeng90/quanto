@@ -59,7 +59,7 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
     for request in requirement.requests:
         selected = [(item, frames[index]) for index, item in enumerate(fragments) if compatible(item.request, request)]
         refs = [item for item, _ in selected]
-        missing, fields, evidence, reason = [], set(), set(), None
+        missing, by_instrument, fields, evidence, reason = [], {}, set(), set(), None
         for ref in refs:
             limitations.update(ref.source.limitations)
             evidence.update(f"unaccepted:{value}" for value in ref.source.limitations if value not in requirement.quality.accepted_limitations)
@@ -88,13 +88,13 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                     expected = list(expected_bars(request, calendar, status, instruments))
                     if observed - set(expected):
                         reason = reason or "BAR_OUTSIDE_SESSION"
-                    missing.extend(begin.to_pydatetime() for key, begin, finish in expected if (key, begin, finish) not in observed)
+                    for key, begin, finish in expected:
+                        if (key, begin, finish) not in observed:
+                            missing.append(begin.to_pydatetime())
+                            by_instrument.setdefault(key, []).append(begin.to_pydatetime())
                     for column in request.columns:
                         if column in data and data[column].isna().any():
                             fields.add(column)
-                    wanted_keys = {key for key, _, _ in expected}
-                    if not set(data.instrument_id).issuperset(wanted_keys):
-                        reason = reason or "MISSING_INSTRUMENT"
             else:
                 proof = {"trading_status": "status", "corporate_actions": "actions"}.get(request.kind, request.kind)
                 verified = [ref for ref in refs if proof in ref.source.verified]
@@ -102,6 +102,6 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                     evidence.add(proof)
                 if request.kind == "instruments" and not {item.key for item in request.instruments}.issubset(set(data.instrument_id)):
                     reason = "MISSING_INSTRUMENT"
-        entries.append(CoverageEntry(request=request, missing=tuple(sorted(set(missing))), missing_fields=tuple(sorted(fields)),
+        entries.append(CoverageEntry(request=request, missing=tuple(sorted(set(missing))), missing_by_instrument={key: tuple(value) for key, value in by_instrument.items()}, missing_fields=tuple(sorted(fields)),
             missing_evidence=tuple(sorted(evidence)), reason=reason))
     return CoverageReport(entries=tuple(entries), limitations=tuple(sorted(limitations)))

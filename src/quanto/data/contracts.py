@@ -185,6 +185,7 @@ class FragmentRef(Contract):
 class CoverageEntry(Contract):
     request: DataRequest
     missing: tuple[datetime, ...] = ()
+    missing_by_instrument: dict[str, tuple[datetime, ...]] = Field(default_factory=dict)
     missing_fields: tuple[str, ...] = ()
     missing_evidence: tuple[str, ...] = ()
     reason: str | None = None

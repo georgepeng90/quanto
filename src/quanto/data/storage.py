@@ -42,9 +42,11 @@ class MarketStore:
         evidence_hash = digest(chunk.evidence)
         source = chunk.source.model_copy(update={"evidence_hash": evidence_hash})
         frames = [chunk.frame]
-        if chunk.request.frequency == "1m" and not chunk.frame.empty:
-            months = pd.to_datetime(chunk.frame.bar_start, utc=True).dt.strftime("%Y-%m")
-            frames = [group for _, group in chunk.frame.groupby(months, sort=True)]
+        if chunk.request.kind == "bars" and not chunk.frame.empty:
+            keys = [chunk.frame.instrument_id]
+            if chunk.request.frequency == "1m":
+                keys.append(pd.to_datetime(chunk.frame.bar_start, utc=True).dt.strftime("%Y-%m"))
+            frames = [group for _, group in chunk.frame.groupby(keys, sort=True)]
         result = []
         with tempfile.TemporaryDirectory(dir=self._path("staging")) as stage_name:
             stage = Path(stage_name)
@@ -62,6 +64,8 @@ class MarketStore:
                 identity = file_hash(path)
                 self._publish(path, f"objects/{identity[:2]}/{identity}.parquet")
                 request = chunk.request
+                if request.kind == "bars" and not frame.empty:
+                    request = request.model_copy(update={"instruments": tuple(item for item in request.instruments if item.key == frame.instrument_id.iloc[0])})
                 if request.frequency == "1m" and not frame.empty:
                     first = pd.Timestamp(frame.bar_start.min()).to_pydatetime()
                     month_start = first.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -106,5 +110,10 @@ class MarketStore:
             evidence = self._path(f"evidence/{fragment.source_evidence_hash[:2]}/{fragment.source_evidence_hash}.bin")
             if not path.is_file() or file_hash(path) != fragment.object_hash or not evidence.is_file() or file_hash(evidence) != fragment.source_evidence_hash:
                 raise ValueError("market fragment or evidence hash mismatch")
+            for item in fragment.source.parameters.get("merge_inputs", []):
+                identity = item["source"]["evidence_hash"]
+                source_path = self._path(f"evidence/{identity[:2]}/{identity}.bin")
+                if not source_path.is_file() or file_hash(source_path) != identity:
+                    raise ValueError("merged source evidence hash mismatch")
         except (ValueError, OSError) as exc:
             raise MarketDataError("INTEGRITY_ERROR", str(exc)) from exc

@@ -11,7 +11,9 @@ def test_imported_minute_coverage_needs_no_live_provider(tmp_path):
 
     store, catalog, requirement = import_case(tmp_path)
     assert evaluate_coverage(requirement, catalog.fragments(requirement), store).complete
-    assert len(list(tmp_path.glob("objects/*/*.parquet"))) == 3
+    minute_refs = [ref for ref in catalog.fragments(requirement) if ref.request.frequency == "1m"]
+    assert {ref.request.start.month for ref in minute_refs} == {1, 2}
+    assert sum(ref.row_count for ref in minute_refs) == 8
 
 
 @pytest.mark.parametrize("frequency", ["1d", "1m"])

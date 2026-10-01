@@ -241,3 +241,36 @@ def test_unknown_required_fact_cannot_become_ready(tmp_path):
         prepare(engine, catalog, requirement)
     assert failure.value.code == "INCOMPLETE"
     assert "availability" in failure.value.coverage.entries[0].missing_evidence
+
+
+@pytest.mark.parametrize("deficiency", ["partial", "quality"])
+def test_incomplete_preferred_source_tries_compatible_alternative(tmp_path, deficiency):
+    from quanto.data.contracts import QualityPolicy
+    first, second = FixtureProvider(partial=deficiency == "partial"), FixtureProvider()
+    first.name, second.name = "preferred", "alternate"
+    requirement = first.requirement
+    if deficiency == "quality":
+        first.bars = replace(first.bars, source=first.bars.source.model_copy(update={"verified": ("price_basis",)}))
+        requirement = requirement.model_copy(update={"quality": QualityPolicy(required_evidence=("units",))})
+    engine, catalog = coordinator(tmp_path, (first, second))
+    assert prepare(engine, catalog, requirement).coverage.complete
+    assert len(second.calls) == 2
+    count = len(first.calls) + len(second.calls)
+    assert prepare(engine, catalog, requirement, "reuse").coverage.complete
+    assert len(first.calls) + len(second.calls) == count
+
+
+def test_gap_fallback_checks_units_against_cached_history(tmp_path):
+    from quanto.data.imports import import_table
+    from quanto.data.storage import MarketStore
+    from quanto.data.catalog import MarketCatalog
+    first, second = FixtureProvider(), FixtureProvider()
+    first.name, second.name = "preferred", "alternate"
+    first.bars = replace(first.bars, source=first.bars.source.model_copy(update={"units": {"volume": "unknown", "amount": "unknown"}, "verified": ("price_basis",)}))
+    store, catalog = MarketStore(tmp_path), MarketCatalog(tmp_path)
+    prefix = second.bars.frame.loc[second.bars.frame.trading_date == second.calendar.frame.trading_date.min()]
+    import_table(store, catalog, second.bars.request, prefix, second.bars.source, b"prefix")
+    import_table(store, catalog, second.calendar.request, second.calendar.frame, second.calendar.source, second.calendar.evidence)
+    engine, catalog = coordinator(tmp_path, (first, second))
+    assert prepare(engine, catalog, second.requirement).coverage.complete
+    assert len(first.calls) == len(second.calls) == 2

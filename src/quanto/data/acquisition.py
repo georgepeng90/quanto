@@ -38,11 +38,11 @@ class AcquisitionCoordinator:
         refs = self.catalog.fragments(requirement)
         return refs, evaluate_coverage(requirement, refs, self.store)
 
-    def _fetch(self, request, cancelled):
+    def _fetch(self, request, cancelled, sufficient):
         available = [provider for provider in self.providers if provider.capabilities().supports(request)]
         if not available:
             raise MarketDataError("CAPABILITY_UNAVAILABLE", "no source supports required data")
-        last = None
+        last, partial = None, None
         for provider in available:
             for attempt in range(self.config.max_retries + 1):
                 if cancelled():
@@ -51,7 +51,11 @@ class AcquisitionCoordinator:
                     context = FetchContext(time.monotonic() + self.config.request_timeout_seconds, cancelled)
                     chunk = provider.fetch(request, context)
                     context.remaining()
-                    return validate_chunk(chunk)
+                    chunk = validate_chunk(chunk)
+                    if sufficient(chunk):
+                        return chunk
+                    partial = partial or chunk
+                    break
                 except MarketDataError as exc:
                     if exc.code in {"CANCELLED", "SEMANTIC_CONFLICT"}:
                         raise
@@ -64,6 +68,8 @@ class AcquisitionCoordinator:
                         if cancelled():
                             raise MarketDataError("CANCELLED", "request cancelled during retry")
                         threading.Event().wait(min(.05, max(0, deadline - time.monotonic())))
+        if partial is not None:
+            return partial
         raise last
 
     def _consolidate(self, chunk, previous):
@@ -166,8 +172,17 @@ class AcquisitionCoordinator:
                                 previous_gap = gap
                         for fetch_request in windows:
                             existing = self.catalog.fragments(DataRequirement(requests=(part,), quality=requirement.quality))
+                            references = tuple(ref for ref in refs if ref.request.kind != "bars")
+                            def sufficient(chunk):
+                                if existing and not refresh:
+                                    if any(ref.request.price_basis != chunk.request.price_basis for ref in existing):
+                                        return False
+                                    if not full_history and any(ref.source.units != chunk.source.units for ref in existing):
+                                        return False
+                                candidate = self.store.put_chunk(chunk)
+                                return evaluate_coverage(DataRequirement(requests=(fetch_request,), quality=requirement.quality), candidate + references, self.store).complete
                             try:
-                                chunk = self._fetch(fetch_request, cancelled)
+                                chunk = self._fetch(fetch_request, cancelled, sufficient)
                             except MarketDataError as exc:
                                 if exc.code in {"INCOMPLETE", "CAPABILITY_UNAVAILABLE", "SEMANTIC_CONFLICT"}:
                                     if refresh:

@@ -26,7 +26,6 @@ def covers_interval(fragments, request) -> bool:
 
 
 def expected_bars(request: DataRequest, calendar: pd.DataFrame, status: pd.DataFrame, instruments: pd.DataFrame):
-    calendar = calendar[(calendar.session_start >= request.start) & (calendar.session_end <= request.end)]
     exclusions = {}
     if not status.empty:
         excluded = status.loc[status.status.isin(["suspended", "not_listed", "delisted"])]
@@ -35,11 +34,13 @@ def expected_bars(request: DataRequest, calendar: pd.DataFrame, status: pd.DataF
     schedule = []
     if request.frequency == "1d":
         daily = calendar.groupby("trading_date", sort=True).agg(begin=("session_start", "min"), finish=("session_end", "max"))
-        schedule = list(daily.itertuples(index=True, name=None))
+        schedule = [(day, begin, finish) for day, begin, finish in daily.itertuples(index=True, name=None) if begin >= request.start and finish <= request.end]
     else:
+        calendar = calendar[(calendar.session_start < request.end) & (calendar.session_end > request.start)]
         for session in calendar.itertuples(index=False):
             schedule.extend((session.trading_date, begin, begin + pd.Timedelta(minutes=1))
-                for begin in pd.date_range(session.session_start, session.session_end, freq="min", inclusive="left"))
+                for begin in pd.date_range(session.session_start, session.session_end, freq="min", inclusive="left")
+                if begin >= request.start and begin + pd.Timedelta(minutes=1) <= request.end)
     for instrument in request.instruments:
         excluded = exclusions.get(instrument.key, set())
         listing = listings.get(instrument.key)

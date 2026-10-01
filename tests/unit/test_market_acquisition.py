@@ -260,15 +260,16 @@ def test_incomplete_preferred_source_tries_compatible_alternative(tmp_path, defi
     assert len(first.calls) + len(second.calls) == count
 
 
-def test_gap_fallback_checks_units_against_cached_history(tmp_path):
+@pytest.mark.parametrize("frequency", ["1d", "1m"])
+def test_gap_fallback_checks_units_against_cached_history(tmp_path, frequency):
     from quanto.data.imports import import_table
     from quanto.data.storage import MarketStore
     from quanto.data.catalog import MarketCatalog
-    first, second = FixtureProvider(), FixtureProvider()
+    first, second = FixtureProvider(frequency), FixtureProvider(frequency)
     first.name, second.name = "preferred", "alternate"
     first.bars = replace(first.bars, source=first.bars.source.model_copy(update={"units": {"volume": "unknown", "amount": "unknown"}, "verified": ("price_basis",)}))
     store, catalog = MarketStore(tmp_path), MarketCatalog(tmp_path)
-    prefix = second.bars.frame.loc[second.bars.frame.trading_date == second.calendar.frame.trading_date.min()]
+    prefix = second.bars.frame.loc[second.bars.frame.bar_start < second.bars.frame.bar_start.max()]
     import_table(store, catalog, second.bars.request, prefix, second.bars.source, b"prefix")
     import_table(store, catalog, second.calendar.request, second.calendar.frame, second.calendar.source, second.calendar.evidence)
     engine, catalog = coordinator(tmp_path, (first, second))

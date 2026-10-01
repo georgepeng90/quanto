@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 import tempfile
 
@@ -27,6 +28,17 @@ class MarketStore:
 
     def object_path(self, ref: FragmentRef) -> Path:
         return self._path(f"objects/{ref.object_hash[:2]}/{ref.object_hash}.parquet")
+
+    def read_evidence(self, identity: str) -> bytes:
+        try:
+            if not re.fullmatch(r"[0-9a-f]{64}", identity):
+                raise ValueError("invalid evidence identity")
+            data = self._path(f"evidence/{identity[:2]}/{identity}.bin").read_bytes()
+            if digest(data) != identity:
+                raise ValueError("source evidence hash mismatch")
+            return data
+        except (ValueError, OSError) as exc:
+            raise MarketDataError("INTEGRITY_ERROR", str(exc)) from exc
 
     def _publish(self, stage: Path, name: str) -> Path:
         target = self._path(name)

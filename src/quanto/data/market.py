@@ -216,6 +216,12 @@ class MarketData:
     async def read_table_async(self, snapshot, table, query):
         return await self._async(self.read_table, snapshot, table, query)
 
+    def read_evidence(self, identity):
+        return self.store.read_evidence(identity)
+
+    async def read_evidence_async(self, identity):
+        return await self._async(self.read_evidence, identity)
+
     async def iter_batches_async(self, snapshot, query):
         iterator = await self._async(self.iter_batches, snapshot, query)
         pending = None

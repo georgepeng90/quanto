@@ -57,7 +57,10 @@ class MarketCatalog:
         finally:
             db.close()
 
-    def register_fragments(self, fragments: tuple[FragmentRef, ...]) -> None:
+    def register_fragments(self, fragments: tuple[FragmentRef, ...], *, inactive: tuple[FragmentRef, ...] = ()) -> None:
+        inactive_ids = {content_key(fragment.model_dump(mode="json")) for fragment in inactive}
+        if not inactive_ids.issubset({content_key(fragment.model_dump(mode="json")) for fragment in fragments}):
+            raise ValueError("inactive fragments must belong to this registration")
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")
             try:
@@ -65,7 +68,8 @@ class MarketCatalog:
                     payload = fragment.model_dump_json()
                     db.execute("INSERT OR IGNORE INTO series VALUES (?, ?)", (fragment.series_id, fragment.request.model_dump_json()))
                     db.execute("INSERT OR IGNORE INTO source_evidence VALUES (?, ?)", (fragment.source_evidence_hash, fragment.source.model_dump_json()))
-                    db.execute("INSERT OR IGNORE INTO fragments(id, series_id, payload) VALUES (?, ?, ?)", (content_key(fragment.model_dump(mode="json")), fragment.series_id, payload))
+                    identity = content_key(fragment.model_dump(mode="json"))
+                    db.execute("INSERT OR IGNORE INTO fragments(id, series_id, payload, active) VALUES (?, ?, ?, ?)", (identity, fragment.series_id, payload, int(identity not in inactive_ids)))
                 db.commit()
             except BaseException:
                 db.rollback()

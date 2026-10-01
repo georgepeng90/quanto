@@ -1,0 +1,571 @@
+{
+  "verified": true,
+  "total_runs": 64,
+  "matched_comparisons": 32,
+  "checks": [
+    "frozen sources/data/audits/protocols",
+    "exact eight original candidate configurations",
+    "same execution, cash, seed and metric parameters",
+    "same old group caps; each added cap 0.5",
+    "exact original27 symbols",
+    "305 qualified symbols and 60-day mean amount >= 10000000 CNY",
+    "all 64 summaries and curves match identities and SHA-256",
+    "CSV/JSON metrics parity",
+    "curve final equity, total return and maximum drawdown reconcile",
+    "same date boundaries/session counts between pools",
+    "all eight original27 post_selection metric sets reproduce prior fresh results"
+  ],
+  "original_protocol_sha256": "5fbc20febe77fbdf66aedb8c757a51fd3893feadbb68ec311436cc2df1d6cd24",
+  "pools": {
+    "expanded": {
+      "protocol_sha256": "8f5b2590cd5fb581b265c643b35d3e21943e836fa03a123cea6ad27a3ea4e1f9",
+      "results_json_sha256": "778db251952ea44ad3052c11da44b22aa96d133f31a916acae12fb6a82d136a5",
+      "results_csv_sha256": "ef4eb06bdf16b35fa31dae9098317b18ab6f5bb314ef822057d971eeff411db7",
+      "source_file_count": 67,
+      "data_files": {
+        "benchmark.parquet": "b19a85aba7c852fc88835a2f9b61f580f64c1e1ed94599605c37947f0b3b726a",
+        "calendar.parquet": "e762ccd52b1f4fc6fa2ccc284043c27dc56e1a27212d8d8a2429b5900549d948",
+        "events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d",
+        "instruments.parquet": "8b660fd97289b2afba5794dfe19a312a98d5b68a805061b53d79fccab0b09c84",
+        "manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+        "prices.parquet": "7c3d13eda441150a0bf8a86ea3ed3985b6b7b34d0806504ba7985609666cae82",
+        "status.parquet": "bb814801a31d8209427fb114a0579136b798345fca26dcb860ded7d396c45e9f"
+      },
+      "audit_sha256": "447e6dacd22e66629a889ffe4c81a73fc4f2f9dff439af7d878ec36194132e33",
+      "runs": [
+        {
+          "candidate": "diversified_200_inverse_vol",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/full__diversified_200_inverse_vol__cost1/summary.json",
+          "summary_sha256": "1e063655fa8c1e50696a1d611b399b6cccf0008050d710d558adc1dc4d2d6391",
+          "curves_sha256": "6ef37913cf0b287bb524d6529747799eeefb694ed1457bef0f2adfa01eb70638",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "diversified_200_equal",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/full__diversified_200_equal__cost1/summary.json",
+          "summary_sha256": "daffe9393391da17d3856c1b618cf2a3725832755548fa669d7d6cbb9b259797",
+          "curves_sha256": "5c2720a519ad2c5e687ceaaf9d1a6b0298a6b9cf1b135130985991779aabb88d",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "diversified_120_inverse_vol",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/full__diversified_120_inverse_vol__cost1/summary.json",
+          "summary_sha256": "5a86b6573b25871f6f910959f63eeb99d729d1fad00b0fb57e5222656bac9640",
+          "curves_sha256": "4e554e201d140cd69a5ab76d0c94aac2fcfdd3d858086e34536c998f9de6a2a7",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "trend_20_20_k3",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/full__trend_20_20_k3__cost1/summary.json",
+          "summary_sha256": "83b45a689f47d4e70d001e9e760d6336f3c40f34373a17e4a0aa2dfe6af340e8",
+          "curves_sha256": "ec2f079a03b91fbd8c03a6b00cf4ad72bc25ad8f6c5b7f7dc863f6f023606293",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "guarded_momentum_200_v0.1",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/full__guarded_momentum_200_v0.1__cost1/summary.json",
+          "summary_sha256": "824928b1ec2a6d788813112a27eba7cd5dab2687ea8ed2a7178d52ade889147f",
+          "curves_sha256": "830e9e62a5719a6e3664a96f555c517088d1c7bc375b6b3a557022065880a498",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "buy_hold",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/full__buy_hold__cost1/summary.json",
+          "summary_sha256": "ba06d6c7c4ac262bf04c60c553fa5e7c4c7a98117260bb608e581fe87994c5dd",
+          "curves_sha256": "160d431479d32e236f12081854d65bf79f60a3ae6d937fb8f776376e61b4754d",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "cash_buy_hold_40",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/full__cash_buy_hold_40__cost1/summary.json",
+          "summary_sha256": "42cd35b562ef26a9e83de09f8fc3860547b1edffe988fe0d1633c1d2df0a05d1",
+          "curves_sha256": "d31270fa0915bf54c4c9085aa40c3f3a81d1301a83503cdf02e3ded21457bbac",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "cash_buy_hold_60",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/full__cash_buy_hold_60__cost1/summary.json",
+          "summary_sha256": "48b9b336bd3acca3e92cbcbb19d01a6c5e6e2e622b7643a116bc4ac2d167af86",
+          "curves_sha256": "d0e30af51ed5b63409e264b505781c56406e3f1d9e3ec115deaa16242822ee8d",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "diversified_200_inverse_vol",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/middle__diversified_200_inverse_vol__cost1/summary.json",
+          "summary_sha256": "a52e66171d4153bd311620881c2c5aa35b50d4437f7baefb8b5e14092127c357",
+          "curves_sha256": "616a134189e8a7e20de911e46d710d6a1798f9beac1be17f1fbb4e944a6be63f",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "diversified_200_equal",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/middle__diversified_200_equal__cost1/summary.json",
+          "summary_sha256": "3dc837a905a0080c28b1ff55a49be86b3c54a73eae5eb69294bc5d30e4d180d8",
+          "curves_sha256": "c57a7347d137057a1af73b5203077debc09722de493ecf80152a787c2b4e2766",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "diversified_120_inverse_vol",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/middle__diversified_120_inverse_vol__cost1/summary.json",
+          "summary_sha256": "6a54ff009ba87ec219d2a44e6e9a8bca5c8cb12d153153f9929dc8a81ea9d3d9",
+          "curves_sha256": "f0bcca2bd5da2d90dca036209000dcdc0d4f95866a305dbb6698e05a6c411e86",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "trend_20_20_k3",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/middle__trend_20_20_k3__cost1/summary.json",
+          "summary_sha256": "f3372cbaf231fb36527f5f3022d8c9f4ffd90082d35073d7c2e06fdc66b0c62c",
+          "curves_sha256": "e7ac06055541226d511500f3e441ca6bf699dc8cc6bf203da0fdc251bc7e70ac",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "guarded_momentum_200_v0.1",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/middle__guarded_momentum_200_v0.1__cost1/summary.json",
+          "summary_sha256": "c72dac9a6d78ac84063f53b0e2bae3e268ef0043e8225382bcee9c437276ae13",
+          "curves_sha256": "916533ec7964de1c86e01841a846ff759f778983f4bbbb0a01cd7251762a7052",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "buy_hold",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/middle__buy_hold__cost1/summary.json",
+          "summary_sha256": "2db2af189da36061fdff894f658cb5afec03b751a2a7bcc7b54b86d404ec00f7",
+          "curves_sha256": "78b6ba1f59810bd7e27e4951810e030e512d06cd63a1d87aae0a39d1de4d8305",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "cash_buy_hold_40",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/middle__cash_buy_hold_40__cost1/summary.json",
+          "summary_sha256": "e722a114e99329dd2484472750cbd4073f442c7f4ea387bed5c8f59ef7d36761",
+          "curves_sha256": "586f04d6a0ccee54d3c3a129a40ae44ab06174ee1fc6824119d5a39f13ca3737",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "cash_buy_hold_60",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/middle__cash_buy_hold_60__cost1/summary.json",
+          "summary_sha256": "7170280535ca367baba7877fc96d132477fff7249c1b83cd24ce15bc5007f3fd",
+          "curves_sha256": "2df17447d9048ba7d125cdc18430615be3056a7730984a8eecc03c4f5c7be03b",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "diversified_200_inverse_vol",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/recent__diversified_200_inverse_vol__cost1/summary.json",
+          "summary_sha256": "274f6d0fee13e55298ea704e7a0a2645b0f45faf7ef21177eecf10282315a442",
+          "curves_sha256": "94f2a21c97e081e13984f1a70ab63a130c923eab9371355d482e2300313de02a",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "diversified_200_equal",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/recent__diversified_200_equal__cost1/summary.json",
+          "summary_sha256": "2f6bfa538ef8b846dbd76e114c2385986f969b422643bc641b4ceaf03656a9fe",
+          "curves_sha256": "76b8141a650a46198885c80a9f628e9762421330b8453dba9a99b9782c045346",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "diversified_120_inverse_vol",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/recent__diversified_120_inverse_vol__cost1/summary.json",
+          "summary_sha256": "fe25d7ffb79f82424c0022845e8af383e6f32dd25bbc51da2ca3ede35410c67f",
+          "curves_sha256": "623be2ac67328fab05f76627d624f3e996844cb7d481fdfb1620d63ebb038583",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "trend_20_20_k3",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/recent__trend_20_20_k3__cost1/summary.json",
+          "summary_sha256": "b1ec5f16cc45e7ac08e397fb26800d7e5a9664e872d0ce29842e492cbf792f94",
+          "curves_sha256": "f809644190d5c52ab6d35cbf88ccf674a6371fbec7e7004f42d394637c68dff4",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "guarded_momentum_200_v0.1",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/recent__guarded_momentum_200_v0.1__cost1/summary.json",
+          "summary_sha256": "eb755543d805dc5cc8f3225b4736d1537c452613f4c31c1578d0d90f49d6df51",
+          "curves_sha256": "02a73e470b97e1c38a7e8f590b99630177e483cd3b836c768aceeaf77e63890d",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "buy_hold",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/recent__buy_hold__cost1/summary.json",
+          "summary_sha256": "c1734e64017f09292838f6cf38374f1afb0685e2d11bccddcb413bbe51e3796c",
+          "curves_sha256": "283bd09766c8e6e474c3bea885c09a96b20929caf7d72393b7a49fd67d8ba125",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "cash_buy_hold_40",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/recent__cash_buy_hold_40__cost1/summary.json",
+          "summary_sha256": "c427ea50cc49fb20364b53b7bb7fb8762abd21edcdc260517bbda4d1447c2495",
+          "curves_sha256": "05b0cd971f3a396427d450d56430e0df63dedbfd90cebd774fec5a7273dcc6b8",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "cash_buy_hold_60",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/recent__cash_buy_hold_60__cost1/summary.json",
+          "summary_sha256": "81b3d6dfd58f4a2ffa713acd0229d9481606630645d13ba0a1a2bd437743d563",
+          "curves_sha256": "a34eab479c9faeaf13b317fb7eea4c4248da1da4a894865e9639353bb867a94b",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "diversified_200_inverse_vol",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/post_selection__diversified_200_inverse_vol__cost1/summary.json",
+          "summary_sha256": "452ff63f73c4b18a72e8099d7a3714a6c398492a98519ce3aaa79c910a219d27",
+          "curves_sha256": "6ccc54f09c062035a1bcc7dda87dc956254dbe67b0e3d4b30df13b6602a15169",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "diversified_200_equal",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/post_selection__diversified_200_equal__cost1/summary.json",
+          "summary_sha256": "b401661afadea7110cac39ab585f8c85b6cd5b819c4faee78aac8644808ea0d5",
+          "curves_sha256": "8334f64c7e29fd4b45dc2a519e205b2392f2df7a14abd8b229252817156a5f6e",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "diversified_120_inverse_vol",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/post_selection__diversified_120_inverse_vol__cost1/summary.json",
+          "summary_sha256": "071bbbe0e2187df547a66ab719edc8c1f9495084b100d94ba77b6306c4425885",
+          "curves_sha256": "7fffea502bebfa4ac3bc713624a893a8909df0ed8b8e960431217a0e18d2b4b0",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "trend_20_20_k3",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/post_selection__trend_20_20_k3__cost1/summary.json",
+          "summary_sha256": "cbba2c64dd7a411975fb36c36f814966038584d559223c78f4f9f5fc1393fb98",
+          "curves_sha256": "122f3a16d644f119a16f15b4fa357d42604e2d678a739865ea5fdc648f7545dc",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "guarded_momentum_200_v0.1",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/post_selection__guarded_momentum_200_v0.1__cost1/summary.json",
+          "summary_sha256": "9198d5c00372fb96e03bd98a3a37dcbf6d863f64d96657b2c0ff2ed6ffe9bec2",
+          "curves_sha256": "e696fe70dfc1a11214973f2e9a6b1542179869a82ace2286f0b2a7edae1e4b40",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "buy_hold",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/post_selection__buy_hold__cost1/summary.json",
+          "summary_sha256": "ae38abdc8216f355423d3dcdf67aa8695f2811c239ad2e900bb7cc0ae7ceb534",
+          "curves_sha256": "7099b1898b35d2835a8566a3d8b673694c6954afe964ab421388cf949c1b0b32",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "cash_buy_hold_40",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/post_selection__cash_buy_hold_40__cost1/summary.json",
+          "summary_sha256": "79162ba22fedde3e183738af3aed6de6ab8d652d8bdd15e39364909f58bd0368",
+          "curves_sha256": "d7573c360dbdf67dafa67f9a622acbe2e8667cb7b59370ccf710b5109e3954f4",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "cash_buy_hold_60",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/shared-cache/runs/post_selection__cash_buy_hold_60__cost1/summary.json",
+          "summary_sha256": "ff7337318f730c10fac1405223cde01b10b0485de0921dc1632bb2a01316aec8",
+          "curves_sha256": "087dac197e3ffdcc0912b5331d2c7b807dccf0a944bc26b0949df7cb64eb348e",
+          "curve_sessions": 94
+        }
+      ]
+    },
+    "original27": {
+      "protocol_sha256": "767e1ac714d6003b0ac9d64ca70680a4ff7fe5246b57dea6a14e049af35866ee",
+      "results_json_sha256": "8b5ba4475f707ea83bd620799848388b8498821d75b28bbc8974aad3dace6f5c",
+      "results_csv_sha256": "b6c766116a2a659ad95b71ed76c0b50ae10e68ff3bcf7eaf0f968c24e20335fd",
+      "source_file_count": 67,
+      "data_files": {
+        "benchmark.parquet": "b19a85aba7c852fc88835a2f9b61f580f64c1e1ed94599605c37947f0b3b726a",
+        "calendar.parquet": "e762ccd52b1f4fc6fa2ccc284043c27dc56e1a27212d8d8a2429b5900549d948",
+        "events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d",
+        "instruments.parquet": "d932e1e67f96a55a31e1da4b988636bfc74a73ef209504c1c137143e221ffeba",
+        "manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+        "prices.parquet": "8b0f3dc7a3c8f3c2d0b85d5ab547e30bc940bb063acf1262d59b4480e7742918",
+        "status.parquet": "59d427eaf8f53aee7e007f6aefdb2aa28959ed72dbbc02828021c6812b0eb144"
+      },
+      "audit_sha256": "30103cadd55ddd229305f7f59bd0967a2984d31576115ceac4fa5c722d6c95e2",
+      "runs": [
+        {
+          "candidate": "diversified_200_inverse_vol",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/full__diversified_200_inverse_vol__cost1/summary.json",
+          "summary_sha256": "c2d54e1a361c95e61faaa9827b6dc49d1937cb57355251b620722a9d76b9e44b",
+          "curves_sha256": "d350594f3ce7a6409ff43950a7428147589e5d158510b157c8801817dda5de2c",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "diversified_200_equal",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/full__diversified_200_equal__cost1/summary.json",
+          "summary_sha256": "474b06f6cc9ccfb51c3dcbe411ba536b8e4ae642f5366c3f301971144e22f9b6",
+          "curves_sha256": "180dded6bf780ed6e94285e2c05768bacdb9bb0c1269ddbaca05645ec9fca9ae",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "diversified_120_inverse_vol",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/full__diversified_120_inverse_vol__cost1/summary.json",
+          "summary_sha256": "86d1ed7f5838f5893578d8914b958f304399ec96b456103171c6fb5af3758d87",
+          "curves_sha256": "e8453474b71a59fd79f5d52a85f0195e0a2332428be7ea06613d9d77cd8624b5",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "trend_20_20_k3",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/full__trend_20_20_k3__cost1/summary.json",
+          "summary_sha256": "b7b7630a90ca7f2219247adb6e886ea08cd73a164371304428a3293f1449388a",
+          "curves_sha256": "a5194dfb40a7582993236bedcb69d3930e8c5aa529eb3a6ddc0bcc7c1fe1d212",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "guarded_momentum_200_v0.1",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/full__guarded_momentum_200_v0.1__cost1/summary.json",
+          "summary_sha256": "b3f4c7bc202b403496eec935897fa1ea3a80f1274ad6ab245a06bf8d7ab6f562",
+          "curves_sha256": "9a2077ea69ad3663b5310d6e8fe2b4da714922d4efe5c0230160bee368dd2669",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "buy_hold",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/full__buy_hold__cost1/summary.json",
+          "summary_sha256": "1bfc05c5761e75f54ec9e4075c989d252843152de9ade055e679763ecaf71d04",
+          "curves_sha256": "188f950e18c7ec3a417d94096f79cb8af6e3e03d398f0143df050c2e19cefb38",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "cash_buy_hold_40",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/full__cash_buy_hold_40__cost1/summary.json",
+          "summary_sha256": "cf5d93054b286f2a05dbdecc6d51c35dc5aafe17d6c246b0368e1eeb25082eec",
+          "curves_sha256": "b5b2adb0d8fa9f12b7fe072652c8a7c373b3a309223455883a5e56d134d55551",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "cash_buy_hold_60",
+          "period": "full",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/full__cash_buy_hold_60__cost1/summary.json",
+          "summary_sha256": "8114c18438d7dc18a79884e2dd31c29a982aaec370ceedc8e084f946c8488d91",
+          "curves_sha256": "53752b45e67620eb327ef13ece2148474dc17944f49b70ac3ab1ac78e4a730c0",
+          "curve_sessions": 726
+        },
+        {
+          "candidate": "diversified_200_inverse_vol",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/middle__diversified_200_inverse_vol__cost1/summary.json",
+          "summary_sha256": "b07f7d064f6459bffd00da9c39389de6fa9b8a392a060da2d1110c60aa691f90",
+          "curves_sha256": "34d229423765aaf7f8cc9f86aadec474337b77f81e7ea0226de4d28eaefc585f",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "diversified_200_equal",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/middle__diversified_200_equal__cost1/summary.json",
+          "summary_sha256": "a238128de99623d94ca1e15141bf43fcb55466ec4ff6d108e52a8dd1ae856f64",
+          "curves_sha256": "bb379a94c51c6fa97e0b294e5a3f1b66baf0ad2067c8f9cc503c5286f069ee1a",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "diversified_120_inverse_vol",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/middle__diversified_120_inverse_vol__cost1/summary.json",
+          "summary_sha256": "d7343c8c9c515d743b8571db0057d04a381f5fbd3f389e9acc25d179e50ebc58",
+          "curves_sha256": "86b8764be2c47b6f789ef5303326da96ed9744b7f0c543f7507a6f24ca65c9c8",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "trend_20_20_k3",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/middle__trend_20_20_k3__cost1/summary.json",
+          "summary_sha256": "7d0f9d5eb6d4e099c1c5ce63a42c9c203a3b101c1d50d81feaf9bd373d939d23",
+          "curves_sha256": "d5926f8469ae4d0fdd7a00ec65985414b95631a494d340afadb7232d960de3a0",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "guarded_momentum_200_v0.1",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/middle__guarded_momentum_200_v0.1__cost1/summary.json",
+          "summary_sha256": "fd323dad902b0a012bbd768d7d137c5517606a6de580f594335433cbd315df03",
+          "curves_sha256": "84f476c30b303d4bf132aa20af0a1cd30f00a9385b62da3303af6c231c13ddde",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "buy_hold",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/middle__buy_hold__cost1/summary.json",
+          "summary_sha256": "abce3952e8f7df9b68cb3f20c7a6a8604e19c2ca69c6773cc2ab7e33bbb19f27",
+          "curves_sha256": "1d7c4462cdd256588f5d26ba00fd6a13ba2bacf5fca90a20fe3ce8580f6a4a44",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "cash_buy_hold_40",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/middle__cash_buy_hold_40__cost1/summary.json",
+          "summary_sha256": "5da9c07fa220d52b67f226a95e4eb446bcd2ff989262b69803092a7c9c0ed86e",
+          "curves_sha256": "1a935b8a2b973cc962d57656ad15d27861b64e41d8a0067a2882c9b68fb1bd99",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "cash_buy_hold_60",
+          "period": "middle",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/middle__cash_buy_hold_60__cost1/summary.json",
+          "summary_sha256": "5867c012fcd7c235b15cec7d34531295b071718a3df5d2f740b7e666155d7bd6",
+          "curves_sha256": "41243f2c660ccab604795ca00f53481c4d47ff22c17d2a275b451e28b58174b5",
+          "curve_sessions": 302
+        },
+        {
+          "candidate": "diversified_200_inverse_vol",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/recent__diversified_200_inverse_vol__cost1/summary.json",
+          "summary_sha256": "c1ba993e576e1b4d6559d63be29afabecf4d1270980c8b778c41f0a2e2d3a681",
+          "curves_sha256": "baa9005f30e44196b1d0d03f385dbed6fec83b8178bd5fdcf95e21cff62b89b5",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "diversified_200_equal",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/recent__diversified_200_equal__cost1/summary.json",
+          "summary_sha256": "bf3dd16e5671d3c2c6f3cffc38f6d9fbe517c4af4b6e95f3e6a62908d9b08c60",
+          "curves_sha256": "b6bfe5590494dbd4537d180ef69dea4a02e6a16a526ece5d269c1aa7524db155",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "diversified_120_inverse_vol",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/recent__diversified_120_inverse_vol__cost1/summary.json",
+          "summary_sha256": "365cf6f76a7b8139b822badc3f6fcf37e1624aa2b09994f2acd2d0168c7ec1b3",
+          "curves_sha256": "346e3eef2843a64429418032c23d3a796e22e0b78a0dc33024f21e0057a56627",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "trend_20_20_k3",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/recent__trend_20_20_k3__cost1/summary.json",
+          "summary_sha256": "3d9028f02e794673eb2d393fad083cd1746a682f74eaaea32a190625f3fbcb14",
+          "curves_sha256": "ca2c5ae7948819c7f8e72052e18c170e98848517c92c5c4fcb286e8647254321",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "guarded_momentum_200_v0.1",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/recent__guarded_momentum_200_v0.1__cost1/summary.json",
+          "summary_sha256": "58748878eaab3e8a24bcef49071b5ecfcdebf19a665aeb9840d47329f416336c",
+          "curves_sha256": "d705d3e6d138ef63f6db9108e9af60070adfaffffff61d102b6923d96e47369d",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "buy_hold",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/recent__buy_hold__cost1/summary.json",
+          "summary_sha256": "0f1e1eb3215a03a5122313cf1552c85e84a616673d021c1d47a39c210450b280",
+          "curves_sha256": "478acbe70f217c39873c484b3d10669f3d347ddc1791cfd47105e2417b79e61a",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "cash_buy_hold_40",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/recent__cash_buy_hold_40__cost1/summary.json",
+          "summary_sha256": "ca9e0d094be5679f7435760082d6448cf8aabf02bde2983bb07fa772340869d7",
+          "curves_sha256": "c08d2daded5a693bf584f1ed779578eba32529d24f0fb98c559caf3630aa81c8",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "cash_buy_hold_60",
+          "period": "recent",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/recent__cash_buy_hold_60__cost1/summary.json",
+          "summary_sha256": "b71c8022a7cf5f6298b7bc5b191a91745cb08365d97fc5d53a86af1d08b3de29",
+          "curves_sha256": "8e562a11f0d27a63979e279e4db8da7e5563a7af4a48cdcc24d350cbedf69231",
+          "curve_sessions": 424
+        },
+        {
+          "candidate": "diversified_200_inverse_vol",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/post_selection__diversified_200_inverse_vol__cost1/summary.json",
+          "summary_sha256": "37e6c393a1b01cc490f85fe0a018f9a8657db1dc7f80ef772349978fff02e9b4",
+          "curves_sha256": "7aa7f483b79d96d172b568a6d31f6114aa5d69dd1c754667bbfa83d3590ddb85",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "diversified_200_equal",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/post_selection__diversified_200_equal__cost1/summary.json",
+          "summary_sha256": "c85e6d7e160688074c57d565471ff18b0d90dd0b28080628234714647324e2ed",
+          "curves_sha256": "2b15d699d95dbec6066aac336fff4acdcc1b0e3fc5f08eedea222ea54ddb15e7",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "diversified_120_inverse_vol",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/post_selection__diversified_120_inverse_vol__cost1/summary.json",
+          "summary_sha256": "cc6dbb6a9b93cec7edbe44bb9d6f083ce3310b32283cf81d351ad91f678870d0",
+          "curves_sha256": "498be8d6ef763bdf18858c5518dce935cd39d920a528d3ecc32701c33f18655c",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "trend_20_20_k3",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/post_selection__trend_20_20_k3__cost1/summary.json",
+          "summary_sha256": "fef893aae04584fc19478e692d58aa454a7a9ef9e00aa19f842d1d7d30d7bfa5",
+          "curves_sha256": "ed2bc974eed5c5665e4c7d449129dcc73db349062d916e444eb621743a01d926",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "guarded_momentum_200_v0.1",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/post_selection__guarded_momentum_200_v0.1__cost1/summary.json",
+          "summary_sha256": "2d9dd32c69c8f1b3765b165f9393e298f1246fa2c21597bdb826ae517425fd3a",
+          "curves_sha256": "5d1ab69059264fe93e8ad013ad89110f970ceea16a70f7c8053a6a301a5abd04",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "buy_hold",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/post_selection__buy_hold__cost1/summary.json",
+          "summary_sha256": "057443c46eb7417e9162f234602d42be44b0e6157af0bf21099df9e74afe6c5a",
+          "curves_sha256": "65ef53040ac5c4a27a34657b4f74aeb969d67e3b7266d0d9cca503ce008f608c",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "cash_buy_hold_40",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/post_selection__cash_buy_hold_40__cost1/summary.json",
+          "summary_sha256": "a4a9f621ff05baf4af5f1d34977a61204ce5f6724c89191072b3a8fff72aa6b3",
+          "curves_sha256": "9d1b8f7106fe19832e324cf1b60d3268c8f950e0765cb97a288ef2b0c0778b1e",
+          "curve_sessions": 94
+        },
+        {
+          "candidate": "cash_buy_hold_60",
+          "period": "post_selection",
+          "summary": "outputs/etf-expansion-20261002/original27/runs/post_selection__cash_buy_hold_60__cost1/summary.json",
+          "summary_sha256": "8813a5098dd4edd7113172ef3ebc9e72357d5ff4b6f17b946edae365adc45aba",
+          "curves_sha256": "2dbabeb370e2f63a777efa7b9f95e9baedf1c8cca811608325f8cbdac0c0c1ff",
+          "curve_sessions": 94
+        }
+      ]
+    }
+  },
+  "comparison_sha256": "9407da1ff02a4f0f816416a7f0de9c61507e5d756ce906c36129220012bce93e",
+  "eligibility_audit_sha256": "e5747e578e14fbd42cd2400ceb2ef59bee1bf89f10ae359cd4d290d54a1eb696"
+}

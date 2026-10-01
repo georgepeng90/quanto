@@ -1,0 +1,119 @@
+{
+  "rule": {
+    "min_history_days": 120,
+    "min_avg_turnover_20d": 0
+  },
+  "periods": {},
+  "pools": {
+    "expanded": {
+      "full": {
+        "start": "2023-10-09",
+        "end": "2026-09-30",
+        "eligible_at_start_120d": 196,
+        "eligible_and_seasoned_200d_at_start": 189,
+        "eligible_120d_but_not_seasoned_200d_at_start": 7,
+        "seasoned_200d_at_start_including_not_yet_120d_eligible": 189,
+        "later_becoming_eligible_after_start": 109,
+        "ever_eligible_in_period": 305,
+        "buy_hold_later_eligible_omitted_from_initial_cohort": 109
+      },
+      "middle": {
+        "start": "2023-10-09",
+        "end": "2024-12-31",
+        "eligible_at_start_120d": 196,
+        "eligible_and_seasoned_200d_at_start": 189,
+        "eligible_120d_but_not_seasoned_200d_at_start": 7,
+        "seasoned_200d_at_start_including_not_yet_120d_eligible": 189,
+        "later_becoming_eligible_after_start": 41,
+        "ever_eligible_in_period": 237,
+        "buy_hold_later_eligible_omitted_from_initial_cohort": 41
+      },
+      "recent": {
+        "start": "2025-01-02",
+        "end": "2026-09-30",
+        "eligible_at_start_120d": 237,
+        "eligible_and_seasoned_200d_at_start": 226,
+        "eligible_120d_but_not_seasoned_200d_at_start": 11,
+        "seasoned_200d_at_start_including_not_yet_120d_eligible": 226,
+        "later_becoming_eligible_after_start": 68,
+        "ever_eligible_in_period": 305,
+        "buy_hold_later_eligible_omitted_from_initial_cohort": 68
+      },
+      "post_selection": {
+        "start": "2026-05-20",
+        "end": "2026-09-30",
+        "eligible_at_start_120d": 284,
+        "eligible_and_seasoned_200d_at_start": 270,
+        "eligible_120d_but_not_seasoned_200d_at_start": 14,
+        "seasoned_200d_at_start_including_not_yet_120d_eligible": 270,
+        "later_becoming_eligible_after_start": 21,
+        "ever_eligible_in_period": 305,
+        "buy_hold_later_eligible_omitted_from_initial_cohort": 21
+      },
+      "global_observed_dates_at_full_start": 243
+    },
+    "original27": {
+      "full": {
+        "start": "2023-10-09",
+        "end": "2026-09-30",
+        "eligible_at_start_120d": 27,
+        "eligible_and_seasoned_200d_at_start": 26,
+        "eligible_120d_but_not_seasoned_200d_at_start": 1,
+        "seasoned_200d_at_start_including_not_yet_120d_eligible": 26,
+        "later_becoming_eligible_after_start": 0,
+        "ever_eligible_in_period": 27,
+        "buy_hold_later_eligible_omitted_from_initial_cohort": 0
+      },
+      "middle": {
+        "start": "2023-10-09",
+        "end": "2024-12-31",
+        "eligible_at_start_120d": 27,
+        "eligible_and_seasoned_200d_at_start": 26,
+        "eligible_120d_but_not_seasoned_200d_at_start": 1,
+        "seasoned_200d_at_start_including_not_yet_120d_eligible": 26,
+        "later_becoming_eligible_after_start": 0,
+        "ever_eligible_in_period": 27,
+        "buy_hold_later_eligible_omitted_from_initial_cohort": 0
+      },
+      "recent": {
+        "start": "2025-01-02",
+        "end": "2026-09-30",
+        "eligible_at_start_120d": 27,
+        "eligible_and_seasoned_200d_at_start": 27,
+        "eligible_120d_but_not_seasoned_200d_at_start": 0,
+        "seasoned_200d_at_start_including_not_yet_120d_eligible": 27,
+        "later_becoming_eligible_after_start": 0,
+        "ever_eligible_in_period": 27,
+        "buy_hold_later_eligible_omitted_from_initial_cohort": 0
+      },
+      "post_selection": {
+        "start": "2026-05-20",
+        "end": "2026-09-30",
+        "eligible_at_start_120d": 27,
+        "eligible_and_seasoned_200d_at_start": 27,
+        "eligible_120d_but_not_seasoned_200d_at_start": 0,
+        "seasoned_200d_at_start_including_not_yet_120d_eligible": 27,
+        "later_becoming_eligible_after_start": 0,
+        "ever_eligible_in_period": 27,
+        "buy_hold_later_eligible_omitted_from_initial_cohort": 0
+      },
+      "global_observed_dates_at_full_start": 243
+    }
+  },
+  "checks": {
+    "expanded": {
+      "symbols_in_instruments": 305,
+      "symbols_in_prices": 305,
+      "price_rows": 238070,
+      "prelisting_or_unregistered_price_rows": 0,
+      "eligible_rows": 201775
+    },
+    "original27": {
+      "symbols_in_instruments": 27,
+      "symbols_in_prices": 27,
+      "price_rows": 26022,
+      "prelisting_or_unregistered_price_rows": 0,
+      "eligible_rows": 22809
+    }
+  }
+}

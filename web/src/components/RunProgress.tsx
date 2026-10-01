@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { RunEvent, RunRecord, RunState } from '../types'
+import { taskTime } from './timePresentation'
 
 export const terminalStates = new Set<RunState>(['succeeded', 'failed', 'cancelled', 'interrupted'])
 export const stateLabel: Record<RunState, string> = { queued: '排队中', running: '运行中', cancel_requested: '正在取消', succeeded: '已完成', failed: '失败', cancelled: '已取消', interrupted: '已中断' }
@@ -25,7 +26,8 @@ export function RunProgress({ run, latest, progress }: { run: RunRecord; latest?
     {knownTotal ? <p>已完成交易日 {progress.completed_days} / {progress.total_days}</p> : <p>已完成交易日：{latest?.completed_days ?? 0} · 总量待服务端确认</p>}
     {knownTotal && <progress value={progress.completed_days} max={progress.total_days} aria-label="交易日进度" />}
     <p>模拟日期：{latest?.asof || progress?.asof || run.completed_through || '尚未开始'} · 已完成至：{run.completed_through || '尚无完整交易日'}</p>
-    <p>提交：{run.created_at || '历史记录未知'} · 开始：{run.started_at || '尚未开始或历史记录未知'} · 结束：{run.finished_at || '尚未结束或历史记录未知'}</p>
+    <p className="muted">任务时间：北京时间（Asia/Shanghai，UTC+8）。模拟日期为回测交易日。</p>
+    <p>提交：{taskTime(run.created_at, '历史记录未知')} · 开始：{taskTime(run.started_at, '尚未开始或历史记录未知')} · 结束：{taskTime(run.finished_at, '尚未结束或历史记录未知')}</p>
     <p>运行耗时：{duration(run.started_at, run.finished_at, now)}</p>
   </div>
 }

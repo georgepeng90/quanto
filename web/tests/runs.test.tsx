@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { App } from '../src/App'
+import { RunProgress } from '../src/components/RunProgress'
 import type { RunRecord } from '../src/types'
 
 const experiment = { id: 'e1', revision: 3, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: { start: '2024-01-01', end: '2024-01-31' }, sample_purpose: 'exploration' } }
@@ -200,6 +201,28 @@ test('shows next-session fills beside the dated signal through their exact order
   expect(screen.getByRole('link', { name: 'o1' })).toHaveAttribute('href', '#order-o1')
   expect(screen.getByText(/价格 1/)).toBeVisible()
   expect(traceRequests.some(path => requestUrl(path).pathname.endsWith('/fills') && requestUrl(path).searchParams.get('context_date') === '2024-01-03')).toBe(true)
+})
+
+const screenshotRun = { ...running, state: 'succeeded', completed_through: '2026-05-19', created_at: '2026-09-30T17:25:14.122820+00:00', started_at: '2026-09-30T17:25:35.757974+00:00', finished_at: '2026-09-30T17:25:45.832972+00:00' } as RunRecord
+
+test('run progress shows Shanghai wall-clock times across midnight without shifting market dates', () => {
+  const progress = { ...event, asof: '2026-05-19', completed_days: 330, total_days: 330 }
+  render(<RunProgress run={screenshotRun} latest={progress} progress={progress} />)
+  expect(screen.getByText(/提交：2026-10-01 01:25:14.*开始：2026-10-01 01:25:35.*结束：2026-10-01 01:25:45/)).toBeVisible()
+  expect(screen.getByText(/北京时间.*Asia\/Shanghai/)).toBeVisible()
+  expect(screen.getByText('模拟日期：2026-05-19 · 已完成至：2026-05-19')).toBeVisible()
+  expect(screen.getByText('运行耗时：0时 0分 10秒')).toBeVisible()
+  expect(screen.queryByText(/2026-09-30T17:/)).toBeNull()
+})
+
+test('run list uses the same Shanghai timezone as the detail progress', async () => {
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/runs' && !init?.method
+    ? Response.json({ items: [screenshotRun], next_cursor: null }) : prior(input, init)))
+  app('/runs')
+  expect(await screen.findByText(/提交 2026-10-01 01:25:14.*开始 2026-10-01 01:25:35.*结束 2026-10-01 01:25:45/)).toBeVisible()
+  expect(screen.getByText(/北京时间.*Asia\/Shanghai/)).toBeVisible()
+  expect(screen.queryByText(/2026-09-30T17:/)).toBeNull()
 })
 
 test('keeps each run log tail independent when moving between detail URLs', async () => {

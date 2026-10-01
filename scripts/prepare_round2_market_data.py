@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
-import shutil
 import sys
 
 import pandas as pd
@@ -11,7 +11,6 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "outputs/strategy-research-20261001-round2/alternate-data"
-RAW = ROOT / "data/raw/tencent-20261001"
 OUTPUT = ROOT / "outputs/strategy-research-20261001-round2/fresh"
 CUTOFF = pd.Timestamp("2026-09-30")
 TABLES = ("prices", "benchmark", "calendar", "instruments", "status", "events", "eligibility")
@@ -50,22 +49,10 @@ def read_csv(path: Path, symbol: str) -> pd.DataFrame:
     return frame
 
 
-def copy_unchanged(source: Path, destination: Path) -> None:
-    if destination.exists():
-        if sha256(source) != sha256(destination):
-            raise ValueError(f"Existing raw copy differs: {destination}")
-        return
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, destination)
-    if sha256(source) != sha256(destination):
-        raise ValueError(f"Raw copy verification failed: {destination}")
-
-
-def main() -> None:
+def verify_legacy() -> None:
     sys.path.insert(0, str(ROOT / "src"))
     from quanto.backtest.dataset_loaders import load_dataset, validate_benchmark, validate_dataset, validate_prices
     from quanto.backtest.dataset_schemas import DatasetBundle, DatasetManifest
-    from quanto.backtest.dataset_storage import write_parquet_dataset
 
     selection_path = ROOT / "docs/research/2026-10-01/source_audit.json"
     instruments_path = ROOT / "outputs/strategy-research-20261001/dataset/instruments.parquet"
@@ -170,18 +157,10 @@ def main() -> None:
         pd.concat(status_frames, ignore_index=True), events, pd.DataFrame(),
     ))
 
-    copy_unchanged(benchmark_source_path, RAW / "benchmark/sh000300.csv")
-    for symbol in symbols:
-        copy_unchanged(source_dir / f"{symbol}.csv", RAW / "etf" / f"{symbol}.csv")
-    for item in source_records:
-        source_path = ROOT / item["path"]
-        destination = RAW / ("benchmark/sh000300.csv" if source_path == benchmark_source_path else f"etf/{source_path.stem}.csv")
-        item["raw_copy_path"] = destination.relative_to(ROOT).as_posix()
-        item["raw_copy_sha256"] = sha256(destination)
-
+    # Audit the prior frozen result; never copy into a supplier-specific cache or regenerate it.
     dataset_path = OUTPUT / "dataset"
     if not dataset_path.exists():
-        write_parquet_dataset(bundle, dataset_path)
+        raise FileNotFoundError("legacy verification requires the existing frozen dataset")
     saved = load_dataset(dataset_path)
     if saved.manifest.model_dump(mode="json") != manifest.model_dump(mode="json"):
         raise ValueError("Saved manifest differs")
@@ -208,16 +187,33 @@ def main() -> None:
         "validation": "validate_dataset and exact Parquet roundtrip passed",
         "limitations": manifest.limitations,
     }
-    audit_path = OUTPUT / "source_audit.json"
-    content = json.dumps(source_audit, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-    if audit_path.exists() and audit_path.read_text(encoding="utf-8") != content:
-        raise ValueError("Existing source audit differs")
-    audit_path.write_text(content, encoding="utf-8")
     print(json.dumps({
         "symbols": len(symbols), "price_rows": len(bundle.prices),
         "benchmark_rows": len(bundle.benchmark), "calendar_rows": len(bundle.calendar),
         "data_end": CUTOFF.date().isoformat(), "dataset": str(dataset_path), "validation": "passed",
+        "audit": source_audit,
     }, ensure_ascii=False))
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Read prepared market snapshots, or audit an existing round-two freeze")
+    parser.add_argument("--audit-legacy", action="store_true")
+    parser.add_argument("--root", type=Path)
+    parser.add_argument("--snapshot")
+    parser.add_argument("--requirement", type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--assumptions", type=Path)
+    args = parser.parse_args()
+    if args.audit_legacy:
+        verify_legacy()
+        return
+    if any(value is None for value in (args.root, args.snapshot, args.requirement, args.output)):
+        parser.error("--root, --snapshot, --requirement and --output are required")
+    sys.path.insert(0, str(ROOT))
+    from scripts.prepare_strategy_research_data import prepare_from_snapshot
+    assumptions = json.loads(args.assumptions.read_text(encoding="utf-8")) if args.assumptions else {}
+    result = prepare_from_snapshot(args.root, args.snapshot, json.loads(args.requirement.read_text(encoding="utf-8")), args.output, assumptions)
+    print(json.dumps(result, ensure_ascii=False))
 
 
 if __name__ == "__main__":

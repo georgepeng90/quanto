@@ -1,0 +1,73 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.13.12",
+  "cpu": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+  "logical_cpus": 16,
+  "memory_bytes": 33451126784,
+  "cases": [
+    {
+      "frequency": "1d",
+      "symbols": 32,
+      "sessions": 2520,
+      "etf_rows": 80640,
+      "object_bytes": 5356048,
+      "object_bytes_per_row": 66.41924603174603,
+      "total_cache_bytes": 12066838,
+      "gap_request_count": 33,
+      "repeat_request_count": 0,
+      "seconds": {
+        "import_tables": 1.0434842000249773,
+        "prepare_gaps": 15.276831800001673,
+        "repeat": 2.2332920000189915,
+        "full_read": 0.7279315000050701,
+        "one_symbol_read": 0.11622750002425164,
+        "integrity_verification": 0.09794190002139658,
+        "batch_read": 0.6880340999923646,
+        "workbench_job": 10.862512100022286
+      },
+      "batch_rss_baseline": 234835968,
+      "batch_rss_peak": 242548736,
+      "batch_rss_increase": 7712768,
+      "methodology": "Synthetic seed 20261001, random OHLC, 240 minute bars/session, benchmark plus factual reference tables; one sample, warm OS cache, batch peak sampled every 5ms; workbench time includes frozen child and parent registration; no real source throughput measured.",
+      "gap_intervals": [
+        [
+          "2029-08-29T01:30:00Z",
+          "2029-08-29T07:00:00Z"
+        ]
+      ],
+      "gap_instruments": "32 ETFs plus one benchmark; one final bar each"
+    },
+    {
+      "frequency": "1m",
+      "symbols": 32,
+      "sessions": 20,
+      "etf_rows": 153600,
+      "object_bytes": 9324539,
+      "object_bytes_per_row": 60.70663411458333,
+      "total_cache_bytes": 20138123,
+      "gap_request_count": 33,
+      "repeat_request_count": 0,
+      "seconds": {
+        "import_tables": 1.5430363999912515,
+        "prepare_gaps": 24.849136999982875,
+        "repeat": 3.4558800000231713,
+        "full_read": 1.1196814000140876,
+        "one_symbol_read": 0.13961059995926917,
+        "integrity_verification": 0.10063060000538826,
+        "batch_read": 1.1224917999934405,
+        "workbench_job": null
+      },
+      "batch_rss_baseline": 304553984,
+      "batch_rss_peak": 311439360,
+      "batch_rss_increase": 6885376,
+      "methodology": "Synthetic seed 20261001, random OHLC, 240 minute bars/session, benchmark plus factual reference tables; one sample, warm OS cache, batch peak sampled every 5ms; workbench time includes frozen child and parent registration; no real source throughput measured.",
+      "gap_intervals": [
+        [
+          "2020-01-29T06:59:00Z",
+          "2020-01-29T07:00:00Z"
+        ]
+      ],
+      "gap_instruments": "32 ETFs plus one benchmark; one final bar each"
+    }
+  ]
+}

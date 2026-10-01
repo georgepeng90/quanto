@@ -86,8 +86,8 @@ $RECYCLE.BIN/
 
 ### Quanto generated artifacts
 /data/*
-!/data/raw/
-!/data/raw/**
+# Already tracked historical samples stay tracked; new downloads never enter Git.
+/market/
 /outputs/
 /data/workbench/
 /web/node_modules/

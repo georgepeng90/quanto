@@ -8,7 +8,6 @@ import platform
 import tempfile
 import time
 
-import numpy as np
 import pandas as pd
 
 from quanto.config import BacktestSpec
@@ -19,30 +18,21 @@ from quanto.workbench.store import WorkbenchStore
 
 
 def fixture(root: Path, count: int, days: int) -> list[str]:
-    root.mkdir()
-    dates = pd.bdate_range("2010-01-04", periods=days + 1)
-    symbols = [f"{index:06d}" for index in range(count)]
-    close = np.random.default_rng(20260930).uniform(5, 50, count * days)
-    prices = pd.DataFrame({"date": np.tile(dates[:days], count), "symbol": np.repeat(symbols, days),
-        "open": close, "high": close * 1.01, "low": close * 0.99, "close": close,
-        "volume": 10000, "amount": close * 10000})
-    tables = {"prices": prices,
-        "benchmark": pd.DataFrame({"date": dates[:days], "close": np.arange(days) + 1000, "turnover": 1000000}),
-        "calendar": pd.DataFrame({"date": dates}),
-        "instruments": pd.DataFrame({"symbol": symbols, "lot_size": 100, "settlement_sessions": 1,
-                                     "listing_date": dates[0], "group": "synthetic"}),
-        "status": prices[["date", "symbol"]].assign(status="trading", can_buy=True, can_sell=True),
-        "events": pd.DataFrame(columns=["symbol", "event_type", "record_date", "ex_date", "pay_date", "cash_per_share", "split_ratio"])}
-    for name, table in tables.items():
-        table.to_csv(root / f"{name}.csv", index=False)
-    manifest = {"source": "synthetic storage benchmark", "is_demo": True, "price_mode": "raw_cash",
-        "currency": "CNY", "calendar_start": str(dates[0].date()), "calendar_end": str(dates[-1].date()),
-        "data_start": str(dates[0].date()), "data_end": str(dates[-2].date()),
-        "volume_unit": "share", "amount_unit": "CNY", "event_coverage": "complete",
-        "benchmark_type": "price_index", "field_semantics": {},
-        "universe_rule": {"min_history_days": 120, "min_avg_turnover_20d": 0}, "limitations": []}
-    (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    return symbols
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from scripts.benchmark_market_data import synthetic_case
+    from quanto.data import MarketData
+    from quanto.data.imports import import_table
+    from quanto.backtest.market_dataset import assemble_dataset
+    from quanto.backtest.dataset_storage import write_parquet_dataset
+    payload, requirement, chunks = synthetic_case(count, days)
+    with MarketData(root.parent / "market", providers=()) as market:
+        for chunk in chunks:
+            import_table(market.store, market.catalog, chunk.request, chunk.frame, chunk.source, chunk.evidence)
+        ref = market.wait_ready(market.prefetch(requirement).id)
+        bundle = assemble_dataset(market, ref, requirement, {"universe_rule": {"min_history_days": 120, "min_avg_turnover_20d": 0}})
+    write_parquet_dataset(bundle, root)
+    return payload["symbols"]
 
 
 def timed(operation):
@@ -93,8 +83,8 @@ def main():
         pd.testing.assert_frame_equal(actual, expected)
         print(json.dumps({"platform": platform.platform(), "python": platform.python_version(),
             "rows": args.symbols * args.days, "schema": manifest["schema_version"],
-            "method": "synthetic; one observation per pipeline phase; OS cache not cleared; not end-to-end",
-            "seconds": {"csv_load_validate": load_seconds, "register": registration_seconds,
+            "method": "synthetic prepared market snapshot; one observation per pipeline phase; OS cache not cleared; not comparable to prior CSV input benchmark; not end-to-end",
+            "seconds": {"assembled_load_validate": load_seconds, "register": registration_seconds,
                 "freeze_first": first_seconds, "freeze_second": second_seconds,
                 "snapshot_verify": verification_seconds, "runtime_load": runtime_seconds},
             "bytes": {"input": size(root / "input"), "registered": size(dataset.path),

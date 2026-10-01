@@ -43,6 +43,18 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
     return record.run_id as string
   }
   const first = await run(experiment)
+  await page.getByRole('link', { name: '回测任务', exact: true }).click()
+  const summary = page.getByRole('article', { name: `回测 ${first}`, exact: true })
+  await expect(summary.getByRole('link', { name: '浏览器演示', exact: true })).toBeVisible()
+  await expect(summary.getByText('回测区间 2018-01-02 — 2018-01-31')).toBeVisible()
+  await expect(summary.getByText('初始资金 CNY 100,000.00')).toBeVisible()
+  await expect(summary.getByText('年化收益', { exact: true })).toBeVisible()
+  await expect(summary.getByText('夏普比率', { exact: true })).toBeVisible()
+  await expect(summary.getByText('演示数据 · 合成绩效')).toBeVisible()
+  await expect(summary.getByText(/^有效参数/)).not.toBeVisible()
+  await summary.getByText('参数与来源').click()
+  await expect(summary.getByText(/^有效参数/)).toHaveText('有效参数 {"weight":0.5}')
+  await page.goto(`/runs/${first}`)
   const detailRequests: string[] = []
   const recordDetailRequest = (request: import('@playwright/test').Request) => {
     if (request.url().includes(`/api/runs/${first}/`)) detailRequests.push(request.url())

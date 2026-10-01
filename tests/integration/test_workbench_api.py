@@ -1,8 +1,10 @@
 from fastapi.testclient import TestClient
 from uuid import uuid4
 from datetime import datetime, timezone
+import json
 
 from quanto.api.app import create_app
+from quanto.workbench.runs import RunService
 from tests.integration.test_snapshot_submission import _ready
 
 
@@ -78,6 +80,26 @@ def test_run_and_job_api_expose_persisted_lifecycle_times(tmp_path):
         assert job["created_at"] == run["created_at"]
         assert client.get(f"/api/runs/{run['run_id']}", headers=headers).json()["created_at"] == run["created_at"]
         assert client.get("/api/runs", headers=headers).json()["items"][0]["created_at"] == run["created_at"]
+
+
+def test_run_summary_uses_frozen_strategy_name_and_inputs_after_draft_edits(tmp_path):
+    store, draft, _, strategy = _ready(tmp_path)
+    run = RunService(store).submit(draft.id, draft.revision, "summary", "web")
+    declaration = {**strategy.manifest, "name": "later name"}
+    files = {path.name: path.read_bytes() for path in strategy.path.iterdir() if path.is_file()}
+    files["strategy.json"] = json.dumps(declaration).encode()
+    later = store.register_strategy(files, declaration)
+    updated = {**draft.payload, "strategy_revision_id": later.id,
+               "backtest_spec": {**draft.payload["backtest_spec"],
+               "initial_cash": 2000, "end": "2024-01-02"}}
+    store.save_experiment(draft.id, draft.revision, updated)
+    client = TestClient(create_app(store.root), base_url="http://127.0.0.1:8765")
+    headers = {"Authorization": f"Bearer {client.get('/api/session').json()['token']}"}
+    provenance = client.get(f"/api/runs/{run.run_id}", headers=headers).json()["provenance"]
+    assert provenance["strategy_name"] == "test"
+    assert provenance["start"] == "2024-01-01"
+    assert provenance["end"] == "2024-01-03"
+    assert provenance["initial_cash"] == 1000
 
 
 def test_idempotency_conflict(tmp_path):

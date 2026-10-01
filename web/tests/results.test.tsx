@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
@@ -161,22 +161,57 @@ test('downloads authenticated ZIP and HTML report bytes without token in URL', a
   click.mockRestore()
 })
 
-test('run list shows frozen strategy, params, dataset and final metrics with state and group filters', async () => {
+test('run list prioritizes frozen inputs and performance while keeping technical details expandable', async () => {
   const calls: string[] = []
   const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => { calls.push(String(input)); return prior(input, init) }))
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push(String(input))
+    if (String(input) === '/api/runs/r1') return Response.json({ ...run, provenance: { ...provenance, strategy_name: '冻结趋势轮动', initial_cash: 80000, currency: 'CNY', is_demo: false, source: 'long frozen source description' } })
+    if (String(input) === '/api/runs/r1/results') return Response.json({ ...result, metrics: { ...result.metrics, total_return: .25, annual_return: .12, max_drawdown: .18, sharpe: null } })
+    return prior(input, init)
+  }))
   app('/runs')
-  expect(await screen.findByText(/strategy-1/)).toBeVisible()
-  expect(screen.getByText(/dataset-1/)).toBeVisible()
+  expect(await screen.findByRole('link', { name: /冻结趋势轮动/ })).toHaveAttribute('href', '/runs/r1')
+  expect(screen.getByText(/2024-01-03 — 2024-01-04/)).toBeVisible()
+  expect(screen.getByText(/初始资金 CNY 80,000.00/)).toBeVisible()
+  expect(screen.getByText('25.00%')).toBeVisible()
+  expect(screen.getByText('25.00%')).toHaveClass('return-positive')
+  expect(screen.getByText('12.00%')).toBeVisible()
+  expect(screen.getByText('18.00%')).toBeVisible()
+  expect(screen.getByText('夏普比率').parentElement).toHaveTextContent('不可用')
+  expect(screen.getByText('CNY 100,000.00')).toBeVisible()
+  expect(screen.getByText(/strategy-1/)).not.toBeVisible()
+  expect(screen.getByText(/dataset-1/)).not.toBeVisible()
+  expect(screen.getByText(/window.*4/)).not.toBeVisible()
+  expect(screen.getByText(/long frozen source description/)).not.toBeVisible()
+  await userEvent.click(screen.getByText('参数与来源'))
+  expect(screen.getByText(/strategy-1/)).toBeVisible()
   expect(screen.getByText(/window.*4/)).toBeVisible()
-  expect(screen.getByText(/最终权益.*100,000.00/)).toBeVisible()
+  expect(screen.getByText(/long frozen source description/)).toBeVisible()
   await userEvent.click(screen.getByRole('button', { name: '刷新' }))
   await waitFor(() => expect(calls.filter(path => path === '/api/runs').length).toBeGreaterThan(1))
   expect(calls.filter(path => path === '/api/runs/r1/results')).toHaveLength(1)
   await userEvent.selectOptions(screen.getByLabelText('批次筛选'), 'group-1')
-  expect(screen.getByRole('link', { name: 'r1' })).toBeVisible()
+  expect(screen.getByRole('link', { name: /冻结趋势轮动/ })).toBeVisible()
   await userEvent.selectOptions(screen.getByLabelText('状态筛选'), 'failed')
   expect(screen.getByText('暂无匹配运行。')).toBeVisible()
+})
+
+test('negative returns are green and unfinished runs do not show final performance', async () => {
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/runs') return page([run, { ...run, run_id: 'r2', state: 'running', detail_url: '/runs/r2', provenance: undefined }])
+    if (path === '/api/runs/r2') return Response.json({ ...run, run_id: 'r2', state: 'running', provenance })
+    if (path === '/api/runs/r1/results') return Response.json({ ...result, metrics: { ...result.metrics, total_return: -.1, annual_return: -.08, max_drawdown: .2 } })
+    return prior(input, init)
+  }))
+  app('/runs')
+  expect(await screen.findByText('-10.00%')).toHaveClass('return-negative')
+  expect(screen.getByText('-8.00%')).toHaveClass('return-negative')
+  const active = within(screen.getByRole('article', { name: '回测 r2' }))
+  expect(active.getByText(/尚无最终绩效/)).toBeVisible()
+  expect(active.queryByText('累计收益')).toBeNull()
 })
 
 test('state and group filters include runs beyond the first server page', async () => {
@@ -230,6 +265,11 @@ test.each(['/runs/r1', '/runs'])('demo disclosure remains visible beside perform
     return previous(input, init)
   }))
   app(path)
+  if (path === '/runs') {
+    expect(await screen.findByText('演示数据 · 合成绩效')).toBeVisible()
+    expect(screen.getByText(/synthetic fixture/)).not.toBeVisible()
+    await userEvent.click(screen.getByText('参数与来源'))
+  }
   expect(await screen.findByText(/演示数据：合成绩效/)).toBeVisible()
   expect(screen.getByText(/演示数据：合成绩效/)).toHaveTextContent('synthetic fixture')
 })

@@ -1,5 +1,5 @@
 const rates = new Set(['total_return', 'annual_return', 'volatility', 'max_drawdown', 'benchmark_return', 'average_invested_ratio', 'return', 'drawdown', 'weight'])
-const amounts = new Set(['final_equity', 'equity', 'benchmark_equity', 'realized_pnl', 'unrealized_pnl', 'commission_paid', 'slippage_cost', 'execution_cost', 'dividend_income', 'interest_income'])
+const amounts = new Set(['initial_cash', 'final_equity', 'equity', 'benchmark_equity', 'realized_pnl', 'unrealized_pnl', 'commission_paid', 'slippage_cost', 'execution_cost', 'dividend_income', 'interest_income'])
 export function metricValue(key: string, value: unknown, currency: unknown = ''): string {
   if (value == null) return '不可用'
   if (typeof value !== 'number' || !Number.isFinite(value)) return String(value)

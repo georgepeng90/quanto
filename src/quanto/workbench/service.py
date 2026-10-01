@@ -182,6 +182,7 @@ class WorkbenchService:
         engine_names = {"src/quanto/config.py", "src/quanto/universe.py", "src/quanto/workbench/worker.py"}
         return {"dataset_version_id": manifest["dataset_version_id"],
                 "strategy_revision_id": manifest["strategy_revision_id"],
+                "strategy_name": manifest["strategy_manifest"].get("name") or manifest["strategy_manifest"]["entrypoint"],
                 "strategy_source_hashes": {name: value for name, value in manifest["files"].items() if name.startswith("strategy/")},
                 "engine_source_hashes": {name: value for name, value in manifest["files"].items()
                                          if name.startswith(engine_prefixes) or name in engine_names},

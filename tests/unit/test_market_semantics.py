@@ -134,3 +134,15 @@ def test_conflicting_reference_facts_block_ready(tmp_path, kind, proof):
         with pytest.raises(MarketDataError) as failure:
             market.wait_ready(market.prefetch(wanted).id, 10)
         assert any(entry.reason == "SEMANTIC_CONFLICT" for entry in failure.value.coverage.entries)
+        from quanto.data.contracts import NormalizedChunk
+        from quanto.data.providers.base import ProviderCapabilities
+        from tests.unit.test_market_acquisition import coordinator, prepare
+        class ReferenceProvider:
+            name = "revision"
+            def capabilities(self):
+                return ProviderCapabilities((kind,), (), {}, ())
+            def fetch(self, demand, context):
+                return NormalizedChunk(demand, pd.DataFrame([rows[0]]), source, b"explicit revision")
+        engine, catalog = coordinator(tmp_path, (ReferenceProvider(),))
+        repaired = prepare(engine, catalog, DataRequirement(requests=(request,)), "reference-refresh", refresh=True)
+        assert repaired.coverage.complete

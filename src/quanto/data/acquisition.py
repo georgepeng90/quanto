@@ -172,7 +172,7 @@ class AcquisitionCoordinator:
                                 previous_gap = gap
                         for fetch_request in windows:
                             existing = self.catalog.fragments(DataRequirement(requests=(part,), quality=requirement.quality))
-                            references = tuple(ref for ref in refs if ref.request.kind != "bars")
+                            references = tuple(ref for ref in refs if ref.request.kind not in {"bars", fetch_request.kind})
                             def sufficient(chunk):
                                 if existing and not refresh:
                                     if any(ref.request.price_basis != chunk.request.price_basis for ref in existing):
@@ -198,7 +198,6 @@ class AcquisitionCoordinator:
                             new = self.store.put_chunk(chunk)
                             check()
                             if refresh or full_history:
-                                references = tuple(ref for ref in refs if ref.request.kind != "bars")
                                 candidate = evaluate_coverage(DataRequirement(requests=(fetch_request,), quality=requirement.quality), new + references, self.store)
                                 if not candidate.complete:
                                     if refresh:

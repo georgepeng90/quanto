@@ -1,0 +1,128 @@
+{
+  "retrieved_utc": "2026-10-01T11:04:34.017024+00:00",
+  "source_files": [
+    {
+      "symbol": "512400",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh512400&scale=240&ma=no&datalen=10",
+      "status": 200,
+      "file": "sina-sh512400-daily-last10.json",
+      "sha256": "d207966a64f435dcce29f2f5fb1c7f16fa5c50e56188b08730aac793f7108941"
+    },
+    {
+      "symbol": "515880",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh515880&scale=240&ma=no&datalen=10",
+      "status": 200,
+      "file": "sina-sh515880-daily-last10.json",
+      "sha256": "1d01554504de2cb1e726fff04b3e76be92fd621f21af3527f867acb7dffaae87"
+    },
+    {
+      "symbol": "159995",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159995&scale=240&ma=no&datalen=10",
+      "status": 200,
+      "file": "sina-sz159995-daily-last10.json",
+      "sha256": "1e9f03c5709dfe6a08eb5421f0e1bab9f2e08c2dd2fb1aa72d632b80e124fb5b"
+    },
+    {
+      "url": "https://hq.sinajs.cn/list=sh512400,sh515880,sz159995",
+      "status": 200,
+      "file": "sina-quote-exception-samples-20260930-gbk.txt",
+      "sha256": "726726da6e69cc9f79cb1f187937303d268ed343ad15ff2a5cb2f3fc4f63f41d",
+      "encoding": "GBK"
+    }
+  ],
+  "comparisons": [
+    {
+      "symbol": "512400",
+      "bars": [
+        {
+          "date": "2026-09-28",
+          "ohlc_exact": true,
+          "sina_volume_shares": 556733036,
+          "tencent_volume_lots": 5567330.0,
+          "share_difference_after_100x": -36.0
+        },
+        {
+          "date": "2026-09-29",
+          "ohlc_exact": true,
+          "sina_volume_shares": 419889940,
+          "tencent_volume_lots": 4198899.0,
+          "share_difference_after_100x": -40.0
+        },
+        {
+          "date": "2026-09-30",
+          "ohlc_exact": true,
+          "sina_volume_shares": 207442371,
+          "tencent_volume_lots": 2074424.0,
+          "share_difference_after_100x": 29.0
+        }
+      ],
+      "quote_date": "2026-09-30",
+      "quote_volume_shares": 207442371,
+      "quote_amount_cny": 336196291.0,
+      "tencent_amount_cny": 336196300.0,
+      "amount_difference_cny": 9.0
+    },
+    {
+      "symbol": "515880",
+      "bars": [
+        {
+          "date": "2026-09-28",
+          "ohlc_exact": true,
+          "sina_volume_shares": 7469733740,
+          "tencent_volume_lots": 74697337.0,
+          "share_difference_after_100x": -40.0
+        },
+        {
+          "date": "2026-09-29",
+          "ohlc_exact": true,
+          "sina_volume_shares": 4331750328,
+          "tencent_volume_lots": 43317503.0,
+          "share_difference_after_100x": -28.0
+        },
+        {
+          "date": "2026-09-30",
+          "ohlc_exact": true,
+          "sina_volume_shares": 3117606333,
+          "tencent_volume_lots": 31176063.0,
+          "share_difference_after_100x": -33.0
+        }
+      ],
+      "quote_date": "2026-09-30",
+      "quote_volume_shares": 3117606333,
+      "quote_amount_cny": 1965845582.0,
+      "tencent_amount_cny": 1965845600.0,
+      "amount_difference_cny": 18.0
+    },
+    {
+      "symbol": "159995",
+      "bars": [
+        {
+          "date": "2026-09-28",
+          "ohlc_exact": true,
+          "sina_volume_shares": 794976952,
+          "tencent_volume_lots": 7949770.0,
+          "share_difference_after_100x": 48.0
+        },
+        {
+          "date": "2026-09-29",
+          "ohlc_exact": true,
+          "sina_volume_shares": 758715064,
+          "tencent_volume_lots": 7587151.0,
+          "share_difference_after_100x": 36.0
+        },
+        {
+          "date": "2026-09-30",
+          "ohlc_exact": true,
+          "sina_volume_shares": 686075749,
+          "tencent_volume_lots": 6860757.0,
+          "share_difference_after_100x": -49.0
+        }
+      ],
+      "quote_date": "2026-09-30",
+      "quote_volume_shares": 686075749,
+      "quote_amount_cny": 730439861.161,
+      "tencent_amount_cny": 730439900.0,
+      "amount_difference_cny": 38.839
+    }
+  ]
+}

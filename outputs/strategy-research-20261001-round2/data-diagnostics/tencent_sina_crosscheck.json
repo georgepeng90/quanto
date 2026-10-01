@@ -1,0 +1,212 @@
+{
+  "checked_utc": "2026-10-01T11:04:03.832656+00:00",
+  "reference": "Sina daily trading K-line API and 2026-09-30 quote feed",
+  "candidate": "Tencent 640-row ETF qfq CSV from alternate-data/tencent_qfq",
+  "symbols": [
+    {
+      "symbol": "159928",
+      "bars": [
+        {
+          "date": "2026-09-28",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "0.6460",
+            "high": "0.6480",
+            "low": "0.6420",
+            "close": "0.6450"
+          },
+          "sina_ohlc": {
+            "open": "0.646",
+            "high": "0.648",
+            "low": "0.642",
+            "close": "0.645"
+          },
+          "sina_volume_shares": 398543100,
+          "tencent_volume_lots": 3985431.0,
+          "volume_share_difference_after_100x": 0.0
+        },
+        {
+          "date": "2026-09-29",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "0.6460",
+            "high": "0.6480",
+            "low": "0.6440",
+            "close": "0.6470"
+          },
+          "sina_ohlc": {
+            "open": "0.646",
+            "high": "0.648",
+            "low": "0.644",
+            "close": "0.647"
+          },
+          "sina_volume_shares": 181686600,
+          "tencent_volume_lots": 1816866.0,
+          "volume_share_difference_after_100x": 0.0
+        },
+        {
+          "date": "2026-09-30",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "0.6480",
+            "high": "0.6600",
+            "low": "0.6470",
+            "close": "0.6580"
+          },
+          "sina_ohlc": {
+            "open": "0.648",
+            "high": "0.660",
+            "low": "0.647",
+            "close": "0.658"
+          },
+          "sina_volume_shares": 300003978,
+          "tencent_volume_lots": 3000040.0,
+          "volume_share_difference_after_100x": 22.0
+        }
+      ],
+      "quote_last_date": "2026-09-30",
+      "sina_quote_volume_shares": 300003978,
+      "sina_quote_amount_cny": 196382215.068,
+      "tencent_amount_cny": 196382200.0,
+      "amount_difference_cny": -15.068,
+      "quote_vs_sina_daily_volume_exact": true
+    },
+    {
+      "symbol": "515050",
+      "bars": [
+        {
+          "date": "2026-09-28",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "1.0230",
+            "high": "1.0280",
+            "low": "0.9630",
+            "close": "0.9670"
+          },
+          "sina_ohlc": {
+            "open": "1.023",
+            "high": "1.028",
+            "low": "0.963",
+            "close": "0.967"
+          },
+          "sina_volume_shares": 1118174486,
+          "tencent_volume_lots": 11181745.0,
+          "volume_share_difference_after_100x": 14.0
+        },
+        {
+          "date": "2026-09-29",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "0.9560",
+            "high": "0.9800",
+            "low": "0.9560",
+            "close": "0.9760"
+          },
+          "sina_ohlc": {
+            "open": "0.956",
+            "high": "0.980",
+            "low": "0.956",
+            "close": "0.976"
+          },
+          "sina_volume_shares": 771763059,
+          "tencent_volume_lots": 7717631.0,
+          "volume_share_difference_after_100x": 41.0
+        },
+        {
+          "date": "2026-09-30",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "0.9820",
+            "high": "0.9860",
+            "low": "0.9610",
+            "close": "0.9650"
+          },
+          "sina_ohlc": {
+            "open": "0.982",
+            "high": "0.986",
+            "low": "0.961",
+            "close": "0.965"
+          },
+          "sina_volume_shares": 497601711,
+          "tencent_volume_lots": 4976017.0,
+          "volume_share_difference_after_100x": -11.0
+        }
+      ],
+      "quote_last_date": "2026-09-30",
+      "sina_quote_volume_shares": 497601711,
+      "sina_quote_amount_cny": 483285064.0,
+      "tencent_amount_cny": 483285100.0,
+      "amount_difference_cny": 36.0,
+      "quote_vs_sina_daily_volume_exact": true
+    },
+    {
+      "symbol": "159611",
+      "bars": [
+        {
+          "date": "2026-09-28",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "1.0240",
+            "high": "1.0310",
+            "low": "1.0220",
+            "close": "1.0300"
+          },
+          "sina_ohlc": {
+            "open": "1.024",
+            "high": "1.031",
+            "low": "1.022",
+            "close": "1.030"
+          },
+          "sina_volume_shares": 300231529,
+          "tencent_volume_lots": 3002315.0,
+          "volume_share_difference_after_100x": -29.0
+        },
+        {
+          "date": "2026-09-29",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "1.0270",
+            "high": "1.0330",
+            "low": "1.0250",
+            "close": "1.0270"
+          },
+          "sina_ohlc": {
+            "open": "1.027",
+            "high": "1.033",
+            "low": "1.025",
+            "close": "1.027"
+          },
+          "sina_volume_shares": 196148568,
+          "tencent_volume_lots": 1961486.0,
+          "volume_share_difference_after_100x": 32.0
+        },
+        {
+          "date": "2026-09-30",
+          "ohlc_exact": true,
+          "tencent_ohlc": {
+            "open": "1.0270",
+            "high": "1.0350",
+            "low": "1.0250",
+            "close": "1.0330"
+          },
+          "sina_ohlc": {
+            "open": "1.027",
+            "high": "1.035",
+            "low": "1.025",
+            "close": "1.033"
+          },
+          "sina_volume_shares": 188707468,
+          "tencent_volume_lots": 1887075.0,
+          "volume_share_difference_after_100x": 32.0
+        }
+      ],
+      "quote_last_date": "2026-09-30",
+      "sina_quote_volume_shares": 188707468,
+      "sina_quote_amount_cny": 194799595.809,
+      "tencent_amount_cny": 194799600.0,
+      "amount_difference_cny": 4.191,
+      "quote_vs_sina_daily_volume_exact": true
+    }
+  ],
+  "assessment": "All 9 sampled OHLC bars match exactly. Tencent volume is in lots (100 shares), with rounding of at most 50 shares in tested bars. Tencent amount is CNY after scaling source 10,000-CNY unit; on 2026-09-30 the three amount differences vs Sina quotes are within CNY 50, consistent with Tencent 10,000-CNY source rounding. Sina data are exchange trading OHLC/volume/turnover, not NAV. This validates these recent samples, not every instrument or historical adjustment basis."
+}

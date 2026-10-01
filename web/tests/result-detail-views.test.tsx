@@ -228,6 +228,45 @@ test('trace requires a bounded date before querying a new context', async () => 
   expect(tableCalls).toHaveLength(4)
 })
 
+test('trace day shortcuts query from the draft date, keep the symbol and reset pagination', async () => {
+  tableReply = async (name, url) => name === 'orders' ? page([{
+    id: url.searchParams.has('cursor') ? 'o2' : 'o1', signal_date: url.searchParams.get('context_date'), symbol: '000001'
+  }], 'more', 101) : page([])
+  render(<RunTrace runId="r1" defaultDate="2024-03-02" startDate="2024-02-28" endDate="2024-03-03" />)
+  await screen.findByText(/订单 o1/)
+  await userEvent.click(within(screen.getByRole('region', { name: '订单追踪' })).getByRole('button', { name: '下一页' }))
+  await screen.findByText(/订单 o2/)
+  await userEvent.clear(screen.getByLabelText('模拟日期'))
+  await userEvent.type(screen.getByLabelText('模拟日期'), '2024-03-01')
+  await userEvent.type(screen.getByLabelText('标的'), ' 000001 ')
+  await userEvent.click(screen.getByRole('button', { name: '前一天' }))
+  await waitFor(() => expect(tableCalls).toHaveLength(9))
+  expect(screen.getByLabelText('模拟日期')).toHaveValue('2024-02-29')
+  expect(tableCalls.slice(5).every(call => call.url.searchParams.get('context_date') === '2024-02-29' && call.url.searchParams.get('symbol') === '000001' && !call.url.searchParams.has('cursor'))).toBe(true)
+  expect(tableCalls[4].signal?.aborted).toBe(true)
+  expect(await screen.findByText(/订单 o1/)).toBeVisible()
+  expect(within(screen.getByRole('region', { name: '订单追踪' })).getByRole('button', { name: '上一页' })).toBeDisabled()
+  await userEvent.click(screen.getByRole('button', { name: '后一天' }))
+  await waitFor(() => expect(tableCalls).toHaveLength(13))
+  expect(screen.getByLabelText('模拟日期')).toHaveValue('2024-03-01')
+  expect(tableCalls.slice(9).every(call => call.url.searchParams.get('context_date') === '2024-03-01' && call.url.searchParams.get('symbol') === '000001')).toBe(true)
+})
+
+test('trace day shortcuts cross the year boundary and disable empty or out-of-range navigation', async () => {
+  render(<RunTrace runId="r1" defaultDate="2023-12-31" startDate="2023-12-31" endDate="2024-01-01" />)
+  await waitFor(() => expect(tableCalls).toHaveLength(4))
+  expect(screen.getByRole('button', { name: '前一天' })).toBeDisabled()
+  await userEvent.click(screen.getByRole('button', { name: '后一天' }))
+  await waitFor(() => expect(tableCalls).toHaveLength(8))
+  expect(screen.getByLabelText('模拟日期')).toHaveValue('2024-01-01')
+  expect(screen.getByRole('button', { name: '后一天' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: '前一天' })).toBeEnabled()
+  await userEvent.clear(screen.getByLabelText('模拟日期'))
+  expect(screen.getByRole('button', { name: '前一天' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: '后一天' })).toBeDisabled()
+  expect(tableCalls).toHaveLength(8)
+})
+
 test('terminal transition refreshes trace context on the same day', async () => {
   let final = false
   tableReply = async name => name === 'signals' && final

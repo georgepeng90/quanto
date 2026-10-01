@@ -42,14 +42,27 @@ export function RunTrace({ runId, defaultDate, startDate, endDate, refreshToken,
   const [symbol, setSymbol] = useState('')
   const [draftSymbol, setDraftSymbol] = useState('')
   useEffect(() => { if (!custom) { setDay(defaultDate); setDraftDay(defaultDate) } }, [custom, defaultDate])
-  const apply = () => {
-    if (!draftDay || (startDate && draftDay < startDate) || (endDate && draftDay > endDate)) return
+  const inRange = (value: string) => !!value && (!startDate || value >= startDate) && (!endDate || value <= endDate)
+  const adjacentDay = (offset: number) => {
+    if (!inRange(draftDay)) return ''
+    const date = new Date(`${draftDay}T00:00:00Z`)
+    if (!Number.isFinite(date.getTime())) return ''
+    date.setUTCDate(date.getUTCDate() + offset)
+    const value = date.toISOString().slice(0, 10)
+    return inRange(value) ? value : ''
+  }
+  const previousDay = adjacentDay(-1)
+  const nextDay = adjacentDay(1)
+  const apply = (value = draftDay) => {
+    if (!inRange(value)) return
     setCustom(true)
-    setDay(draftDay)
+    setDay(value)
+    setDraftDay(value)
     setSymbol(draftSymbol.trim())
   }
   return <section className="panel"><h2>交易决策追踪</h2><p className="muted">成交通过 order_id 精确关联订单；信号与风控由服务端按日期提供上下文。每类记录单独分页，每页最多 100 行。</p>
     <form className="form-grid" onSubmit={event => { event.preventDefault(); apply() }}><label>模拟日期<input type="date" required min={startDate} max={endDate} value={draftDay} onChange={event => setDraftDay(event.target.value)} /></label><label>标的<input type="text" value={draftSymbol} onChange={event => setDraftSymbol(event.target.value)} placeholder="可选" /></label><button type="submit">查询追踪</button></form>
+    <div className="inline-actions"><button type="button" disabled={!previousDay} onClick={() => apply(previousDay)}>前一天</button><button type="button" disabled={!nextDay} onClick={() => apply(nextDay)}>后一天</button><span className="muted">按自然日切换并直接查询。</span></div>
     <TraceDay key={JSON.stringify([runId, day, symbol])} runId={runId} day={day} symbol={symbol} refreshToken={refreshToken} live={live} />
   </section>
 }

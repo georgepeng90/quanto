@@ -49,7 +49,7 @@ def validate_chunk(chunk: NormalizedChunk) -> NormalizedChunk:
         if request.kind == "bars":
             if request.price_basis.mode == "vendor_research" and not request.price_basis.basis_id:
                 raise ValueError("normalized bars require a resolved research basis")
-            if frame[list(BAR_KEY)].isna().any().any() or ((frame.bar_start < request.start) | (frame.bar_end > request.end) | (frame.bar_start >= frame.bar_end)).any():
+            if frame[list(BAR_COLUMNS[:4])].isna().any().any() or ((frame.bar_start < request.start) | (frame.bar_end > request.end) | (frame.bar_start >= frame.bar_end)).any():
                 raise ValueError("invalid bar interval")
             if request.frequency == "1m" and ((frame.bar_end - frame.bar_start) != pd.Timedelta(minutes=1)).any():
                 raise ValueError("minute bars must cover exactly one minute")

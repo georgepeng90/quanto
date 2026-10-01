@@ -46,7 +46,7 @@ def expected_bars(request: DataRequest, calendar: pd.DataFrame, status: pd.DataF
         for day, begin, finish in schedule:
             if day in excluded or (listing and day < listing):
                 continue
-            yield instrument.key, begin, finish
+            yield instrument.key, begin, finish, day
 
 
 def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef, ...], store: MarketStore) -> CoverageReport:
@@ -92,10 +92,13 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                         data = deduplicate(data, BAR_KEY)
                     except MarketDataError:
                         reason = "SEMANTIC_CONFLICT"
-                    observed = set(data[list(BAR_KEY)].itertuples(index=False, name=None))
-                    expected = list(expected_bars(request, calendar, status, instruments))
+                    observed_dates = dict(zip(data[list(BAR_KEY)].itertuples(index=False, name=None), data.trading_date))
+                    observed = set(observed_dates)
+                    expected = {(key, begin, finish): day for key, begin, finish, day in expected_bars(request, calendar, status, instruments)}
                     if observed - set(expected):
                         reason = reason or "BAR_OUTSIDE_SESSION"
+                    if any(observed_dates[key] != expected[key] for key in observed.intersection(expected)):
+                        reason = reason or "TRADING_DATE_MISMATCH"
                     for key, begin, finish in expected:
                         if (key, begin, finish) not in observed:
                             missing.append(begin.to_pydatetime())

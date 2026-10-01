@@ -85,3 +85,30 @@ def test_reference_fields_must_cover_each_requested_instrument(tmp_path):
         with pytest.raises(MarketDataError) as failure:
             market.wait_ready(market.prefetch(DataRequirement(requests=(request,))).id, 10)
         assert "can_buy" in failure.value.coverage.entries[0].missing_fields
+
+
+def test_null_trading_date_is_not_normalized_data():
+    _, bars, _ = market_case("1d")
+    frame = bars.frame.copy()
+    frame.loc[0, "trading_date"] = None
+    with pytest.raises(MarketDataError):
+        validate_chunk(replace(bars, frame=frame))
+
+
+@pytest.mark.parametrize("frequency", ["1d", "1m"])
+def test_trading_dates_follow_calendar_session_labels(tmp_path, frequency):
+    requirement, bars, calendar = market_case(frequency)
+    # Overnight markets may label a UTC session with the following trading date.
+    dates = {day: day + pd.Timedelta(days=1) for day in calendar.frame.trading_date}
+    calendar = replace(calendar, frame=calendar.frame.assign(trading_date=lambda frame: frame.trading_date.map(dates)))
+    with MarketData(tmp_path, providers=()) as market:
+        import_table(market.store, market.catalog, calendar.request, calendar.frame, calendar.source, calendar.evidence)
+        bad = import_table(market.store, market.catalog, bars.request, bars.frame, bars.source, bars.evidence)
+        with pytest.raises(MarketDataError) as failure:
+            market.wait_ready(market.prefetch(requirement).id, 10)
+        assert failure.value.coverage.entries[0].reason == "TRADING_DATE_MISMATCH"
+        corrected = bars.frame.assign(trading_date=lambda frame: frame.trading_date.map(dates))
+        refs = market.store.put_chunk(validate_chunk(replace(bars, frame=corrected, evidence=b"correct session labels")))
+        market.catalog.create_request("repair", requirement)
+        market.catalog.publish_fragments(bad, refs, (), ("repair",))
+        assert market.wait_ready(market.prefetch(requirement).id, 10).coverage.complete

@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from quanto.data import MarketData
-from quanto.data.contracts import DataRequirement, MarketDataError, PriceBasis
+from quanto.data.contracts import DataRequest, DataRequirement, MarketDataError, PriceBasis
 from quanto.data.imports import import_table
 from quanto.data.validation import validate_chunk
 from tests.fixtures.market_data_cases import market_case
@@ -48,3 +48,40 @@ def test_unresolved_persisted_research_basis_cannot_become_ready(tmp_path):
         with pytest.raises(MarketDataError) as failure:
             market.wait_ready(market.prefetch(DataRequirement(requests=(request, calendar.request))).id, 10)
         assert failure.value.coverage.entries[0].reason == "UNRESOLVED_PRICE_BASIS"
+
+
+@pytest.mark.parametrize("kind,columns,proof", [
+    ("corporate_actions", ("instrument_id", "event_type", "record_date", "ex_date", "pay_date", "cash_per_share", "split_ratio"), "actions"),
+    ("trading_status", ("instrument_id", "trading_date", "status"), "status"),
+])
+def test_reference_evidence_must_cover_each_requested_instrument(tmp_path, kind, columns, proof):
+    _, bars, _ = market_case("1d")
+    request = DataRequest(kind=kind, instruments=bars.request.instruments, start=bars.request.start, end=bars.request.end, columns=columns)
+    source = bars.source.model_copy(update={"verified": (proof,)})
+    with MarketData(tmp_path, providers=()) as market:
+        for index, instrument in enumerate(request.instruments):
+            part = request.model_copy(update={"instruments": (instrument,)})
+            import_table(market.store, market.catalog, part, pd.DataFrame(columns=columns), source, str(index).encode())
+            task = market.prefetch(DataRequirement(requests=(request,)))
+            if index == 0:
+                with pytest.raises(MarketDataError) as failure:
+                    market.wait_ready(task.id, 10)
+                assert proof in failure.value.coverage.entries[0].missing_evidence
+            else:
+                assert market.wait_ready(task.id, 10).coverage.complete
+
+
+def test_reference_fields_must_cover_each_requested_instrument(tmp_path):
+    _, bars, _ = market_case("1d")
+    request = DataRequest(kind="trading_status", instruments=bars.request.instruments, start=bars.request.start, end=bars.request.end,
+        columns=("instrument_id", "trading_date", "status", "can_buy"))
+    source = bars.source.model_copy(update={"verified": ("status",)})
+    with MarketData(tmp_path, providers=()) as market:
+        for index, instrument in enumerate(request.instruments):
+            columns = request.columns if index else request.columns[:-1]
+            part = request.model_copy(update={"instruments": (instrument,), "columns": columns})
+            frame = pd.DataFrame([{"instrument_id": instrument.key, "trading_date": bars.frame.trading_date.min(), "status": "trading", "can_buy": True}])[list(columns)]
+            import_table(market.store, market.catalog, part, frame, source, str(index).encode())
+        with pytest.raises(MarketDataError) as failure:
+            market.wait_ready(market.prefetch(DataRequirement(requests=(request,))).id, 10)
+        assert "can_buy" in failure.value.coverage.entries[0].missing_fields

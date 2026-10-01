@@ -105,9 +105,14 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                             fields.add(column)
             else:
                 proof = {"trading_status": "status", "corporate_actions": "actions"}.get(request.kind, request.kind)
-                verified = [ref for ref in refs if proof in ref.source.verified]
-                if not covers_interval(verified, request):
-                    evidence.add(proof)
+                verified = [(ref, frame) for ref, frame in selected if proof in ref.source.verified]
+                for instrument in request.instruments or (None,):
+                    scope = [(ref, frame) for ref, frame in verified if instrument is None or not ref.request.instruments or instrument in ref.request.instruments]
+                    if not covers_interval([ref for ref, _ in scope], request):
+                        evidence.add(proof)
+                    for column in request.columns:
+                        if not covers_interval([ref for ref, frame in scope if column in frame.columns], request):
+                            fields.add(column)
                 if request.kind == "instruments" and not {item.key for item in request.instruments}.issubset(set(data.instrument_id)):
                     reason = "MISSING_INSTRUMENT"
         entries.append(CoverageEntry(request=request, missing=tuple(sorted(set(missing))), missing_by_instrument={key: tuple(value) for key, value in by_instrument.items()}, missing_fields=tuple(sorted(fields)),

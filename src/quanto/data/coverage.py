@@ -76,8 +76,11 @@ def evaluate_coverage(requirement: DataRequirement, fragments: tuple[FragmentRef
                 data = data[(data.bar_start >= request.start) & (data.bar_end <= request.end)]
             fields.update(set(request.columns) - set(data.columns))
             if request.kind == "bars":
-                bases = {ref.request.price_basis.model_dump_json() for ref in refs}
-                if len(bases) > 1:
+                bases_by_instrument = {}
+                for ref in refs:
+                    for instrument in ref.request.instruments:
+                        bases_by_instrument.setdefault(instrument.key, set()).add(ref.request.price_basis.model_dump_json())
+                if any(len(bases) > 1 for bases in bases_by_instrument.values()):
                     reason = "SEMANTIC_CONFLICT"
                 elif calendar.empty:
                     reason = "CALENDAR_NOT_PREPARED"

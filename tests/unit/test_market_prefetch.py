@@ -126,3 +126,24 @@ def test_late_consumer_binding_error_is_terminal_not_stuck(tmp_path, monkeypatch
         with pytest.raises(MarketDataError) as failure:
             market.wait_ready(second.id, 1)
         assert failure.value.code == "FAILED"
+
+
+def test_different_instruments_can_resolve_distinct_research_bases(tmp_path):
+    from quanto.data import MarketData
+    from quanto.data.contracts import DataRequirement, DataQuery, PriceBasis
+    from quanto.data.imports import import_table
+    from tests.fixtures.market_data_cases import market_case
+    requirement, bars, calendar = market_case("1d")
+    wanted = bars.request.model_copy(update={"price_basis": PriceBasis(mode="vendor_research")})
+    requirement = DataRequirement(requests=(wanted, calendar.request))
+    with MarketData(tmp_path, providers=()) as market:
+        import_table(market.store, market.catalog, calendar.request, calendar.frame, calendar.source, calendar.evidence)
+        for index, instrument in enumerate(wanted.instruments):
+            request = wanted.model_copy(update={"instruments": (instrument,), "price_basis": PriceBasis(mode="vendor_research", basis_id=f"source_{index}")})
+            frame = bars.frame.loc[bars.frame.instrument_id == instrument.key]
+            import_table(market.store, market.catalog, request, frame, bars.source, bars.evidence)
+        snapshot = market.wait_ready(market.prefetch(requirement).id, 10)
+        assert snapshot.coverage.complete
+        for index, instrument in enumerate(wanted.instruments):
+            query = DataQuery(**wanted.model_copy(update={"instruments": (instrument,), "price_basis": PriceBasis(mode="vendor_research", basis_id=f"source_{index}")}).model_dump())
+            assert len(market.read_bars(snapshot, query)) == 2

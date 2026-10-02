@@ -21,6 +21,11 @@ dependencies = [
 [project.scripts]
 quanto = "quanto.cli:main"
 
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
@@ -35,6 +40,9 @@ web = [
   "python-multipart>=0.0.20,<1",
   "uvicorn>=0.34,<1",
 ]
+learning = [
+    "torch>=2.7,<3",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -42,3 +50,6 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }

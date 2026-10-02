@@ -4,6 +4,7 @@ import math
 
 
 FEATURE_VERSION = "minute-price-volume-v1"
+STEP_POLICY = "observed_bar_steps"
 FEATURE_NAMES = ("log_return", "log_body", "range_ratio", "log_volume_change", "log_amount_change")
 
 

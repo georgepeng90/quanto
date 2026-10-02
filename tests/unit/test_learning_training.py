@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pytest
@@ -86,3 +86,59 @@ def test_requested_cuda_is_never_silently_downgraded(monkeypatch):
     assert resolve_device("auto") == "cpu"
     with pytest.raises(ValueError, match="CUDA.*unavailable"):
         resolve_device("cuda")
+
+
+def test_resuming_early_stopped_checkpoint_does_not_train_another_epoch(tmp_path):
+    from quanto.learning.dataset import prepare_dataset
+    from quanto.learning.training import train_model, read_checkpoint
+    from quanto.learning.inference import iter_inference_rows
+    spec, start = learning_case(tmp_path / "market")
+    prepare_dataset(spec, tmp_path / "market", tmp_path / "dataset", lambda event: None, lambda: False)
+    config = training_case(start, epochs=20, learning_rate=.1, patience=1)
+    first = train_model(config, tmp_path / "dataset", tmp_path / "first", lambda event: None, lambda: False)
+    assert first["epochs_completed"] < config["epochs"]
+    assert read_checkpoint(tmp_path / "first")["stale"] >= config["patience"]
+    events = []
+    resumed = train_model({**config, "epochs": 30}, tmp_path / "dataset", tmp_path / "resumed", events.append, lambda: False, tmp_path / "first")
+    assert resumed["epochs_completed"] == first["epochs_completed"]
+    assert resumed["best_epoch"] == first["best_epoch"]
+    assert not any("epoch" in event for event in events)
+    assert read_checkpoint(tmp_path / "resumed")["epoch"] == first["epochs_completed"]
+    before = list(iter_inference_rows(tmp_path / "first", tmp_path / "dataset", start, start + timedelta(minutes=90), lambda: False))
+    after = list(iter_inference_rows(tmp_path / "resumed", tmp_path / "dataset", start, start + timedelta(minutes=90), lambda: False))
+    assert before == after
+
+
+def test_training_and_inference_use_same_observed_steps_across_missing_minutes(tmp_path):
+    import torch
+    from quanto.learning.contracts import TrainingSpec
+    from quanto.learning.dataset import prepare_dataset
+    from quanto.learning.features import FEATURE_NAMES
+    from quanto.learning.models import build_model
+    from quanto.learning.training import train_model
+    from quanto.learning.inference import iter_inference_rows
+    from quanto.learning.windows import WindowStore
+    spec, start = learning_case(tmp_path / "market", missing=(datetime(2024, 1, 2, 1, 34, tzinfo=timezone.utc),))
+    dataset = prepare_dataset(spec, tmp_path / "market", tmp_path / "dataset", lambda event: None, lambda: False)
+    config = training_case(start, epochs=1)
+    manifest = train_model(config, tmp_path / "dataset", tmp_path / "model", lambda event: None, lambda: False)
+    assert dataset["step_policy"] == manifest["step_policy"] == "observed_bar_steps"
+    rows = list(iter_inference_rows(tmp_path / "model", tmp_path / "dataset", start, start + timedelta(minutes=90), lambda: False))
+    assert rows[4]["bar_start"] == (start + timedelta(minutes=5)).isoformat()
+    assert rows[4]["score"] is not None
+    with WindowStore(tmp_path / "dataset", tmp_path / "cache", TrainingSpec.model_validate(config)) as windows:
+        first_sample = windows.samples[windows.indices("train")[0]]
+        assert first_sample["anchor"] == 3
+        assert first_sample["label_end"] == int((start + timedelta(minutes=7)).timestamp() * 1e6)
+        model = build_model(TrainingSpec.model_validate(config), len(FEATURE_NAMES))
+        model.load_state_dict(torch.load(tmp_path / "model" / "weights.pt", weights_only=True))
+        model.eval()
+        with torch.inference_mode():
+            score = float(model(torch.from_numpy(windows.window(4)[None]))[0])
+        assert rows[4]["score"] == pytest.approx(score, abs=1e-7)
+    from quanto.objects import digest, json_bytes
+    manifest["step_policy"] = "wall_clock_steps"
+    manifest["id"] = digest(json_bytes({key: value for key, value in manifest.items() if key != "id"}))
+    (tmp_path / "model" / "manifest.json").write_bytes(json_bytes(manifest))
+    with pytest.raises(ValueError, match="step policy"):
+        list(iter_inference_rows(tmp_path / "model", tmp_path / "dataset", start, start + timedelta(minutes=90), lambda: False))

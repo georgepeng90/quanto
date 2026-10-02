@@ -7,14 +7,17 @@ from quanto.data.contracts import CoverageEntry, CoverageReport, DataQuery, Data
 from quanto.data.storage import MarketStore
 
 
-def learning_case(root, minutes=90, missing=(), spike_after=None, instrument_count=1, missing_by_instrument=None):
+def learning_case(root, minutes=90, missing=(), spike_after=None, instrument_count=1, missing_by_instrument=None, days=1):
     start = datetime(2024, 1, 2, 1, 30, tzinfo=timezone.utc)
-    end = start + timedelta(hours=5)
+    end = start + timedelta(days=days - 1, hours=5)
     instruments = tuple(InstrumentId(exchange="SZSE", instrument_type="etf", code=f"{index + 1:06d}") for index in range(instrument_count))
     query = DataQuery(kind="bars", instruments=instruments, start=start, end=end,
         columns=("open", "high", "low", "close", "volume", "amount"), frequency="1m", price_basis=PriceBasis(mode="raw"))
     calendar_request = DataRequest(kind="calendar", start=start, end=end, columns=("trading_date", "session_start", "session_end"))
-    sessions = [(start, start + timedelta(minutes=minutes)), (start + timedelta(hours=3), start + timedelta(hours=3, minutes=10))]
+    sessions = []
+    for day in range(days):
+        begin = start + timedelta(days=day)
+        sessions.extend([(begin, begin + timedelta(minutes=minutes)), (begin + timedelta(hours=3), begin + timedelta(hours=3, minutes=10))])
     rows = []
     for begin, finish in sessions:
         for index in range(int((finish - begin).total_seconds() / 60)):

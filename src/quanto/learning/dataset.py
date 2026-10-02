@@ -13,7 +13,7 @@ from quanto.data.contracts import BAR_COLUMNS, TableQuery
 from quanto.data.market import MarketData
 from quanto.learning.artifacts import read_manifest, write_manifest
 from quanto.learning.contracts import PrepareSpec, check_cancelled, timestamp
-from quanto.learning.features import FEATURE_NAMES, FEATURE_VERSION, causal_features
+from quanto.learning.features import FEATURE_NAMES, FEATURE_VERSION, STEP_POLICY, causal_features
 from quanto.objects import safe_name
 
 
@@ -21,6 +21,8 @@ def read_dataset_manifest(path: Path) -> dict:
     manifest = read_manifest(path, "dataset")
     if manifest["feature_version"] != FEATURE_VERSION or tuple(manifest["features"]) != FEATURE_NAMES:
         raise ValueError("incompatible dataset feature schema")
+    if manifest.get("step_policy") != STEP_POLICY:
+        raise ValueError("incompatible dataset step policy")
     if not manifest["shards"] or any(safe_name(name) not in manifest["files"] for name in manifest["shards"]):
         raise ValueError("dataset shard integrity mismatch")
     return manifest
@@ -34,8 +36,10 @@ def prepare_dataset(spec: dict, market_root: Path, output_dir: Path, emit, cance
         raise ValueError("dataset output directory must be empty")
     if shutil.disk_usage(output_dir).free < 64 * 1024 * 1024:
         raise ValueError("insufficient free disk space for dataset preparation")
-    statistics = dict(source_rows=0, invalid_rows=0, invalid_feature_bars=0, incomplete_buckets=0, outside_session_rows=0)
+    statistics = dict(source_rows=0, invalid_rows=0, invalid_feature_bars=0, incomplete_buckets=0, outside_session_rows=0, gap_events=0)
     previous, buckets, buffer, shards = {}, {}, [], []
+    observed_minutes = {item.key: 0 for item in config.query.instruments}
+    previous_minute = {}
     count, first, last = 0, None, None
 
     def flush():
@@ -52,11 +56,22 @@ def prepare_dataset(spec: dict, market_root: Path, output_dir: Path, emit, cance
         snapshot = market.resolve_snapshot(config.snapshot_id)
         source = market.store.verify_snapshot(snapshot)
         query = config.query
-        calendar = market.read_table(snapshot, "calendar", TableQuery(start=query.start, end=query.end, columns=("trading_date", "session_start", "session_end")))
-        sessions = sorted((timestamp(row.session_start.to_pydatetime()), timestamp(row.session_end.to_pydatetime()), str(row.trading_date)) for row in calendar.itertuples())
+        sessions = set()
+        for request in source.requirement.requests:
+            if request.kind != "calendar" or request.end <= query.start or request.start >= query.end:
+                continue
+            calendar = market.read_table(snapshot, "calendar", TableQuery(start=request.start, end=request.end, columns=("trading_date", "session_start", "session_end")))
+            for row in calendar.itertuples():
+                begin, finish = timestamp(row.session_start.to_pydatetime()), timestamp(row.session_end.to_pydatetime())
+                if begin < query.end and finish > query.start:
+                    sessions.add((begin, finish, str(row.trading_date)))
+        sessions = sorted(sessions)
         if not sessions:
             raise ValueError("snapshot contains no trading sessions")
         starts = [item[0] for item in sessions]
+        expected_per_instrument = sum(max(0,
+            math.floor((min(query.end, finish) - begin).total_seconds() / 60) -
+            math.ceil((max(query.start, begin) - begin).total_seconds() / 60)) for begin, finish, _ in sessions)
         interval = timedelta(minutes=config.frequency_minutes)
         for batch in market.iter_batches(snapshot, query):
             check_cancelled(cancelled)
@@ -70,6 +85,13 @@ def prepare_dataset(spec: dict, market_root: Path, output_dir: Path, emit, cance
                 session_start, session_end, trading_date = sessions[session_index]
                 offset = (begin - session_start).total_seconds() / 60
                 valid = offset.is_integer() and finish - begin == timedelta(minutes=1)
+                key = row["instrument_id"]
+                if valid:
+                    observed_minutes[key] += 1
+                    prior = previous_minute.get(key)
+                    if prior and prior[0] == session_index and begin > prior[1]:
+                        statistics["gap_events"] += 1
+                    previous_minute[key] = (session_index, finish)
                 valid = valid and all(row[key] is not None and math.isfinite(float(row[key])) for key in ("open", "high", "low", "close", "volume", "amount"))
                 valid = valid and min(row["open"], row["high"], row["low"], row["close"]) > 0 and min(row["volume"], row["amount"]) >= 0
                 valid = valid and row["high"] >= max(row["open"], row["close"], row["low"]) and row["low"] <= min(row["open"], row["close"])
@@ -77,7 +99,6 @@ def prepare_dataset(spec: dict, market_root: Path, output_dir: Path, emit, cance
                     statistics["invalid_rows"] += 1
                     continue
                 bucket_start = session_start + int(offset // config.frequency_minutes) * interval
-                key = row["instrument_id"]
                 current = buckets.get(key)
                 if current and current["bar_start"] != bucket_start:
                     statistics["incomplete_buckets"] += 1
@@ -111,14 +132,19 @@ def prepare_dataset(spec: dict, market_root: Path, output_dir: Path, emit, cance
                         flush()
                         emit(dict(kind="progress", message=f"prepared {count} bars", rows=count))
         statistics["incomplete_buckets"] += len(buckets)
+        statistics["expected_minutes"] = expected_per_instrument * len(observed_minutes)
+        statistics["missing_minutes_by_instrument"] = {key: expected_per_instrument - observed for key, observed in observed_minutes.items()}
+        statistics["missing_minutes"] = sum(statistics["missing_minutes_by_instrument"].values())
         flush()
         limitations = sorted(set(snapshot.coverage.limitations).union(*(fragment.source.limitations for fragment in source.fragments)))
+        limitations.append("observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles")
     check_cancelled(cancelled)
     if not count:
         raise ValueError("no complete valid bars in requested interval")
     result = write_manifest(output_dir, dict(kind="dataset", version=1, name=config.name, query=query.model_dump(mode="json"), snapshot_id=snapshot.id,
         snapshot_digest=snapshot.manifest_digest, frequency_minutes=config.frequency_minutes, instruments=[item.key for item in query.instruments],
         row_count=count, first_bar=first, last_bar=last, feature_version=FEATURE_VERSION, features=list(FEATURE_NAMES), shards=shards,
+        step_policy=STEP_POLICY,
         trading_days=sorted({day for _, _, day in sessions}),
         timezone="UTC", interval="[start,end)", limitations=limitations, statistics=statistics, price_basis=query.price_basis.model_dump(mode="json")))
     emit(dict(kind="progress", message="dataset prepared", progress=1., rows=count))

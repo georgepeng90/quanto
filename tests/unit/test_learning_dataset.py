@@ -76,3 +76,39 @@ def test_sparse_instruments_keep_features_aligned_and_bars_globally_sorted(tmp_p
         expected = np.log(row["close"]) - np.log(previous[row["instrument_id"]]) if row["instrument_id"] in previous else 0.
         assert row["log_return"] == pytest.approx(expected)
         previous[row["instrument_id"]] = row["close"]
+
+
+def test_intraday_query_uses_original_session_anchor(tmp_path):
+    from quanto.learning.dataset import prepare_dataset, iter_dataset_bars
+    spec, start = learning_case(tmp_path / "market")
+    spec["query"]["start"] = (start + timedelta(minutes=6)).isoformat()
+    spec["query"]["end"] = (start + timedelta(minutes=21)).isoformat()
+    spec["frequency_minutes"] = 5
+    manifest = prepare_dataset(spec, tmp_path / "market", tmp_path / "dataset", lambda event: None, lambda: False)
+    rows = list(iter_dataset_bars(tmp_path / "dataset"))
+    assert manifest["row_count"] == 2
+    assert [row["bar_start"] for row in rows] == [(start + timedelta(minutes=minute)).isoformat() for minute in (10, 15)]
+
+
+def test_missing_minute_statistics_exclude_lunch_and_record_step_policy(tmp_path):
+    from quanto.learning.dataset import prepare_dataset
+    missing = datetime(2024, 1, 2, 1, 32, tzinfo=timezone.utc)
+    spec, _ = learning_case(tmp_path / "market", minutes=12, instrument_count=2,
+        missing_by_instrument={"SZSE:etf:000001": (missing, missing + timedelta(minutes=1))})
+    manifest = prepare_dataset(spec, tmp_path / "market", tmp_path / "dataset", lambda event: None, lambda: False)
+    assert manifest["step_policy"] == "observed_bar_steps"
+    assert manifest["statistics"]["expected_minutes"] == 44
+    assert manifest["statistics"]["missing_minutes"] == 2
+    assert manifest["statistics"]["gap_events"] == 1
+    assert manifest["statistics"]["missing_minutes_by_instrument"] == {"SZSE:etf:000001": 2, "SZSE:etf:000002": 0}
+    assert any("observed_bar_steps" in item and "overnight" in item for item in manifest["limitations"])
+
+
+def test_lunch_and_overnight_do_not_count_as_missing_minutes(tmp_path):
+    from quanto.learning.dataset import prepare_dataset
+    spec, _ = learning_case(tmp_path / "market", minutes=12, days=2)
+    manifest = prepare_dataset(spec, tmp_path / "market", tmp_path / "dataset", lambda event: None, lambda: False)
+    assert manifest["trading_days"] == ["2024-01-02", "2024-01-03"]
+    assert manifest["statistics"]["expected_minutes"] == 44
+    assert manifest["statistics"]["missing_minutes"] == 0
+    assert manifest["statistics"]["gap_events"] == 0

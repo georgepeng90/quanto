@@ -46,3 +46,23 @@ def test_dataset_manifest_rejects_changed_feature_definition(tmp_path):
     (tmp_path / "dataset" / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(ValueError, match="schema"):
         read_dataset_manifest(tmp_path / "dataset")
+
+
+def test_window_cache_cleanup_rejects_targets_outside_output_directory(tmp_path):
+    from quanto.learning.training import _remove_window_cache
+    output = tmp_path / "output"
+    output.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    marker = outside / "preserved.txt"
+    marker.write_text("preserve", encoding="utf-8")
+    with pytest.raises(ValueError, match="outside"):
+        _remove_window_cache(outside, output)
+    assert marker.read_text(encoding="utf-8") == "preserve"
+    with pytest.raises(ValueError, match="outside"):
+        _remove_window_cache(output, output)
+    cache = output / "window-cache"
+    cache.mkdir()
+    (cache / "temporary.txt").write_text("temporary", encoding="utf-8")
+    _remove_window_cache(cache, output)
+    assert not cache.exists()

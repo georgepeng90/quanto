@@ -10,7 +10,7 @@ import numpy as np
 from quanto.learning.artifacts import read_model_manifest, write_manifest
 from quanto.learning.contracts import TrainingSpec, check_cancelled
 from quanto.learning.dataset import read_dataset_manifest
-from quanto.learning.features import FEATURE_NAMES, FEATURE_VERSION
+from quanto.learning.features import FEATURE_NAMES, FEATURE_VERSION, STEP_POLICY
 from quanto.learning.models import build_model, resolve_device
 from quanto.learning.windows import WindowStore
 from quanto.objects import digest, file_hash, json_bytes, safe_name
@@ -38,6 +38,26 @@ def read_checkpoint(root: Path):
         if checkpoint[key] != metadata[key]:
             raise ValueError("checkpoint identity mismatch")
     return checkpoint
+
+
+def _write_checkpoint(root, checkpoint):
+    import torch
+
+    filename = f"epoch-{checkpoint['epoch']:04d}.pt"
+    temporary = root / "checkpoint.tmp"
+    torch.save(checkpoint, temporary)
+    temporary.replace(root / filename)
+    metadata = dict(file=filename, hash=file_hash(root / filename), dataset_id=checkpoint["dataset_id"], config_id=checkpoint["config_id"], epoch=checkpoint["epoch"])
+    temporary = root / "checkpoint.json.tmp"
+    temporary.write_bytes(json_bytes(metadata))
+    temporary.replace(root / "checkpoint.json")
+
+
+def _remove_window_cache(cache_dir, output_dir):
+    resolved_cache, resolved_output = cache_dir.resolve(), output_dir.resolve()
+    if resolved_cache == resolved_output or not resolved_cache.is_relative_to(resolved_output):
+        raise ValueError("window cache deletion target is outside the model output directory")
+    shutil.rmtree(cache_dir)
 
 
 def train_model(spec: dict, dataset_dir: Path, output_dir: Path, emit, cancelled, resume_dir: Path | None = None) -> dict:
@@ -78,6 +98,7 @@ def train_model(spec: dict, dataset_dir: Path, output_dir: Path, emit, cancelled
         if device == "cuda" and checkpoint["cuda_rng"]:
             torch.cuda.set_rng_state_all(checkpoint["cuda_rng"])
         curves, best_epoch, best_loss, best_state, stale = checkpoint["curves"], checkpoint["best_epoch"], checkpoint["best_loss"], checkpoint["best_model"], checkpoint["stale"]
+        _write_checkpoint(checkpoint_dir, checkpoint)
     cache_dir = output_dir / "window-cache"
     try:
         with WindowStore(Path(dataset_dir), cache_dir, config, cancelled) as windows:
@@ -105,7 +126,8 @@ def train_model(spec: dict, dataset_dir: Path, output_dir: Path, emit, cancelled
                         count += len(labels)
                 return {"mse": squared / count, "mae": absolute / count, "samples": count}
 
-            for epoch in range(first_epoch + 1, config.epochs + 1):
+            final_epoch = first_epoch if stale >= config.patience else config.epochs
+            for epoch in range(first_epoch + 1, final_epoch + 1):
                 model.train()
                 total, count = 0., 0
                 for values, labels in batches("train"):
@@ -130,14 +152,7 @@ def train_model(spec: dict, dataset_dir: Path, output_dir: Path, emit, cancelled
                     model={name: value.detach().cpu() for name, value in model.state_dict().items()}, optimizer=optimizer.state_dict(),
                     best_model=best_state, best_loss=best_loss, best_epoch=best_epoch, stale=stale, curves=curves,
                     rng=torch.get_rng_state(), cuda_rng=torch.cuda.get_rng_state_all() if device == "cuda" else [], scaler=windows.scaler)
-                filename = f"epoch-{epoch:04d}.pt"
-                temporary = checkpoint_dir / "checkpoint.tmp"
-                torch.save(checkpoint, temporary)
-                temporary.replace(checkpoint_dir / filename)
-                metadata = dict(file=filename, hash=file_hash(checkpoint_dir / filename), dataset_id=dataset["id"], config_id=training_identity(config), epoch=epoch)
-                temporary = checkpoint_dir / "checkpoint.json.tmp"
-                temporary.write_bytes(json_bytes(metadata))
-                temporary.replace(checkpoint_dir / "checkpoint.json")
+                _write_checkpoint(checkpoint_dir, checkpoint)
                 emit(dict(kind="progress", message=f"epoch {epoch}/{config.epochs}", progress=epoch / config.epochs, **curves[-1], device=device))
                 check_cancelled(cancelled)
                 if stale >= config.patience:
@@ -151,7 +166,7 @@ def train_model(spec: dict, dataset_dir: Path, output_dir: Path, emit, cancelled
         raise ValueError("CUDA memory exhausted; reduce batch_size, lookback or hidden_size, or select CPU") from exc
     finally:
         if cache_dir.exists():
-            shutil.rmtree(cache_dir)
+            _remove_window_cache(cache_dir, output_dir)
     check_cancelled(cancelled)
     torch.save(best_state, output_dir / "weights.pt")
     (output_dir / "curves.json").write_bytes(json_bytes(curves))
@@ -161,6 +176,7 @@ def train_model(spec: dict, dataset_dir: Path, output_dir: Path, emit, cancelled
     manifest = write_manifest(output_dir, dict(kind="model", version=1, name=config.name, config=config.model_dump(mode="json"),
         dataset_id=dataset["id"], dataset_snapshot_id=dataset["snapshot_id"], frequency_minutes=dataset["frequency_minutes"],
         feature_version=FEATURE_VERSION, features=list(FEATURE_NAMES), scaler=scaler, cutoff=config.validation_end.isoformat(),
+        step_policy=STEP_POLICY,
         metrics=metrics, best_epoch=best_epoch, epochs_completed=curves[-1]["epoch"], runtime=runtime, limitations=dataset["limitations"],
         resume_parent=str(resume_dir) if resume_dir is not None else None))
     emit(dict(kind="progress", message="model trained", progress=1., metrics=metrics))

@@ -9,7 +9,7 @@ import numpy as np
 from quanto.learning.artifacts import read_model_manifest
 from quanto.learning.contracts import TrainingSpec, check_cancelled, timestamp
 from quanto.learning.dataset import iter_dataset_bars, read_dataset_manifest
-from quanto.learning.features import FEATURE_NAMES, FEATURE_VERSION
+from quanto.learning.features import FEATURE_NAMES, FEATURE_VERSION, STEP_POLICY
 from quanto.learning.models import build_model, resolve_device
 
 
@@ -21,6 +21,8 @@ def iter_inference_rows(model_dir: Path, dataset_dir: Path, start, end, cancelle
     manifest, dataset = read_model_manifest(model_dir), read_dataset_manifest(dataset_dir)
     if manifest["frequency_minutes"] != dataset["frequency_minutes"] or manifest["feature_version"] != FEATURE_VERSION or tuple(manifest["features"]) != FEATURE_NAMES:
         raise ValueError("incompatible model/dataset frequency or feature schema")
+    if manifest.get("step_policy") != STEP_POLICY or manifest["step_policy"] != dataset["step_policy"]:
+        raise ValueError("incompatible model/dataset step policy")
     config = TrainingSpec.model_validate(manifest["config"])
     device = resolve_device(config.device)
     torch.use_deterministic_algorithms(True)

@@ -1,0 +1,2192 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "synthetic": true,
+  "warning": "Synthetic functional/capacity acceptance only; no real-market profitability evidence.",
+  "started_at": "2026-10-02T19:37:35.769040+00:00",
+  "python": "3.13.12 (main, Mar 10 2026, 18:14:40) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "verification_script_sha256": "2fc3ab1d60b1f668f4922b0dc6dbbae1eeab0624b50d35f9ca17c68d21a7558d",
+  "logical_cpus": 16,
+  "physical_cpus": 8,
+  "total_memory_bytes": 33451126784,
+  "parameters": {
+    "symbols": 8,
+    "days": 60,
+    "frequency": 1,
+    "device": "cuda",
+    "model": "gru",
+    "epochs": 2,
+    "lookback": 16,
+    "batch_size": 256,
+    "seed": 42,
+    "threads": 4,
+    "timeout": 1800,
+    "baselines": [
+      "cash",
+      "equal_weight",
+      "momentum"
+    ],
+    "output": "docs\\research\\2026-10-03-deeplearning\\synthetic-cuda-115200-final.json",
+    "temp_parent": "outputs\\learning-acceptance",
+    "keep_artifacts": true
+  },
+  "raw_rows": 115200,
+  "scratch_path": "D:\\Projects\\quanto\\outputs\\learning-acceptance\\quanto-learning-acceptance-ky2ci5rp",
+  "stages": {
+    "generate_snapshot": {
+      "seconds": 4.067156600009184,
+      "snapshot_id": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6"
+    },
+    "prepare": {
+      "job_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+      "request": {
+        "spec": {
+          "name": "SYNTHETIC acceptance dataset",
+          "snapshot_id": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6",
+          "query": {
+            "kind": "bars",
+            "instruments": [
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0000"
+              },
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0001"
+              },
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0002"
+              },
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0003"
+              },
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0004"
+              },
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0005"
+              },
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0006"
+              },
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0007"
+              }
+            ],
+            "start": "2024-01-02T01:30:00Z",
+            "end": "2024-03-25T07:00:00Z",
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "frequency": "1m",
+            "price_basis": {
+              "mode": "raw",
+              "basis_id": null
+            },
+            "currency": "CNY"
+          },
+          "frequency_minutes": 1
+        }
+      },
+      "seconds": 102.71000020002248,
+      "state": "succeeded",
+      "content_hash": "3882981354c8954813ec34d59a30fdd7ae63901dc3d5ea4adf793fcacfaef21e",
+      "files": {
+        "bars-00000.parquet": "daa476d42d0d5f5354a1c9eb7e2b11547fabf5a23e64e9b672330427d58b111b",
+        "bars-00001.parquet": "837085943f782d523c820e994ce17a8960cb15074b6a0b47656bfdfa518c01db",
+        "bars-00002.parquet": "1515857b56ba02d45cc3230e40bac9a7eae17738245c7aef604e696be4a2baf6",
+        "bars-00003.parquet": "f19e3b61a205086291d0840f6903e7f61212ae6c4ac15f1c7e7d0ae60ad314d2",
+        "bars-00004.parquet": "1904ee55cb60c8dbc3275e6e8c7fdb32dbdf8e225a01b7ca0f772234a0b7794a",
+        "bars-00005.parquet": "ecc29b56ca3b4933662feaa81ae7c48ea4e379be249b54621839a4479b1ea91e",
+        "bars-00006.parquet": "fa72de397d697e67c8fcc533805bbc8a15a13a0f9333ae5e13d1d3c0d9794090",
+        "bars-00007.parquet": "116f7280e523f9b5a64a59f09ba17288b813bc920a0655d1c0ebe15f6f226e4c",
+        "bars-00008.parquet": "ac3d4a13f5b708db82c63b7dcf67151b33a7726b708bbd7df343b991f8bdbfe6",
+        "bars-00009.parquet": "2732a3369d10170254b8b3942725637f79b207d1c3c0635ec5a7cdc2ccdcf080",
+        "bars-00010.parquet": "f6545077883a1f693bc87d63bdc796af410a2c73c2c611a8bc4d67364bcdee57",
+        "bars-00011.parquet": "81255dd78141646f025d5614e452c0da3837195ce687306e028bf7322474fd89",
+        "bars-00012.parquet": "c419504f8e53ffd264aa81d897377b6bbe1c8de5c23c7c2de83a9b288af4dd54",
+        "bars-00013.parquet": "3f2f012eca13d8aa6bda9dbe5f8b3888cb8415e74f20111488209f9adc8ddb28",
+        "bars-00014.parquet": "dd3957608a35e04dc21ce77d3b216edf1d1437e29abb338554b922d8a0a75807",
+        "manifest.json": "611d980c4ff0f0734daabcba8954d086d9220c1c93b7025f52b8f2328cfc80ac"
+      },
+      "manifest": {
+        "feature_version": "minute-price-volume-v1",
+        "features": [
+          "log_return",
+          "log_body",
+          "range_ratio",
+          "log_volume_change",
+          "log_amount_change"
+        ],
+        "files": {
+          "bars-00000.parquet": "daa476d42d0d5f5354a1c9eb7e2b11547fabf5a23e64e9b672330427d58b111b",
+          "bars-00001.parquet": "837085943f782d523c820e994ce17a8960cb15074b6a0b47656bfdfa518c01db",
+          "bars-00002.parquet": "1515857b56ba02d45cc3230e40bac9a7eae17738245c7aef604e696be4a2baf6",
+          "bars-00003.parquet": "f19e3b61a205086291d0840f6903e7f61212ae6c4ac15f1c7e7d0ae60ad314d2",
+          "bars-00004.parquet": "1904ee55cb60c8dbc3275e6e8c7fdb32dbdf8e225a01b7ca0f772234a0b7794a",
+          "bars-00005.parquet": "ecc29b56ca3b4933662feaa81ae7c48ea4e379be249b54621839a4479b1ea91e",
+          "bars-00006.parquet": "fa72de397d697e67c8fcc533805bbc8a15a13a0f9333ae5e13d1d3c0d9794090",
+          "bars-00007.parquet": "116f7280e523f9b5a64a59f09ba17288b813bc920a0655d1c0ebe15f6f226e4c",
+          "bars-00008.parquet": "ac3d4a13f5b708db82c63b7dcf67151b33a7726b708bbd7df343b991f8bdbfe6",
+          "bars-00009.parquet": "2732a3369d10170254b8b3942725637f79b207d1c3c0635ec5a7cdc2ccdcf080",
+          "bars-00010.parquet": "f6545077883a1f693bc87d63bdc796af410a2c73c2c611a8bc4d67364bcdee57",
+          "bars-00011.parquet": "81255dd78141646f025d5614e452c0da3837195ce687306e028bf7322474fd89",
+          "bars-00012.parquet": "c419504f8e53ffd264aa81d897377b6bbe1c8de5c23c7c2de83a9b288af4dd54",
+          "bars-00013.parquet": "3f2f012eca13d8aa6bda9dbe5f8b3888cb8415e74f20111488209f9adc8ddb28",
+          "bars-00014.parquet": "dd3957608a35e04dc21ce77d3b216edf1d1437e29abb338554b922d8a0a75807"
+        },
+        "first_bar": "2024-01-02T01:31:00+00:00",
+        "frequency_minutes": 1,
+        "id": "78d638aec92475c2347b8b89f48747ecb0cacce10e6af24fb4542ece35ec95cb",
+        "instruments": [
+          "SZSE:etf:SYNTH0000",
+          "SZSE:etf:SYNTH0001",
+          "SZSE:etf:SYNTH0002",
+          "SZSE:etf:SYNTH0003",
+          "SZSE:etf:SYNTH0004",
+          "SZSE:etf:SYNTH0005",
+          "SZSE:etf:SYNTH0006",
+          "SZSE:etf:SYNTH0007"
+        ],
+        "interval": "[start,end)",
+        "kind": "dataset",
+        "last_bar": "2024-03-25T07:00:00+00:00",
+        "limitations": [
+          "synthetic acceptance data; not real market prices or investment evidence",
+          "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+          "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+        ],
+        "name": "SYNTHETIC acceptance dataset",
+        "price_basis": {
+          "basis_id": null,
+          "mode": "raw"
+        },
+        "query": {
+          "columns": [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "amount"
+          ],
+          "currency": "CNY",
+          "end": "2024-03-25T07:00:00Z",
+          "frequency": "1m",
+          "instruments": [
+            {
+              "code": "SYNTH0000",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            },
+            {
+              "code": "SYNTH0001",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            },
+            {
+              "code": "SYNTH0002",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            },
+            {
+              "code": "SYNTH0003",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            },
+            {
+              "code": "SYNTH0004",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            },
+            {
+              "code": "SYNTH0005",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            },
+            {
+              "code": "SYNTH0006",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            },
+            {
+              "code": "SYNTH0007",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            }
+          ],
+          "kind": "bars",
+          "price_basis": {
+            "basis_id": null,
+            "mode": "raw"
+          },
+          "start": "2024-01-02T01:30:00Z"
+        },
+        "row_count": 115200,
+        "shards": [
+          "bars-00000.parquet",
+          "bars-00001.parquet",
+          "bars-00002.parquet",
+          "bars-00003.parquet",
+          "bars-00004.parquet",
+          "bars-00005.parquet",
+          "bars-00006.parquet",
+          "bars-00007.parquet",
+          "bars-00008.parquet",
+          "bars-00009.parquet",
+          "bars-00010.parquet",
+          "bars-00011.parquet",
+          "bars-00012.parquet",
+          "bars-00013.parquet",
+          "bars-00014.parquet"
+        ],
+        "snapshot_digest": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6",
+        "snapshot_id": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6",
+        "statistics": {
+          "expected_minutes": 115200,
+          "gap_events": 0,
+          "incomplete_buckets": 0,
+          "invalid_feature_bars": 0,
+          "invalid_rows": 0,
+          "missing_minutes": 0,
+          "missing_minutes_by_instrument": {
+            "SZSE:etf:SYNTH0000": 0,
+            "SZSE:etf:SYNTH0001": 0,
+            "SZSE:etf:SYNTH0002": 0,
+            "SZSE:etf:SYNTH0003": 0,
+            "SZSE:etf:SYNTH0004": 0,
+            "SZSE:etf:SYNTH0005": 0,
+            "SZSE:etf:SYNTH0006": 0,
+            "SZSE:etf:SYNTH0007": 0
+          },
+          "outside_session_rows": 0,
+          "source_rows": 115200
+        },
+        "step_policy": "observed_bar_steps",
+        "timezone": "UTC",
+        "trading_days": [
+          "2024-01-02",
+          "2024-01-03",
+          "2024-01-04",
+          "2024-01-05",
+          "2024-01-08",
+          "2024-01-09",
+          "2024-01-10",
+          "2024-01-11",
+          "2024-01-12",
+          "2024-01-15",
+          "2024-01-16",
+          "2024-01-17",
+          "2024-01-18",
+          "2024-01-19",
+          "2024-01-22",
+          "2024-01-23",
+          "2024-01-24",
+          "2024-01-25",
+          "2024-01-26",
+          "2024-01-29",
+          "2024-01-30",
+          "2024-01-31",
+          "2024-02-01",
+          "2024-02-02",
+          "2024-02-05",
+          "2024-02-06",
+          "2024-02-07",
+          "2024-02-08",
+          "2024-02-09",
+          "2024-02-12",
+          "2024-02-13",
+          "2024-02-14",
+          "2024-02-15",
+          "2024-02-16",
+          "2024-02-19",
+          "2024-02-20",
+          "2024-02-21",
+          "2024-02-22",
+          "2024-02-23",
+          "2024-02-26",
+          "2024-02-27",
+          "2024-02-28",
+          "2024-02-29",
+          "2024-03-01",
+          "2024-03-04",
+          "2024-03-05",
+          "2024-03-06",
+          "2024-03-07",
+          "2024-03-08",
+          "2024-03-11",
+          "2024-03-12",
+          "2024-03-13",
+          "2024-03-14",
+          "2024-03-15",
+          "2024-03-18",
+          "2024-03-19",
+          "2024-03-20",
+          "2024-03-21",
+          "2024-03-22",
+          "2024-03-25"
+        ],
+        "trading_sessions": [
+          {
+            "end": "2024-01-02T03:30:00+00:00",
+            "start": "2024-01-02T01:30:00+00:00",
+            "trading_date": "2024-01-02"
+          },
+          {
+            "end": "2024-01-02T07:00:00+00:00",
+            "start": "2024-01-02T05:00:00+00:00",
+            "trading_date": "2024-01-02"
+          },
+          {
+            "end": "2024-01-03T03:30:00+00:00",
+            "start": "2024-01-03T01:30:00+00:00",
+            "trading_date": "2024-01-03"
+          },
+          {
+            "end": "2024-01-03T07:00:00+00:00",
+            "start": "2024-01-03T05:00:00+00:00",
+            "trading_date": "2024-01-03"
+          },
+          {
+            "end": "2024-01-04T03:30:00+00:00",
+            "start": "2024-01-04T01:30:00+00:00",
+            "trading_date": "2024-01-04"
+          },
+          {
+            "end": "2024-01-04T07:00:00+00:00",
+            "start": "2024-01-04T05:00:00+00:00",
+            "trading_date": "2024-01-04"
+          },
+          {
+            "end": "2024-01-05T03:30:00+00:00",
+            "start": "2024-01-05T01:30:00+00:00",
+            "trading_date": "2024-01-05"
+          },
+          {
+            "end": "2024-01-05T07:00:00+00:00",
+            "start": "2024-01-05T05:00:00+00:00",
+            "trading_date": "2024-01-05"
+          },
+          {
+            "end": "2024-01-08T03:30:00+00:00",
+            "start": "2024-01-08T01:30:00+00:00",
+            "trading_date": "2024-01-08"
+          },
+          {
+            "end": "2024-01-08T07:00:00+00:00",
+            "start": "2024-01-08T05:00:00+00:00",
+            "trading_date": "2024-01-08"
+          },
+          {
+            "end": "2024-01-09T03:30:00+00:00",
+            "start": "2024-01-09T01:30:00+00:00",
+            "trading_date": "2024-01-09"
+          },
+          {
+            "end": "2024-01-09T07:00:00+00:00",
+            "start": "2024-01-09T05:00:00+00:00",
+            "trading_date": "2024-01-09"
+          },
+          {
+            "end": "2024-01-10T03:30:00+00:00",
+            "start": "2024-01-10T01:30:00+00:00",
+            "trading_date": "2024-01-10"
+          },
+          {
+            "end": "2024-01-10T07:00:00+00:00",
+            "start": "2024-01-10T05:00:00+00:00",
+            "trading_date": "2024-01-10"
+          },
+          {
+            "end": "2024-01-11T03:30:00+00:00",
+            "start": "2024-01-11T01:30:00+00:00",
+            "trading_date": "2024-01-11"
+          },
+          {
+            "end": "2024-01-11T07:00:00+00:00",
+            "start": "2024-01-11T05:00:00+00:00",
+            "trading_date": "2024-01-11"
+          },
+          {
+            "end": "2024-01-12T03:30:00+00:00",
+            "start": "2024-01-12T01:30:00+00:00",
+            "trading_date": "2024-01-12"
+          },
+          {
+            "end": "2024-01-12T07:00:00+00:00",
+            "start": "2024-01-12T05:00:00+00:00",
+            "trading_date": "2024-01-12"
+          },
+          {
+            "end": "2024-01-15T03:30:00+00:00",
+            "start": "2024-01-15T01:30:00+00:00",
+            "trading_date": "2024-01-15"
+          },
+          {
+            "end": "2024-01-15T07:00:00+00:00",
+            "start": "2024-01-15T05:00:00+00:00",
+            "trading_date": "2024-01-15"
+          },
+          {
+            "end": "2024-01-16T03:30:00+00:00",
+            "start": "2024-01-16T01:30:00+00:00",
+            "trading_date": "2024-01-16"
+          },
+          {
+            "end": "2024-01-16T07:00:00+00:00",
+            "start": "2024-01-16T05:00:00+00:00",
+            "trading_date": "2024-01-16"
+          },
+          {
+            "end": "2024-01-17T03:30:00+00:00",
+            "start": "2024-01-17T01:30:00+00:00",
+            "trading_date": "2024-01-17"
+          },
+          {
+            "end": "2024-01-17T07:00:00+00:00",
+            "start": "2024-01-17T05:00:00+00:00",
+            "trading_date": "2024-01-17"
+          },
+          {
+            "end": "2024-01-18T03:30:00+00:00",
+            "start": "2024-01-18T01:30:00+00:00",
+            "trading_date": "2024-01-18"
+          },
+          {
+            "end": "2024-01-18T07:00:00+00:00",
+            "start": "2024-01-18T05:00:00+00:00",
+            "trading_date": "2024-01-18"
+          },
+          {
+            "end": "2024-01-19T03:30:00+00:00",
+            "start": "2024-01-19T01:30:00+00:00",
+            "trading_date": "2024-01-19"
+          },
+          {
+            "end": "2024-01-19T07:00:00+00:00",
+            "start": "2024-01-19T05:00:00+00:00",
+            "trading_date": "2024-01-19"
+          },
+          {
+            "end": "2024-01-22T03:30:00+00:00",
+            "start": "2024-01-22T01:30:00+00:00",
+            "trading_date": "2024-01-22"
+          },
+          {
+            "end": "2024-01-22T07:00:00+00:00",
+            "start": "2024-01-22T05:00:00+00:00",
+            "trading_date": "2024-01-22"
+          },
+          {
+            "end": "2024-01-23T03:30:00+00:00",
+            "start": "2024-01-23T01:30:00+00:00",
+            "trading_date": "2024-01-23"
+          },
+          {
+            "end": "2024-01-23T07:00:00+00:00",
+            "start": "2024-01-23T05:00:00+00:00",
+            "trading_date": "2024-01-23"
+          },
+          {
+            "end": "2024-01-24T03:30:00+00:00",
+            "start": "2024-01-24T01:30:00+00:00",
+            "trading_date": "2024-01-24"
+          },
+          {
+            "end": "2024-01-24T07:00:00+00:00",
+            "start": "2024-01-24T05:00:00+00:00",
+            "trading_date": "2024-01-24"
+          },
+          {
+            "end": "2024-01-25T03:30:00+00:00",
+            "start": "2024-01-25T01:30:00+00:00",
+            "trading_date": "2024-01-25"
+          },
+          {
+            "end": "2024-01-25T07:00:00+00:00",
+            "start": "2024-01-25T05:00:00+00:00",
+            "trading_date": "2024-01-25"
+          },
+          {
+            "end": "2024-01-26T03:30:00+00:00",
+            "start": "2024-01-26T01:30:00+00:00",
+            "trading_date": "2024-01-26"
+          },
+          {
+            "end": "2024-01-26T07:00:00+00:00",
+            "start": "2024-01-26T05:00:00+00:00",
+            "trading_date": "2024-01-26"
+          },
+          {
+            "end": "2024-01-29T03:30:00+00:00",
+            "start": "2024-01-29T01:30:00+00:00",
+            "trading_date": "2024-01-29"
+          },
+          {
+            "end": "2024-01-29T07:00:00+00:00",
+            "start": "2024-01-29T05:00:00+00:00",
+            "trading_date": "2024-01-29"
+          },
+          {
+            "end": "2024-01-30T03:30:00+00:00",
+            "start": "2024-01-30T01:30:00+00:00",
+            "trading_date": "2024-01-30"
+          },
+          {
+            "end": "2024-01-30T07:00:00+00:00",
+            "start": "2024-01-30T05:00:00+00:00",
+            "trading_date": "2024-01-30"
+          },
+          {
+            "end": "2024-01-31T03:30:00+00:00",
+            "start": "2024-01-31T01:30:00+00:00",
+            "trading_date": "2024-01-31"
+          },
+          {
+            "end": "2024-01-31T07:00:00+00:00",
+            "start": "2024-01-31T05:00:00+00:00",
+            "trading_date": "2024-01-31"
+          },
+          {
+            "end": "2024-02-01T03:30:00+00:00",
+            "start": "2024-02-01T01:30:00+00:00",
+            "trading_date": "2024-02-01"
+          },
+          {
+            "end": "2024-02-01T07:00:00+00:00",
+            "start": "2024-02-01T05:00:00+00:00",
+            "trading_date": "2024-02-01"
+          },
+          {
+            "end": "2024-02-02T03:30:00+00:00",
+            "start": "2024-02-02T01:30:00+00:00",
+            "trading_date": "2024-02-02"
+          },
+          {
+            "end": "2024-02-02T07:00:00+00:00",
+            "start": "2024-02-02T05:00:00+00:00",
+            "trading_date": "2024-02-02"
+          },
+          {
+            "end": "2024-02-05T03:30:00+00:00",
+            "start": "2024-02-05T01:30:00+00:00",
+            "trading_date": "2024-02-05"
+          },
+          {
+            "end": "2024-02-05T07:00:00+00:00",
+            "start": "2024-02-05T05:00:00+00:00",
+            "trading_date": "2024-02-05"
+          },
+          {
+            "end": "2024-02-06T03:30:00+00:00",
+            "start": "2024-02-06T01:30:00+00:00",
+            "trading_date": "2024-02-06"
+          },
+          {
+            "end": "2024-02-06T07:00:00+00:00",
+            "start": "2024-02-06T05:00:00+00:00",
+            "trading_date": "2024-02-06"
+          },
+          {
+            "end": "2024-02-07T03:30:00+00:00",
+            "start": "2024-02-07T01:30:00+00:00",
+            "trading_date": "2024-02-07"
+          },
+          {
+            "end": "2024-02-07T07:00:00+00:00",
+            "start": "2024-02-07T05:00:00+00:00",
+            "trading_date": "2024-02-07"
+          },
+          {
+            "end": "2024-02-08T03:30:00+00:00",
+            "start": "2024-02-08T01:30:00+00:00",
+            "trading_date": "2024-02-08"
+          },
+          {
+            "end": "2024-02-08T07:00:00+00:00",
+            "start": "2024-02-08T05:00:00+00:00",
+            "trading_date": "2024-02-08"
+          },
+          {
+            "end": "2024-02-09T03:30:00+00:00",
+            "start": "2024-02-09T01:30:00+00:00",
+            "trading_date": "2024-02-09"
+          },
+          {
+            "end": "2024-02-09T07:00:00+00:00",
+            "start": "2024-02-09T05:00:00+00:00",
+            "trading_date": "2024-02-09"
+          },
+          {
+            "end": "2024-02-12T03:30:00+00:00",
+            "start": "2024-02-12T01:30:00+00:00",
+            "trading_date": "2024-02-12"
+          },
+          {
+            "end": "2024-02-12T07:00:00+00:00",
+            "start": "2024-02-12T05:00:00+00:00",
+            "trading_date": "2024-02-12"
+          },
+          {
+            "end": "2024-02-13T03:30:00+00:00",
+            "start": "2024-02-13T01:30:00+00:00",
+            "trading_date": "2024-02-13"
+          },
+          {
+            "end": "2024-02-13T07:00:00+00:00",
+            "start": "2024-02-13T05:00:00+00:00",
+            "trading_date": "2024-02-13"
+          },
+          {
+            "end": "2024-02-14T03:30:00+00:00",
+            "start": "2024-02-14T01:30:00+00:00",
+            "trading_date": "2024-02-14"
+          },
+          {
+            "end": "2024-02-14T07:00:00+00:00",
+            "start": "2024-02-14T05:00:00+00:00",
+            "trading_date": "2024-02-14"
+          },
+          {
+            "end": "2024-02-15T03:30:00+00:00",
+            "start": "2024-02-15T01:30:00+00:00",
+            "trading_date": "2024-02-15"
+          },
+          {
+            "end": "2024-02-15T07:00:00+00:00",
+            "start": "2024-02-15T05:00:00+00:00",
+            "trading_date": "2024-02-15"
+          },
+          {
+            "end": "2024-02-16T03:30:00+00:00",
+            "start": "2024-02-16T01:30:00+00:00",
+            "trading_date": "2024-02-16"
+          },
+          {
+            "end": "2024-02-16T07:00:00+00:00",
+            "start": "2024-02-16T05:00:00+00:00",
+            "trading_date": "2024-02-16"
+          },
+          {
+            "end": "2024-02-19T03:30:00+00:00",
+            "start": "2024-02-19T01:30:00+00:00",
+            "trading_date": "2024-02-19"
+          },
+          {
+            "end": "2024-02-19T07:00:00+00:00",
+            "start": "2024-02-19T05:00:00+00:00",
+            "trading_date": "2024-02-19"
+          },
+          {
+            "end": "2024-02-20T03:30:00+00:00",
+            "start": "2024-02-20T01:30:00+00:00",
+            "trading_date": "2024-02-20"
+          },
+          {
+            "end": "2024-02-20T07:00:00+00:00",
+            "start": "2024-02-20T05:00:00+00:00",
+            "trading_date": "2024-02-20"
+          },
+          {
+            "end": "2024-02-21T03:30:00+00:00",
+            "start": "2024-02-21T01:30:00+00:00",
+            "trading_date": "2024-02-21"
+          },
+          {
+            "end": "2024-02-21T07:00:00+00:00",
+            "start": "2024-02-21T05:00:00+00:00",
+            "trading_date": "2024-02-21"
+          },
+          {
+            "end": "2024-02-22T03:30:00+00:00",
+            "start": "2024-02-22T01:30:00+00:00",
+            "trading_date": "2024-02-22"
+          },
+          {
+            "end": "2024-02-22T07:00:00+00:00",
+            "start": "2024-02-22T05:00:00+00:00",
+            "trading_date": "2024-02-22"
+          },
+          {
+            "end": "2024-02-23T03:30:00+00:00",
+            "start": "2024-02-23T01:30:00+00:00",
+            "trading_date": "2024-02-23"
+          },
+          {
+            "end": "2024-02-23T07:00:00+00:00",
+            "start": "2024-02-23T05:00:00+00:00",
+            "trading_date": "2024-02-23"
+          },
+          {
+            "end": "2024-02-26T03:30:00+00:00",
+            "start": "2024-02-26T01:30:00+00:00",
+            "trading_date": "2024-02-26"
+          },
+          {
+            "end": "2024-02-26T07:00:00+00:00",
+            "start": "2024-02-26T05:00:00+00:00",
+            "trading_date": "2024-02-26"
+          },
+          {
+            "end": "2024-02-27T03:30:00+00:00",
+            "start": "2024-02-27T01:30:00+00:00",
+            "trading_date": "2024-02-27"
+          },
+          {
+            "end": "2024-02-27T07:00:00+00:00",
+            "start": "2024-02-27T05:00:00+00:00",
+            "trading_date": "2024-02-27"
+          },
+          {
+            "end": "2024-02-28T03:30:00+00:00",
+            "start": "2024-02-28T01:30:00+00:00",
+            "trading_date": "2024-02-28"
+          },
+          {
+            "end": "2024-02-28T07:00:00+00:00",
+            "start": "2024-02-28T05:00:00+00:00",
+            "trading_date": "2024-02-28"
+          },
+          {
+            "end": "2024-02-29T03:30:00+00:00",
+            "start": "2024-02-29T01:30:00+00:00",
+            "trading_date": "2024-02-29"
+          },
+          {
+            "end": "2024-02-29T07:00:00+00:00",
+            "start": "2024-02-29T05:00:00+00:00",
+            "trading_date": "2024-02-29"
+          },
+          {
+            "end": "2024-03-01T03:30:00+00:00",
+            "start": "2024-03-01T01:30:00+00:00",
+            "trading_date": "2024-03-01"
+          },
+          {
+            "end": "2024-03-01T07:00:00+00:00",
+            "start": "2024-03-01T05:00:00+00:00",
+            "trading_date": "2024-03-01"
+          },
+          {
+            "end": "2024-03-04T03:30:00+00:00",
+            "start": "2024-03-04T01:30:00+00:00",
+            "trading_date": "2024-03-04"
+          },
+          {
+            "end": "2024-03-04T07:00:00+00:00",
+            "start": "2024-03-04T05:00:00+00:00",
+            "trading_date": "2024-03-04"
+          },
+          {
+            "end": "2024-03-05T03:30:00+00:00",
+            "start": "2024-03-05T01:30:00+00:00",
+            "trading_date": "2024-03-05"
+          },
+          {
+            "end": "2024-03-05T07:00:00+00:00",
+            "start": "2024-03-05T05:00:00+00:00",
+            "trading_date": "2024-03-05"
+          },
+          {
+            "end": "2024-03-06T03:30:00+00:00",
+            "start": "2024-03-06T01:30:00+00:00",
+            "trading_date": "2024-03-06"
+          },
+          {
+            "end": "2024-03-06T07:00:00+00:00",
+            "start": "2024-03-06T05:00:00+00:00",
+            "trading_date": "2024-03-06"
+          },
+          {
+            "end": "2024-03-07T03:30:00+00:00",
+            "start": "2024-03-07T01:30:00+00:00",
+            "trading_date": "2024-03-07"
+          },
+          {
+            "end": "2024-03-07T07:00:00+00:00",
+            "start": "2024-03-07T05:00:00+00:00",
+            "trading_date": "2024-03-07"
+          },
+          {
+            "end": "2024-03-08T03:30:00+00:00",
+            "start": "2024-03-08T01:30:00+00:00",
+            "trading_date": "2024-03-08"
+          },
+          {
+            "end": "2024-03-08T07:00:00+00:00",
+            "start": "2024-03-08T05:00:00+00:00",
+            "trading_date": "2024-03-08"
+          },
+          {
+            "end": "2024-03-11T03:30:00+00:00",
+            "start": "2024-03-11T01:30:00+00:00",
+            "trading_date": "2024-03-11"
+          },
+          {
+            "end": "2024-03-11T07:00:00+00:00",
+            "start": "2024-03-11T05:00:00+00:00",
+            "trading_date": "2024-03-11"
+          },
+          {
+            "end": "2024-03-12T03:30:00+00:00",
+            "start": "2024-03-12T01:30:00+00:00",
+            "trading_date": "2024-03-12"
+          },
+          {
+            "end": "2024-03-12T07:00:00+00:00",
+            "start": "2024-03-12T05:00:00+00:00",
+            "trading_date": "2024-03-12"
+          },
+          {
+            "end": "2024-03-13T03:30:00+00:00",
+            "start": "2024-03-13T01:30:00+00:00",
+            "trading_date": "2024-03-13"
+          },
+          {
+            "end": "2024-03-13T07:00:00+00:00",
+            "start": "2024-03-13T05:00:00+00:00",
+            "trading_date": "2024-03-13"
+          },
+          {
+            "end": "2024-03-14T03:30:00+00:00",
+            "start": "2024-03-14T01:30:00+00:00",
+            "trading_date": "2024-03-14"
+          },
+          {
+            "end": "2024-03-14T07:00:00+00:00",
+            "start": "2024-03-14T05:00:00+00:00",
+            "trading_date": "2024-03-14"
+          },
+          {
+            "end": "2024-03-15T03:30:00+00:00",
+            "start": "2024-03-15T01:30:00+00:00",
+            "trading_date": "2024-03-15"
+          },
+          {
+            "end": "2024-03-15T07:00:00+00:00",
+            "start": "2024-03-15T05:00:00+00:00",
+            "trading_date": "2024-03-15"
+          },
+          {
+            "end": "2024-03-18T03:30:00+00:00",
+            "start": "2024-03-18T01:30:00+00:00",
+            "trading_date": "2024-03-18"
+          },
+          {
+            "end": "2024-03-18T07:00:00+00:00",
+            "start": "2024-03-18T05:00:00+00:00",
+            "trading_date": "2024-03-18"
+          },
+          {
+            "end": "2024-03-19T03:30:00+00:00",
+            "start": "2024-03-19T01:30:00+00:00",
+            "trading_date": "2024-03-19"
+          },
+          {
+            "end": "2024-03-19T07:00:00+00:00",
+            "start": "2024-03-19T05:00:00+00:00",
+            "trading_date": "2024-03-19"
+          },
+          {
+            "end": "2024-03-20T03:30:00+00:00",
+            "start": "2024-03-20T01:30:00+00:00",
+            "trading_date": "2024-03-20"
+          },
+          {
+            "end": "2024-03-20T07:00:00+00:00",
+            "start": "2024-03-20T05:00:00+00:00",
+            "trading_date": "2024-03-20"
+          },
+          {
+            "end": "2024-03-21T03:30:00+00:00",
+            "start": "2024-03-21T01:30:00+00:00",
+            "trading_date": "2024-03-21"
+          },
+          {
+            "end": "2024-03-21T07:00:00+00:00",
+            "start": "2024-03-21T05:00:00+00:00",
+            "trading_date": "2024-03-21"
+          },
+          {
+            "end": "2024-03-22T03:30:00+00:00",
+            "start": "2024-03-22T01:30:00+00:00",
+            "trading_date": "2024-03-22"
+          },
+          {
+            "end": "2024-03-22T07:00:00+00:00",
+            "start": "2024-03-22T05:00:00+00:00",
+            "trading_date": "2024-03-22"
+          },
+          {
+            "end": "2024-03-25T03:30:00+00:00",
+            "start": "2024-03-25T01:30:00+00:00",
+            "trading_date": "2024-03-25"
+          },
+          {
+            "end": "2024-03-25T07:00:00+00:00",
+            "start": "2024-03-25T05:00:00+00:00",
+            "trading_date": "2024-03-25"
+          }
+        ],
+        "version": 1
+      },
+      "rows_per_second": 1121.6045153894838
+    },
+    "train": {
+      "job_id": "199f76ca-1b1a-4e97-9636-a548cce5e9be",
+      "request": {
+        "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+        "spec": {
+          "name": "SYNTHETIC acceptance model",
+          "model_type": "gru",
+          "train_start": "2024-01-02T01:30:00+00:00",
+          "train_end": "2024-02-21T01:30:00+00:00",
+          "validation_start": "2024-02-21T01:30:00+00:00",
+          "validation_end": "2024-03-08T01:30:00+00:00",
+          "test_start": "2024-03-08T01:30:00+00:00",
+          "test_end": "2024-03-25T07:00:00Z",
+          "lookback": 16,
+          "horizon": 2,
+          "epochs": 2,
+          "batch_size": 256,
+          "learning_rate": 0.001,
+          "hidden_size": 16,
+          "layers": 1,
+          "seed": 42,
+          "device": "cuda",
+          "patience": 3
+        }
+      },
+      "seconds": 14.298380299995188,
+      "state": "succeeded",
+      "content_hash": "576bf57f4293d244711f4ffe34145eee5f98a1274e44ec13c7fd3ef77d49873f",
+      "files": {
+        "checkpoints/checkpoint.json": "5d47d56ef705daa216bf1e773460cd53d3c9dc4811498f5656ae0b7397530c2e",
+        "checkpoints/epoch-0001.pt": "71f83c5db2d4476ddfee2de86bbdb878a709b596d841f125cdc073c53a5f124e",
+        "checkpoints/epoch-0002.pt": "062d310d1a302723a7efe2bf7c3acb371d5a153d453fe353c05fb8092ac84b56",
+        "curves.json": "51eae28891b678d8b28d28298f1d2bd6c192d6b8cc47a931711cd654dad60795",
+        "manifest.json": "87273fe7adc7399febd213b0138f29fcc5c4f82a857ac01b42ab0e931b50092e",
+        "weights.pt": "8db74ec2de2102bb436b56928f7fa12c53bba97e6dd452473f216393f8f52eca"
+      },
+      "manifest": {
+        "best_epoch": 2,
+        "config": {
+          "batch_size": 256,
+          "device": "cuda",
+          "epochs": 2,
+          "hidden_size": 16,
+          "horizon": 2,
+          "layers": 1,
+          "learning_rate": 0.001,
+          "lookback": 16,
+          "model_type": "gru",
+          "name": "SYNTHETIC acceptance model",
+          "patience": 3,
+          "seed": 42,
+          "test_end": "2024-03-25T07:00:00Z",
+          "test_start": "2024-03-08T01:30:00Z",
+          "train_end": "2024-02-21T01:30:00Z",
+          "train_start": "2024-01-02T01:30:00Z",
+          "validation_end": "2024-03-08T01:30:00Z",
+          "validation_start": "2024-02-21T01:30:00Z"
+        },
+        "cutoff": "2024-03-08T01:30:00+00:00",
+        "dataset_id": "78d638aec92475c2347b8b89f48747ecb0cacce10e6af24fb4542ece35ec95cb",
+        "dataset_snapshot_id": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6",
+        "epochs_completed": 2,
+        "feature_version": "minute-price-volume-v1",
+        "features": [
+          "log_return",
+          "log_body",
+          "range_ratio",
+          "log_volume_change",
+          "log_amount_change"
+        ],
+        "files": {
+          "checkpoints/checkpoint.json": "5d47d56ef705daa216bf1e773460cd53d3c9dc4811498f5656ae0b7397530c2e",
+          "checkpoints/epoch-0001.pt": "71f83c5db2d4476ddfee2de86bbdb878a709b596d841f125cdc073c53a5f124e",
+          "checkpoints/epoch-0002.pt": "062d310d1a302723a7efe2bf7c3acb371d5a153d453fe353c05fb8092ac84b56",
+          "curves.json": "51eae28891b678d8b28d28298f1d2bd6c192d6b8cc47a931711cd654dad60795",
+          "weights.pt": "8db74ec2de2102bb436b56928f7fa12c53bba97e6dd452473f216393f8f52eca"
+        },
+        "frequency_minutes": 1,
+        "id": "39a2cd6cc7bf21b32075c391aa00778145278b974b170b03ff4f6f47b096b1a7",
+        "kind": "model",
+        "limitations": [
+          "synthetic acceptance data; not real market prices or investment evidence",
+          "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+          "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+        ],
+        "metrics": {
+          "samples": {
+            "test": 23024,
+            "train": 68984,
+            "validation": 23024
+          },
+          "test": {
+            "mae": 0.0013532193967861546,
+            "mse": 4.2024082446672625e-06,
+            "samples": 23024
+          },
+          "train": {
+            "mae": 0.0013366362159253273,
+            "mse": 4.019037482846014e-06,
+            "samples": 68984
+          },
+          "validation": {
+            "mae": 0.0013446370217382205,
+            "mse": 4.133201023999835e-06,
+            "samples": 23024
+          }
+        },
+        "name": "SYNTHETIC acceptance model",
+        "resume_parent": null,
+        "runtime": {
+          "cublas_workspace_config": ":4096:8",
+          "cuda_version": "12.8",
+          "cudnn_benchmark": false,
+          "cudnn_deterministic": true,
+          "deterministic_algorithms": true,
+          "device": "cuda",
+          "device_name": "NVIDIA GeForce RTX 5070 Ti",
+          "seed": 42,
+          "torch_version": "2.11.0+cu128"
+        },
+        "scaler": {
+          "count": 69120,
+          "mean": [
+            9.626064473417692e-07,
+            -1.8841919093586607e-06,
+            0.0020324251662764913,
+            3.754308115815202e-05,
+            3.852133032288075e-05
+          ],
+          "scale": [
+            0.0002137396550738106,
+            0.00025542091542479295,
+            0.00016911402647306985,
+            0.02220708082058992,
+            0.022208978867656208
+          ]
+        },
+        "step_policy": "observed_bar_steps",
+        "version": 1,
+        "history": [
+          {
+            "epoch": 1,
+            "train_mse": 0.0003328053130070247,
+            "validation_mse": 1.1833128869755043e-05
+          },
+          {
+            "epoch": 2,
+            "train_mse": 8.077047023594056e-06,
+            "validation_mse": 4.133201023999835e-06
+          }
+        ]
+      }
+    },
+    "model_backtest": {
+      "job_id": "36298efb-037f-46cb-9265-cf1d49a66c0a",
+      "request": {
+        "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+        "model_id": "199f76ca-1b1a-4e97-9636-a548cce5e9be",
+        "spec": {
+          "start": "2024-03-08T01:30:00+00:00",
+          "end": "2024-03-25T07:00:00Z",
+          "baseline": "model",
+          "initial_cash": 100000,
+          "top_k": 3,
+          "rebalance_every": 15,
+          "max_total_weight": 0.9,
+          "max_symbol_weight": 0.4,
+          "commission_rate": 0.0003,
+          "minimum_commission": 5,
+          "slippage_rate": 0.0005,
+          "participation_rate": 0.1,
+          "lot_size": 100,
+          "settlement_days": 1
+        }
+      },
+      "seconds": 6.192171100003179,
+      "state": "succeeded",
+      "content_hash": "31a43574aa14f1165cc23e723aa0d64ef8b4e2fbe52b3cca78b749a0ab240da6",
+      "files": {
+        "daily_equity.csv": "8332b099b6382b25cccc35bbfdc159f098c4154e6f479f21ee31782f554b2d78",
+        "equity.csv": "99bd46a895ea26006bcbfc1fcf037fca24b48e0bcb35084d9153be03e8c00fba",
+        "fills.csv": "b6579438616d58873c4edc7069ebb81b41b79ccd8a5289d16f2ba8977560bc62",
+        "orders.csv": "4bea5067cd37ddfe39cf05454068dfc9488836f929b396ad185d3b3e623cdb07",
+        "positions.csv": "3365edb15e85f23d60ce4a5298e53ee4149fe23fd91d899fe944573e0b573f3c",
+        "results.sqlite3": "ba775ef607609d2385752fdac2962cc0d6fc92d4da48b4fa7514d73e0e454da7",
+        "signals.csv": "cbf57469e932d0981f8cb3240286d8810e252699ca1f09da30feba383d7c0068",
+        "summary.json": "1c63e7a59de653a3b8ca1bc20de6d07bcea1caa13b733072bfb51c63609a5d36"
+      },
+      "manifest": {
+        "assumptions": {
+          "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
+          "corporate_actions": "no corporate-action cash flows; adjusted prices not double counted; raw_cash unsupported",
+          "coverage": "observed dates match supplied expected_trading_days for requested interval",
+          "default_lot_size": 100,
+          "default_settlement_days": 1,
+          "drawdown_pause": "sticky for remaining period; attempts liquidation subject to settlement and participation",
+          "execution": "next available real bar open after completed signal; no order-book or queue simulation",
+          "ledger": "research_price_ledger",
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
+          "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
+          "settlement": "supplied trading_days calendar",
+          "tradability": "positive valid OHLC bars assumed tradable; no inferred suspensions or limit states"
+        },
+        "counts": {
+          "bars": 2880,
+          "fills": 106,
+          "orders": 761,
+          "rows": 23040,
+          "signals": 1536,
+          "trading_days": 12
+        },
+        "metadata": {
+          "allow_in_sample": false,
+          "dataset_content_id": "78d638aec92475c2347b8b89f48747ecb0cacce10e6af24fb4542ece35ec95cb",
+          "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+          "expected_trading_days": [
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12",
+            "2024-03-13",
+            "2024-03-14",
+            "2024-03-15",
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25"
+          ],
+          "frequency_minutes": 1,
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "model_config": {
+            "batch_size": 256,
+            "device": "cuda",
+            "epochs": 2,
+            "hidden_size": 16,
+            "horizon": 2,
+            "layers": 1,
+            "learning_rate": 0.001,
+            "lookback": 16,
+            "model_type": "gru",
+            "name": "SYNTHETIC acceptance model",
+            "patience": 3,
+            "seed": 42,
+            "test_end": "2024-03-25T07:00:00Z",
+            "test_start": "2024-03-08T01:30:00Z",
+            "train_end": "2024-02-21T01:30:00Z",
+            "train_start": "2024-01-02T01:30:00Z",
+            "validation_end": "2024-03-08T01:30:00Z",
+            "validation_start": "2024-02-21T01:30:00Z"
+          },
+          "model_content_id": "39a2cd6cc7bf21b32075c391aa00778145278b974b170b03ff4f6f47b096b1a7",
+          "model_cutoff": "2024-03-08T01:30:00+00:00",
+          "model_id": "199f76ca-1b1a-4e97-9636-a548cce5e9be",
+          "price_mode": "research",
+          "query": {
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "currency": "CNY",
+            "end": "2024-03-25T07:00:00Z",
+            "frequency": "1m",
+            "instruments": [
+              {
+                "code": "SYNTH0000",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0001",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0002",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0003",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0004",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0005",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0006",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0007",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              }
+            ],
+            "kind": "bars",
+            "price_basis": {
+              "basis_id": null,
+              "mode": "raw"
+            },
+            "start": "2024-01-02T01:30:00Z"
+          },
+          "source_snapshot_id": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6",
+          "trading_days": [
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+            "2024-01-08",
+            "2024-01-09",
+            "2024-01-10",
+            "2024-01-11",
+            "2024-01-12",
+            "2024-01-15",
+            "2024-01-16",
+            "2024-01-17",
+            "2024-01-18",
+            "2024-01-19",
+            "2024-01-22",
+            "2024-01-23",
+            "2024-01-24",
+            "2024-01-25",
+            "2024-01-26",
+            "2024-01-29",
+            "2024-01-30",
+            "2024-01-31",
+            "2024-02-01",
+            "2024-02-02",
+            "2024-02-05",
+            "2024-02-06",
+            "2024-02-07",
+            "2024-02-08",
+            "2024-02-09",
+            "2024-02-12",
+            "2024-02-13",
+            "2024-02-14",
+            "2024-02-15",
+            "2024-02-16",
+            "2024-02-19",
+            "2024-02-20",
+            "2024-02-21",
+            "2024-02-22",
+            "2024-02-23",
+            "2024-02-26",
+            "2024-02-27",
+            "2024-02-28",
+            "2024-02-29",
+            "2024-03-01",
+            "2024-03-04",
+            "2024-03-05",
+            "2024-03-06",
+            "2024-03-07",
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12",
+            "2024-03-13",
+            "2024-03-14",
+            "2024-03-15",
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25"
+          ]
+        },
+        "metrics": {
+          "annualized_return": -0.6140698163713894,
+          "cash_interest": 0.0,
+          "commissions": 721.6138743125819,
+          "final_cash": 27871.23892260888,
+          "final_equity": 95567.43730025785,
+          "initial_cash": 100000,
+          "max_drawdown": 0.046713025880927406,
+          "minute_max_drawdown": 0.06642461185190307,
+          "sharpe": -10.444253402158697,
+          "slippage_cost": 975.8550733370671,
+          "total_return": -0.044325626997421486,
+          "trading_days": 12,
+          "turnover": 19.517453623204233
+        },
+        "period": {
+          "end": "2024-03-25T07:00:00+00:00",
+          "first_bar": "2024-03-08T01:31:00+00:00",
+          "last_bar": "2024-03-25T07:00:00+00:00",
+          "start": "2024-03-08T01:30:00+00:00"
+        },
+        "spec": {
+          "baseline": "model",
+          "cash_rate": 0,
+          "commission_rate": 0.0003,
+          "drawdown_pause": 1,
+          "end": "2024-03-25T07:00:00+00:00",
+          "initial_cash": 100000,
+          "instruments": {},
+          "lot_size": 100,
+          "max_symbol_weight": 0.4,
+          "max_total_weight": 0.9,
+          "minimum_commission": 5,
+          "participation_rate": 0.1,
+          "rebalance_every": 15,
+          "settlement_days": 1,
+          "slippage_rate": 0.0005,
+          "start": "2024-03-08T01:30:00+00:00",
+          "top_k": 3
+        }
+      }
+    },
+    "cash": {
+      "job_id": "fe8b9bcc-ae36-4c9b-b036-8a4549356663",
+      "request": {
+        "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+        "spec": {
+          "start": "2024-03-08T01:30:00+00:00",
+          "end": "2024-03-25T07:00:00Z",
+          "baseline": "cash",
+          "initial_cash": 100000,
+          "top_k": 3,
+          "rebalance_every": 15,
+          "max_total_weight": 0.9,
+          "max_symbol_weight": 0.4,
+          "commission_rate": 0.0003,
+          "minimum_commission": 5,
+          "slippage_rate": 0.0005,
+          "participation_rate": 0.1,
+          "lot_size": 100,
+          "settlement_days": 1
+        }
+      },
+      "seconds": 2.3001799999619834,
+      "state": "succeeded",
+      "content_hash": "39f8d84c6fb178c2d1286a94a57480b19ac8cf9d0cf1084b0c5103915c1853eb",
+      "files": {
+        "daily_equity.csv": "1728417e76f9401e19d942ee7faa9371989f8e787fab29f98ea8d89d4a8f4567",
+        "equity.csv": "10f223d808fafa9a87be71d82a80581fb357f35bd248dedef9f294117bcfb58c",
+        "fills.csv": "ba72dd95e8b2e9eb95baa1d4aee7b9b84521db2105f765cd1e621e5941b51c62",
+        "orders.csv": "a814686a8b373d301042ef5d7903f6630100600cda53e3f315d2649b88c16d18",
+        "positions.csv": "46fa526b87c0cae85c76a46fb891b46ac474d5c607c6a7ff77a2f845aecf99e2",
+        "results.sqlite3": "916aafcab3a744aae2d4595aab6fb7c9ee57ab516507ee9a614bd362d36408cb",
+        "signals.csv": "4d32e43df342c8b9337cfd7e250fcff78f6d8f7bffc7e9934b0fce6662b87da0",
+        "summary.json": "e10deb8f357cd304dc5bb566431a356eb01f8dc61264b56ce47756fa50385cac"
+      },
+      "manifest": {
+        "assumptions": {
+          "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
+          "corporate_actions": "no corporate-action cash flows; adjusted prices not double counted; raw_cash unsupported",
+          "coverage": "observed dates match supplied expected_trading_days for requested interval",
+          "default_lot_size": 100,
+          "default_settlement_days": 1,
+          "drawdown_pause": "sticky for remaining period; attempts liquidation subject to settlement and participation",
+          "execution": "next available real bar open after completed signal; no order-book or queue simulation",
+          "ledger": "research_price_ledger",
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
+          "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
+          "settlement": "supplied trading_days calendar",
+          "tradability": "positive valid OHLC bars assumed tradable; no inferred suspensions or limit states"
+        },
+        "counts": {
+          "bars": 2880,
+          "fills": 0,
+          "orders": 0,
+          "rows": 23040,
+          "signals": 1536,
+          "trading_days": 12
+        },
+        "metadata": {
+          "allow_in_sample": false,
+          "dataset_content_id": "78d638aec92475c2347b8b89f48747ecb0cacce10e6af24fb4542ece35ec95cb",
+          "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+          "expected_trading_days": [
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12",
+            "2024-03-13",
+            "2024-03-14",
+            "2024-03-15",
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25"
+          ],
+          "frequency_minutes": 1,
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "price_mode": "research",
+          "query": {
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "currency": "CNY",
+            "end": "2024-03-25T07:00:00Z",
+            "frequency": "1m",
+            "instruments": [
+              {
+                "code": "SYNTH0000",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0001",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0002",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0003",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0004",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0005",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0006",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0007",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              }
+            ],
+            "kind": "bars",
+            "price_basis": {
+              "basis_id": null,
+              "mode": "raw"
+            },
+            "start": "2024-01-02T01:30:00Z"
+          },
+          "source_snapshot_id": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6",
+          "trading_days": [
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+            "2024-01-08",
+            "2024-01-09",
+            "2024-01-10",
+            "2024-01-11",
+            "2024-01-12",
+            "2024-01-15",
+            "2024-01-16",
+            "2024-01-17",
+            "2024-01-18",
+            "2024-01-19",
+            "2024-01-22",
+            "2024-01-23",
+            "2024-01-24",
+            "2024-01-25",
+            "2024-01-26",
+            "2024-01-29",
+            "2024-01-30",
+            "2024-01-31",
+            "2024-02-01",
+            "2024-02-02",
+            "2024-02-05",
+            "2024-02-06",
+            "2024-02-07",
+            "2024-02-08",
+            "2024-02-09",
+            "2024-02-12",
+            "2024-02-13",
+            "2024-02-14",
+            "2024-02-15",
+            "2024-02-16",
+            "2024-02-19",
+            "2024-02-20",
+            "2024-02-21",
+            "2024-02-22",
+            "2024-02-23",
+            "2024-02-26",
+            "2024-02-27",
+            "2024-02-28",
+            "2024-02-29",
+            "2024-03-01",
+            "2024-03-04",
+            "2024-03-05",
+            "2024-03-06",
+            "2024-03-07",
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12",
+            "2024-03-13",
+            "2024-03-14",
+            "2024-03-15",
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25"
+          ]
+        },
+        "metrics": {
+          "annualized_return": 0.0,
+          "cash_interest": 0.0,
+          "commissions": 0,
+          "final_cash": 100000.0,
+          "final_equity": 100000.0,
+          "initial_cash": 100000,
+          "max_drawdown": 0,
+          "minute_max_drawdown": 0,
+          "sharpe": null,
+          "slippage_cost": 0,
+          "total_return": 0.0,
+          "trading_days": 12,
+          "turnover": 0.0
+        },
+        "period": {
+          "end": "2024-03-25T07:00:00+00:00",
+          "first_bar": "2024-03-08T01:31:00+00:00",
+          "last_bar": "2024-03-25T07:00:00+00:00",
+          "start": "2024-03-08T01:30:00+00:00"
+        },
+        "spec": {
+          "baseline": "cash",
+          "cash_rate": 0,
+          "commission_rate": 0.0003,
+          "drawdown_pause": 1,
+          "end": "2024-03-25T07:00:00+00:00",
+          "initial_cash": 100000,
+          "instruments": {},
+          "lot_size": 100,
+          "max_symbol_weight": 0.4,
+          "max_total_weight": 0.9,
+          "minimum_commission": 5,
+          "participation_rate": 0.1,
+          "rebalance_every": 15,
+          "settlement_days": 1,
+          "slippage_rate": 0.0005,
+          "start": "2024-03-08T01:30:00+00:00",
+          "top_k": 3
+        }
+      }
+    },
+    "equal_weight": {
+      "job_id": "ab470c8b-fb72-4cf2-84be-7509264c96ac",
+      "request": {
+        "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+        "spec": {
+          "start": "2024-03-08T01:30:00+00:00",
+          "end": "2024-03-25T07:00:00Z",
+          "baseline": "equal_weight",
+          "initial_cash": 100000,
+          "top_k": 3,
+          "rebalance_every": 15,
+          "max_total_weight": 0.9,
+          "max_symbol_weight": 0.4,
+          "commission_rate": 0.0003,
+          "minimum_commission": 5,
+          "slippage_rate": 0.0005,
+          "participation_rate": 0.1,
+          "lot_size": 100,
+          "settlement_days": 1
+        }
+      },
+      "seconds": 2.5318654999719,
+      "state": "succeeded",
+      "content_hash": "742d4c6dfa085aeabbeadbea96792542f06b4487278d0ecc10928e5b6df47946",
+      "files": {
+        "daily_equity.csv": "d059e0e23b28e4256ec3c1f54c1db1a1353dc11a3f4df4afa13422a6bcfd9fe9",
+        "equity.csv": "25c4933498de83d77d1f81d2091b3f697ba7b3253b97a3117e4487d1be07487d",
+        "fills.csv": "d19b9ea51abea113a5403e0cea5824e3efa9464f2d79b3fdf1018a9381f058d3",
+        "orders.csv": "3042bff8d8314836635ede05569384cbe28c5baaad1e147432103464aa3193b6",
+        "positions.csv": "4d0ef86cbb6b5510a82cfa876500bd32669e403f6e6c914d4336724dd02638e1",
+        "results.sqlite3": "2237eda13d92b33b2faa221389793abbc06e71ea4f7a76aa0943e780bd45662a",
+        "signals.csv": "0af9f5a658b2e7ace60f96fef372ce760c386b5d69998438296a4950c143a26f",
+        "summary.json": "ded528f64cb78434366480a9c9382a7662c94b940a756152ff856e5a52571428"
+      },
+      "manifest": {
+        "assumptions": {
+          "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
+          "corporate_actions": "no corporate-action cash flows; adjusted prices not double counted; raw_cash unsupported",
+          "coverage": "observed dates match supplied expected_trading_days for requested interval",
+          "default_lot_size": 100,
+          "default_settlement_days": 1,
+          "drawdown_pause": "sticky for remaining period; attempts liquidation subject to settlement and participation",
+          "execution": "next available real bar open after completed signal; no order-book or queue simulation",
+          "ledger": "research_price_ledger",
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
+          "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
+          "settlement": "supplied trading_days calendar",
+          "tradability": "positive valid OHLC bars assumed tradable; no inferred suspensions or limit states"
+        },
+        "counts": {
+          "bars": 2880,
+          "fills": 21,
+          "orders": 23,
+          "rows": 23040,
+          "signals": 1536,
+          "trading_days": 12
+        },
+        "metadata": {
+          "allow_in_sample": false,
+          "dataset_content_id": "78d638aec92475c2347b8b89f48747ecb0cacce10e6af24fb4542ece35ec95cb",
+          "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+          "expected_trading_days": [
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12",
+            "2024-03-13",
+            "2024-03-14",
+            "2024-03-15",
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25"
+          ],
+          "frequency_minutes": 1,
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "price_mode": "research",
+          "query": {
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "currency": "CNY",
+            "end": "2024-03-25T07:00:00Z",
+            "frequency": "1m",
+            "instruments": [
+              {
+                "code": "SYNTH0000",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0001",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0002",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0003",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0004",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0005",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0006",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0007",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              }
+            ],
+            "kind": "bars",
+            "price_basis": {
+              "basis_id": null,
+              "mode": "raw"
+            },
+            "start": "2024-01-02T01:30:00Z"
+          },
+          "source_snapshot_id": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6",
+          "trading_days": [
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+            "2024-01-08",
+            "2024-01-09",
+            "2024-01-10",
+            "2024-01-11",
+            "2024-01-12",
+            "2024-01-15",
+            "2024-01-16",
+            "2024-01-17",
+            "2024-01-18",
+            "2024-01-19",
+            "2024-01-22",
+            "2024-01-23",
+            "2024-01-24",
+            "2024-01-25",
+            "2024-01-26",
+            "2024-01-29",
+            "2024-01-30",
+            "2024-01-31",
+            "2024-02-01",
+            "2024-02-02",
+            "2024-02-05",
+            "2024-02-06",
+            "2024-02-07",
+            "2024-02-08",
+            "2024-02-09",
+            "2024-02-12",
+            "2024-02-13",
+            "2024-02-14",
+            "2024-02-15",
+            "2024-02-16",
+            "2024-02-19",
+            "2024-02-20",
+            "2024-02-21",
+            "2024-02-22",
+            "2024-02-23",
+            "2024-02-26",
+            "2024-02-27",
+            "2024-02-28",
+            "2024-02-29",
+            "2024-03-01",
+            "2024-03-04",
+            "2024-03-05",
+            "2024-03-06",
+            "2024-03-07",
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12",
+            "2024-03-13",
+            "2024-03-14",
+            "2024-03-15",
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25"
+          ]
+        },
+        "metrics": {
+          "annualized_return": 0.5343981426459448,
+          "cash_interest": 0.0,
+          "commissions": 115.33247355224641,
+          "final_cash": 12294.955081522183,
+          "final_equity": 102059.6779383591,
+          "initial_cash": 100000,
+          "max_drawdown": 0.00032982592413288714,
+          "minute_max_drawdown": 0.019644023887064543,
+          "sharpe": 36.89105365148716,
+          "slippage_cost": 52.36164976223776,
+          "total_return": 0.020596779383591057,
+          "trading_days": 12,
+          "turnover": 1.0476706819987942
+        },
+        "period": {
+          "end": "2024-03-25T07:00:00+00:00",
+          "first_bar": "2024-03-08T01:31:00+00:00",
+          "last_bar": "2024-03-25T07:00:00+00:00",
+          "start": "2024-03-08T01:30:00+00:00"
+        },
+        "spec": {
+          "baseline": "equal_weight",
+          "cash_rate": 0,
+          "commission_rate": 0.0003,
+          "drawdown_pause": 1,
+          "end": "2024-03-25T07:00:00+00:00",
+          "initial_cash": 100000,
+          "instruments": {},
+          "lot_size": 100,
+          "max_symbol_weight": 0.4,
+          "max_total_weight": 0.9,
+          "minimum_commission": 5,
+          "participation_rate": 0.1,
+          "rebalance_every": 15,
+          "settlement_days": 1,
+          "slippage_rate": 0.0005,
+          "start": "2024-03-08T01:30:00+00:00",
+          "top_k": 3
+        }
+      }
+    },
+    "momentum": {
+      "job_id": "cfdb7cf3-e11e-420c-b577-6cff061a7ad2",
+      "request": {
+        "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+        "spec": {
+          "start": "2024-03-08T01:30:00+00:00",
+          "end": "2024-03-25T07:00:00Z",
+          "baseline": "momentum",
+          "initial_cash": 100000,
+          "top_k": 3,
+          "rebalance_every": 15,
+          "max_total_weight": 0.9,
+          "max_symbol_weight": 0.4,
+          "commission_rate": 0.0003,
+          "minimum_commission": 5,
+          "slippage_rate": 0.0005,
+          "participation_rate": 0.1,
+          "lot_size": 100,
+          "settlement_days": 1
+        }
+      },
+      "seconds": 2.3120905999676324,
+      "state": "succeeded",
+      "content_hash": "8bebf3e153a12a4f0ce9de20aed1de7d6bbff219662d00b287bc9f7d77d8ab2d",
+      "files": {
+        "daily_equity.csv": "12439a2c54540cee8175a2e84938e26487e1da5adf9c552cbf747618aaec5afa",
+        "equity.csv": "d057ee2d962d8ded4ceb412926ebcfbe7c156f05f4206516a8dfcdb4ca8584eb",
+        "fills.csv": "b01c490be7987732858b6107c43ff8dba35d95d4315c364ee9f4289e4e3a2948",
+        "orders.csv": "d5cf87c47255053d49b03a6853ff93208aa69c3b84663506a0b363a4c34ab679",
+        "positions.csv": "2c60b907fe89fc5182e59eed0ed61c3f9eb53d4ef0fec9608dae0ec6580efbf5",
+        "results.sqlite3": "ca001922e657cbbdd0d066717cf2510c2c75c7e38c0a451072e1cb79d33c0a32",
+        "signals.csv": "c9bf8c99275b4faf64a2dec7f6e890f1aa467c47a8319a822ad263eed239d947",
+        "summary.json": "c9e56a1abfae72a631f386076ba725715afe0eab43bfb85e0baf8b389416db6a"
+      },
+      "manifest": {
+        "assumptions": {
+          "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
+          "corporate_actions": "no corporate-action cash flows; adjusted prices not double counted; raw_cash unsupported",
+          "coverage": "observed dates match supplied expected_trading_days for requested interval",
+          "default_lot_size": 100,
+          "default_settlement_days": 1,
+          "drawdown_pause": "sticky for remaining period; attempts liquidation subject to settlement and participation",
+          "execution": "next available real bar open after completed signal; no order-book or queue simulation",
+          "ledger": "research_price_ledger",
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
+          "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
+          "settlement": "supplied trading_days calendar",
+          "tradability": "positive valid OHLC bars assumed tradable; no inferred suspensions or limit states"
+        },
+        "counts": {
+          "bars": 2880,
+          "fills": 127,
+          "orders": 707,
+          "rows": 23040,
+          "signals": 1536,
+          "trading_days": 12
+        },
+        "metadata": {
+          "allow_in_sample": false,
+          "dataset_content_id": "78d638aec92475c2347b8b89f48747ecb0cacce10e6af24fb4542ece35ec95cb",
+          "dataset_id": "c761256f-80d9-4945-ac1b-dd567ac88172",
+          "expected_trading_days": [
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12",
+            "2024-03-13",
+            "2024-03-14",
+            "2024-03-15",
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25"
+          ],
+          "frequency_minutes": 1,
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "price_mode": "research",
+          "query": {
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "currency": "CNY",
+            "end": "2024-03-25T07:00:00Z",
+            "frequency": "1m",
+            "instruments": [
+              {
+                "code": "SYNTH0000",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0001",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0002",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0003",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0004",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0005",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0006",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0007",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              }
+            ],
+            "kind": "bars",
+            "price_basis": {
+              "basis_id": null,
+              "mode": "raw"
+            },
+            "start": "2024-01-02T01:30:00Z"
+          },
+          "source_snapshot_id": "71c13b145c75f896b0598d8ecf27aa00f4794285c1007773f0cf23201158c3c6",
+          "trading_days": [
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+            "2024-01-08",
+            "2024-01-09",
+            "2024-01-10",
+            "2024-01-11",
+            "2024-01-12",
+            "2024-01-15",
+            "2024-01-16",
+            "2024-01-17",
+            "2024-01-18",
+            "2024-01-19",
+            "2024-01-22",
+            "2024-01-23",
+            "2024-01-24",
+            "2024-01-25",
+            "2024-01-26",
+            "2024-01-29",
+            "2024-01-30",
+            "2024-01-31",
+            "2024-02-01",
+            "2024-02-02",
+            "2024-02-05",
+            "2024-02-06",
+            "2024-02-07",
+            "2024-02-08",
+            "2024-02-09",
+            "2024-02-12",
+            "2024-02-13",
+            "2024-02-14",
+            "2024-02-15",
+            "2024-02-16",
+            "2024-02-19",
+            "2024-02-20",
+            "2024-02-21",
+            "2024-02-22",
+            "2024-02-23",
+            "2024-02-26",
+            "2024-02-27",
+            "2024-02-28",
+            "2024-02-29",
+            "2024-03-01",
+            "2024-03-04",
+            "2024-03-05",
+            "2024-03-06",
+            "2024-03-07",
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12",
+            "2024-03-13",
+            "2024-03-14",
+            "2024-03-15",
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25"
+          ]
+        },
+        "metrics": {
+          "annualized_return": 1.5368399035667073,
+          "cash_interest": 0.0,
+          "commissions": 799.1997166181658,
+          "final_cash": 11441.247323162217,
+          "final_equity": 104532.671708021,
+          "initial_cash": 100000,
+          "max_drawdown": 0.00554662300197295,
+          "minute_max_drawdown": 0.023380234623785023,
+          "sharpe": 13.28660419358965,
+          "slippage_cost": 978.5409275462896,
+          "total_return": 0.045326717080209855,
+          "trading_days": 12,
+          "turnover": 19.57125245598799
+        },
+        "period": {
+          "end": "2024-03-25T07:00:00+00:00",
+          "first_bar": "2024-03-08T01:31:00+00:00",
+          "last_bar": "2024-03-25T07:00:00+00:00",
+          "start": "2024-03-08T01:30:00+00:00"
+        },
+        "spec": {
+          "baseline": "momentum",
+          "cash_rate": 0,
+          "commission_rate": 0.0003,
+          "drawdown_pause": 1,
+          "end": "2024-03-25T07:00:00+00:00",
+          "initial_cash": 100000,
+          "instruments": {},
+          "lot_size": 100,
+          "max_symbol_weight": 0.4,
+          "max_total_weight": 0.9,
+          "minimum_commission": 5,
+          "participation_rate": 0.1,
+          "rebalance_every": 15,
+          "settlement_days": 1,
+          "slippage_rate": 0.0005,
+          "start": "2024-03-08T01:30:00+00:00",
+          "top_k": 3
+        }
+      }
+    }
+  },
+  "disk_free_before_bytes": 24972943360,
+  "capabilities": {
+    "python_version": "3.13.12",
+    "torch_available": true,
+    "cuda_available": true,
+    "device_name": "NVIDIA GeForce RTX 5070 Ti",
+    "torch_version": "2.11.0+cu128",
+    "cuda_version": "12.8",
+    "gpu_memory_bytes": 17094475776,
+    "disk_free_bytes": 24940924928
+  },
+  "prepared_rows": 115200,
+  "runtime": {
+    "cublas_workspace_config": ":4096:8",
+    "cuda_version": "12.8",
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "deterministic_algorithms": true,
+    "device": "cuda",
+    "device_name": "NVIDIA GeForce RTX 5070 Ti",
+    "seed": 42,
+    "torch_version": "2.11.0+cu128"
+  },
+  "checks": {
+    "artifact_hashes": true,
+    "chronological_cutoff": true,
+    "nonempty_partitions": true,
+    "source_and_prepared_rows": true,
+    "backtest_rows": true,
+    "paged_table": true,
+    "bounded_chart": true,
+    "zip_export": true
+  },
+  "resources": {
+    "elapsed_seconds": 135.9888302999898,
+    "peak_process_tree_rss_bytes": 2162245632,
+    "peak_scratch_disk_bytes": 68104719,
+    "final_scratch_disk_bytes": 68104719,
+    "sample_interval_seconds": 0.5,
+    "gpu_peak_memory_bytes": null,
+    "measurement_notes": "RSS sums parent and worker descendants (shared pages may count twice); disk sums logical file sizes. Sampled peaks are lower bounds; GPU allocation peak is not instrumented."
+  },
+  "artifacts_retained": true
+}

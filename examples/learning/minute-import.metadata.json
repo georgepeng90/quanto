@@ -1,0 +1,24 @@
+{
+  "request": {
+    "kind": "bars",
+    "instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "159915"}],
+    "start": "2024-01-02T01:30:00+00:00",
+    "end": "2024-01-31T07:00:00+00:00",
+    "columns": ["open", "high", "low", "close", "volume", "amount"],
+    "frequency": "1m",
+    "price_basis": {"mode": "raw"}
+  },
+  "source": {
+    "provider": "REPLACE_WITH_ACTUAL_SOURCE",
+    "interface": "REPLACE_WITH_ACTUAL_EXPORT_INTERFACE",
+    "upstream": "REPLACE_WITH_LICENSED_SOURCE_OR_ORIGINAL_FILE",
+    "downloaded_at": "2024-02-01T00:00:00+00:00",
+    "actual_mode": "raw",
+    "units": {"volume": "share", "amount": "CNY"},
+    "verified": [],
+    "limitations": ["source_provenance_not_verified", "trading_status_not_imported", "corporate_actions_not_reconstructed"]
+  },
+  "timezone": "Asia/Shanghai",
+  "column_map": {},
+  "instrument_map": {"159915": "SZSE:etf:159915"}
+}

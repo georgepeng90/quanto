@@ -1,0 +1,16 @@
+{
+  "spec": {
+    "name": "真实分钟训练集（填写来源后使用）",
+    "snapshot_id": "0000000000000000000000000000000000000000000000000000000000000000",
+    "query": {
+      "kind": "bars",
+      "instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "159915"}],
+      "start": "2024-01-02T01:30:00+00:00",
+      "end": "2024-01-31T07:00:00+00:00",
+      "columns": ["open", "high", "low", "close", "volume", "amount"],
+      "frequency": "1m",
+      "price_basis": {"mode": "raw"}
+    },
+    "frequency_minutes": 5
+  }
+}

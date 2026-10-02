@@ -1,0 +1,23 @@
+{
+  "requests": [
+    {
+      "kind": "bars",
+      "instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "159915"}],
+      "start": "2024-01-02T01:30:00+00:00",
+      "end": "2024-01-31T07:00:00+00:00",
+      "columns": ["open", "high", "low", "close", "volume", "amount"],
+      "frequency": "1m",
+      "price_basis": {"mode": "raw"}
+    },
+    {
+      "kind": "calendar",
+      "start": "2024-01-02T01:30:00+00:00",
+      "end": "2024-01-31T07:00:00+00:00",
+      "columns": ["trading_date", "session_start", "session_end"]
+    }
+  ],
+  "quality": {
+    "required_evidence": [],
+    "accepted_limitations": ["source_provenance_not_verified", "trading_status_not_imported", "corporate_actions_not_reconstructed", "calendar_source_not_verified"]
+  }
+}

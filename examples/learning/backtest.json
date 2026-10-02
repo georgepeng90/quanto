@@ -1,0 +1,22 @@
+{
+  "dataset_id": "REPLACE_SUCCESSFUL_PREPARE_JOB_ID",
+  "model_id": "REPLACE_SUCCESSFUL_TRAIN_JOB_ID",
+  "spec": {
+    "start": "2024-01-25T01:30:00+00:00",
+    "end": "2024-01-31T07:00:00+00:00",
+    "baseline": "model",
+    "initial_cash": 100000,
+    "top_k": 1,
+    "rebalance_every": 6,
+    "max_total_weight": 0.8,
+    "max_symbol_weight": 0.8,
+    "commission_rate": 0.0003,
+    "minimum_commission": 5,
+    "slippage_rate": 0.0005,
+    "participation_rate": 0.1,
+    "lot_size": 100,
+    "settlement_days": 1,
+    "drawdown_pause": 0.15,
+    "cash_rate": 0
+  }
+}

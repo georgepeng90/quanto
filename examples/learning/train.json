@@ -1,0 +1,23 @@
+{
+  "dataset_id": "REPLACE_SUCCESSFUL_PREPARE_JOB_ID",
+  "spec": {
+    "name": "GRU 时间切分示例",
+    "model_type": "gru",
+    "train_start": "2024-01-02T01:30:00+00:00",
+    "train_end": "2024-01-18T01:30:00+00:00",
+    "validation_start": "2024-01-18T01:30:00+00:00",
+    "validation_end": "2024-01-25T01:30:00+00:00",
+    "test_start": "2024-01-25T01:30:00+00:00",
+    "test_end": "2024-01-31T07:00:00+00:00",
+    "lookback": 32,
+    "horizon": 5,
+    "epochs": 20,
+    "batch_size": 256,
+    "learning_rate": 0.001,
+    "hidden_size": 32,
+    "layers": 1,
+    "seed": 42,
+    "device": "auto",
+    "patience": 5
+  }
+}

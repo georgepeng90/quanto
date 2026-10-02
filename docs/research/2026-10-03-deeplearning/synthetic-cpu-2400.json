@@ -1,0 +1,1082 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "synthetic": true,
+  "warning": "Synthetic functional/capacity acceptance only; no real-market profitability evidence.",
+  "started_at": "2026-10-02T19:37:59.742782+00:00",
+  "python": "3.13.12 (main, Mar 10 2026, 18:14:40) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "verification_script_sha256": "2fc3ab1d60b1f668f4922b0dc6dbbae1eeab0624b50d35f9ca17c68d21a7558d",
+  "logical_cpus": 16,
+  "physical_cpus": 8,
+  "total_memory_bytes": 33451126784,
+  "parameters": {
+    "symbols": 2,
+    "days": 5,
+    "frequency": 1,
+    "device": "cpu",
+    "model": "linear",
+    "epochs": 1,
+    "lookback": 16,
+    "batch_size": 256,
+    "seed": 42,
+    "threads": 4,
+    "timeout": 1800,
+    "baselines": [
+      "cash",
+      "equal_weight",
+      "momentum"
+    ],
+    "output": "docs\\research\\2026-10-03-deeplearning\\synthetic-cpu-2400.json",
+    "temp_parent": "outputs\\learning-acceptance",
+    "keep_artifacts": false
+  },
+  "raw_rows": 2400,
+  "scratch_path": "D:\\Projects\\quanto\\outputs\\learning-acceptance\\quanto-learning-acceptance-p84h4yj4",
+  "stages": {
+    "generate_snapshot": {
+      "seconds": 0.15146999998250976,
+      "snapshot_id": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833"
+    },
+    "prepare": {
+      "job_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+      "request": {
+        "spec": {
+          "name": "SYNTHETIC acceptance dataset",
+          "snapshot_id": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833",
+          "query": {
+            "kind": "bars",
+            "instruments": [
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0000"
+              },
+              {
+                "exchange": "SZSE",
+                "instrument_type": "etf",
+                "code": "SYNTH0001"
+              }
+            ],
+            "start": "2024-01-02T01:30:00Z",
+            "end": "2024-01-08T07:00:00Z",
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "frequency": "1m",
+            "price_basis": {
+              "mode": "raw",
+              "basis_id": null
+            },
+            "currency": "CNY"
+          },
+          "frequency_minutes": 1
+        }
+      },
+      "seconds": 3.7267359999823384,
+      "state": "succeeded",
+      "content_hash": "83eb05afbb2017eea626368585f428c6d4ca883646badb204be2716ec30bfe4f",
+      "files": {
+        "bars-00000.parquet": "91db8d3de301de546564db8da21db3441480ee7d1e871ba06b90bf083e74e183",
+        "manifest.json": "3ff3ee40bc1432a849653ef642edec67ce354a7530f914c87c78de7126947a7b"
+      },
+      "manifest": {
+        "feature_version": "minute-price-volume-v1",
+        "features": [
+          "log_return",
+          "log_body",
+          "range_ratio",
+          "log_volume_change",
+          "log_amount_change"
+        ],
+        "files": {
+          "bars-00000.parquet": "91db8d3de301de546564db8da21db3441480ee7d1e871ba06b90bf083e74e183"
+        },
+        "first_bar": "2024-01-02T01:31:00+00:00",
+        "frequency_minutes": 1,
+        "id": "350abdb6bd2a046245161c4efa038b93cf7e7cb86e277ce9baa2937c0ed8d5d8",
+        "instruments": [
+          "SZSE:etf:SYNTH0000",
+          "SZSE:etf:SYNTH0001"
+        ],
+        "interval": "[start,end)",
+        "kind": "dataset",
+        "last_bar": "2024-01-08T07:00:00+00:00",
+        "limitations": [
+          "synthetic acceptance data; not real market prices or investment evidence",
+          "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+          "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+        ],
+        "name": "SYNTHETIC acceptance dataset",
+        "price_basis": {
+          "basis_id": null,
+          "mode": "raw"
+        },
+        "query": {
+          "columns": [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "amount"
+          ],
+          "currency": "CNY",
+          "end": "2024-01-08T07:00:00Z",
+          "frequency": "1m",
+          "instruments": [
+            {
+              "code": "SYNTH0000",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            },
+            {
+              "code": "SYNTH0001",
+              "exchange": "SZSE",
+              "instrument_type": "etf"
+            }
+          ],
+          "kind": "bars",
+          "price_basis": {
+            "basis_id": null,
+            "mode": "raw"
+          },
+          "start": "2024-01-02T01:30:00Z"
+        },
+        "row_count": 2400,
+        "shards": [
+          "bars-00000.parquet"
+        ],
+        "snapshot_digest": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833",
+        "snapshot_id": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833",
+        "statistics": {
+          "expected_minutes": 2400,
+          "gap_events": 0,
+          "incomplete_buckets": 0,
+          "invalid_feature_bars": 0,
+          "invalid_rows": 0,
+          "missing_minutes": 0,
+          "missing_minutes_by_instrument": {
+            "SZSE:etf:SYNTH0000": 0,
+            "SZSE:etf:SYNTH0001": 0
+          },
+          "outside_session_rows": 0,
+          "source_rows": 2400
+        },
+        "step_policy": "observed_bar_steps",
+        "timezone": "UTC",
+        "trading_days": [
+          "2024-01-02",
+          "2024-01-03",
+          "2024-01-04",
+          "2024-01-05",
+          "2024-01-08"
+        ],
+        "trading_sessions": [
+          {
+            "end": "2024-01-02T03:30:00+00:00",
+            "start": "2024-01-02T01:30:00+00:00",
+            "trading_date": "2024-01-02"
+          },
+          {
+            "end": "2024-01-02T07:00:00+00:00",
+            "start": "2024-01-02T05:00:00+00:00",
+            "trading_date": "2024-01-02"
+          },
+          {
+            "end": "2024-01-03T03:30:00+00:00",
+            "start": "2024-01-03T01:30:00+00:00",
+            "trading_date": "2024-01-03"
+          },
+          {
+            "end": "2024-01-03T07:00:00+00:00",
+            "start": "2024-01-03T05:00:00+00:00",
+            "trading_date": "2024-01-03"
+          },
+          {
+            "end": "2024-01-04T03:30:00+00:00",
+            "start": "2024-01-04T01:30:00+00:00",
+            "trading_date": "2024-01-04"
+          },
+          {
+            "end": "2024-01-04T07:00:00+00:00",
+            "start": "2024-01-04T05:00:00+00:00",
+            "trading_date": "2024-01-04"
+          },
+          {
+            "end": "2024-01-05T03:30:00+00:00",
+            "start": "2024-01-05T01:30:00+00:00",
+            "trading_date": "2024-01-05"
+          },
+          {
+            "end": "2024-01-05T07:00:00+00:00",
+            "start": "2024-01-05T05:00:00+00:00",
+            "trading_date": "2024-01-05"
+          },
+          {
+            "end": "2024-01-08T03:30:00+00:00",
+            "start": "2024-01-08T01:30:00+00:00",
+            "trading_date": "2024-01-08"
+          },
+          {
+            "end": "2024-01-08T07:00:00+00:00",
+            "start": "2024-01-08T05:00:00+00:00",
+            "trading_date": "2024-01-08"
+          }
+        ],
+        "version": 1
+      },
+      "rows_per_second": 643.9951743325457
+    },
+    "train": {
+      "job_id": "d7be2ebc-c2eb-424a-bd9d-6583d642e13c",
+      "request": {
+        "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+        "spec": {
+          "name": "SYNTHETIC acceptance model",
+          "model_type": "linear",
+          "train_start": "2024-01-02T01:30:00+00:00",
+          "train_end": "2024-01-05T01:30:00+00:00",
+          "validation_start": "2024-01-05T01:30:00+00:00",
+          "validation_end": "2024-01-08T01:30:00+00:00",
+          "test_start": "2024-01-08T01:30:00+00:00",
+          "test_end": "2024-01-08T07:00:00Z",
+          "lookback": 16,
+          "horizon": 2,
+          "epochs": 1,
+          "batch_size": 256,
+          "learning_rate": 0.001,
+          "hidden_size": 16,
+          "layers": 1,
+          "seed": 42,
+          "device": "cpu",
+          "patience": 3
+        }
+      },
+      "seconds": 3.0892052999697626,
+      "state": "succeeded",
+      "content_hash": "c33a23aa5a4a7341446e7908709917816e8bc349ef60833f287197d4d3f504ec",
+      "files": {
+        "checkpoints/checkpoint.json": "00c89c2021c31e2fc3f98208dfb43faf1ee5628f7dade8def9cbc82d3c138822",
+        "checkpoints/epoch-0001.pt": "f34d6265cfd32e3b956321d1afeacf44081fd26fce995b8d4e8b3c9c8c2c69a0",
+        "curves.json": "647e5af9d6088bfd628383a2d77f624ceb28e1a4a3e7977ae486db017bfa19e1",
+        "manifest.json": "42c8d330bde53dd839b66c2f9aa9105e783636e2c1902d31b5cad7ef63cf54dd",
+        "weights.pt": "54849591ebf8b897bf5a9e33f3e031f447137e720f8ff3bd82e733768e74ee41"
+      },
+      "manifest": {
+        "best_epoch": 1,
+        "config": {
+          "batch_size": 256,
+          "device": "cpu",
+          "epochs": 1,
+          "hidden_size": 16,
+          "horizon": 2,
+          "layers": 1,
+          "learning_rate": 0.001,
+          "lookback": 16,
+          "model_type": "linear",
+          "name": "SYNTHETIC acceptance model",
+          "patience": 3,
+          "seed": 42,
+          "test_end": "2024-01-08T07:00:00Z",
+          "test_start": "2024-01-08T01:30:00Z",
+          "train_end": "2024-01-05T01:30:00Z",
+          "train_start": "2024-01-02T01:30:00Z",
+          "validation_end": "2024-01-08T01:30:00Z",
+          "validation_start": "2024-01-05T01:30:00Z"
+        },
+        "cutoff": "2024-01-08T01:30:00+00:00",
+        "dataset_id": "350abdb6bd2a046245161c4efa038b93cf7e7cb86e277ce9baa2937c0ed8d5d8",
+        "dataset_snapshot_id": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833",
+        "epochs_completed": 1,
+        "feature_version": "minute-price-volume-v1",
+        "features": [
+          "log_return",
+          "log_body",
+          "range_ratio",
+          "log_volume_change",
+          "log_amount_change"
+        ],
+        "files": {
+          "checkpoints/checkpoint.json": "00c89c2021c31e2fc3f98208dfb43faf1ee5628f7dade8def9cbc82d3c138822",
+          "checkpoints/epoch-0001.pt": "f34d6265cfd32e3b956321d1afeacf44081fd26fce995b8d4e8b3c9c8c2c69a0",
+          "curves.json": "647e5af9d6088bfd628383a2d77f624ceb28e1a4a3e7977ae486db017bfa19e1",
+          "weights.pt": "54849591ebf8b897bf5a9e33f3e031f447137e720f8ff3bd82e733768e74ee41"
+        },
+        "frequency_minutes": 1,
+        "id": "89946015648d9a358da8dba0490946e657bd506af1e99e7d589011de8304d5c7",
+        "kind": "model",
+        "limitations": [
+          "synthetic acceptance data; not real market prices or investment evidence",
+          "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+          "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+        ],
+        "metrics": {
+          "samples": {
+            "test": 476,
+            "train": 1406,
+            "validation": 476
+          },
+          "test": {
+            "mae": 0.24761712851644563,
+            "mse": 0.2526266735141017,
+            "samples": 476
+          },
+          "train": {
+            "mae": 0.22514686068973025,
+            "mse": 0.18178507511849762,
+            "samples": 1406
+          },
+          "validation": {
+            "mae": 0.17401952503108176,
+            "mse": 0.04540842621266341,
+            "samples": 476
+          }
+        },
+        "name": "SYNTHETIC acceptance model",
+        "resume_parent": null,
+        "runtime": {
+          "cublas_workspace_config": ":4096:8",
+          "cuda_version": "12.8",
+          "cudnn_benchmark": false,
+          "cudnn_deterministic": true,
+          "deterministic_algorithms": true,
+          "device": "cpu",
+          "device_name": "CPU",
+          "seed": 42,
+          "torch_version": "2.11.0+cu128"
+        },
+        "scaler": {
+          "count": 1440,
+          "mean": [
+            1.5804847485078258e-06,
+            8.996264322449716e-06,
+            0.002223033092579704,
+            0.00014985246177982663,
+            0.00015148902033009488
+          ],
+          "scale": [
+            0.00022978421108736828,
+            0.0002813239872088781,
+            0.00012639912338208877,
+            0.021337789753861976,
+            0.021338929220034795
+          ]
+        },
+        "step_policy": "observed_bar_steps",
+        "version": 1,
+        "history": [
+          {
+            "epoch": 1,
+            "train_mse": 0.22844694288789294,
+            "validation_mse": 0.04540842621266341
+          }
+        ]
+      }
+    },
+    "model_backtest": {
+      "job_id": "ea96fbe6-f9ac-4c7f-98fa-70ee3661f81f",
+      "request": {
+        "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+        "model_id": "d7be2ebc-c2eb-424a-bd9d-6583d642e13c",
+        "spec": {
+          "start": "2024-01-08T01:30:00+00:00",
+          "end": "2024-01-08T07:00:00Z",
+          "baseline": "model",
+          "initial_cash": 100000,
+          "top_k": 2,
+          "rebalance_every": 15,
+          "max_total_weight": 0.9,
+          "max_symbol_weight": 0.4,
+          "commission_rate": 0.0003,
+          "minimum_commission": 5,
+          "slippage_rate": 0.0005,
+          "participation_rate": 0.1,
+          "lot_size": 100,
+          "settlement_days": 1
+        }
+      },
+      "seconds": 3.3000396999996156,
+      "state": "succeeded",
+      "content_hash": "690b10405ecd936c02911a2851c576ca86ce20403386829d55bf299b87359a8a",
+      "files": {
+        "daily_equity.csv": "f0ac12729ea40b1db520d630ca870f3b896fe1724f94cd9cea9364570deae255",
+        "equity.csv": "5d94bc309acd51a884f4ab7c52cdd5a1809d612d69918d6d6f776d8eb449290f",
+        "fills.csv": "7380b1e68adfaf0cd026460cac17ad3e33fd082ad458b288af4043647ae89275",
+        "orders.csv": "92f20381f8373d9a22fbc0aa9964e5c6377e5c93de326c47085f5aab7eab4adb",
+        "positions.csv": "7541f6bf170c67851d86f061e822db2042adf9498718b1a3d69ab847605b1760",
+        "results.sqlite3": "42e940b4eb222433490c70e4c73f9cfb4b0131f5db9835d0adb6dc217b136e52",
+        "signals.csv": "1d5f4ef3545e51abe895988141da661388514f3dcd23a87eb55e160d9a87a0f1",
+        "summary.json": "5ff6c7e0b5559cbe43a271b24f7060030082953ff5722a336c30b0fe3ef698d9"
+      },
+      "manifest": {
+        "assumptions": {
+          "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
+          "corporate_actions": "no corporate-action cash flows; adjusted prices not double counted; raw_cash unsupported",
+          "coverage": "observed dates match supplied expected_trading_days for requested interval",
+          "default_lot_size": 100,
+          "default_settlement_days": 1,
+          "drawdown_pause": "sticky for remaining period; attempts liquidation subject to settlement and participation",
+          "execution": "next available real bar open after completed signal; no order-book or queue simulation",
+          "ledger": "research_price_ledger",
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
+          "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
+          "settlement": "supplied trading_days calendar",
+          "tradability": "positive valid OHLC bars assumed tradable; no inferred suspensions or limit states"
+        },
+        "counts": {
+          "bars": 240,
+          "fills": 5,
+          "orders": 19,
+          "rows": 480,
+          "signals": 32,
+          "trading_days": 1
+        },
+        "metadata": {
+          "allow_in_sample": false,
+          "dataset_content_id": "350abdb6bd2a046245161c4efa038b93cf7e7cb86e277ce9baa2937c0ed8d5d8",
+          "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+          "expected_trading_days": [
+            "2024-01-08"
+          ],
+          "frequency_minutes": 1,
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "model_config": {
+            "batch_size": 256,
+            "device": "cpu",
+            "epochs": 1,
+            "hidden_size": 16,
+            "horizon": 2,
+            "layers": 1,
+            "learning_rate": 0.001,
+            "lookback": 16,
+            "model_type": "linear",
+            "name": "SYNTHETIC acceptance model",
+            "patience": 3,
+            "seed": 42,
+            "test_end": "2024-01-08T07:00:00Z",
+            "test_start": "2024-01-08T01:30:00Z",
+            "train_end": "2024-01-05T01:30:00Z",
+            "train_start": "2024-01-02T01:30:00Z",
+            "validation_end": "2024-01-08T01:30:00Z",
+            "validation_start": "2024-01-05T01:30:00Z"
+          },
+          "model_content_id": "89946015648d9a358da8dba0490946e657bd506af1e99e7d589011de8304d5c7",
+          "model_cutoff": "2024-01-08T01:30:00+00:00",
+          "model_id": "d7be2ebc-c2eb-424a-bd9d-6583d642e13c",
+          "price_mode": "research",
+          "query": {
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "currency": "CNY",
+            "end": "2024-01-08T07:00:00Z",
+            "frequency": "1m",
+            "instruments": [
+              {
+                "code": "SYNTH0000",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0001",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              }
+            ],
+            "kind": "bars",
+            "price_basis": {
+              "basis_id": null,
+              "mode": "raw"
+            },
+            "start": "2024-01-02T01:30:00Z"
+          },
+          "source_snapshot_id": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833",
+          "trading_days": [
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+            "2024-01-08"
+          ]
+        },
+        "metrics": {
+          "annualized_return": 5.0049797211900655,
+          "cash_interest": 0.0,
+          "commissions": 30.55798285029723,
+          "final_cash": 20681.033662702335,
+          "final_equity": 100713.88093990265,
+          "initial_cash": 100000,
+          "max_drawdown": 0,
+          "minute_max_drawdown": 0.009652621108932613,
+          "sharpe": null,
+          "slippage_cost": 39.62439198122727,
+          "total_return": 0.007138809399026558,
+          "trading_days": 1,
+          "turnover": 0.7928840835444737
+        },
+        "period": {
+          "end": "2024-01-08T07:00:00+00:00",
+          "first_bar": "2024-01-08T01:31:00+00:00",
+          "last_bar": "2024-01-08T07:00:00+00:00",
+          "start": "2024-01-08T01:30:00+00:00"
+        },
+        "spec": {
+          "baseline": "model",
+          "cash_rate": 0,
+          "commission_rate": 0.0003,
+          "drawdown_pause": 1,
+          "end": "2024-01-08T07:00:00+00:00",
+          "initial_cash": 100000,
+          "instruments": {},
+          "lot_size": 100,
+          "max_symbol_weight": 0.4,
+          "max_total_weight": 0.9,
+          "minimum_commission": 5,
+          "participation_rate": 0.1,
+          "rebalance_every": 15,
+          "settlement_days": 1,
+          "slippage_rate": 0.0005,
+          "start": "2024-01-08T01:30:00+00:00",
+          "top_k": 2
+        }
+      }
+    },
+    "cash": {
+      "job_id": "7df73e64-f309-438c-be4f-6050c8e59d7c",
+      "request": {
+        "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+        "spec": {
+          "start": "2024-01-08T01:30:00+00:00",
+          "end": "2024-01-08T07:00:00Z",
+          "baseline": "cash",
+          "initial_cash": 100000,
+          "top_k": 2,
+          "rebalance_every": 15,
+          "max_total_weight": 0.9,
+          "max_symbol_weight": 0.4,
+          "commission_rate": 0.0003,
+          "minimum_commission": 5,
+          "slippage_rate": 0.0005,
+          "participation_rate": 0.1,
+          "lot_size": 100,
+          "settlement_days": 1
+        }
+      },
+      "seconds": 1.2751532000256702,
+      "state": "succeeded",
+      "content_hash": "d3b3c6bec20165f1a85b6a2b43519c50a303a57f6765be464e393a15d7b011f9",
+      "files": {
+        "daily_equity.csv": "0ffb71bd829e2fea5c25f90d19ce544076d198669a5a5fe50c44edb087b3131b",
+        "equity.csv": "104cb3bc04d617511754ab59dd4605d028e279b1efcf7e466a53974cfa3bbb99",
+        "fills.csv": "ba72dd95e8b2e9eb95baa1d4aee7b9b84521db2105f765cd1e621e5941b51c62",
+        "orders.csv": "a814686a8b373d301042ef5d7903f6630100600cda53e3f315d2649b88c16d18",
+        "positions.csv": "46fa526b87c0cae85c76a46fb891b46ac474d5c607c6a7ff77a2f845aecf99e2",
+        "results.sqlite3": "99ec8808db1fd70bf9d2eb2c14aeba295f442d1cca520ee17aaa6601cc94341c",
+        "signals.csv": "e0b5ad1f39158fa9971741821d75cfa1ac38a43448b14b19410e4261e953bf30",
+        "summary.json": "ee6609d234fe0f922a8b710774d43ba02cf8c8be0f2cd4ffaa8d8f85e68f8664"
+      },
+      "manifest": {
+        "assumptions": {
+          "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
+          "corporate_actions": "no corporate-action cash flows; adjusted prices not double counted; raw_cash unsupported",
+          "coverage": "observed dates match supplied expected_trading_days for requested interval",
+          "default_lot_size": 100,
+          "default_settlement_days": 1,
+          "drawdown_pause": "sticky for remaining period; attempts liquidation subject to settlement and participation",
+          "execution": "next available real bar open after completed signal; no order-book or queue simulation",
+          "ledger": "research_price_ledger",
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
+          "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
+          "settlement": "supplied trading_days calendar",
+          "tradability": "positive valid OHLC bars assumed tradable; no inferred suspensions or limit states"
+        },
+        "counts": {
+          "bars": 240,
+          "fills": 0,
+          "orders": 0,
+          "rows": 480,
+          "signals": 32,
+          "trading_days": 1
+        },
+        "metadata": {
+          "allow_in_sample": false,
+          "dataset_content_id": "350abdb6bd2a046245161c4efa038b93cf7e7cb86e277ce9baa2937c0ed8d5d8",
+          "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+          "expected_trading_days": [
+            "2024-01-08"
+          ],
+          "frequency_minutes": 1,
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "price_mode": "research",
+          "query": {
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "currency": "CNY",
+            "end": "2024-01-08T07:00:00Z",
+            "frequency": "1m",
+            "instruments": [
+              {
+                "code": "SYNTH0000",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0001",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              }
+            ],
+            "kind": "bars",
+            "price_basis": {
+              "basis_id": null,
+              "mode": "raw"
+            },
+            "start": "2024-01-02T01:30:00Z"
+          },
+          "source_snapshot_id": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833",
+          "trading_days": [
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+            "2024-01-08"
+          ]
+        },
+        "metrics": {
+          "annualized_return": 0.0,
+          "cash_interest": 0.0,
+          "commissions": 0,
+          "final_cash": 100000.0,
+          "final_equity": 100000.0,
+          "initial_cash": 100000,
+          "max_drawdown": 0,
+          "minute_max_drawdown": 0,
+          "sharpe": null,
+          "slippage_cost": 0,
+          "total_return": 0.0,
+          "trading_days": 1,
+          "turnover": 0.0
+        },
+        "period": {
+          "end": "2024-01-08T07:00:00+00:00",
+          "first_bar": "2024-01-08T01:31:00+00:00",
+          "last_bar": "2024-01-08T07:00:00+00:00",
+          "start": "2024-01-08T01:30:00+00:00"
+        },
+        "spec": {
+          "baseline": "cash",
+          "cash_rate": 0,
+          "commission_rate": 0.0003,
+          "drawdown_pause": 1,
+          "end": "2024-01-08T07:00:00+00:00",
+          "initial_cash": 100000,
+          "instruments": {},
+          "lot_size": 100,
+          "max_symbol_weight": 0.4,
+          "max_total_weight": 0.9,
+          "minimum_commission": 5,
+          "participation_rate": 0.1,
+          "rebalance_every": 15,
+          "settlement_days": 1,
+          "slippage_rate": 0.0005,
+          "start": "2024-01-08T01:30:00+00:00",
+          "top_k": 2
+        }
+      }
+    },
+    "equal_weight": {
+      "job_id": "a2322996-9110-4ad8-9c84-747d9fb07446",
+      "request": {
+        "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+        "spec": {
+          "start": "2024-01-08T01:30:00+00:00",
+          "end": "2024-01-08T07:00:00Z",
+          "baseline": "equal_weight",
+          "initial_cash": 100000,
+          "top_k": 2,
+          "rebalance_every": 15,
+          "max_total_weight": 0.9,
+          "max_symbol_weight": 0.4,
+          "commission_rate": 0.0003,
+          "minimum_commission": 5,
+          "slippage_rate": 0.0005,
+          "participation_rate": 0.1,
+          "lot_size": 100,
+          "settlement_days": 1
+        }
+      },
+      "seconds": 1.5287862999830395,
+      "state": "succeeded",
+      "content_hash": "a2e941f9db27da3dfb0a4618f3350a8428e5787ffbd0604218ac0d0808a9365d",
+      "files": {
+        "daily_equity.csv": "1178d5e13f2256ab4dc14174b688b292612e96e544bb82eef26d4a522d3f9be5",
+        "equity.csv": "29ed0917bb611f0f79b3bd24c57d20a831aa96ca98b63139ca9c5049437d4524",
+        "fills.csv": "42996f047cbc214638458effa3bf38a85d1399d708411bd85b2ce68af273adae",
+        "orders.csv": "84bb4ce6f098540787c3bffdf38a92655f618ceb8389a8af52c499310253ccdc",
+        "positions.csv": "fde40d77c9ad57195c4affa056da0c3c9db514e3ad24858714c9b6f86861a5cf",
+        "results.sqlite3": "1649d5516a9ac505be33e076f702e6c02793f73ea02f874ba0165f3f8ee48421",
+        "signals.csv": "162b25f56bbcb9583df5aa5710b457575df239005244e03556ffb2730ee17d01",
+        "summary.json": "fcb38c16e4f628c2fc8a54949a137618ee8359ff865f81237c1e02a1b69df7e0"
+      },
+      "manifest": {
+        "assumptions": {
+          "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
+          "corporate_actions": "no corporate-action cash flows; adjusted prices not double counted; raw_cash unsupported",
+          "coverage": "observed dates match supplied expected_trading_days for requested interval",
+          "default_lot_size": 100,
+          "default_settlement_days": 1,
+          "drawdown_pause": "sticky for remaining period; attempts liquidation subject to settlement and participation",
+          "execution": "next available real bar open after completed signal; no order-book or queue simulation",
+          "ledger": "research_price_ledger",
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
+          "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
+          "settlement": "supplied trading_days calendar",
+          "tradability": "positive valid OHLC bars assumed tradable; no inferred suspensions or limit states"
+        },
+        "counts": {
+          "bars": 240,
+          "fills": 4,
+          "orders": 4,
+          "rows": 480,
+          "signals": 32,
+          "trading_days": 1
+        },
+        "metadata": {
+          "allow_in_sample": false,
+          "dataset_content_id": "350abdb6bd2a046245161c4efa038b93cf7e7cb86e277ce9baa2937c0ed8d5d8",
+          "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+          "expected_trading_days": [
+            "2024-01-08"
+          ],
+          "frequency_minutes": 1,
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "price_mode": "research",
+          "query": {
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "currency": "CNY",
+            "end": "2024-01-08T07:00:00Z",
+            "frequency": "1m",
+            "instruments": [
+              {
+                "code": "SYNTH0000",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0001",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              }
+            ],
+            "kind": "bars",
+            "price_basis": {
+              "basis_id": null,
+              "mode": "raw"
+            },
+            "start": "2024-01-02T01:30:00Z"
+          },
+          "source_snapshot_id": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833",
+          "trading_days": [
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+            "2024-01-08"
+          ]
+        },
+        "metrics": {
+          "annualized_return": -0.08401392968098265,
+          "cash_interest": 0.0,
+          "commissions": 27.87531349711326,
+          "final_cash": 20945.202839670696,
+          "final_equity": 99965.18299843834,
+          "initial_cash": 100000,
+          "max_drawdown": 0.0003481700156166001,
+          "minute_max_drawdown": 0.016910359610318504,
+          "sharpe": null,
+          "slippage_cost": 39.49371406637869,
+          "total_return": -0.0003481700156166001,
+          "trading_days": 1,
+          "turnover": 0.7902692184683219
+        },
+        "period": {
+          "end": "2024-01-08T07:00:00+00:00",
+          "first_bar": "2024-01-08T01:31:00+00:00",
+          "last_bar": "2024-01-08T07:00:00+00:00",
+          "start": "2024-01-08T01:30:00+00:00"
+        },
+        "spec": {
+          "baseline": "equal_weight",
+          "cash_rate": 0,
+          "commission_rate": 0.0003,
+          "drawdown_pause": 1,
+          "end": "2024-01-08T07:00:00+00:00",
+          "initial_cash": 100000,
+          "instruments": {},
+          "lot_size": 100,
+          "max_symbol_weight": 0.4,
+          "max_total_weight": 0.9,
+          "minimum_commission": 5,
+          "participation_rate": 0.1,
+          "rebalance_every": 15,
+          "settlement_days": 1,
+          "slippage_rate": 0.0005,
+          "start": "2024-01-08T01:30:00+00:00",
+          "top_k": 2
+        }
+      }
+    },
+    "momentum": {
+      "job_id": "59b726dc-7dd4-4b98-84f9-bc2c5394e1d8",
+      "request": {
+        "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+        "spec": {
+          "start": "2024-01-08T01:30:00+00:00",
+          "end": "2024-01-08T07:00:00Z",
+          "baseline": "momentum",
+          "initial_cash": 100000,
+          "top_k": 2,
+          "rebalance_every": 15,
+          "max_total_weight": 0.9,
+          "max_symbol_weight": 0.4,
+          "commission_rate": 0.0003,
+          "minimum_commission": 5,
+          "slippage_rate": 0.0005,
+          "participation_rate": 0.1,
+          "lot_size": 100,
+          "settlement_days": 1
+        }
+      },
+      "seconds": 1.3083116000052541,
+      "state": "succeeded",
+      "content_hash": "9f55a3df51cd368cfcee4053427546f89aae59a327ad72cf52ba58282977bd06",
+      "files": {
+        "daily_equity.csv": "68220614b7cd0b38d68628677f80da2f82cf9a75f7be731a5daaaf0846a3616f",
+        "equity.csv": "2c3086e4f5f3711f0b7f2249838b04929618098d68311a84fdd99ed4a8da9d08",
+        "fills.csv": "2fb98ffcf3828d2a9726aae5f2cfd022ed640bf95cd81990ab3efe393e875806",
+        "orders.csv": "b21556bcaaa51cc343fbd18ced101abf0e4d0a411ccf58aabf8375d357d17bc0",
+        "positions.csv": "ebcc96456089e47acc9af950bdb38cf3818efe7c1457b66127e8de2be58f4e60",
+        "results.sqlite3": "bbfb36aeb7e6007f84f5f25ddad39b5c0742625c31933b46fae99fcb5f6c8e5f",
+        "signals.csv": "f25a50a393ea0a7858ece6758c748e379fa4422d495a70b0363625db94d1d685",
+        "summary.json": "01e6113547a83acb89498ed9d286d99cb6cbe1773fd2f848952a89515588ae69"
+      },
+      "manifest": {
+        "assumptions": {
+          "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
+          "corporate_actions": "no corporate-action cash flows; adjusted prices not double counted; raw_cash unsupported",
+          "coverage": "observed dates match supplied expected_trading_days for requested interval",
+          "default_lot_size": 100,
+          "default_settlement_days": 1,
+          "drawdown_pause": "sticky for remaining period; attempts liquidation subject to settlement and participation",
+          "execution": "next available real bar open after completed signal; no order-book or queue simulation",
+          "ledger": "research_price_ledger",
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
+          "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
+          "settlement": "supplied trading_days calendar",
+          "tradability": "positive valid OHLC bars assumed tradable; no inferred suspensions or limit states"
+        },
+        "counts": {
+          "bars": 240,
+          "fills": 4,
+          "orders": 10,
+          "rows": 480,
+          "signals": 32,
+          "trading_days": 1
+        },
+        "metadata": {
+          "allow_in_sample": false,
+          "dataset_content_id": "350abdb6bd2a046245161c4efa038b93cf7e7cb86e277ce9baa2937c0ed8d5d8",
+          "dataset_id": "9d0be7b4-4483-430b-90bf-6e8f6c8a2e65",
+          "expected_trading_days": [
+            "2024-01-08"
+          ],
+          "frequency_minutes": 1,
+          "limitations": [
+            "synthetic acceptance data; not real market prices or investment evidence",
+            "synthetic weekdays and sessions; exchange holidays/trading status/corporate actions not modeled",
+            "observed_bar_steps: lookback and horizon count observed complete bars; missing bars, lunch and overnight can lengthen elapsed time; no synthetic candles"
+          ],
+          "price_mode": "research",
+          "query": {
+            "columns": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume",
+              "amount"
+            ],
+            "currency": "CNY",
+            "end": "2024-01-08T07:00:00Z",
+            "frequency": "1m",
+            "instruments": [
+              {
+                "code": "SYNTH0000",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              },
+              {
+                "code": "SYNTH0001",
+                "exchange": "SZSE",
+                "instrument_type": "etf"
+              }
+            ],
+            "kind": "bars",
+            "price_basis": {
+              "basis_id": null,
+              "mode": "raw"
+            },
+            "start": "2024-01-02T01:30:00Z"
+          },
+          "source_snapshot_id": "246addd30881dd117f5bd49bfc81b16e7094b812744ec16b5a96a2bba613b833",
+          "trading_days": [
+            "2024-01-02",
+            "2024-01-03",
+            "2024-01-04",
+            "2024-01-05",
+            "2024-01-08"
+          ]
+        },
+        "metrics": {
+          "annualized_return": 49.83555881567079,
+          "cash_interest": 0.0,
+          "commissions": 23.843332082772942,
+          "final_cash": 20498.383058674066,
+          "final_equity": 101571.18198166105,
+          "initial_cash": 100000,
+          "max_drawdown": 0,
+          "minute_max_drawdown": 0.0025695554792225517,
+          "sharpe": null,
+          "slippage_cost": 39.71902729097252,
+          "total_return": 0.015711819816610406,
+          "trading_days": 1,
+          "turnover": 0.7947777360924314
+        },
+        "period": {
+          "end": "2024-01-08T07:00:00+00:00",
+          "first_bar": "2024-01-08T01:31:00+00:00",
+          "last_bar": "2024-01-08T07:00:00+00:00",
+          "start": "2024-01-08T01:30:00+00:00"
+        },
+        "spec": {
+          "baseline": "momentum",
+          "cash_rate": 0,
+          "commission_rate": 0.0003,
+          "drawdown_pause": 1,
+          "end": "2024-01-08T07:00:00+00:00",
+          "initial_cash": 100000,
+          "instruments": {},
+          "lot_size": 100,
+          "max_symbol_weight": 0.4,
+          "max_total_weight": 0.9,
+          "minimum_commission": 5,
+          "participation_rate": 0.1,
+          "rebalance_every": 15,
+          "settlement_days": 1,
+          "slippage_rate": 0.0005,
+          "start": "2024-01-08T01:30:00+00:00",
+          "top_k": 2
+        }
+      }
+    }
+  },
+  "disk_free_before_bytes": 24939466752,
+  "capabilities": {
+    "python_version": "3.13.12",
+    "torch_available": true,
+    "cuda_available": true,
+    "device_name": "NVIDIA GeForce RTX 5070 Ti",
+    "torch_version": "2.11.0+cu128",
+    "cuda_version": "12.8",
+    "gpu_memory_bytes": 17094475776,
+    "disk_free_bytes": 24938635264
+  },
+  "prepared_rows": 2400,
+  "runtime": {
+    "cublas_workspace_config": ":4096:8",
+    "cuda_version": "12.8",
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "deterministic_algorithms": true,
+    "device": "cpu",
+    "device_name": "CPU",
+    "seed": 42,
+    "torch_version": "2.11.0+cu128"
+  },
+  "checks": {
+    "artifact_hashes": true,
+    "chronological_cutoff": true,
+    "nonempty_partitions": true,
+    "source_and_prepared_rows": true,
+    "backtest_rows": true,
+    "paged_table": true,
+    "bounded_chart": true,
+    "zip_export": true
+  },
+  "resources": {
+    "elapsed_seconds": 15.965355599997565,
+    "peak_process_tree_rss_bytes": 1271304192,
+    "peak_scratch_disk_bytes": 5277018,
+    "final_scratch_disk_bytes": 5277018,
+    "sample_interval_seconds": 0.5,
+    "gpu_peak_memory_bytes": null,
+    "measurement_notes": "RSS sums parent and worker descendants (shared pages may count twice); disk sums logical file sizes. Sampled peaks are lower bounds; GPU allocation peak is not instrumented."
+  },
+  "artifacts_retained": false
+}

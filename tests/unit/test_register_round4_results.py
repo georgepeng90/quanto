@@ -103,6 +103,33 @@ def test_experiment_resume_matches_canonical_effective_parameters(tmp_path, monk
     assert item["experiment_id"] == "existing"
 
 
+def test_existing_dataset_accepts_receipt_hash_when_canonical_files_match(tmp_path, monkeypatch):
+    monkeypatch.setattr(publish, "STATE", tmp_path / "state.json")
+    monkeypatch.setattr(publish, "DOCS", tmp_path / "docs")
+    monkeypatch.setattr(publish, "dataset_hash", lambda protocol: ("seven-file-hash", {"prices.parquet": "x"}))
+    seen = []
+
+    def verify(identity, api_hash, normalized_hashes):
+        seen.append((identity, api_hash, normalized_hashes))
+        return {"tables_exact": True}
+
+    monkeypatch.setattr(publish, "verify_dataset", verify)
+    state = {}
+    result = publish.ensure_dataset(
+        lambda method, path: {"content_hash": "whole-directory-with-receipt"}, state, {})
+    assert result == publish.DATASET_ID
+    assert seen == [(publish.DATASET_ID, "whole-directory-with-receipt", {"prices.parquet": "x"})]
+    assert state["dataset_content_hash"] == "seven-file-hash"
+
+
+def test_direct_script_path_imports_from_outside_checkout(tmp_path):
+    script = Path(__file__).resolve().parents[2] / "scripts/register_round4_results.py"
+    code = "import runpy, sys; runpy.run_path(sys.argv[1], run_name='import_probe')"
+    result = subprocess.run([sys.executable, "-I", "-c", code, str(script)], cwd=tmp_path,
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+
+
 def test_selected_rows_reject_changed_summary(tmp_path, monkeypatch):
     monkeypatch.setattr(publish, "ROOT", tmp_path)
     protocol = {"candidates": {name: {"kind": "breadth_risk", "params": {}}

@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 import time
 from uuid import uuid4
 
 import httpx
 
+PROJECT = Path(__file__).resolve().parents[1]
+if str(PROJECT) not in sys.path:
+    sys.path.insert(0, str(PROJECT))
+
 from quanto.workbench.revisions import digest, json_bytes
 from scripts.register_round3_results import dataset_hash, list_all, read, sha256, verify_dataset, write
 
 
-PROJECT = Path(__file__).resolve().parents[1]
 ROOT = PROJECT / "outputs/strategy-research-20261002-round4"
 DOCS = PROJECT / "docs/research/2026-10-02-round4"
 STATE = ROOT / "workbench_state.json"
@@ -85,9 +89,7 @@ def ensure_dataset(request, state, protocol):
     if state.get("dataset_content_hash", expected) != expected:
         raise ValueError("Saved dataset hash differs from frozen data")
     detail = request("GET", f"/api/datasets/{DATASET_ID}")
-    if detail["content_hash"] != expected:
-        raise ValueError("Existing workbench dataset hash differs")
-    verification = verify_dataset(DATASET_ID, expected, normalized_hashes)
+    verification = verify_dataset(DATASET_ID, detail["content_hash"], normalized_hashes)
     state.update(dataset_version_id=DATASET_ID, dataset_content_hash=expected,
                  dataset_verification=verification)
     write(STATE, state)

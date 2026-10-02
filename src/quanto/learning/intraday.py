@@ -298,6 +298,22 @@ class _Ledger:
                 max_quantity = max(0, int((max_quantity + 1e-10) // lot) * lot)
                 if quantity > max_quantity:
                     quantity, reason = max_quantity, "weight_cap"
+            # A candidate's costs lower equity for every existing holding, too.
+            largest_other = max((p.quantity * self.prices[s] for s, p in self.positions.items() if s != symbol), default=0)
+            if quantity and largest_other and spec.max_symbol_weight > 0:
+                cost_budget = equity - largest_other / spec.max_symbol_weight
+                if cost_budget + 1e-10 < spec.minimum_commission:
+                    quantity, reason = 0, "weight_cap"
+                else:
+                    slip_per_share = price - open_price
+                    variable_cost = slip_per_share + price * spec.commission_rate
+                    max_quantity = quantity
+                    if variable_cost > 0:
+                        max_quantity = min(max_quantity, int((cost_budget / variable_cost + 1e-10) // lot) * lot)
+                    if slip_per_share > 0:
+                        max_quantity = min(max_quantity, int(((cost_budget - spec.minimum_commission) / slip_per_share + 1e-10) // lot) * lot)
+                    if quantity > max_quantity:
+                        quantity, reason = max(0, max_quantity), "weight_cap"
         if quantity:
             gross = quantity * price
             commission = max(spec.minimum_commission, gross * spec.commission_rate)
@@ -321,6 +337,7 @@ class _Ledger:
             self.slippage += slippage
             self.turnover += gross
             self.counts["fills"] += 1
+            self.observe_equity()
             self.write("fills", dict(id=f"{order['id']}:fill", order_id=order["id"], instrument_id=symbol,
                                      side=side, signal_time=order["signal_time"], timestamp=row["bar_start"].isoformat(),
                                      bar_start=row["bar_start"].isoformat(), bar_end=row["bar_end"].isoformat(),
@@ -382,14 +399,18 @@ class _Ledger:
         day = next(iter(dates))
         if self.day is not None and day < self.day:
             raise ValueError("Trading dates must be chronological")
+        if self.calendar is not None and day != self.day:
+            if day not in self.calendar:
+                raise ValueError(f"Trading day {day} absent from supplied calendar")
+            if self.day is not None and self.calendar[day] != self.day_index + 1:
+                missing = next(calendar_day for calendar_day, index in self.calendar.items() if index == self.day_index + 1)
+                raise ValueError(f"Missing complete trading day {missing}; supply coverage for every calendar session between observed days")
         self.finish_bar(final_day=self.day is not None and day != self.day)
         if day != self.day:
             self.day = day
             if self.calendar is None:
                 self.day_index += 1
             else:
-                if day not in self.calendar:
-                    raise ValueError(f"Trading day {day} absent from supplied calendar")
                 self.day_index = self.calendar[day]
         self.counts["bars"] += 1
         self.counts["rows"] += len(bars)
@@ -407,7 +428,7 @@ class _Ledger:
         for row in bars:
             self.prices[row["instrument_id"]] = row["close"]
         equity, drawdown = self.observe_equity()
-        if (self.counts["bars"] - 1) % self.spec.rebalance_every == 0:
+        if self.paused or (self.counts["bars"] - 1) % self.spec.rebalance_every == 0:
             self.signal(bars, equity)
         for row in bars:
             self.previous_closes[row["instrument_id"]] = row["close"]
@@ -451,6 +472,8 @@ def run_intraday_backtest(rows, spec: dict, output_dir: Path, emit, cancelled, m
         for _, group in groupby(_bars(rows, _utc(settings.start, "start"), _utc(settings.end, "end"), cancelled),
                                 key=lambda row: row["bar_end"]):
             ledger.process(list(group))
+        if not ledger.counts["bars"]:
+            raise ValueError("No completed bars in the requested backtest interval; check dataset coverage and start/end")
         ledger.finish_bar(final_day=True)
         for order in ledger.pending.values():
             ledger.finish_order(order, reason="end_of_period")

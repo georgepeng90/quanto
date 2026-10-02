@@ -134,8 +134,9 @@ def test_invalid_spec_rejected_before_outputs(tmp_path, changes):
     assert not (tmp_path / "summary.json").exists()
 
 
-def test_calendar_counts_absent_sessions_for_t2(tmp_path):
-    run(tmp_path, [bar(), bar(minute=32, score=-1), bar(day=10, score=-1)],
+def test_calendar_settles_t2_when_instrument_is_absent_but_sessions_are_observed(tmp_path):
+    run(tmp_path, [bar(), bar(minute=32, score=-1), bar(day=8, symbol="B", score=-1),
+                   bar(day=9, symbol="B", score=-1), bar(day=10, score=-1)],
         settlement_days=2, metadata={"trading_days": ["2024-01-05", "2024-01-08", "2024-01-09", "2024-01-10"]})
     assert [f["side"] for f in table(tmp_path, "fills")] == ["buy", "sell"]
 
@@ -225,4 +226,57 @@ def test_cancellation_during_stream_never_writes_success_summary(tmp_path):
         run_intraday_backtest(iter([bar(), bar(minute=32), bar(minute=33)]),
                              dict(start="2024-01-05T00:00:00Z", end="2024-01-06T00:00:00Z"),
                              tmp_path, lambda event: None, cancelled, {})
+    assert not (tmp_path / "summary.json").exists()
+
+
+def test_buy_cost_cannot_push_existing_holding_above_symbol_cap(tmp_path):
+    rows = [bar(minute=minute, symbol=symbol) for minute in (31, 32) for symbol in ("A", "B")]
+    result = run(tmp_path, rows, top_k=2, max_symbol_weight=.5, minimum_commission=150,
+                 settlement_days=0)
+    assert [(f["instrument_id"], int(f["quantity"])) for f in table(tmp_path, "fills")] == [("A", 42)]
+    assert result["metrics"]["final_equity"] == 850
+    assert any(o["instrument_id"] == "B" and o["reason"] == "weight_cap" for o in table(tmp_path, "orders"))
+    assert all(float(p["weight"]) <= .5 for p in table(tmp_path, "positions"))
+
+
+def test_percentage_cost_limits_new_buy_to_keep_other_holding_below_cap(tmp_path):
+    rows = [bar(minute=minute, symbol=symbol) for minute in (31, 32) for symbol in ("A", "B")]
+    result = run(tmp_path, rows, top_k=2, max_symbol_weight=.5, commission_rate=.1,
+                 settlement_days=0)
+    # A costs 517 for 47 shares; B's fee can consume only the remaining 13 of equity headroom.
+    assert [(f["instrument_id"], int(f["quantity"])) for f in table(tmp_path, "fills")] == [("A", 47), ("B", 13)]
+    assert result["metrics"]["final_equity"] == 940
+    assert all(float(p["weight"]) <= .5 for p in table(tmp_path, "positions"))
+
+
+def test_fill_cost_pause_blocks_other_pending_buys_at_same_open(tmp_path):
+    rows = [bar(minute=minute, symbol=symbol) for minute in (31, 32) for symbol in ("A", "B")]
+    result = run(tmp_path, rows, top_k=2, max_symbol_weight=.5, minimum_commission=150,
+                 settlement_days=0, drawdown_pause=.1)
+    assert [f["instrument_id"] for f in table(tmp_path, "fills")] == ["A"]
+    assert any(o["instrument_id"] == "B" and o["reason"] == "drawdown_pause"
+               for o in table(tmp_path, "orders"))
+    assert result["metrics"]["minute_max_drawdown"] == pytest.approx(.15)
+
+
+def test_risk_liquidation_runs_between_scheduled_rebalances(tmp_path):
+    result = run(tmp_path, [bar(), bar(minute=32, close=8), bar(minute=33, price=8)],
+                 rebalance_every=10, drawdown_pause=.1, settlement_days=0)
+    assert [(f["side"], int(f["quantity"])) for f in table(tmp_path, "fills")] == [("buy", 100), ("sell", 100)]
+    assert table(tmp_path, "fills")[-1]["signal_time"] == "2024-01-05T01:32:00+00:00"
+    assert result["metrics"]["final_cash"] == 800
+
+
+def test_missing_complete_calendar_sessions_are_rejected_without_summary(tmp_path):
+    with pytest.raises(ValueError, match="missing.*trading.*day|Missing.*trading.*day"):
+        run(tmp_path, [bar(), bar(day=10)], baseline="cash", cash_rate=.252,
+            metadata={"trading_days": ["2024-01-05", "2024-01-08", "2024-01-09", "2024-01-10"]})
+    assert not (tmp_path / "summary.json").exists()
+
+
+@pytest.mark.parametrize("rows, changes", [([], {}), ([bar(day=8)], dict(end="2024-01-06T00:00:00Z")),
+                                          ([bar()], dict(start="2024-01-06T00:00:00Z"))])
+def test_empty_backtest_interval_is_rejected_without_summary(tmp_path, rows, changes):
+    with pytest.raises(ValueError, match="No.*bars|no.*bars|empty"):
+        run(tmp_path, rows, **changes)
     assert not (tmp_path / "summary.json").exists()

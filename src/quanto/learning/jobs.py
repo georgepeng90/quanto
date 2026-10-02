@@ -2,11 +2,26 @@
 from __future__ import annotations
 
 import json
+import math
+from datetime import timedelta
 from pathlib import Path
 
 from quanto.backtest.models import BacktestCancelled, RunEvent
 from quanto.learning.registry import LEARNING_KINDS, hash_files, verify_ref, verify_runtime
 from quanto.workbench.worker import atomic_json
+
+
+def expected_trading_days(manifest: dict, spec: dict) -> list[str]:
+    from quanto.learning.contracts import timestamp
+    start, end = timestamp(spec['start']), timestamp(spec['end'])
+    interval = timedelta(minutes=manifest['frequency_minutes'])
+    days = set()
+    for session in manifest['trading_sessions']:
+        begin, finish = timestamp(session['start']), timestamp(session['end'])
+        first = begin + max(0, math.ceil((start - begin) / interval)) * interval
+        if first + interval <= min(finish, end):
+            days.add(session['trading_date'])
+    return sorted(days)
 
 
 def execute_learning_job(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:
@@ -52,6 +67,7 @@ def execute_learning_job(descriptor: dict, control_dir: Path, emit, cancelled) -
                             'frequency_minutes': manifest['frequency_minutes'], 'query': manifest['query'],
                             'limitations': manifest.get('limitations', []), 'allow_in_sample': request.get('allow_in_sample', False),
                             'price_mode': 'research', 'source_snapshot_id': manifest.get('snapshot_id')}
+                metadata['expected_trading_days'] = expected_trading_days(manifest, spec)
                 if manifest.get('trading_days'):
                     metadata['trading_days'] = manifest['trading_days']
                 if spec.get('baseline', 'model') == 'model':

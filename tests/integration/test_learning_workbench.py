@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sqlite3
@@ -89,6 +89,16 @@ def test_result_verification_cache_invalidates_on_change(tmp_path):
     path.write_bytes(b'changed-data')
     with pytest.raises(ValueError, match='INVALID_ARTIFACT'):
         verify_result_file(path, expected)
+
+
+def test_expected_trading_days_use_overlapping_complete_session_bars():
+    from quanto.learning.jobs import expected_trading_days
+    manifest = {'frequency_minutes': 5, 'trading_sessions': [
+        {'trading_date': day, 'start': f'{day}T01:30:00Z', 'end': f'{day}T03:30:00Z'}
+        for day in ('2024-01-05', '2024-01-08', '2024-01-09')]}
+    assert expected_trading_days(manifest, {'start': '2024-01-05T00:00:00Z', 'end': '2024-01-10T00:00:00Z'}) == ['2024-01-05', '2024-01-08', '2024-01-09']
+    assert expected_trading_days(manifest, {'start': '2024-01-08T01:31:00Z', 'end': '2024-01-08T01:40:00Z'}) == ['2024-01-08']
+    assert expected_trading_days(manifest, {'start': '2024-01-08T03:29:00Z', 'end': '2024-01-09T01:34:00Z'}) == []
 
 
 def test_learning_routes_auth_and_empty_overview(tmp_path):
@@ -205,3 +215,20 @@ def test_supervised_prepare_train_backtest_and_results(tmp_path):
         assert continued['epochs_completed'] == completed_epoch + 1
         assert continued['resume_parent']
 
+        # Reproduce cancellation winning after a worker already moved staging to final.
+        import shutil
+        late_id = 'late-cancel-after-final-move'
+        store = app.state.service.store
+        original = store.get_job(model)
+        late_root = store.artifact_root / late_id / 'final' / 'artifact'
+        shutil.copytree(original.artifact_root / model / 'final' / 'artifact', late_root)
+        with store.transaction() as db:
+            seq = db.execute('SELECT MAX(enqueue_seq)+1 FROM jobs').fetchone()[0]
+            db.execute("INSERT INTO jobs(id,kind,state,enqueue_seq,artifact_root,input_path) VALUES (?,'train','cancelled',?,?,?)",
+                       (late_id, seq, str(store.artifact_root), original.input_path))
+        overview = client.get('/api/learning/overview', headers=headers).json()
+        assert next(job for job in overview['jobs'] if job['id'] == late_id)['checkpoint_available']
+        late_resume = submit('/api/learning/train', {'dataset_id': dataset, 'resume_job_id': late_id,
+                                                    'spec': {**training, 'epochs': 3}})
+        assert client.get(f'/api/learning/models/{late_resume}', headers=headers).status_code == 200
+        assert client.get(f'/api/learning/models/{late_id}', headers=headers).status_code == 404

@@ -36,6 +36,16 @@ def verify_result_file(path: Path, expected: str) -> None:
     _verify_unchanged_file(str(path.resolve()), expected, (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns))
 
 
+def checkpoint_root(job) -> Path:
+    # Cancellation/restart may win after the worker's atomic staging -> final move.
+    base = job.artifact_root / job.id
+    for phase in ('staging', 'final'):
+        root = base / phase / 'artifact' / 'checkpoints'
+        if (root / 'checkpoint.json').is_file():
+            return root
+    raise ValueError('no complete checkpoint is available for this training job')
+
+
 @lru_cache(maxsize=1)
 def capabilities() -> dict:
     value = {'python_version': platform.python_version(), 'torch_available': False,
@@ -142,8 +152,13 @@ class LearningService:
             job = self.workbench.get_resource('jobs', identity)
             if record.input_path and Path(record.input_path).is_file():
                 job['request'] = json.loads(Path(record.input_path).read_text(encoding='utf-8'))['input']['request']
-            checkpoint = record.artifact_root / record.id / 'staging' / 'artifact' / 'checkpoints' / 'checkpoint.json'
-            job['checkpoint_available'] = record.kind == 'train' and record.state in {'failed', 'cancelled', 'interrupted'} and checkpoint.is_file()
+            job['checkpoint_available'] = False
+            if record.kind == 'train' and record.state in {'failed', 'cancelled', 'interrupted'}:
+                try:
+                    checkpoint_root(record)
+                    job['checkpoint_available'] = True
+                except ValueError:
+                    pass
             jobs.append(job)
         return {'capabilities': {**capabilities(), 'disk_free_bytes': shutil.disk_usage(self.store.artifact_root).free},
                 'snapshots': self.snapshots(), 'jobs': jobs,
@@ -171,7 +186,7 @@ class LearningService:
             job = self.store.get_job(body['resume_job_id'])
             if job.kind != 'train' or job.state not in {'failed', 'interrupted', 'cancelled'}:
                 raise ValueError('resume requires a terminal interrupted/cancelled/failed training job')
-            root = job.artifact_root / job.id / 'staging' / 'artifact' / 'checkpoints'
+            root = checkpoint_root(job)
             from quanto.learning.training import read_checkpoint
             read_checkpoint(root)
             trusted.update(resume_source=root)
@@ -189,6 +204,8 @@ class LearningService:
             raise ValueError('allow_in_sample must be boolean')
         trusted = {'dataset_ref': self.reference(body['dataset_id'], 'dataset')}
         dataset = read_dataset_manifest(Path(trusted['dataset_ref']['path']))
+        if timestamp(spec['start']) < timestamp(dataset['query']['start']) or timestamp(spec['end']) > timestamp(dataset['query']['end']):
+            raise ValueError('backtest interval exceeds the prepared dataset query coverage')
         if spec['baseline'] == 'model':
             if not body.get('model_id'):
                 raise ValueError('model_id is required for model backtests')

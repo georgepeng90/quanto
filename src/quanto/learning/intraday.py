@@ -196,9 +196,28 @@ class _Ledger:
             if days != sorted(set(days)):
                 raise ValueError("Calendar trading_days must be sorted and unique")
             self.calendar = {day: index for index, day in enumerate(days)}
+        expected = metadata.get("expected_trading_days")
+        self.expected_remaining = None
+        self.first_unexpected_day = None
+        if expected is not None:
+            if not isinstance(expected, list):
+                raise ValueError("metadata expected_trading_days must be an ordered list")
+            try:
+                days = [date.fromisoformat(str(day)).isoformat() for day in expected]
+            except ValueError as exc:
+                raise ValueError("Invalid expected_trading_days ISO date") from exc
+            if days != sorted(set(days)):
+                raise ValueError("expected_trading_days must be sorted and unique")
+            self.expected_remaining = set(days)
 
     def write(self, name, value):
         self.writers[name].writerow(value)
+
+    def verify_coverage(self):
+        if self.expected_remaining or self.first_unexpected_day:
+            missing = ", ".join(sorted(self.expected_remaining))
+            unexpected = f"Unexpected observed trading day {self.first_unexpected_day}; " if self.first_unexpected_day else ""
+            raise ValueError(f"{unexpected}Missing expected trading days: [{missing}]; check dataset coverage for the requested interval")
 
     def market_value(self):
         return sum(position.quantity * self.prices[symbol] for symbol, position in self.positions.items())
@@ -399,6 +418,11 @@ class _Ledger:
         day = next(iter(dates))
         if self.day is not None and day < self.day:
             raise ValueError("Trading dates must be chronological")
+        if day != self.day and self.expected_remaining is not None:
+            if day in self.expected_remaining:
+                self.expected_remaining.remove(day)
+            elif self.first_unexpected_day is None:
+                self.first_unexpected_day = day
         if self.calendar is not None and day != self.day:
             if day not in self.calendar:
                 raise ValueError(f"Trading day {day} absent from supplied calendar")
@@ -455,6 +479,8 @@ def run_intraday_backtest(rows, spec: dict, output_dir: Path, emit, cancelled, m
     The inclusive bar-start/exclusive bar-end coverage is confined to ``[start,end)``:
     a bar ending exactly at ``end`` is marked, but its signal cannot execute outside it.
     Unfilled orders expire after their next eligible open; end orders expire explicitly.
+    ``metadata.expected_trading_days`` scopes required session coverage to this
+    request. Without it, first/last session completeness cannot be confirmed.
     """
     settings = IntradaySpec.from_dict(spec)
     _check_cancelled(cancelled)
@@ -472,6 +498,7 @@ def run_intraday_backtest(rows, spec: dict, output_dir: Path, emit, cancelled, m
         for _, group in groupby(_bars(rows, _utc(settings.start, "start"), _utc(settings.end, "end"), cancelled),
                                 key=lambda row: row["bar_end"]):
             ledger.process(list(group))
+        ledger.verify_coverage()
         if not ledger.counts["bars"]:
             raise ValueError("No completed bars in the requested backtest interval; check dataset coverage and start/end")
         ledger.finish_bar(final_day=True)
@@ -483,6 +510,8 @@ def run_intraday_backtest(rows, spec: dict, output_dir: Path, emit, cancelled, m
             "execution": "next available real bar open after completed signal; no order-book or queue simulation",
             "participation": "previous completed signal-bar volume; remainder expires at next eligible open",
             "settlement": "supplied trading_days calendar" if ledger.calendar else "distinct observed trading dates; missing sessions are unknown",
+            "coverage": "observed dates match supplied expected_trading_days for requested interval" if ledger.expected_remaining is not None else
+                        "expected_trading_days not supplied; cannot confirm first/last trading-day coverage",
             "cash_interest": "closing cash times annual cash_rate / 252, once per observed trading day",
             "performance": "daily closing equity returns, 252 trading days/year; intraday drawdown reported separately",
             "default_lot_size": settings.lot_size,

@@ -146,6 +146,7 @@ def prepare_dataset(spec: dict, market_root: Path, output_dir: Path, emit, cance
         row_count=count, first_bar=first, last_bar=last, feature_version=FEATURE_VERSION, features=list(FEATURE_NAMES), shards=shards,
         step_policy=STEP_POLICY,
         trading_days=sorted({day for _, _, day in sessions}),
+        trading_sessions=[dict(start=begin.isoformat(), end=finish.isoformat(), trading_date=day) for begin, finish, day in sessions],
         timezone="UTC", interval="[start,end)", limitations=limitations, statistics=statistics, price_basis=query.price_basis.model_dump(mode="json")))
     emit(dict(kind="progress", message="dataset prepared", progress=1., rows=count))
     return result

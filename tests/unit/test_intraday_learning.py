@@ -280,3 +280,43 @@ def test_empty_backtest_interval_is_rejected_without_summary(tmp_path, rows, cha
     with pytest.raises(ValueError, match="No.*bars|no.*bars|empty"):
         run(tmp_path, rows, **changes)
     assert not (tmp_path / "summary.json").exists()
+
+
+@pytest.mark.parametrize("rows, missing_day", [([bar(day=8)], "2024-01-05"),
+                                             ([bar()], "2024-01-08"), ([], "2024-01-05.*2024-01-08")])
+def test_expected_calendar_rejects_missing_first_last_or_all_days(tmp_path, rows, missing_day):
+    with pytest.raises(ValueError, match=missing_day):
+        run(tmp_path, rows, baseline="cash", cash_rate=.252,
+            metadata={"trading_days": ["2024-01-05", "2024-01-08"],
+                      "expected_trading_days": ["2024-01-05", "2024-01-08"]})
+    assert not (tmp_path / "summary.json").exists()
+
+
+def test_expected_days_use_partial_requested_session_not_entire_dataset_calendar(tmp_path):
+    result = run(tmp_path, [bar(day=8), bar(day=8, minute=32)], baseline="cash", cash_rate=.252,
+                 start="2024-01-08T01:31:00Z", end="2024-01-08T01:32:00Z",
+                 metadata={"trading_days": ["2024-01-05", "2024-01-08", "2024-01-09", "2024-01-10"],
+                           "expected_trading_days": ["2024-01-08"]})
+    assert result["counts"]["bars"] == 1
+    assert result["counts"]["trading_days"] == 1
+    assert result["metrics"]["cash_interest"] == 1
+    assert "coverage" in result["assumptions"]
+
+
+def test_without_expected_days_reports_unknown_endpoint_coverage(tmp_path):
+    result = run(tmp_path, [bar(day=8)], baseline="cash",
+                 metadata={"trading_days": ["2024-01-05", "2024-01-08", "2024-01-09"]})
+    assert "cannot confirm" in result["assumptions"]["coverage"]
+
+
+def test_observed_date_outside_expected_days_is_rejected(tmp_path):
+    with pytest.raises(ValueError, match="Unexpected.*2024-01-08"):
+        run(tmp_path, [bar(day=8)], metadata={"expected_trading_days": ["2024-01-05"]})
+    assert not (tmp_path / "summary.json").exists()
+
+
+@pytest.mark.parametrize("expected", [["2024-01-08", "2024-01-05"],
+                                      ["2024-01-05", "2024-01-05"], ["invalid"], "2024-01-05"])
+def test_expected_trading_days_requires_ordered_unique_iso_dates(tmp_path, expected):
+    with pytest.raises(ValueError, match="expected_trading_days"):
+        run(tmp_path, [bar()], metadata={"expected_trading_days": expected})

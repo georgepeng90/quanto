@@ -1,0 +1,20 @@
+{
+  "verified_at": "2026-10-02T13:51:15.902763+00:00",
+  "candidate_and_selection_tests_passed": 39,
+  "publisher_tests_passed": 9,
+  "full_suite": {
+    "command": ".venv/Scripts/python.exe -m pytest -q",
+    "passed": 491,
+    "skipped": 1,
+    "warnings": 2,
+    "warning_detail": "Existing market-reader timestamp conversion discards nonzero nanoseconds"
+  },
+  "red_green_observed": [
+    "candidate behavior tests before implementation",
+    "early-only robust selection tests before implementation",
+    "receipt directory hash and direct-script import regressions"
+  ],
+  "protocol_sha256": "fc7d85f556bc393e28cb0c16597adbd832b1f8615f31f9e7a040471ab2c3343b",
+  "audited_main_runs": 56,
+  "prior_baseline_exact_matches": 6
+}

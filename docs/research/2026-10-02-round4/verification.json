@@ -1,0 +1,44 @@
+{
+  "verified": true,
+  "runs": 56,
+  "protocol_sha256": "fc7d85f556bc393e28cb0c16597adbd832b1f8615f31f9e7a040471ab2c3343b",
+  "baseline_reproductions": [
+    {
+      "period": "development",
+      "cost_multiplier": 1,
+      "all_metrics_equal": true
+    },
+    {
+      "period": "validation",
+      "cost_multiplier": 1,
+      "all_metrics_equal": true
+    },
+    {
+      "period": "late",
+      "cost_multiplier": 1,
+      "all_metrics_equal": true
+    },
+    {
+      "period": "full",
+      "cost_multiplier": 1,
+      "all_metrics_equal": true
+    },
+    {
+      "period": "full",
+      "cost_multiplier": 2,
+      "all_metrics_equal": true
+    },
+    {
+      "period": "late",
+      "cost_multiplier": 2,
+      "all_metrics_equal": true
+    }
+  ],
+  "results_sha256": "11fd60b8ad20b5f69ba2dfbe5c40c406462392cde40cf63ec7b79ea6d440ff7c",
+  "checks": [
+    "frozen data, implementation, design and identity hashes",
+    "early-only selection unchanged",
+    "artifact hashes and curve/equity consistency",
+    "12 return, exposure, risk and cost metrics independently reconciled"
+  ]
+}

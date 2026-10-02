@@ -1,0 +1,199 @@
+{
+  "protocol_sha256": "24d23b73ef572375b2e3fcdb99c02a2590b7d9dee58e358c52b265ba5c2bb1bc",
+  "selection_sha256": "46568b4b0de53bc8f71dc1c8b3c6e4f45705a62af346817ef0c8e08f6a96ea8a",
+  "baseline_run_id": "8e32c5e8-43f1-4d0b-9f9d-0802f7e0672e",
+  "baseline_url": "http://127.0.0.1:8767/runs/8e32c5e8-43f1-4d0b-9f9d-0802f7e0672e",
+  "revisions": {
+    "w30_v12": "42c9ea0d-7aa8-48ae-8b62-86dd5600f2e4",
+    "w30_v13": "8ea3d1c6-beed-4bfb-8b93-fdc68d1e5fa6",
+    "w30_v11": "2ff0605e-efd8-4629-9b7a-1e0dfa545a35"
+  },
+  "runs": [
+    {
+      "candidate": "w30_v12",
+      "period": "full",
+      "cost_multiplier": 1,
+      "summary_sha256": "3c990b2ff59290d09176efcd0edda2ff5e3c13449e59792f6e09ebdda3918f63",
+      "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+      "strategy_revision_id": "42c9ea0d-7aa8-48ae-8b62-86dd5600f2e4",
+      "idempotency_key": "37aebbe6-de6b-4df5-bf04-92ca58c453ab",
+      "experiment_request_started": true,
+      "experiment_id": "443bd91e-4865-4018-a41f-e9c9a85f2e2e",
+      "expected_revision": 1,
+      "attempts": [
+        {
+          "idempotency_key": "37aebbe6-de6b-4df5-bf04-92ca58c453ab",
+          "run_id": "ac29a81c-7873-47dd-a998-05714ccb75a2",
+          "state": "succeeded",
+          "job_id": "018f025a-ac0c-4a39-af1b-957152fe869e",
+          "completed_through": "2026-09-30"
+        }
+      ],
+      "run_id": "ac29a81c-7873-47dd-a998-05714ccb75a2",
+      "verified": true,
+      "all_metrics_equal": true,
+      "url": "http://127.0.0.1:8767/runs/ac29a81c-7873-47dd-a998-05714ccb75a2"
+    },
+    {
+      "candidate": "w30_v12",
+      "period": "late",
+      "cost_multiplier": 1,
+      "summary_sha256": "ac90f123559471f5614e57e042dcb3a45b0ef6d182c686a1c7b8a71cd34d356f",
+      "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+      "strategy_revision_id": "42c9ea0d-7aa8-48ae-8b62-86dd5600f2e4",
+      "idempotency_key": "23c95d77-f401-4535-b6ef-1dd86ab5993d",
+      "experiment_request_started": true,
+      "experiment_id": "e566475f-88d9-4aaa-93ae-55b62b214946",
+      "expected_revision": 1,
+      "attempts": [
+        {
+          "idempotency_key": "23c95d77-f401-4535-b6ef-1dd86ab5993d",
+          "run_id": "bac338b4-523a-4bef-b19e-fa08f9dc2fcb",
+          "state": "succeeded",
+          "job_id": "30af9a54-7430-47c4-badf-e975ad09a375",
+          "completed_through": "2026-09-30"
+        }
+      ],
+      "run_id": "bac338b4-523a-4bef-b19e-fa08f9dc2fcb",
+      "verified": true,
+      "all_metrics_equal": true,
+      "url": "http://127.0.0.1:8767/runs/bac338b4-523a-4bef-b19e-fa08f9dc2fcb"
+    },
+    {
+      "candidate": "w30_v13",
+      "period": "full",
+      "cost_multiplier": 1,
+      "summary_sha256": "498beb9322b5f84e661c448312889a05e9b8679aecc8b2213cfae60c245c6357",
+      "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+      "strategy_revision_id": "8ea3d1c6-beed-4bfb-8b93-fdc68d1e5fa6",
+      "idempotency_key": "aab28d7d-ccf3-499c-8402-2ddc53ea498d",
+      "experiment_request_started": true,
+      "experiment_id": "917a1a7c-55dd-42c0-be53-102a0c7c9a15",
+      "expected_revision": 1,
+      "attempts": [
+        {
+          "idempotency_key": "aab28d7d-ccf3-499c-8402-2ddc53ea498d",
+          "run_id": "f63c2d43-da4c-4204-a31c-8268fc26d6c7",
+          "state": "succeeded",
+          "job_id": "b759040b-33e3-4238-ae06-5a84739cd955",
+          "completed_through": "2026-09-30"
+        }
+      ],
+      "run_id": "f63c2d43-da4c-4204-a31c-8268fc26d6c7",
+      "verified": true,
+      "all_metrics_equal": true,
+      "url": "http://127.0.0.1:8767/runs/f63c2d43-da4c-4204-a31c-8268fc26d6c7"
+    },
+    {
+      "candidate": "w30_v13",
+      "period": "late",
+      "cost_multiplier": 1,
+      "summary_sha256": "a56f26049d862dbc5075c9aef44d812c239b2cfed2ec79e5d9110903d73a06a0",
+      "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+      "strategy_revision_id": "8ea3d1c6-beed-4bfb-8b93-fdc68d1e5fa6",
+      "idempotency_key": "fc5e0981-7b07-4c7b-a664-752cbe403b85",
+      "experiment_request_started": true,
+      "experiment_id": "b4e47f9b-5d16-4888-9a39-36731405d0b0",
+      "expected_revision": 1,
+      "attempts": [
+        {
+          "idempotency_key": "fc5e0981-7b07-4c7b-a664-752cbe403b85",
+          "run_id": "a1a80dda-cf59-4308-9afa-b1c30455e1bf",
+          "state": "succeeded",
+          "job_id": "ab888637-92f3-4885-8fbc-726c287c759e",
+          "completed_through": "2026-09-30"
+        }
+      ],
+      "run_id": "a1a80dda-cf59-4308-9afa-b1c30455e1bf",
+      "verified": true,
+      "all_metrics_equal": true,
+      "url": "http://127.0.0.1:8767/runs/a1a80dda-cf59-4308-9afa-b1c30455e1bf"
+    },
+    {
+      "candidate": "w30_v11",
+      "period": "full",
+      "cost_multiplier": 1,
+      "summary_sha256": "8bf74fa451c210ec29314ee502e0a56fe8b358869f9211bd54906ce109ac55b1",
+      "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+      "strategy_revision_id": "2ff0605e-efd8-4629-9b7a-1e0dfa545a35",
+      "idempotency_key": "c8d58ede-f370-4283-8bbd-b9bd40342cc0",
+      "experiment_request_started": true,
+      "experiment_id": "46a7bfc0-8162-4460-a4d9-a66c4c4d1c3b",
+      "expected_revision": 1,
+      "attempts": [
+        {
+          "idempotency_key": "c8d58ede-f370-4283-8bbd-b9bd40342cc0",
+          "run_id": "39f08932-0746-4ecb-815d-0d554999d5ce",
+          "state": "succeeded",
+          "job_id": "4b77c146-9ace-4311-af40-7a21fcd2a0d4",
+          "completed_through": "2026-09-30"
+        }
+      ],
+      "run_id": "39f08932-0746-4ecb-815d-0d554999d5ce",
+      "verified": true,
+      "all_metrics_equal": true,
+      "url": "http://127.0.0.1:8767/runs/39f08932-0746-4ecb-815d-0d554999d5ce"
+    },
+    {
+      "candidate": "w30_v11",
+      "period": "late",
+      "cost_multiplier": 1,
+      "summary_sha256": "68116d9996b679842acca7cc6663de62d49ae4c0cdaa33fb585081efd21f504f",
+      "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+      "strategy_revision_id": "2ff0605e-efd8-4629-9b7a-1e0dfa545a35",
+      "idempotency_key": "e0ae7af7-1751-4db1-9c13-43a349b210ac",
+      "experiment_request_started": true,
+      "experiment_id": "5af3c4ce-ab4a-4e06-b477-e4242fbc5dec",
+      "expected_revision": 1,
+      "attempts": [
+        {
+          "idempotency_key": "e0ae7af7-1751-4db1-9c13-43a349b210ac",
+          "run_id": "649ac7c7-a498-4c04-8f49-63f181b9d52c",
+          "state": "succeeded",
+          "job_id": "8cde88a3-7014-4c50-83b1-5cb4aea83877",
+          "completed_through": "2026-09-30"
+        }
+      ],
+      "run_id": "649ac7c7-a498-4c04-8f49-63f181b9d52c",
+      "verified": true,
+      "all_metrics_equal": true,
+      "url": "http://127.0.0.1:8767/runs/649ac7c7-a498-4c04-8f49-63f181b9d52c"
+    }
+  ],
+  "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+  "dataset_content_hash": "c48b9c10b292e4b5162de22df7312896b33c2a6d3b8daf66f7663ea6f777477c",
+  "dataset_verification": {
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "workbench_content_hash": "74525c485618e4c64f6e0a9f0d22dd6c0e065dfa7a262294a3126fa2b7cba4e8",
+    "normalized_content_hash": "c48b9c10b292e4b5162de22df7312896b33c2a6d3b8daf66f7663ea6f777477c",
+    "source_file_hashes": {
+      "benchmark.parquet": "b19a85aba7c852fc88835a2f9b61f580f64c1e1ed94599605c37947f0b3b726a",
+      "calendar.parquet": "e762ccd52b1f4fc6fa2ccc284043c27dc56e1a27212d8d8a2429b5900549d948",
+      "events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d",
+      "instruments.parquet": "8b660fd97289b2afba5794dfe19a312a98d5b68a805061b53d79fccab0b09c84",
+      "manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+      "prices.parquet": "7c3d13eda441150a0bf8a86ea3ed3985b6b7b34d0806504ba7985609666cae82",
+      "status.parquet": "bb814801a31d8209427fb114a0579136b798345fca26dcb860ded7d396c45e9f"
+    },
+    "canonical_file_hashes": {
+      "benchmark.parquet": "2b523aabba09912c0569dde4fe93c8558bf5cba037fdd5bfda6332e5ecbdce3c",
+      "calendar.parquet": "37c3ea20297ebe9c88db3d04552074838237d767fbb1a555f40d9cbbdfcadafc",
+      "events.parquet": "02f2842191d3c1722634129beb9ca48ddf836cf52b0f7f6d5a00ee224d28f517",
+      "instruments.parquet": "8b660fd97289b2afba5794dfe19a312a98d5b68a805061b53d79fccab0b09c84",
+      "manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+      "prices.parquet": "c278c99bd81116d640b3ae4467e7c148963d2e0305d03631f2a658a4af5998f8",
+      "status.parquet": "24a23f198147b571d0883a1e749a65cffdf9c1ae1fc22ea527d2aa92e99f8fa8"
+    },
+    "canonical_rows": {
+      "prices": 238070,
+      "benchmark": 968,
+      "calendar": 973,
+      "instruments": 305,
+      "status": 238070,
+      "events": 0
+    },
+    "job_receipt_sha256": "e7139ace4958ef3fb74f0f44fda4849d3b7a6246991cd8e19c06e401d662fa46",
+    "manifest_equal": true,
+    "tables_exact": true
+  }
+}

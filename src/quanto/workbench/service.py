@@ -299,9 +299,13 @@ class WorkbenchService:
             control = self._job_root(run.job_id) / "control"
             partial = read_partial(control)
             return {"run_id": run_id, "state": run.state, "completed_through": partial["completed_through"],
-                    "metrics": None, "metric_definitions": {}, "tables": partial["tables"], "error": run.error,
+                    "metrics": None, "metric_definitions": {}, "held_symbols": None,
+                    "tables": partial["tables"], "error": run.error,
                     "detail_url": f"/runs/{run_id}"}
-        root, metadata, _ = self._verified_final(run_id)
+        root, metadata, hashes = self._verified_final(run_id, indexed=True)
+        index = ResultIndex(self.store.root, run_id, hashes)
+        receipt = json.loads((root.parent / "control" / "receipt.json").read_text(encoding="utf-8"))
+        index.ensure(root, lambda: validate_job_output("backtest", root.parent, receipt))
         metrics = json.loads((root / "metrics.json").read_text(encoding="utf-8"))
         with self.store.transaction() as db:
             db.execute("CREATE TABLE IF NOT EXISTS result_views (run_id TEXT, viewed_at TEXT, interval_start TEXT, interval_end TEXT)")
@@ -310,7 +314,8 @@ class WorkbenchService:
             db.execute("INSERT INTO result_views VALUES (?,?,?,?)", (run_id, datetime.now(timezone.utc).isoformat(), spec["start"], spec["end"]))
         return {"run_id": run_id, "state": run.state, "completed_through": run.completed_through,
                 "metrics": metrics["metrics"], "metric_definitions": metrics.get("metric_definitions", {}),
-                "warnings": metrics.get("warnings", []), "metadata": metadata, "detail_url": f"/runs/{run_id}"}
+                "warnings": metrics.get("warnings", []), "metadata": metadata,
+                "held_symbols": index.held_symbols(), "detail_url": f"/runs/{run_id}"}
 
     @staticmethod
     def _query_dates(date_from: str | None, date_to: str | None, context_date: str | None) -> None:

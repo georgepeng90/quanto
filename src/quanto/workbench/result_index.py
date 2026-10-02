@@ -12,7 +12,7 @@ from pathlib import Path
 from uuid import uuid4
 
 
-INDEX_VERSION = "3"
+INDEX_VERSION = "4"
 CHART_CACHE_LIMIT = 64
 PARTIAL_COLUMNS = {
     "date": "substr(coalesce(nullif(json_extract(payload,'$.date'),''),nullif(json_extract(payload,'$.period'),''),"
@@ -148,6 +148,13 @@ class ResultIndex:
                 f"SELECT payload FROM rows WHERE {where} ORDER BY {order} LIMIT ? OFFSET ?", (*params, limit, offset))]
         return items, total
 
+    def held_symbols(self, date_from: str | None = None, date_to: str | None = None) -> list[str]:
+        where, params = self._where("positions", date_from, date_to, None, None)
+        with closing(sqlite3.connect(self.path)) as db:
+            return [row[0] for row in db.execute(
+                f"SELECT DISTINCT symbol FROM rows WHERE {where} AND symbol IS NOT NULL "
+                "AND json_extract(payload,'$.shares')>0 ORDER BY symbol", params)]
+
     def chart(self, name: str, date_from: str | None, date_to: str | None, max_points: int) -> dict:
         key = json.dumps([name, date_from, date_to, max_points])
         with closing(sqlite3.connect(self.path)) as db, db:
@@ -162,6 +169,10 @@ class ResultIndex:
                     return result
             source = "positions" if name == "allocation" else name
             where, params = self._where(source, date_from, date_to, None, None)
+            if name == "allocation":
+                held_symbols = self.held_symbols(date_from, date_to)
+                where += f" AND symbol IN ({','.join('?' for _ in held_symbols)})" if held_symbols else " AND 0"
+                params.extend(held_symbols)
             source_total = db.execute(f"SELECT count(*) FROM rows WHERE {where}", params).fetchone()[0]
             if name == "allocation":
                 days = list(db.execute(f"SELECT date,count(DISTINCT symbol) FROM rows WHERE {where} GROUP BY date ORDER BY date", params))

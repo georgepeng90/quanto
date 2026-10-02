@@ -26,7 +26,8 @@ export function RunSummary({ run, provenance, result }: {
     <div className="run-context">
       <span>回测区间 {String(provenance?.start || '读取中')} — {String(provenance?.end || '读取中')}</span>
       <span>初始资金 {metricValue('initial_cash', provenance?.initial_cash, provenance?.currency)}</span>
-      {Array.isArray(symbols) && <span>标的 {symbols.length} 只</span>}
+      {run.state === 'succeeded' && Array.isArray(result?.held_symbols) && <span>实际持有 {result.held_symbols.length} 只</span>}
+      {Array.isArray(symbols) && <span className="muted">回测范围 {symbols.length} 只</span>}
     </div>
     {run.state === 'succeeded' ? result?.metrics ? <dl className="run-metrics">
       {metrics.map(([key, label]) => {

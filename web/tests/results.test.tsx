@@ -4,9 +4,9 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { App } from '../src/App'
 
-const provenance = { strategy_revision_id: 'strategy-1', dataset_version_id: 'dataset-1', effective_strategy_params: { window: 4 }, price_mode: 'raw_cash', start: '2024-01-03', end: '2024-01-04' }
+const provenance = { strategy_revision_id: 'strategy-1', dataset_version_id: 'dataset-1', effective_strategy_params: { window: 4 }, price_mode: 'raw_cash', start: '2024-01-03', end: '2024-01-04', symbols: ['000001', '000002', '000003', '000004', '000005', '000006'] }
 const run = { run_id: 'r1', job_id: 'j1', experiment_id: 'e1', experiment_revision: 1, manifest_hash: 'hash', source: 'web', parent_run_id: null, group_id: 'group-1', state: 'succeeded', completed_through: '2024-01-04', error: null, created_at: '2024-01-01T00:00:00Z', started_at: '2024-01-01T00:01:00Z', finished_at: '2024-01-01T00:02:00Z', detail_url: '/runs/r1', provenance }
-const result = { run_id: 'r1', state: 'succeeded', completed_through: '2024-01-04', metrics: { final_equity: 100000, total_return: 0, sharpe: null, fill_count: 0, round_trip_count: 0 }, metric_definitions: { sharpe: { description: '零方差时不可用' }, total_return: { description: '累计收益' } }, warnings: [], metadata: { dataset_version_id: 'dataset-1', strategy_revision_id: 'strategy-1', price_mode: 'raw_cash' }, detail_url: '/runs/r1' }
+const result = { run_id: 'r1', state: 'succeeded', completed_through: '2024-01-04', metrics: { final_equity: 100000, total_return: 0, sharpe: null, fill_count: 0, round_trip_count: 0 }, metric_definitions: { sharpe: { description: '零方差时不可用' }, total_return: { description: '累计收益' } }, warnings: [], metadata: { dataset_version_id: 'dataset-1', strategy_revision_id: 'strategy-1', price_mode: 'raw_cash' }, held_symbols: ['000001', '000002'], detail_url: '/runs/r1' }
 const page = (items: unknown[]) => Response.json({ items, next_cursor: null, total: items.length })
 const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
 
@@ -54,6 +54,27 @@ test('links fills to their order and dated signal without treating risk as a dir
   expect(screen.getByText(/目标权重/)).toBeVisible()
   expect(screen.getByText(/<script>alert\(1\)<\/script>/)).toBeVisible()
   expect(document.querySelector('script:not([src])')).toBeNull()
+})
+
+test('final performance distinguishes actual held symbols from configured backtest scope', async () => {
+  app('/runs/r1')
+  expect(await screen.findByText('实际持有 2 只')).toBeVisible()
+  expect(screen.getByText('回测期间持有标的')).toBeVisible()
+  await userEvent.click(screen.getByText('回测期间持有标的'))
+  expect(screen.getByText('000001、000002')).toBeVisible()
+  expect(screen.getByText('回测范围 6 只')).toBeVisible()
+})
+
+test('an empty completed held-symbol list reports zero and no held instruments', async () => {
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/runs/r1/results') return Response.json({ ...result, held_symbols: [] })
+    return prior(input, init)
+  }))
+  app('/runs/r1')
+  expect(await screen.findByText('实际持有 0 只')).toBeVisible()
+  await userEvent.click(screen.getByText('回测期间持有标的'))
+  expect(screen.getByText('回测期间未持有标的')).toBeVisible()
 })
 
 test('loads independent summaries and requests positions only after selecting its tab', async () => {
@@ -173,6 +194,8 @@ test('run list prioritizes frozen inputs and performance while keeping technical
   app('/runs')
   expect(await screen.findByRole('link', { name: /冻结趋势轮动/ })).toHaveAttribute('href', '/runs/r1')
   expect(screen.getByText(/2024-01-03 — 2024-01-04/)).toBeVisible()
+  expect(screen.getByText('实际持有 2 只')).toBeVisible()
+  expect(screen.getByText('回测范围 6 只')).toBeVisible()
   expect(screen.getByText(/初始资金 CNY 80,000.00/)).toBeVisible()
   expect(screen.getByText('25.00%')).toBeVisible()
   expect(screen.getByText('25.00%')).toHaveClass('return-positive')
@@ -211,6 +234,8 @@ test('negative returns are green and unfinished runs do not show final performan
   expect(screen.getByText('-8.00%')).toHaveClass('return-negative')
   const active = within(screen.getByRole('article', { name: '回测 r2' }))
   expect(active.getByText(/尚无最终绩效/)).toBeVisible()
+  expect(active.getByText('回测范围 6 只')).toBeVisible()
+  expect(active.queryByText(/实际持有/)).toBeNull()
   expect(active.queryByText('累计收益')).toBeNull()
 })
 

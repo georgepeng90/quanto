@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import sqlite3
+from contextlib import closing
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from threading import Lock
@@ -200,6 +201,74 @@ def test_chart_endpoints_preserve_extremes_and_bound_allocation(tmp_path):
     logs = client.get(f"/api/runs/{run.run_id}/logs?tail=true&limit=2", headers=headers).json()
     assert len(logs["items"]) == 2
     assert logs["items"][-1]["seq"] > logs["items"][0]["seq"]
+
+
+def test_results_and_allocation_use_positive_shares_from_complete_positions(tmp_path):
+    store, run, _ = ready_run(tmp_path)
+    service = WorkbenchService(store.root)
+    assert run_until_finished(store, run.job_id).state == "succeeded"
+    root = store.artifact_root / run.job_id / "final"
+    days = [f"2024-01-{day:02d}" for day in range(1, 10)]
+    _replace_tables(root, {"positions": [
+        {"date": day, "symbol": symbol,
+         "shares": 1 if (symbol == "A" and day == days[0]) or (symbol == "C" and day == days[4]) else 0,
+         "sellable_shares": 0, "market_value": 10 if symbol == "A" and day == days[0] else 0,
+         "weight": 0.5 if symbol == "B" else 0, "cost_basis": 0,
+         "unrealized_pnl": 0, "realized_pnl": 0}
+        for day in days for symbol in ("C", "B", "A")]})
+
+    allocation = service.chart(run.run_id, "allocation", max_points=4)
+    assert allocation["total_rows"] == 18
+    assert allocation["sampled"] is True
+    assert len(allocation["items"]) <= 4
+    assert [row["date"] for row in allocation["items"]] == [days[0], days[0], days[-1], days[-1]]
+    assert {row["symbol"] for row in allocation["items"]} == {"A", "C"}
+    assert next(row for row in allocation["items"] if row["date"] == days[-1] and row["symbol"] == "A")["weight"] == 0
+    assert service.chart(run.run_id, "allocation", days[1], days[3], 2)["items"] == []
+    assert service.results(run.run_id)["held_symbols"] == ["A", "C"]
+
+
+def test_unfinished_result_has_unknown_held_symbols(tmp_path):
+    store, run, _ = ready_run(tmp_path)
+    assert WorkbenchService(store.root).results(run.run_id)["held_symbols"] is None
+
+
+def test_all_cash_allocation_and_summary_are_empty(tmp_path):
+    store, run, _ = ready_run(tmp_path)
+    assert run_until_finished(store, run.job_id).state == "succeeded"
+    root = store.artifact_root / run.job_id / "final"
+    _replace_tables(root, {"positions": [
+        {"date": day, "symbol": "A", "shares": 0, "sellable_shares": 0,
+         "market_value": 0, "weight": 0, "cost_basis": 0,
+         "unrealized_pnl": 0, "realized_pnl": 0}
+        for day in ("2024-01-01", "2024-01-02")]})
+    service = WorkbenchService(store.root)
+    assert service.chart(run.run_id, "allocation", max_points=2) == {
+        "items": [], "total_rows": 0, "sampled": False}
+    assert service.results(run.run_id)["held_symbols"] == []
+
+
+def test_allocation_rebuilds_legacy_chart_cache(tmp_path):
+    store, run, _ = ready_run(tmp_path)
+    assert run_until_finished(store, run.job_id).state == "succeeded"
+    root = store.artifact_root / run.job_id / "final"
+    _replace_tables(root, {"positions": [
+        {"date": "2024-01-01", "symbol": symbol, "shares": shares,
+         "sellable_shares": shares, "market_value": shares, "weight": shares,
+         "cost_basis": 0, "unrealized_pnl": 0, "realized_pnl": 0}
+        for symbol, shares in (("A", 1), ("B", 0))]})
+    receipt = json.loads((root.parent / "control" / "receipt.json").read_text(encoding="utf-8"))
+    index = ResultIndex(store.root, run.run_id, receipt["result"]["hashes"])
+    index.ensure(root, lambda: None)
+    with closing(sqlite3.connect(index.path)) as db, db:
+        db.execute("UPDATE meta SET value='3' WHERE key='version'")
+        db.execute("INSERT INTO chart_cache VALUES (?,?,1)", (
+            json.dumps(["allocation", None, None, 2]),
+            json.dumps({"items": [{"date": "2024-01-01", "symbol": "B", "weight": 0}],
+                        "total_rows": 2, "sampled": False})))
+    chart = WorkbenchService(store.root).chart(run.run_id, "allocation", max_points=2)
+    assert [row["symbol"] for row in chart["items"]] == ["A"]
+    assert chart["total_rows"] == 1
 
 
 def test_partial_table_filters_without_creating_final_index(tmp_path):

@@ -32,6 +32,6 @@ export type ChartName = 'curves' | 'monthly_returns' | 'annual_returns' | 'alloc
 export type ChartQuery = { date_from?: string; date_to?: string; max_points?: number }
 export type ChartData = { items: TableRow[]; total_rows: number; sampled: boolean }
 export type MetricDefinition = Record<string, unknown>
-export type RunResult = { run_id: string; state: RunState; completed_through: string | null; metrics: Record<string, number | null> | null; metric_definitions: Record<string, MetricDefinition>; warnings?: string[]; metadata?: Record<string, unknown>; error?: string | null; detail_url: string }
+export type RunResult = { run_id: string; state: RunState; completed_through: string | null; metrics: Record<string, number | null> | null; metric_definitions: Record<string, MetricDefinition>; held_symbols: string[] | null; warnings?: string[]; metadata?: Record<string, unknown>; error?: string | null; detail_url: string }
 export type ComparisonRun = { run_id: string; state: RunState; metrics: Record<string, number | null> | null; metric_definitions: Record<string, MetricDefinition> | null; [key: string]: unknown }
 export type ComparisonResult = { runs: ComparisonRun[]; differences: Record<string, unknown[]>; directly_comparable: boolean }

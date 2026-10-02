@@ -155,6 +155,68 @@ def validate(root: Path, docs: Path):
     return protocol, selection, lookup
 
 
+def validate_followup(root: Path, docs: Path, protocol, selection, lookup):
+    plan_path = docs / "window120_followup_plan.json"
+    if not plan_path.exists():
+        return None
+    plan = load(plan_path)
+    protocol_hash = digest(root / "protocol.json")
+    selection_hash = digest(root / "selection.json")
+    require(plan.get("protocol_sha256") == protocol_hash
+            and plan.get("selection_sha256") == selection_hash
+            and plan.get("main_results_sha256") == digest(docs / "results.json")
+            and plan.get("candidate") == "w120_v12", "Follow-up plan differs from frozen evidence")
+    expected = {("w120_v12", "full", 2), ("w120_v12", "late", 2)}
+    expected |= {("w120_v12", period, 1) for period in RESTARTS}
+    require({("w120_v12", job["period"], job["cost_multiplier"]) for job in plan["jobs"]} == expected
+            and len(plan["jobs"]) == len(expected), "Unexpected follow-up plan jobs")
+    result = load(docs / "window120_followup.json")
+    require(result.get("verified") is True and result.get("plan_sha256") == digest(plan_path)
+            and result.get("protocol_sha256") == protocol_hash
+            and result.get("selection_sha256") == selection_hash, "Follow-up verification differs")
+    rows = result.get("results")
+    require(isinstance(rows, list) and len(rows) == len(expected), "Incomplete follow-up results")
+    extra = {}
+    for row in rows:
+        key = row["candidate"], row["period"], row["cost_multiplier"]
+        require(key in expected and key not in extra and key not in lookup, f"Unexpected follow-up run: {key}")
+        require(row.get("protocol_sha256") == protocol_hash
+                and row.get("parameters") == protocol["candidates"][key[0]]
+                and all(metric in row.get("metrics", {}) for metric in METRICS),
+                f"Follow-up identity or metrics differ: {key}")
+        folder = root / "runs" / f"{key[1]}__{key[0]}__cost{key[2]}"
+        require(load(folder / "summary.json") == row, f"Follow-up summary differs: {key}")
+        require(set(row.get("artifacts", {})) == ARTIFACTS, f"Follow-up artifacts incomplete: {key}")
+        for filename, hash_value in row["artifacts"].items():
+            path = folder / filename
+            require(path.is_file() and digest(path) == hash_value, f"Follow-up artifact differs: {path}")
+        extra[key] = row
+    require(set(extra) == expected, "Follow-up result identities incomplete")
+
+    diagnostic_path = docs / "target13-diagnostic.json"
+    diagnostic = load(diagnostic_path)
+    replay = diagnostic.get("replay_verification", {})
+    trigger = diagnostic.get("trigger", {})
+    swing = diagnostic.get("largest_daily_gap_change", {})
+    require(diagnostic.get("protocol_sha256") == protocol_hash
+            and replay.get("baseline_metric_dictionary_equal") is True
+            and replay.get("w60_v13_metric_dictionary_equal") is True
+            and trigger.get("risk_code") == "EXPOSURE_REDUCTION"
+            and trigger.get("baseline_current_exposure", 1) < .8
+            and trigger.get("w60_v13_current_exposure", 0) > .8
+            and swing.get("date") == "2025-07-15"
+            and isinstance(swing.get("change"), (int, float))
+            and math.isfinite(swing["change"]),
+            "Target-13 diagnostic is not tied to frozen replay metrics")
+    for name in (BASELINE, "w60_v13"):
+        audited = lookup[name, "validation", 1]["metrics"]
+        recorded = diagnostic.get("metrics", {}).get(name, {})
+        require({"annual_return", "max_drawdown", "sharpe", "final_equity"} <= set(recorded)
+                and all(recorded[metric] == audited[metric] for metric in recorded),
+                f"Target-13 diagnostic metrics differ: {name}")
+    return extra
+
+
 def curve(root: Path, name: str, lookup):
     path = root / "runs" / f"full__{name}__cost1" / "curves.csv"
     require(digest(path) == lookup[name, "full", 1]["artifacts"]["curves.csv"], f"Curve hash differs: {name}")
@@ -224,7 +286,86 @@ def workbench_links(docs: Path, selected):
     return "<section class='panel'><h2>工作台核验记录</h2><ul>" + "".join(links) + "</ul></section>" if links else ""
 
 
-def render(docs: Path, protocol, selection, lookup):
+def followup_workbench_links(root: Path, docs: Path, extra):
+    path = docs / "workbench_followup_verified.json"
+    if not path.exists():
+        return ""
+    state = load(path)
+    require(isinstance(state, dict) and state.get("plan_sha256") == digest(docs / "window120_followup_plan.json")
+            and state.get("protocol_sha256") == digest(root / "protocol.json")
+            and state.get("selection_sha256") == digest(root / "selection.json")
+            and state.get("main_results_sha256") == digest(docs / "results.json")
+            and state.get("candidate") == "w120_v12", "Follow-up workbench verification differs")
+    records = state.get("runs")
+    require(isinstance(records, list) and len(records) == 2, "Incomplete follow-up workbench records")
+    seen = set()
+    links = []
+    for row in records:
+        key = row.get("candidate"), row.get("period"), row.get("cost_multiplier")
+        require(key in {("w120_v12", "full", 1), ("w120_v12", "late", 1)} and key not in seen
+                and row.get("verified") is True and row.get("all_metrics_equal") is True,
+                f"Invalid follow-up workbench run: {key}")
+        summary = root / "runs" / f"{key[1]}__{key[0]}__cost1" / "summary.json"
+        require(row.get("summary_sha256") == digest(summary), f"Follow-up workbench source differs: {key}")
+        url = row.get("url")
+        require(isinstance(url, str) and url.startswith(("http://", "https://")),
+                f"Invalid follow-up workbench URL: {key}")
+        seen.add(key)
+        links.append(f"<li>{esc(key[1])}: <a href='{esc(url)}'>{esc(row.get('run_id', '工作台记录'))}</a></li>")
+    require(seen == {("w120_v12", "full", 1), ("w120_v12", "late", 1)},
+            "Follow-up workbench identities incomplete")
+    return "<p>工作台核验：</p><ul>" + "".join(links) + "</ul>"
+
+
+def followup_section(root: Path, docs: Path, lookup, extra):
+    if extra is None:
+        return ""
+    baseline = lookup[BASELINE, "full", 1]["metrics"]
+    window = lookup["w120_v12", "full", 1]["metrics"]
+    validation_base = lookup[BASELINE, "validation", 1]["metrics"]
+    validation_window = lookup["w120_v12", "validation", 1]["metrics"]
+    validation_score_delta = ((validation_window["annual_return"] - .5 * validation_window["max_drawdown"])
+                              - (validation_base["annual_return"] - .5 * validation_base["max_drawdown"]))
+    full_rows = []
+    for name, metrics in ((BASELINE, baseline), ("w120_v12", window)):
+        full_rows.append([name, fmt(metrics["annual_return"], True), fmt(metrics["max_drawdown"], True),
+                          fmt(metrics["sharpe"]), fmt(metrics["average_invested_ratio"], True),
+                          fmt(metrics["execution_cost"])])
+    cost_rows = []
+    for period in ("full", "late"):
+        for name in (BASELINE, "w120_v12"):
+            normal = lookup[name, period, 1]["metrics"]
+            high = (lookup if name == BASELINE else extra)[name, period, 2]["metrics"]
+            metric = "annual_return" if period == "full" else "total_return"
+            cost_rows.append([period, name, fmt(normal[metric], True), fmt(high[metric], True),
+                              delta(high[metric], normal[metric], True), fmt(high["max_drawdown"], True),
+                              fmt(high["sharpe"]), fmt(high["execution_cost"])])
+    restart_rows = []
+    for period in RESTARTS:
+        base = lookup[BASELINE, period, 1]["metrics"]
+        for name in (BASELINE, "w120_v12"):
+            metrics = (lookup if name == BASELINE else extra)[name, period, 1]["metrics"]
+            restart_rows.append([period.removeprefix("restart_"), name, fmt(metrics["total_return"], True),
+                                 fmt(metrics["annual_return"], True), fmt(metrics["max_drawdown"], True),
+                                 fmt(metrics["sharpe"]), fmt(metrics["average_invested_ratio"], True),
+                                 delta(metrics["total_return"], base["total_return"], True)])
+    validation_note = ("验证段得分低于基准" if validation_score_delta < 0 else "验证段得分未低于基准")
+    return ("<section class='panel'><h2>120 日窗口追加诊断（事后）</h2>"
+            "<p>在查看完整 80 次主研究结果后，追加 w120_v12 的双倍成本与三个现金重启检查；"
+            "这组不在开发/验证期冻结的预选名单中，也不改变原有净值图或 80 次审计。"
+            f"{validation_note}（相差 {delta(validation_window['annual_return'] - .5 * validation_window['max_drawdown'], validation_base['annual_return'] - .5 * validation_base['max_drawdown'], True)}）。"
+            "下表呈现收益、回撤与 Sharpe 的取舍，不能据此认定稳健优胜。</p>"
+            + table(("配置", "全期 CAGR", "最大回撤", "Sharpe", "平均仓位", "交易成本/元"), full_rows)
+            + "<h3>双倍成本</h3><p>Full 比较 CAGR，late 比较区间收益；差值单位为百分点。</p>"
+            + table(("区间", "配置", "正常收益", "双倍成本收益", "收益差", "双倍成本回撤", "双倍成本 Sharpe", "交易成本/元"), cost_rows)
+            + "<h3>现金重启</h3><p>每次单独从现金和未激活宽度状态运行；区间收益差相对同起点基准，单位为百分点。</p>"
+            + table(("重启日期", "配置", "区间收益", "CAGR", "最大回撤", "Sharpe", "平均仓位", "Δ 区间收益"), restart_rows)
+            + "<p><a href='window120_followup_plan.json'>冻结追加方案</a> · "
+              "<a href='window120_followup.json'>五次追加核验</a>。</p>"
+            + followup_workbench_links(root, docs, extra) + "</section>")
+
+
+def render(root: Path, docs: Path, protocol, selection, lookup, extra):
     selected = selection["selected"]
     parameter_rows = []
     for name in NAMES:
@@ -291,6 +432,21 @@ def render(docs: Path, protocol, selection, lookup):
         ("protocol.json", "冻结协议"), ("selection.json", "早期预选与路径分组"),
         ("results.json", "全部审计结果"), ("verification.json", "审计验证")))
     selected_label = "、".join(selected) if selected else "无独立候选路径"
+    diagnostic = load(docs / "target13-diagnostic.json") if extra is not None else None
+    diagnostic_note = ""
+    if diagnostic is not None:
+        trigger = diagnostic["trigger"]
+        swing = diagnostic["largest_daily_gap_change"]
+        diagnostic_note = (
+            "<section class='panel'><h2>13% 目标波动率的路径诊断</h2>"
+            f"<p>冻结验证段的两次内存重跑与原指标字典完全一致。{esc(trigger['signal_date'])} 评估时，"
+            f"w60_v13 已有持仓占净值 {fmt(trigger['w60_v13_current_exposure'], True)}，触发 {fmt(.8, True)} 风险上限修复；"
+            f"其新目标约 {fmt(trigger['w60_v13_proposed_target_total_approx'], True)} 未执行，"
+            f"{esc(trigger['execution_date'])} 的修复改变了再平衡路径。"
+            f"{esc(swing['date'])} 的 w60_v13 相对基准净值差"
+            f"{'减少' if swing['change'] < 0 else '增加'} {fmt(abs(swing['change']))} 元。"
+            "后续路径与费用也影响最终差距，这一事件并非完整因果归因。"
+            "<a href='target13-diagnostic.json'>逐项诊断证据</a>。</p></section>")
     blocks = ["<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>",
               "<meta name='viewport' content='width=device-width,initial-scale=1'>",
               "<title>第五轮 · 波动率邻域研究</title>",
@@ -326,6 +482,7 @@ def render(docs: Path, protocol, selection, lookup):
               "<section class='panel'><h2>现金重启日期敏感性</h2><p>每次从标示日期重新以现金和未激活宽度状态运行至 2026-09-30；"
               "这不是全期收益拼接，也不是未查看留出样本。Δ 区间收益以百分点表示，相对同起点 baseline。</p>",
               table(("重启日期", "配置", "区间收益", "CAGR", "最大回撤", "Sharpe", "平均仓位", "交易成本/元", "Δ 区间收益"), restart_rows), "</section>",
+              followup_section(root, docs, lookup, extra), diagnostic_note,
               "<section class='panel'><h2>研究边界</h2><p>ETF 历史目录与存续样本选择可能带来幸存者偏差；流动性筛选也使用当前可得资料。"
               "供应商价格、复权和公司行为口径尚未得到全历史认证，先前六月五只证券的核对仅是局部抽查。"
               "现金利息设为零，投资范围仅为 ETF 股票类资产；每周信号、次日开盘成交、整手及费用假设可能偏离实际。"
@@ -344,8 +501,9 @@ def main():
     args = parser.parse_args()
     root, docs = args.root.resolve(), args.docs.resolve()
     protocol, selection, lookup = validate(root, docs)
+    extra = validate_followup(root, docs, protocol, selection, lookup)
     png = chart(root, docs, selection["selected"], lookup)
-    page = render(docs, protocol, selection, lookup)
+    page = render(root, docs, protocol, selection, lookup, extra)
     print(f"Wrote {png}\nWrote {page}")
 
 

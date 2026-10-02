@@ -1,0 +1,23 @@
+{
+  "verified": true,
+  "main_research_runs": 80,
+  "posthoc_sensitivity_runs": 5,
+  "workbench_replays": 8,
+  "tables": 11,
+  "table_rows_including_headers": 128,
+  "unique_workbench_links_including_baseline": 9,
+  "relative_links_exist": true,
+  "plot_visually_inspected": true,
+  "checks": [
+    "Main and follow-up protocol, selection and artifact hashes validated by report generator",
+    "HTML has all 15 configurations and costs/start-date comparisons",
+    "Eight workbench metric dictionaries and provenance identities independently checked through API",
+    "PNG net equity and drawdown inspected for readable axes, labels and traces",
+    "Frozen numerical sources and original early selection unchanged"
+  ],
+  "artifact_sha256": {
+    "dashboard.html": "c238349ba8317ef9718f13aca00e578a8cdad57a4026ab70fcbd8266a6414a8b",
+    "comparison.png": "1dbd0da11012df57c5307721ed9ddff3893052063ab8d72fcc53392921ac8ca0"
+  },
+  "report_script_sha256": "f254b54d73048a69abe17067b8f6951bb7c2ba8a5d783558d424072f7c1d5e22"
+}

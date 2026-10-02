@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import argparse
 import csv
+from datetime import datetime
 import hashlib
 import html
 import json
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -23,7 +25,7 @@ FAMILY_NAMES = {
 }
 BASELINE_NAMES = {
     "trend_20_20_k3": "20日轮动", "guarded_momentum_200_v0.1": "200日防守动量",
-    "diversified_200_inverse_vol": "200日逆波动分散", "buy_hold": "全额买入持有",
+    "diversified_200_inverse_vol": "200\u65e5\u9006\u6ce2\u52a8\u5206\u6563", "buy_hold": "\u4e70\u5165\u6301\u6709\uff08\u4e0a\u965080%\uff09",
     "cash_buy_hold_40": "40%买入持有", "group_equal_80": "分组等权80%",
     "group_equal_40": "分组等权40%",
 }
@@ -39,6 +41,14 @@ def fmt(value, percent=False):
     return f"{value:.2%}" if percent else f"{value:.3f}"
 
 
+def fmt_cost(value):
+    return "\u2014" if value is None else f"{value:,.2f} \u5143"
+
+
+def sha256(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def validate(results, protocol):
     candidates = set(protocol["candidates"])
     keys = [(r["candidate"], r["period"], r["cost_multiplier"]) for r in results]
@@ -47,8 +57,11 @@ def validate(results, protocol):
     return keys, expected
 
 
-def read_curve(root, name):
+def read_curve(root, name, result):
     path = root / "runs" / f"full__{name}__cost1" / "curves.csv"
+    expected_hash = result["artifacts"].get("curves.csv")
+    if not expected_hash or hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
+        raise ValueError(f"Curve is absent from or differs from audited artifacts: {path}")
     with path.open(encoding="utf-8-sig", newline="") as stream:
         rows = list(csv.DictReader(stream))
     if not rows or "date" not in rows[0] or "equity" not in rows[0]:
@@ -56,84 +69,57 @@ def read_curve(root, name):
     return [r["date"] for r in rows], [float(r["equity"]) for r in rows]
 
 
-def font(size):
-    for path in ("C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/calibri.ttf"):
-        if Path(path).exists():
-            return ImageFont.truetype(path, size)
-    return ImageFont.load_default()
-
-
 def chart(root, docs, protocol, results, selected):
-    W, H = 1500, 760
-    im = Image.new("RGB", (W, H), "white")
-    draw = ImageDraw.Draw(im)
-    title, label, small = font(25), font(17), font(13)
-    left = (85, 100, 780, 665)
-    right = (865, 100, 1445, 665)
-    draw.text((85, 28), "Round 3: full-period equity and risk/return", fill="#142338", font=title)
-
+    lookup = {(r["candidate"], r["period"], r["cost_multiplier"]): r for r in results}
+    fig, (equity_ax, scatter_ax) = plt.subplots(1, 2, figsize=(16, 7), constrained_layout=True)
     chart_names = list(selected) + FINALIST_BASELINES
-    series = [(name, *read_curve(root, name)) for name in chart_names]
+    series = [(name, *read_curve(root, name, lookup[name, "full", 1])) for name in chart_names]
     dates0 = series[0][1]
     if any(dates != dates0 for _, dates, _ in series):
         raise ValueError("Full-period chart curves do not share the same dates")
-    vals = [v for _, _, line in series for v in line]
-    lo, hi = min(vals), max(vals)
-    if lo == hi:
-        hi += 1
-    palette = ["#1261a0", "#de6b35", "#419d78", "#845ec2", "#a87825", "#52616b"]
-    draw.rectangle(left, outline="#6b7785", width=2)
-    for frac in (0, .25, .5, .75, 1):
-        y = left[3] - round(frac * (left[3] - left[1]))
-        value = lo + (hi - lo) * frac
-        draw.line((left[0], y, left[2], y), fill="#e7ebef")
-        draw.text((left[0] - 77, y - 8), f"{value / 1e6:.2f}m", fill="#34495e", font=small)
+    dates = [datetime.strptime(value, "%Y-%m-%d") for value in dates0]
+    palette = plt.get_cmap("tab10").colors
     for idx, (name, _, line) in enumerate(series):
-        pts = [(left[0] + round(i * (left[2] - left[0]) / (len(line) - 1)),
-                left[3] - round((v - lo) / (hi - lo) * (left[3] - left[1]))) for i, v in enumerate(line)]
-        draw.line(pts, fill=palette[idx % len(palette)], width=3 if name in selected else 2)
-        draw.text((left[0] + (idx % 2) * 310, 680 + (idx // 2) * 21),
-                  f"{'★ ' if name in selected else ''}{name}", fill=palette[idx % len(palette)], font=small)
-    draw.text((left[0], 72), "Equity (CNY)", fill="#34495e", font=label)
-    draw.text((left[0], 728), f"{dates0[0]}  →  {dates0[-1]}", fill="#34495e", font=small)
+        baseline = name not in selected
+        equity_ax.plot(dates, line, label=("* " if name in selected else "") + name,
+                       color=palette[idx], linewidth=2.6 if name in selected else 1.7,
+                       linestyle="--" if baseline else "-")
+    equity_ax.set_title("Full-period net value (same start date)")
+    equity_ax.set_ylabel("Equity (CNY, millions)")
+    equity_ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda value, _: f"{value / 1e6:.1f}"))
+    locator = mdates.AutoDateLocator()
+    equity_ax.xaxis.set_major_locator(locator)
+    equity_ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+    equity_ax.grid(alpha=.25)
+    equity_ax.legend(fontsize=8, loc="best")
 
     full = {r["candidate"]: r["metrics"] for r in results if r["period"] == "full" and r["cost_multiplier"] == 1}
-    scatter_names = [name for name in protocol["candidates"] if name.startswith(tuple(FAMILY_NAMES.keys()))]
-    # Use the frozen family map to define exactly the twenty experimental variants.
     scatter_names = [name for names in protocol["families"].values() for name in names]
     points = [(full[n]["annual_return"], full[n]["max_drawdown"], n) for n in scatter_names]
     points += [(full[n]["annual_return"], full[n]["max_drawdown"], n) for n in protocol["baselines"]]
-    xmin, xmax = min(p[0] for p in points), max(p[0] for p in points)
-    ymin, ymax = min(p[1] for p in points), max(p[1] for p in points)
-    if xmin == xmax: xmax += .01
-    if ymin == ymax: ymax += .01
-    def xy(x, y):
-        return (right[0] + round((x - xmin) / (xmax - xmin) * (right[2] - right[0])),
-                right[3] - round((y - ymin) / (ymax - ymin) * (right[3] - right[1])))
-    draw.rectangle(right, outline="#6b7785", width=2)
-    for i in range(5):
-        x = xmin + (xmax - xmin) * i / 4
-        y = ymin + (ymax - ymin) * i / 4
-        px, py = xy(x, y)
-        draw.line((px, right[1], px, right[3]), fill="#e7ebef")
-        draw.line((right[0], py, right[2], py), fill="#e7ebef")
-        draw.text((px - 22, right[3] + 6), f"{x:.0%}", fill="#34495e", font=small)
-        draw.text((right[0] - 55, py - 7), f"{y:.0%}", fill="#34495e", font=small)
+    baseline_points = [point for point in points if point[2] in protocol["baselines"]]
+    candidate_points = [point for point in points if point[2] not in protocol["baselines"]]
+    scatter_ax.scatter([x for x, _, _ in candidate_points], [y for _, y, _ in candidate_points],
+                       marker="o", color="#1769aa", alpha=.78, label="20 family variants")
+    scatter_ax.scatter([x for x, _, _ in baseline_points], [y for _, y, _ in baseline_points],
+                       marker="D", color="#778899", alpha=.88, label="7 baselines")
     for x, y, name in points:
-        px, py = xy(x, y)
-        if name in protocol["baselines"]:
-            rad, color = 7, "#7b8794"
-            draw.polygon([(px, py-rad), (px+rad, py), (px, py+rad), (px-rad, py)], fill=color)
-        else:
-            rad, color = 6, "#1261a0"
-            draw.ellipse((px-rad, py-rad, px+rad, py+rad), fill=color)
         if name in selected:
-            draw.ellipse((px-11, py-11, px+11, py+11), outline="#e05858", width=3)
-    draw.text((right[0], 72), "All 20 family variants and seven baselines", fill="#34495e", font=label)
-    draw.text((right[0], 680), "Annual return →     Max drawdown ↑     Red ring: preselected top three", fill="#34495e", font=small)
-    draw.text((right[0], 703), "Blue circle: family variant     Gray diamond: baseline", fill="#34495e", font=small)
+            scatter_ax.scatter([x], [y], s=150, facecolors="none", edgecolors="#d64045", linewidths=2)
+            scatter_ax.annotate(name, (x, y), xytext=(5, 6), textcoords="offset points", fontsize=8)
+        elif name in FINALIST_BASELINES:
+            scatter_ax.annotate(name, (x, y), xytext=(5, 6), textcoords="offset points", fontsize=8)
+    scatter_ax.set_title("Full-period return and drawdown")
+    scatter_ax.set_xlabel("Annual return")
+    scatter_ax.set_ylabel("Maximum drawdown")
+    scatter_ax.xaxis.set_major_formatter(plt.PercentFormatter(1))
+    scatter_ax.yaxis.set_major_formatter(plt.PercentFormatter(1))
+    scatter_ax.grid(alpha=.25)
+    scatter_ax.legend(fontsize=9)
+    fig.suptitle("Round 3: preselected finalists and complete comparison", fontsize=15)
     out = docs / "comparison.png"
-    im.save(out, format="PNG", optimize=True)
+    fig.savefig(out, dpi=160)
+    plt.close(fig)
     return out
 
 
@@ -157,7 +143,7 @@ def report(docs, protocol, results, training, selection):
         finalist = "★" if winner in selected else ""
         chunks.append(f"<tr><td>{cell(FAMILY_NAMES.get(family, family))}</td><td>{cell(winner)}</td><td>{finalist}</td></tr>")
     chunks.append("</tbody></table><h2>全部20组候选策略</h2><p>参数来自冻结协议；结果按家族及预先固定的 variant 顺序呈现，供完整比较。</p>")
-    chunks.append('<table><thead><tr><th>家族</th><th>候选</th><th>参数说明</th><th>冻结参数</th><th>训练入选</th><th>前三</th><th>Full年化</th><th>Full回撤</th><th>Full Sharpe</th><th>Late年化</th><th>Late回撤</th><th>Late Sharpe</th><th>Full成本</th><th>Late成本</th></tr></thead><tbody>')
+    chunks.append('<table><thead><tr><th>\u5bb6\u65cf</th><th>\u5019\u9009</th><th>\u53c2\u6570\u8bf4\u660e</th><th>\u51bb\u7ed3\u53c2\u6570</th><th>\u8bad\u7ec3\u5165\u9009</th><th>\u524d\u4e09</th><th>Full\u5e74\u5316\u6536\u76ca</th><th>Full\u6700\u5927\u56de\u64a4</th><th>Full Sharpe</th><th>Late\u533a\u95f4\u6536\u76ca</th><th>Late\u6700\u5927\u56de\u64a4</th><th>Late Sharpe</th><th>Full\u6210\u672c\uff08\u5143\uff09</th><th>Late\u6210\u672c\uff08\u5143\uff09</th></tr></thead><tbody>')
     for family, names in protocol["families"].items():
         for name in names:
             f = lookup[name, "full", 1]["metrics"]
@@ -169,20 +155,20 @@ def report(docs, protocol, results, training, selection):
             description = protocol["descriptions"][family][variant] if variant is not None else ""
             vals = [FAMILY_NAMES.get(family, family), name, description, params, trainmark, finalmark,
                     fmt(f["annual_return"], True), fmt(f["max_drawdown"], True), fmt(f["sharpe"]),
-                    fmt(l["annual_return"], True), fmt(l["max_drawdown"], True), fmt(l["sharpe"]),
-                    fmt(f["execution_cost"], True), fmt(l["execution_cost"], True)]
+                    fmt(l["total_return"], True), fmt(l["max_drawdown"], True), fmt(l["sharpe"]),
+                    fmt_cost(f["execution_cost"]), fmt_cost(l["execution_cost"])]
             chunks.append("<tr>" + "".join(f'<td class="{"param" if i == 2 else ""}">{cell(v)}</td>' for i, v in enumerate(vals)) + "</tr>")
-    chunks.append("</tbody></table><h2>基准策略</h2><table><thead><tr><th>基准</th><th>Full年化</th><th>Full回撤</th><th>Full Sharpe</th><th>Late年化</th><th>Late回撤</th><th>Late Sharpe</th><th>Full成本</th><th>Late成本</th></tr></thead><tbody>")
+    chunks.append("</tbody></table><h2>\u57fa\u51c6\u7b56\u7565</h2><table><thead><tr><th>\u57fa\u51c6</th><th>Full\u5e74\u5316\u6536\u76ca</th><th>Full\u6700\u5927\u56de\u64a4</th><th>Full Sharpe</th><th>Late\u533a\u95f4\u6536\u76ca</th><th>Late\u6700\u5927\u56de\u64a4</th><th>Late Sharpe</th><th>Full\u6210\u672c\uff08\u5143\uff09</th><th>Late\u6210\u672c\uff08\u5143\uff09</th></tr></thead><tbody>")
     for name in protocol["baselines"]:
         f, l = lookup[name, "full", 1]["metrics"], lookup[name, "late", 1]["metrics"]
-        chunks.append("<tr>" + "".join(f"<td>{cell(v)}</td>" for v in [BASELINE_NAMES.get(name, name), fmt(f['annual_return'], True), fmt(f['max_drawdown'], True), fmt(f['sharpe']), fmt(l['annual_return'], True), fmt(l['max_drawdown'], True), fmt(l['sharpe']), fmt(f['execution_cost'], True), fmt(l['execution_cost'], True)]) + "</tr>")
-    chunks.append("</tbody></table><h2>双倍成本压力测试</h2><table><thead><tr><th>预选配置</th><th>时段</th><th>成本倍数</th><th>年化收益</th><th>最大回撤</th><th>Sharpe</th><th>交易成本</th></tr></thead><tbody>")
+        chunks.append("<tr>" + "".join(f"<td>{cell(v)}</td>" for v in [BASELINE_NAMES.get(name, name), fmt(f['annual_return'], True), fmt(f['max_drawdown'], True), fmt(f['sharpe']), fmt(l['total_return'], True), fmt(l['max_drawdown'], True), fmt(l['sharpe']), fmt_cost(f['execution_cost']), fmt_cost(l['execution_cost'])]) + "</tr>")
+    chunks.append("</tbody></table><h2>\u53cc\u500d\u6210\u672c\u538b\u529b\u6d4b\u8bd5</h2><table><thead><tr><th>\u9884\u9009\u914d\u7f6e</th><th>\u65f6\u6bb5</th><th>\u6210\u672c\u500d\u6570</th><th>\u6536\u76ca\uff08Full\u5e74\u5316 / Late\u533a\u95f4\uff09</th><th>\u6700\u5927\u56de\u64a4</th><th>Sharpe</th><th>\u4ea4\u6613\u6210\u672c\uff08\u5143\uff09</th></tr></thead><tbody>")
     stress_names = selected + ["group_equal_80", "group_equal_40"]
     for name in stress_names:
         for period in ("full", "late"):
             m = lookup[name, period, 2]["metrics"]
-            chunks.append("<tr>" + "".join(f"<td>{cell(v)}</td>" for v in [name, period, "2×", fmt(m['annual_return'], True), fmt(m['max_drawdown'], True), fmt(m['sharpe']), fmt(m['execution_cost'], True)]) + "</tr>")
-    chunks.append("</tbody></table><p>成本列为佣金与滑点合计相对于初始资金的比例。报告只呈现冻结筛选名单与全部结果，不据 late 表现重选。</p></body></html>")
+            chunks.append("<tr>" + "".join(f"<td>{cell(v)}</td>" for v in [name, period, "2×", (fmt(m['annual_return'] if period == "full" else m['total_return'], True)), fmt(m['max_drawdown'], True), fmt(m['sharpe']), fmt_cost(m['execution_cost'])]) + "</tr>")
+    chunks.append("</tbody></table><p>\u6210\u672c\u4e3a\u4f63\u91d1\u4e0e\u6ed1\u70b9\u5408\u8ba1\u7684\u4eba\u6c11\u5e01\u91d1\u989d\u3002</p></body></html>")
     path = docs / "dashboard.html"
     path.write_text("\n".join(chunks), encoding="utf-8")
     return path
@@ -200,13 +186,24 @@ def main():
     selection = load(docs / "selection.json")
     verification = load(docs / "verification.json")
     result_hash = hashlib.sha256((docs / "results.json").read_bytes()).hexdigest()
-    if not verification.get("verified") or verification.get("results_sha256") != result_hash:
+    protocol_hash = sha256(root / "protocol.json")
+    training_hash = sha256(docs / "training_selection.json")
+    if sha256(docs / "protocol.json") != protocol_hash:
+        raise ValueError("Documentation protocol differs from the frozen research protocol")
+    if training.get("protocol_sha256") != protocol_hash:
+        raise ValueError("Training selection does not match the frozen protocol")
+    if selection.get("protocol_sha256") != protocol_hash or selection.get("training_selection_sha256") != training_hash:
+        raise ValueError("Final selection does not match the frozen protocol and training selection")
+    if (not verification.get("verified") or verification.get("protocol_sha256") != protocol_hash
+            or verification.get("results_sha256") != result_hash):
         raise ValueError("Final audit verification is missing or does not match results.json")
     keys, expected = validate(results, protocol)
     stress_names = selection["selected"] + ["group_equal_80", "group_equal_40"]
     expected |= {(name, period, 2) for name in stress_names for period in ("full", "late")}
     if len(results) != 118 or len(set(keys)) != len(keys) or set(keys) != expected:
         raise ValueError(f"Expected 118 unique audited rows; found {len(results)} rows and {len(set(keys))} identities")
+    if any(row.get("protocol_sha256") != protocol_hash for row in results):
+        raise ValueError("One or more result rows do not match the frozen protocol")
     if len(protocol["families"]) != 10 or sum(map(len, protocol["families"].values())) != 20:
         raise ValueError("Protocol does not define the expected ten families and twenty variants")
     chart_path = chart(root, docs, protocol, results, selection["selected"])

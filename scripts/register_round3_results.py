@@ -6,12 +6,15 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import sqlite3
 import tempfile
 import time
 from uuid import uuid4
 import zipfile
 
 import httpx
+from pandas.testing import assert_frame_equal
+import pyarrow.parquet as pq
 
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.backtest.dataset_storage import write_parquet_dataset
@@ -25,6 +28,7 @@ DATASET = PROJECT / "outputs/etf-expansion-20261002/shared-cache/dataset"
 SOURCE = PROJECT / "scripts/research_round3_candidates.py"
 URL = "http://127.0.0.1:8767"
 STATE = ROOT / "workbench_state.json"
+WORKSPACE = PROJECT / "data/research-20261001"
 DATA_FILES = ("benchmark.parquet", "calendar.parquet", "events.parquet",
               "instruments.parquet", "manifest.json", "prices.parquet", "status.parquet")
 
@@ -56,7 +60,38 @@ def dataset_hash(protocol):
         normalized = Path(directory)
         write_parquet_dataset(load_dataset(DATASET), normalized)
         hashes = {name: digest(content) for name, content in source_files(normalized).items()}
-    return digest(json_bytes(hashes))
+    return digest(json_bytes(hashes)), hashes
+
+
+def verify_dataset(identity, api_hash, normalized_hashes):
+    """Prove that the imported canonical data equals the seven frozen source files."""
+    with sqlite3.connect(f"file:{WORKSPACE / 'workbench.sqlite3'}?mode=ro", uri=True) as db:
+        row = db.execute("SELECT path, content_hash FROM datasets WHERE id=?", (identity,)).fetchone()
+    if row is None or row[1] != api_hash:
+        raise ValueError("Workbench dataset database identity differs")
+    imported = Path(row[0]).resolve()
+    if not imported.is_relative_to(WORKSPACE.resolve()):
+        raise ValueError("Workbench dataset is outside the expected workspace")
+    actual_files = source_files(imported)
+    if set(actual_files) - set(DATA_FILES) != {"result.json"}:
+        raise ValueError("Imported dataset has unexpected files")
+    if digest(json_bytes({name: digest(content) for name, content in actual_files.items()})) != api_hash:
+        raise ValueError("Workbench dataset database hash differs from files")
+    actual_hashes = {name: digest(actual_files[name]) for name in DATA_FILES}
+    if actual_hashes != normalized_hashes:
+        raise ValueError("Imported canonical dataset files differ from frozen normalization")
+    source, registered = load_dataset(DATASET), load_dataset(imported)
+    if source.manifest != registered.manifest:
+        raise ValueError("Imported manifest differs from frozen source")
+    rows = {}
+    for name in ("prices", "benchmark", "calendar", "instruments", "status", "events"):
+        assert_frame_equal(getattr(source, name), getattr(registered, name), check_exact=True, check_dtype=True)
+        rows[name] = len(getattr(source, name))
+        if pq.read_schema(DATASET / f"{name}.parquet") != pq.read_schema(imported / f"{name}.parquet"):
+            raise ValueError(f"Imported {name} schema differs")
+    return {"dataset_version_id": identity, "workbench_content_hash": api_hash,
+            "canonical_file_hashes": actual_hashes, "canonical_rows": rows,
+            "manifest_equal": True, "tables_exact": True}
 
 
 def list_all(request, resource):
@@ -82,18 +117,19 @@ def wait_job(request, job_id, *, timeout=900):
 
 
 def ensure_dataset(request, state, protocol):
-    expected = dataset_hash(protocol)
+    expected, normalized_hashes = dataset_hash(protocol)
     state.setdefault("dataset_content_hash", expected)
     if state["dataset_content_hash"] != expected:
         raise ValueError("Saved dataset identity differs from frozen snapshot")
     matches = [item for item in list_all(request, "datasets") if item["content_hash"] == expected]
     if state.get("dataset_version_id"):
         detail = request("GET", f"/api/datasets/{state['dataset_version_id']}")
-        if detail["content_hash"] != expected:
-            raise ValueError("Saved dataset version differs from frozen snapshot")
+        state["dataset_verification"] = verify_dataset(state["dataset_version_id"], detail["content_hash"], normalized_hashes)
+        write(STATE, state)
         return state["dataset_version_id"]
     if matches:
         state["dataset_version_id"] = matches[0]["id"]
+        state["dataset_verification"] = verify_dataset(state["dataset_version_id"], matches[0]["content_hash"], normalized_hashes)
         write(STATE, state)
         return state["dataset_version_id"]
     if "import_job_id" not in state:
@@ -114,8 +150,7 @@ def ensure_dataset(request, state, protocol):
     job = wait_job(request, state["import_job_id"])
     identity = job["result"]["dataset_version_id"]
     detail = request("GET", f"/api/datasets/{identity}")
-    if detail["content_hash"] != expected:
-        raise ValueError("Imported dataset differs from frozen snapshot")
+    state["dataset_verification"] = verify_dataset(identity, detail["content_hash"], normalized_hashes)
     state["dataset_version_id"] = identity
     write(STATE, state)
     return identity

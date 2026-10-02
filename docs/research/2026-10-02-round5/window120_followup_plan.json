@@ -1,0 +1,35 @@
+{
+  "purpose": "Post-hoc follow-up of w120_v12 after the complete frozen 80-run matrix; early selection remains unchanged.",
+  "protocol_sha256": "24d23b73ef572375b2e3fcdb99c02a2590b7d9dee58e358c52b265ba5c2bb1bc",
+  "selection_sha256": "46568b4b0de53bc8f71dc1c8b3c6e4f45705a62af346817ef0c8e08f6a96ea8a",
+  "main_results_sha256": "b404e73d5cd470963b96b2856faf997d7af636455f5963a71c7ffaa16eb067f3",
+  "candidate": "w120_v12",
+  "reason": "Full CAGR 10.4542% versus baseline 10.8504%, drawdown 6.7116% versus 8.6576%; inspect lower-drawdown tradeoff despite weaker early-period selection score and slightly lower full Sharpe.",
+  "jobs": [
+    {
+      "period": "full",
+      "cost_multiplier": 2
+    },
+    {
+      "period": "late",
+      "cost_multiplier": 2
+    },
+    {
+      "period": "restart_20240701",
+      "cost_multiplier": 1
+    },
+    {
+      "period": "restart_20250701",
+      "cost_multiplier": 1
+    },
+    {
+      "period": "restart_20260401",
+      "cost_multiplier": 1
+    }
+  ],
+  "publication_periods": [
+    "full",
+    "late"
+  ],
+  "limitations": "Already inspected historical data and post-hoc choice; no independent holdout, no revision of early shortlist, no additional parameter search."
+}

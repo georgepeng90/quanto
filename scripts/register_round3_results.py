@@ -90,7 +90,10 @@ def verify_dataset(identity, api_hash, normalized_hashes):
         if pq.read_schema(DATASET / f"{name}.parquet") != pq.read_schema(imported / f"{name}.parquet"):
             raise ValueError(f"Imported {name} schema differs")
     return {"dataset_version_id": identity, "workbench_content_hash": api_hash,
+            "normalized_content_hash": digest(json_bytes(normalized_hashes)),
+            "source_file_hashes": {name: sha256(DATASET / name) for name in DATA_FILES},
             "canonical_file_hashes": actual_hashes, "canonical_rows": rows,
+            "job_receipt_sha256": digest(actual_files["result.json"]),
             "manifest_equal": True, "tables_exact": True}
 
 
@@ -126,11 +129,13 @@ def ensure_dataset(request, state, protocol):
         detail = request("GET", f"/api/datasets/{state['dataset_version_id']}")
         state["dataset_verification"] = verify_dataset(state["dataset_version_id"], detail["content_hash"], normalized_hashes)
         write(STATE, state)
+        write(DOCS / "workbench_dataset_verification.json", state["dataset_verification"])
         return state["dataset_version_id"]
     if matches:
         state["dataset_version_id"] = matches[0]["id"]
         state["dataset_verification"] = verify_dataset(state["dataset_version_id"], matches[0]["content_hash"], normalized_hashes)
         write(STATE, state)
+        write(DOCS / "workbench_dataset_verification.json", state["dataset_verification"])
         return state["dataset_version_id"]
     if "import_job_id" not in state:
         if "upload_id" not in state:
@@ -153,6 +158,7 @@ def ensure_dataset(request, state, protocol):
     state["dataset_verification"] = verify_dataset(identity, detail["content_hash"], normalized_hashes)
     state["dataset_version_id"] = identity
     write(STATE, state)
+    write(DOCS / "workbench_dataset_verification.json", state["dataset_verification"])
     return identity
 
 
@@ -209,10 +215,13 @@ def expected_rows(protocol, selection):
 
 def verify_run(request, item, row):
     run = request("GET", f"/api/runs/{item['run_id']}")
+    attempt = item["attempts"][-1]
     if run["state"] in {"failed", "cancelled", "interrupted"}:
-        raise RuntimeError(f"Workbench run {item['run_id']} ended in {run['state']}")
+        attempt.update({"state": run["state"], "job_id": run["job_id"], "error": run.get("error"),
+                        "completed_through": run.get("completed_through")})
+        return "failed"
     if run["state"] != "succeeded":
-        return False
+        return "pending"
     result = request("GET", f"/api/runs/{item['run_id']}/results")
     if result["metrics"] != row["metrics"]:
         raise ValueError(f"Metric dictionary differs: {item['run_id']}")
@@ -222,7 +231,19 @@ def verify_run(request, item, row):
         raise ValueError(f"Workbench provenance differs: {item['run_id']}")
     item["all_metrics_equal"] = True
     item["url"] = URL + "/runs/" + item["run_id"]
-    return True
+    attempt.update({"state": "succeeded", "job_id": run["job_id"], "completed_through": run["completed_through"]})
+    return "verified"
+
+
+def retryable_watchdog_failure(item):
+    attempt = item["attempts"][-1]
+    if attempt["state"] != "failed" or "WORKER_EXITED" not in (attempt.get("error") or ""):
+        return False
+    log = WORKSPACE / "artifacts" / attempt["job_id"] / "control/process.log"
+    if not log.is_file():
+        return False
+    details = log.read_text(encoding="utf-8", errors="replace")
+    return "PermissionError" in details and "heartbeat.json.tmp" in details
 
 
 def main():
@@ -270,25 +291,62 @@ def main():
             saved[key] = item
             write(STATE, state)
         for item in state["runs"]:
+            if "attempts" not in item and "run_id" in item:
+                item["attempts"] = [{"run_id": item["run_id"], "idempotency_key": item["idempotency_key"]}]
+                write(STATE, state)
             if "run_id" not in item:
                 payload = {key: item[key] for key in ("experiment_id", "expected_revision", "idempotency_key")}
                 run = request("POST", "/api/runs", json={**payload, "source": "agent"})
                 item["run_id"] = run["run_id"]
+                if "attempts" not in item:
+                    item["attempts"] = [{"idempotency_key": item["idempotency_key"]}]
+                item["attempts"][-1]["run_id"] = run["run_id"]
                 write(STATE, state)
         deadline = time.monotonic() + 3600
         while True:
             pending = []
             for item in state["runs"]:
                 key = item["candidate"], item["period"], item["cost_multiplier"]
-                if verify_run(request, item, expected[key]):
-                    write(STATE, state)
+                if item["attempts"][-1].get("state") == "failed":
                     continue
-                pending.append(item)
+                if verify_run(request, item, expected[key]) == "pending":
+                    pending.append(item)
+                else:
+                    write(STATE, state)
             if not pending:
                 break
             if time.monotonic() >= deadline:
                 raise TimeoutError(f"{len(pending)} workbench runs still incomplete; rerun to resume")
             time.sleep(5)
+        # Finish the initial queue before retrying: at most one retry run is active.
+        for item in state["runs"]:
+            key = item["candidate"], item["period"], item["cost_multiplier"]
+            if item["attempts"][-1]["state"] == "succeeded":
+                continue
+            if len(item["attempts"]) >= 2 or not retryable_watchdog_failure(item):
+                write(DOCS / "workbench_run_attempts.json", state["runs"])
+                raise RuntimeError(f"Workbench run failed after allowed attempts: {key}")
+            item["idempotency_key"] = str(uuid4())
+            item.pop("run_id")
+            item["attempts"].append({"idempotency_key": item["idempotency_key"]})
+            write(STATE, state)
+            payload = {name: item[name] for name in ("experiment_id", "expected_revision", "idempotency_key")}
+            run = request("POST", "/api/runs", json={**payload, "source": "agent"})
+            item["run_id"] = run["run_id"]
+            item["attempts"][-1]["run_id"] = run["run_id"]
+            write(STATE, state)
+            while True:
+                status = verify_run(request, item, expected[key])
+                if status != "pending":
+                    write(STATE, state)
+                    break
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(f"Workbench retry still incomplete: {key}")
+                time.sleep(5)
+            if status != "verified":
+                write(DOCS / "workbench_run_attempts.json", state["runs"])
+                raise RuntimeError(f"Workbench retry failed: {key}")
+        write(DOCS / "workbench_run_attempts.json", state["runs"])
     write(DOCS / "workbench_verified.json", state["runs"])
     print(f"Verified {len(state['runs'])} workbench results: {URL}")
 

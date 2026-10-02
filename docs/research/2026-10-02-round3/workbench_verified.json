@@ -1,0 +1,238 @@
+[
+  {
+    "candidate": "pullback_v1",
+    "period": "full",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "dc474d6b-f11f-455e-b873-e94e8efb2c43",
+    "experiment_id": "8570de03-110b-4f97-81c2-00e813a53ecf",
+    "expected_revision": 1,
+    "idempotency_key": "cbc1231f-591e-45f6-906b-1721b548639a",
+    "attempts": [
+      {
+        "run_id": "c1808e3d-45bd-43b8-b426-e8cf920832a3",
+        "idempotency_key": "79c703c6-9fbc-4e2b-bd92-f16544f858a8",
+        "state": "failed",
+        "job_id": "d29b2953-a26f-4284-9d6f-52c511e1bfb7",
+        "error": "WORKER_EXITED: 工作进程异常退出",
+        "completed_through": "2024-05-23"
+      },
+      {
+        "idempotency_key": "cbc1231f-591e-45f6-906b-1721b548639a",
+        "run_id": "7eb5adc0-fc32-4f6a-af4e-0a949e6bb0c2",
+        "state": "succeeded",
+        "job_id": "e317e1c7-9227-4146-91f3-cc2025657f68",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "run_id": "7eb5adc0-fc32-4f6a-af4e-0a949e6bb0c2",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/7eb5adc0-fc32-4f6a-af4e-0a949e6bb0c2"
+  },
+  {
+    "candidate": "breadth_timing_v1",
+    "period": "full",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "5ef6bb7b-5c99-4258-a991-41900758e4b4",
+    "experiment_id": "62c6790a-9b6d-4ec2-a3e2-89b8a0cd0bd9",
+    "expected_revision": 1,
+    "idempotency_key": "481139a1-81e0-4e88-92a0-5403e23af697",
+    "attempts": [
+      {
+        "run_id": "7ec9f742-64e6-4216-9263-9f9e71e44610",
+        "idempotency_key": "fd491467-72ac-4e6a-af8d-740d64207901",
+        "state": "failed",
+        "job_id": "8c36f21c-e4ae-47cd-aeda-31df0155ef40",
+        "error": "WORKER_EXITED: 工作进程异常退出",
+        "completed_through": "2024-09-27"
+      },
+      {
+        "idempotency_key": "481139a1-81e0-4e88-92a0-5403e23af697",
+        "run_id": "b4a88368-9d50-4fb4-887c-1f54f432a35d",
+        "state": "succeeded",
+        "job_id": "7aa933fa-f873-4d2c-964b-6a3f81e5194c",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "run_id": "b4a88368-9d50-4fb4-887c-1f54f432a35d",
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/b4a88368-9d50-4fb4-887c-1f54f432a35d"
+  },
+  {
+    "candidate": "low_vol_v1",
+    "period": "full",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "9a4da527-eddc-40be-8111-5c9d0b4c1615",
+    "experiment_id": "d83aa25c-7770-40e1-9ad0-c79e2a6e1678",
+    "expected_revision": 1,
+    "idempotency_key": "694cdb84-4f5b-47e5-8455-003109cb3d9a",
+    "run_id": "f0223af1-2fa8-4f3e-a21e-ae4388128cc7",
+    "attempts": [
+      {
+        "run_id": "f0223af1-2fa8-4f3e-a21e-ae4388128cc7",
+        "idempotency_key": "694cdb84-4f5b-47e5-8455-003109cb3d9a",
+        "state": "succeeded",
+        "job_id": "79d1d774-ea34-47fa-8539-73b9a60982b6",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/f0223af1-2fa8-4f3e-a21e-ae4388128cc7"
+  },
+  {
+    "candidate": "group_equal_80",
+    "period": "full",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "d7ede58b-ca17-4601-b684-7ff212bfcf3b",
+    "experiment_id": "23f4f6ec-7033-4139-ab0e-4ccf5b5a530c",
+    "expected_revision": 1,
+    "idempotency_key": "be9305b8-df98-40c0-84a6-2e42654d4e45",
+    "run_id": "43a1c93a-3a0a-4b6e-9c22-89f7e3e43171",
+    "attempts": [
+      {
+        "run_id": "43a1c93a-3a0a-4b6e-9c22-89f7e3e43171",
+        "idempotency_key": "be9305b8-df98-40c0-84a6-2e42654d4e45",
+        "state": "succeeded",
+        "job_id": "0b9b4e8f-7233-4d8f-8b6a-6a8c5c0b63ac",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/43a1c93a-3a0a-4b6e-9c22-89f7e3e43171"
+  },
+  {
+    "candidate": "group_equal_40",
+    "period": "full",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "69e0ba6f-b515-4f5e-a749-dd5ad7ccf8e5",
+    "experiment_id": "3d36b6f5-b7f3-4288-be6a-a3cf2836993a",
+    "expected_revision": 1,
+    "idempotency_key": "03a4b6f0-cac2-4046-929e-d3c3154b99c0",
+    "run_id": "30be5ff9-a6e3-4967-8f12-c965d713630a",
+    "attempts": [
+      {
+        "run_id": "30be5ff9-a6e3-4967-8f12-c965d713630a",
+        "idempotency_key": "03a4b6f0-cac2-4046-929e-d3c3154b99c0",
+        "state": "succeeded",
+        "job_id": "5c399007-bf2b-4a1d-83f0-cceed2adf2d7",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/30be5ff9-a6e3-4967-8f12-c965d713630a"
+  },
+  {
+    "candidate": "pullback_v1",
+    "period": "late",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "dc474d6b-f11f-455e-b873-e94e8efb2c43",
+    "experiment_id": "c038c9c5-9c8a-4ac6-ab1d-08fb99a528e2",
+    "expected_revision": 1,
+    "idempotency_key": "1a0572a0-3f52-473f-a69a-935804ff2f17",
+    "run_id": "b5357010-4d2b-4220-a8bf-dcc07fb53a33",
+    "attempts": [
+      {
+        "run_id": "b5357010-4d2b-4220-a8bf-dcc07fb53a33",
+        "idempotency_key": "1a0572a0-3f52-473f-a69a-935804ff2f17",
+        "state": "succeeded",
+        "job_id": "e854009b-a04b-4561-ba33-5ea4a134dfff",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/b5357010-4d2b-4220-a8bf-dcc07fb53a33"
+  },
+  {
+    "candidate": "breadth_timing_v1",
+    "period": "late",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "5ef6bb7b-5c99-4258-a991-41900758e4b4",
+    "experiment_id": "33cb81f4-9b6a-4cd5-abac-65a1c1cf65d0",
+    "expected_revision": 1,
+    "idempotency_key": "e06f06e1-d84c-42b9-9732-a40d1a99358e",
+    "run_id": "9e4d8b6d-511a-473a-a9a8-91778be65384",
+    "attempts": [
+      {
+        "run_id": "9e4d8b6d-511a-473a-a9a8-91778be65384",
+        "idempotency_key": "e06f06e1-d84c-42b9-9732-a40d1a99358e",
+        "state": "succeeded",
+        "job_id": "835b9784-0ad8-45b7-853c-deb625d51789",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/9e4d8b6d-511a-473a-a9a8-91778be65384"
+  },
+  {
+    "candidate": "low_vol_v1",
+    "period": "late",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "9a4da527-eddc-40be-8111-5c9d0b4c1615",
+    "experiment_id": "e2badf73-09d8-4afc-87c8-11eb66dbac1b",
+    "expected_revision": 1,
+    "idempotency_key": "9e6ce379-73d4-481b-8834-fdaf29ff8275",
+    "run_id": "addc0e2a-6ab9-4690-80b8-f4b0b1e6da86",
+    "attempts": [
+      {
+        "run_id": "addc0e2a-6ab9-4690-80b8-f4b0b1e6da86",
+        "idempotency_key": "9e6ce379-73d4-481b-8834-fdaf29ff8275",
+        "state": "succeeded",
+        "job_id": "97dfb034-89cc-46a5-acbd-d3164fcf0701",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/addc0e2a-6ab9-4690-80b8-f4b0b1e6da86"
+  },
+  {
+    "candidate": "group_equal_80",
+    "period": "late",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "d7ede58b-ca17-4601-b684-7ff212bfcf3b",
+    "experiment_id": "d9520a81-0884-447c-af40-1ed94a0753d4",
+    "expected_revision": 1,
+    "idempotency_key": "55d27af7-3070-4d8d-9a86-c04db82d57e7",
+    "run_id": "5d92ccc7-83aa-4757-976b-232e0b63c0b1",
+    "attempts": [
+      {
+        "run_id": "5d92ccc7-83aa-4757-976b-232e0b63c0b1",
+        "idempotency_key": "55d27af7-3070-4d8d-9a86-c04db82d57e7",
+        "state": "succeeded",
+        "job_id": "bd160807-3bc3-4b42-b59e-4cc711d9bef9",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/5d92ccc7-83aa-4757-976b-232e0b63c0b1"
+  },
+  {
+    "candidate": "group_equal_40",
+    "period": "late",
+    "cost_multiplier": 1,
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "69e0ba6f-b515-4f5e-a749-dd5ad7ccf8e5",
+    "experiment_id": "3e2b72eb-6dc1-4f22-8360-9add18846c62",
+    "expected_revision": 1,
+    "idempotency_key": "99c1c9c3-463a-4102-baca-994db78f0773",
+    "run_id": "f1d4c38d-005a-441a-8b4d-f35e2234f657",
+    "attempts": [
+      {
+        "run_id": "f1d4c38d-005a-441a-8b4d-f35e2234f657",
+        "idempotency_key": "99c1c9c3-463a-4102-baca-994db78f0773",
+        "state": "succeeded",
+        "job_id": "c2373ce7-bf08-4259-9522-9a5279f28e7c",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/f1d4c38d-005a-441a-8b4d-f35e2234f657"
+  }
+]

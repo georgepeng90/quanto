@@ -1,0 +1,17 @@
+{
+  "command": ".venv/Scripts/python.exe -m pytest -q",
+  "passed": 501,
+  "skipped": 1,
+  "warnings": 2,
+  "elapsed_seconds": 226.11,
+  "warning": "Existing tests/unit/test_market_readers.py mixed timestamp nanosecond conversion warning in src/quanto/data/storage.py:82",
+  "source_sha256": {
+    "scripts/research_round5.py": "4738ffc3b5d7dce383c83019a1c2d887923d3c635daf94ae5a4261e9f07354ed",
+    "scripts/register_round5_results.py": "eabe8ecb937344c4204138bc44aa13dd454a8e48889694a0b5fc091b369d3032",
+    "scripts/report_round5.py": "d1ea40e68105c38b27587252c7c04265acf958e35e3ab1edb82fd33b5877e8b8",
+    "tests/unit/test_research_round5.py": "47250f6b496fe99bc9273d39760da94e8c7d1496d09f76f461dcca28436fd21d",
+    "tests/unit/test_register_round5_results.py": "0df39156fa2237e0968e29b6eabf642f4407dfe7585bea070aabf8dd264b4e88"
+  },
+  "protocol_sha256": "24d23b73ef572375b2e3fcdb99c02a2590b7d9dee58e358c52b265ba5c2bb1bc",
+  "frozen_numerical_sources_and_data_verified": true
+}

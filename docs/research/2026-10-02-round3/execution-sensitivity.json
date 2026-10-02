@@ -1,0 +1,212 @@
+{
+  "purpose": "Post-hoc ±1% starting-capital execution sensitivity; no retuning or reselection",
+  "protocol_sha256": "d1cb996f248148f93e92e53145d3729e519fb645867684154a2f1b730de52075",
+  "candidate": "breadth_timing_v1",
+  "strategy_signals_equal_across_capitals": true,
+  "baseline": [
+    {
+      "period": "full",
+      "initial_cash": 1000000,
+      "metrics": {
+        "total_return": 0.3978252487554117,
+        "annual_return": 0.12327935461367989,
+        "volatility": 0.19630492702100533,
+        "sharpe": 0.6906982871693992,
+        "max_drawdown": 0.18596658563624957,
+        "calmar": 0.6629113192130879,
+        "final_equity": 1397825.2487554117,
+        "fill_count": 1161,
+        "round_trip_count": 70,
+        "open_lot_count": 0,
+        "realized_pnl": 397825.2487554118,
+        "unrealized_pnl": 0.0,
+        "turnover": 23.91892842571365,
+        "commission_paid": 10126.17074459,
+        "slippage_cost": 13311.78049999859,
+        "execution_cost": 23437.95124458859,
+        "average_invested_ratio": 0.4511372814917263,
+        "average_holding_sessions": 30.277140249972348,
+        "dividend_income": 0.0,
+        "interest_income": 0.0,
+        "benchmark_return": 0.18261582259758513,
+        "relative_return_difference": 0.21520942615782657
+      },
+      "curve_sha256": "345835431ae269a4414711ab5280e09773affa522484f7077248fdfa9bc568e9"
+    },
+    {
+      "period": "late",
+      "initial_cash": 1000000,
+      "metrics": {
+        "total_return": 0.08741442470440064,
+        "annual_return": 0.12375494693111966,
+        "volatility": 0.21635359594883696,
+        "sharpe": 0.6475477070020726,
+        "max_drawdown": 0.12209128643786304,
+        "calmar": 1.0136263654990916,
+        "final_equity": 1087414.4247044006,
+        "fill_count": 345,
+        "round_trip_count": 25,
+        "open_lot_count": 0,
+        "realized_pnl": 87414.42470440082,
+        "unrealized_pnl": 0.0,
+        "turnover": 8.116599566347361,
+        "commission_paid": 3099.3387955999997,
+        "slippage_cost": 4254.636499999497,
+        "execution_cost": 7353.975295599496,
+        "average_invested_ratio": 0.4634988845614714,
+        "average_holding_sessions": 22.642767160738696,
+        "dividend_income": 0.0,
+        "interest_income": 0.0,
+        "benchmark_return": -0.07633511737586773,
+        "relative_return_difference": 0.16374954208026837
+      },
+      "curve_sha256": "0288f507c1906f0c286fbd3f71af95489497d5e0d9cbe182e0c03017f8a922ca"
+    }
+  ],
+  "cases": [
+    {
+      "period": "full",
+      "initial_cash": 990000,
+      "cost_multiplier": 1,
+      "metrics": {
+        "total_return": 0.3979285636748702,
+        "annual_return": 0.1233081717870399,
+        "volatility": 0.19631113638588513,
+        "sharpe": 0.6908134962967428,
+        "max_drawdown": 0.18597876956547688,
+        "calmar": 0.6630228389785493,
+        "final_equity": 1383949.2780381215,
+        "fill_count": 1135,
+        "round_trip_count": 70,
+        "open_lot_count": 0,
+        "realized_pnl": 393949.27803812176,
+        "unrealized_pnl": 0.0,
+        "turnover": 23.917356066796607,
+        "commission_paid": 9945.96456188,
+        "slippage_cost": 13178.3573999986,
+        "execution_cost": 23124.321961878602,
+        "average_invested_ratio": 0.45114161128512387,
+        "average_holding_sessions": 30.2780873378301,
+        "dividend_income": 0.0,
+        "interest_income": 0.0,
+        "benchmark_return": 0.18261582259758513,
+        "relative_return_difference": 0.21531274107728504
+      },
+      "curve_sha256": "24bd6c1582a8bd917eb5238e83c7eeed32be783b9fb7b2e428b345b88d20f90e",
+      "artifacts": {
+        "curves.csv": "24bd6c1582a8bd917eb5238e83c7eeed32be783b9fb7b2e428b345b88d20f90e",
+        "equity.csv": "3f2bdffc7d5eea0fbaab04e7d54c0a258f50f9a65faa8e135c6699d1289016dc",
+        "fills.csv": "3a2d42e068b9eb829a1572145f4977903b3898e7d675dd5422542987362fafb4"
+      }
+    },
+    {
+      "period": "full",
+      "initial_cash": 1010000,
+      "cost_multiplier": 1,
+      "metrics": {
+        "total_return": 0.3978636455093485,
+        "annual_return": 0.12329006461273195,
+        "volatility": 0.19631220226549767,
+        "sharpe": 0.6907286211518782,
+        "max_drawdown": 0.18598839913144383,
+        "calmar": 0.662891154440224,
+        "final_equity": 1411842.281964442,
+        "fill_count": 1162,
+        "round_trip_count": 70,
+        "open_lot_count": 0,
+        "realized_pnl": 401842.2819644418,
+        "unrealized_pnl": 0.0,
+        "turnover": 23.917192739331103,
+        "commission_paid": 10181.22448556,
+        "slippage_cost": 13443.993549998575,
+        "execution_cost": 23625.218035558573,
+        "average_invested_ratio": 0.45114326537330235,
+        "average_holding_sessions": 30.27815385457806,
+        "dividend_income": 0.0,
+        "interest_income": 0.0,
+        "benchmark_return": 0.18261582259758513,
+        "relative_return_difference": 0.21524782291176336
+      },
+      "curve_sha256": "0b1bbf2be4b2e09fff37063f0e3b1d2f5dd217353fb5c5b2f1302967915a6124",
+      "artifacts": {
+        "curves.csv": "0b1bbf2be4b2e09fff37063f0e3b1d2f5dd217353fb5c5b2f1302967915a6124",
+        "equity.csv": "083bdde62d06d08721baf81afbf81b48bfff87d797582aa5f963d7989df496c0",
+        "fills.csv": "5641f04ae19dbff666a962732090bdb4b42510452e22379790beab21f16eeeea"
+      }
+    },
+    {
+      "period": "late",
+      "initial_cash": 990000,
+      "cost_multiplier": 1,
+      "metrics": {
+        "total_return": 0.08734387235788943,
+        "annual_return": 0.12365343795931327,
+        "volatility": 0.2163443997101286,
+        "sharpe": 0.647148326692034,
+        "max_drawdown": 0.12208662197715892,
+        "calmar": 1.0128336418583805,
+        "final_equity": 1076470.4336343105,
+        "fill_count": 344,
+        "round_trip_count": 25,
+        "open_lot_count": 0,
+        "realized_pnl": 86470.43363431067,
+        "unrealized_pnl": 0.0,
+        "turnover": 8.116730512529747,
+        "commission_paid": 3078.1768656900003,
+        "slippage_cost": 4211.989499999501,
+        "execution_cost": 7290.166365689502,
+        "average_invested_ratio": 0.4634998612265456,
+        "average_holding_sessions": 22.641605977745893,
+        "dividend_income": 0.0,
+        "interest_income": 0.0,
+        "benchmark_return": -0.07633511737586773,
+        "relative_return_difference": 0.16367898973375716
+      },
+      "curve_sha256": "4519632b8fc065f2590c0b75d91b97a9be1d44d4ca159f55cfed0e21a0da4e54",
+      "artifacts": {
+        "curves.csv": "4519632b8fc065f2590c0b75d91b97a9be1d44d4ca159f55cfed0e21a0da4e54",
+        "equity.csv": "40e19caff681717d345860d62ba79dacce6b61d0bbf6e8b9019c75f31735376d",
+        "fills.csv": "87bc5f1d8c7a9b3c1625902054f8a6fb23b98ea5c01c3551ecd8f0575a377eb9"
+      }
+    },
+    {
+      "period": "late",
+      "initial_cash": 1010000,
+      "cost_multiplier": 1,
+      "metrics": {
+        "total_return": 0.0873892059417134,
+        "annual_return": 0.1237186625021891,
+        "volatility": 0.21634608125124066,
+        "sharpe": 0.6474131053316405,
+        "max_drawdown": 0.12208073392650065,
+        "calmar": 1.0134167654715656,
+        "final_equity": 1098263.0980011306,
+        "fill_count": 344,
+        "round_trip_count": 25,
+        "open_lot_count": 0,
+        "realized_pnl": 88263.09800113081,
+        "unrealized_pnl": 0.0,
+        "turnover": 8.11652905989558,
+        "commission_paid": 3110.7305488700003,
+        "slippage_cost": 4297.071449999492,
+        "execution_cost": 7407.801998869492,
+        "average_invested_ratio": 0.4634908293996694,
+        "average_holding_sessions": 22.642720662385223,
+        "dividend_income": 0.0,
+        "interest_income": 0.0,
+        "benchmark_return": -0.07633511737586773,
+        "relative_return_difference": 0.16372432331758113
+      },
+      "curve_sha256": "b4a1f0495208837bc4be5a1430fb6ff98b6d53579fd713c3b87214eda8dc6cd2",
+      "artifacts": {
+        "curves.csv": "b4a1f0495208837bc4be5a1430fb6ff98b6d53579fd713c3b87214eda8dc6cd2",
+        "equity.csv": "f102e1a2083601b969d28db9854755938783e6959316288c33dcbc15cac6af5a",
+        "fills.csv": "b47c6175c9324c27726c7afdd5b31553434f849856c9636b07004ca3e3c97add"
+      }
+    }
+  ],
+  "limitations": [
+    "Current universe is retrospective; all periods were previously inspected.",
+    "Capital and cost perturbations can cross the engine's exposure-repair boundary and change trade timing."
+  ]
+}

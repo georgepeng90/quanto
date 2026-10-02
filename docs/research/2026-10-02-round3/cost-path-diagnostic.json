@@ -1,0 +1,308 @@
+{
+  "purpose": "Post-hoc explanation of higher double-cost return; not a parameter-selection input",
+  "protocol_sha256": "d1cb996f248148f93e92e53145d3729e519fb645867684154a2f1b730de52075",
+  "candidate": "breadth_timing_v1",
+  "period": "late",
+  "first_equity_divergence": "2026-01-12",
+  "first_quantity_divergence": "2026-01-13",
+  "first_quantity_differences": [
+    {
+      "symbol": "159755",
+      "cost1": -1500.0,
+      "cost2": -1600.0
+    },
+    {
+      "symbol": "159819",
+      "cost1": -1000.0,
+      "cost2": -1100.0
+    },
+    {
+      "symbol": "512400",
+      "cost1": -800.0,
+      "cost2": -900.0
+    },
+    {
+      "symbol": "515880",
+      "cost1": -3100.0,
+      "cost2": -3300.0
+    },
+    {
+      "symbol": "588200",
+      "cost1": -1900.0,
+      "cost2": -2000.0
+    }
+  ],
+  "trigger_invested_ratio": {
+    "cost1": 0.800068834571475,
+    "cost2": 0.7999793967095098
+  },
+  "next_open_key_trades": {
+    "cost1": [
+      {
+        "symbol": "562500",
+        "side": "sell",
+        "quantity": 100,
+        "price": 1.213393
+      }
+    ],
+    "cost2": [
+      {
+        "symbol": "562500",
+        "side": "sell",
+        "quantity": 145500,
+        "price": 1.212786
+      },
+      {
+        "symbol": "159967",
+        "side": "buy",
+        "quantity": 197900,
+        "price": 0.894894
+      }
+    ]
+  },
+  "trigger_date": "2026-05-22",
+  "next_open_date": "2026-05-25",
+  "strategy_target": {
+    "515880": 0.16,
+    "588200": 0.16,
+    "159363": 0.16,
+    "159967": 0.16,
+    "159732": 0.16
+  },
+  "cost1": {
+    "risk_events": [
+      {
+        "date": "2026-05-22",
+        "code": "EXPOSURE_REDUCTION",
+        "message": "实际持仓超出风险限额",
+        "details": {
+          "actual": {
+            "515880": 0.15538592661027278,
+            "588200": 0.16458379851389557,
+            "159732": 0.16887310988174453,
+            "159363": 0.15074859993601852,
+            "562500": 0.1604773996295437
+          },
+          "allowed": {
+            "515880": 0.15537255785597404,
+            "588200": 0.1645696384132231,
+            "159732": 0.16885858074668758,
+            "159363": 0.1507356301578836,
+            "562500": 0.1604635928262318
+          }
+        }
+      }
+    ],
+    "approved_weights": {
+      "515880": 0.15537255785597404,
+      "588200": 0.1645696384132231,
+      "159732": 0.16885858074668758,
+      "159363": 0.1507356301578836,
+      "562500": 0.1604635928262318
+    },
+    "orders": [
+      {
+        "id": "2026-05-22:159363:sell",
+        "symbol": "159363",
+        "side": "sell",
+        "quantity": 100,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "risk_limit",
+        "source": "risk",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      },
+      {
+        "id": "2026-05-22:159732:sell",
+        "symbol": "159732",
+        "side": "sell",
+        "quantity": 100,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "risk_limit",
+        "source": "risk",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      },
+      {
+        "id": "2026-05-22:515880:sell",
+        "symbol": "515880",
+        "side": "sell",
+        "quantity": 100,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "risk_limit",
+        "source": "risk",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      },
+      {
+        "id": "2026-05-22:562500:sell",
+        "symbol": "562500",
+        "side": "sell",
+        "quantity": 100,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "risk_limit",
+        "source": "risk",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      },
+      {
+        "id": "2026-05-22:588200:sell",
+        "symbol": "588200",
+        "side": "sell",
+        "quantity": 100,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "risk_limit",
+        "source": "risk",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      }
+    ],
+    "metrics": {
+      "total_return": 0.08741442470440064,
+      "final_equity": 1087414.4247044006,
+      "execution_cost": 7353.975295599496,
+      "fill_count": 345
+    }
+  },
+  "cost2": {
+    "risk_events": [],
+    "approved_weights": {
+      "515880": 0.16,
+      "588200": 0.16,
+      "159363": 0.16,
+      "159967": 0.16,
+      "159732": 0.16
+    },
+    "orders": [
+      {
+        "id": "2026-05-22:159363:buy",
+        "symbol": "159363",
+        "side": "buy",
+        "quantity": 7500,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "breadth_timing",
+        "source": "strategy",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      },
+      {
+        "id": "2026-05-22:159732:sell",
+        "symbol": "159732",
+        "side": "sell",
+        "quantity": 6200,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "breadth_timing",
+        "source": "strategy",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      },
+      {
+        "id": "2026-05-22:159967:buy",
+        "symbol": "159967",
+        "side": "buy",
+        "quantity": 197900,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "breadth_timing",
+        "source": "strategy",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      },
+      {
+        "id": "2026-05-22:515880:buy",
+        "symbol": "515880",
+        "side": "buy",
+        "quantity": 6700,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "breadth_timing",
+        "source": "strategy",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      },
+      {
+        "id": "2026-05-22:562500:sell",
+        "symbol": "562500",
+        "side": "sell",
+        "quantity": 145500,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "rebalance",
+        "source": "strategy",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": true
+      },
+      {
+        "id": "2026-05-22:588200:sell",
+        "symbol": "588200",
+        "side": "sell",
+        "quantity": 4200,
+        "signal_date": "2026-05-22",
+        "execution_date": "2026-05-25",
+        "status": "pending",
+        "reason": "breadth_timing",
+        "source": "strategy",
+        "filled_quantity": 0,
+        "expired_quantity": 0,
+        "lot_size": 100,
+        "settlement_sessions": 1,
+        "full_exit": false
+      }
+    ],
+    "metrics": {
+      "total_return": 0.10228788789056065,
+      "final_equity": 1102287.8878905606,
+      "execution_cost": 14859.012109439513,
+      "fill_count": 349
+    }
+  },
+  "terminal_equity_cost2_minus_cost1": 14873.463186159963,
+  "interpretation": "The 80% cap repair deferred the base-cost rotation by one week; cost stress changes holdings and cannot be read as a fixed-trade fee deduction."
+}

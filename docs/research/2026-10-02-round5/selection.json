@@ -1,0 +1,147 @@
+{
+  "protocol_sha256": "24d23b73ef572375b2e3fcdb99c02a2590b7d9dee58e358c52b265ba5c2bb1bc",
+  "selected": [
+    "w30_v12",
+    "w30_v13",
+    "w30_v11"
+  ],
+  "groups": [
+    {
+      "representative": "w30_v12",
+      "aliases": [
+        "w30_v12"
+      ],
+      "curve_hashes": [
+        "682ece1c8d22424d9d185ada433715d2942bcc2eb9aa3c51ae66f87ee7e1219d",
+        "b7be412126f3952632def24e5e389f14b14eaa5f44f38c48df0fcb85336a466d"
+      ],
+      "minimum_improvement": -0.006407247334699384,
+      "minimum_sharpe": 0.08030653272684507,
+      "validation_sharpe": 1.7739478005170959
+    },
+    {
+      "representative": "w30_v13",
+      "aliases": [
+        "w30_v13"
+      ],
+      "curve_hashes": [
+        "86d0bb3b57f02e04fd6c0b913c367a43fc1cbcf7e4792375c7d9807a4e746b9f",
+        "3d6be6d366a5bea44ddb0e745ecab5d4a9a44d12018529b6a6f2a7aaeeb0fb84"
+      ],
+      "minimum_improvement": -0.007710442931163075,
+      "minimum_sharpe": 0.08167142679249005,
+      "validation_sharpe": 1.7366949043730084
+    },
+    {
+      "representative": "w30_v11",
+      "aliases": [
+        "w30_v11"
+      ],
+      "curve_hashes": [
+        "6afd985d4afe22ee1c64187d7e28bd52cdc231f671c2fc1fb7c22c3860179cec",
+        "77389ea1f9cc98ccd1d9426b52260f5f18a7791f6401da1f0a67be259979127c"
+      ],
+      "minimum_improvement": -0.008073888637373017,
+      "minimum_sharpe": 0.08068573526215604,
+      "validation_sharpe": 1.7889116830012448
+    },
+    {
+      "representative": "w60_v13",
+      "aliases": [
+        "w60_v13"
+      ],
+      "curve_hashes": [
+        "dbe569c24009c819cb563a9a7519f7326798ce067fbd0498302779fbb5c8dceb",
+        "3c64424bdff5e534679377626c0381f3b80de5a1cfd7ae27f4adc63c6a6b04ca"
+      ],
+      "minimum_improvement": -0.013152335555077166,
+      "minimum_sharpe": 0.22468646933473213,
+      "validation_sharpe": 1.5777086078936453
+    },
+    {
+      "representative": "w60_v11",
+      "aliases": [
+        "w60_v11"
+      ],
+      "curve_hashes": [
+        "d5335dadc29d810f70462696603c4129deec98c1e203725450d042fb077ad154",
+        "93901e43c26b15267c9cfc0ba1c2ef062a914117be700f59fbda4350e421ac0c"
+      ],
+      "minimum_improvement": -0.016307990371618952,
+      "minimum_sharpe": 0.2233926593989596,
+      "validation_sharpe": 1.7255560455636785
+    },
+    {
+      "representative": "w120_v12",
+      "aliases": [
+        "w120_v12"
+      ],
+      "curve_hashes": [
+        "23b523fe570f25a92e57d05060f3439b826e2a53c6cfb831721614f4afeba49e",
+        "22681fa93c860cae8cfb890f9ae6c6ee53b374eb9b7898ba7ae7bd2e6cbdfb4a"
+      ],
+      "minimum_improvement": -0.023457085670409772,
+      "minimum_sharpe": 0.19103645247332093,
+      "validation_sharpe": 1.5934968809636068
+    },
+    {
+      "representative": "w90_v13",
+      "aliases": [
+        "w90_v13"
+      ],
+      "curve_hashes": [
+        "948f4285fc0e9522e1fe77bbf82837939f137b2149aa2a62c0d56e2dd029b29e",
+        "bfc9e092eb1070bc7c9d4974f3037242c7b7a8815e2db68c3c35d07147ea0440"
+      ],
+      "minimum_improvement": -0.029596327988197835,
+      "minimum_sharpe": 0.2189365175149725,
+      "validation_sharpe": 1.4773910593398862
+    },
+    {
+      "representative": "w20_v12",
+      "aliases": [
+        "w20_v12"
+      ],
+      "curve_hashes": [
+        "84511d8ff468826b1381125fd56efd9bbd207f3d3e54875ebc3a484ed8f3307f",
+        "90a29cebf21c13b776d71db34d9087d93807b11013d4133d56cbb018d270fca9"
+      ],
+      "minimum_improvement": -0.03927962982722244,
+      "minimum_sharpe": -0.3378745129512395,
+      "validation_sharpe": 1.5159720636687875
+    },
+    {
+      "representative": "w90_v12",
+      "aliases": [
+        "w90_v12"
+      ],
+      "curve_hashes": [
+        "6e5c41c4abb21ff780b5f42740223f6364b6b5085495fd5c690c8ddde2f63a7c",
+        "80a30025f976acb3f4b35e36c957d377d3f51c8f9699a181d2367eaf0e7da2ba"
+      ],
+      "minimum_improvement": -0.04682125994362063,
+      "minimum_sharpe": 0.21728336078294064,
+      "validation_sharpe": 1.4168480364325584
+    },
+    {
+      "representative": "w90_v11",
+      "aliases": [
+        "w90_v11"
+      ],
+      "curve_hashes": [
+        "62dc4d799df4a5f50d47a3e6cc803f3d17dff4784da8d3fecbaacf0a329451e8",
+        "1adbdddc184752e8ee8cbc43f53ca525906c1b1ae73891f9bfdd415b156e337b"
+      ],
+      "minimum_improvement": -0.058135049776549375,
+      "minimum_sharpe": 0.21707905705180158,
+      "validation_sharpe": 1.4162099562398194
+    }
+  ],
+  "baseline_aliases": [
+    "baseline",
+    "entry50",
+    "entry65",
+    "exit35",
+    "exit50"
+  ]
+}

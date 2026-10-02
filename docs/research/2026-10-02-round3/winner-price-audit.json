@@ -1,0 +1,814 @@
+{
+  "scope": "Full breadth_timing_v1 cost1 winner; five highest and five lowest daily returns plus four March-May 2026 moves",
+  "method": "Reconstruct close-to-close inventory P&L plus each buy/sell fill's close-versus-execution difference and commission; compare frozen daily bars with saved Sina scale=240 daily bars. Raw and adjusted levels are not required to match.",
+  "input_sha256": {
+    "outputs/strategy-research-20261002-round3/runs/full__breadth_timing_v1__cost1/curves.csv": "345835431ae269a4414711ab5280e09773affa522484f7077248fdfa9bc568e9",
+    "outputs/strategy-research-20261002-round3/runs/full__breadth_timing_v1__cost1/fills.csv": "28ed5fecca3308c95c722657e4d8c5624e4c8b0b6048e9b84e0ba237552e51c7",
+    "outputs/strategy-research-20261002-round3/runs/full__breadth_timing_v1__cost1/equity.csv": "491c2f37fba8dc0067b2152d77ac722d3968c5cd638f8a71a4c0747e93e3e410",
+    "outputs/strategy-research-20261002-round3/runs/full__breadth_timing_v1__cost1/average_weights.csv": "5a742abfae87ba0fe82990a4e6e01261b3c38ba938a41349468d1afb513492ab",
+    "outputs/etf-expansion-20261002/shared-cache/dataset/prices.parquet": "7c3d13eda441150a0bf8a86ea3ed3985b6b7b34d0806504ba7985609666cae82",
+    "outputs/etf-expansion-20261002/shared-cache/dataset/events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d"
+  },
+  "top_positive_dates": [
+    "2024-10-18",
+    "2025-01-14",
+    "2024-10-08",
+    "2025-09-11",
+    "2026-04-08"
+  ],
+  "top_negative_dates": [
+    "2025-04-07",
+    "2024-10-09",
+    "2025-02-28",
+    "2026-02-02",
+    "2025-10-10"
+  ],
+  "additional_march_may_dates": [
+    "2026-03-03",
+    "2026-05-21",
+    "2026-05-22",
+    "2026-05-25"
+  ],
+  "days": [
+    {
+      "date": "2024-10-08",
+      "portfolio_return": 0.04431668,
+      "equity_change_cny": 45318.9,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "159732",
+          "pnl_cny": 17681.31,
+          "prior_equity_contribution": 0.01729029
+        },
+        {
+          "symbol": "512880",
+          "pnl_cny": 17637.54,
+          "prior_equity_contribution": 0.01724749
+        },
+        {
+          "symbol": "510300",
+          "pnl_cny": 8542.63,
+          "prior_equity_contribution": 0.00835371
+        },
+        {
+          "symbol": "516110",
+          "pnl_cny": 3795.7,
+          "prior_equity_contribution": 0.00371176
+        },
+        {
+          "symbol": "512200",
+          "pnl_cny": -2338.29,
+          "prior_equity_contribution": -0.00228658
+        }
+      ]
+    },
+    {
+      "date": "2024-10-09",
+      "portfolio_return": -0.05810422,
+      "equity_change_cny": -62051.46,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "512200",
+          "pnl_cny": -16031.01,
+          "prior_equity_contribution": -0.01501124
+        },
+        {
+          "symbol": "510300",
+          "pnl_cny": -15825.81,
+          "prior_equity_contribution": -0.01481909
+        },
+        {
+          "symbol": "516110",
+          "pnl_cny": -12941.65,
+          "prior_equity_contribution": -0.0121184
+        },
+        {
+          "symbol": "159732",
+          "pnl_cny": -11479.09,
+          "prior_equity_contribution": -0.01074888
+        },
+        {
+          "symbol": "512880",
+          "pnl_cny": -5773.9,
+          "prior_equity_contribution": -0.00540661
+        }
+      ]
+    },
+    {
+      "date": "2024-10-18",
+      "portfolio_return": 0.06479333,
+      "equity_change_cny": 63021.8,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "588200",
+          "pnl_cny": 26523.0,
+          "prior_equity_contribution": 0.02726855
+        },
+        {
+          "symbol": "515880",
+          "pnl_cny": 12287.6,
+          "prior_equity_contribution": 0.012633
+        },
+        {
+          "symbol": "512880",
+          "pnl_cny": 11323.8,
+          "prior_equity_contribution": 0.01164211
+        },
+        {
+          "symbol": "159732",
+          "pnl_cny": 9701.4,
+          "prior_equity_contribution": 0.0099741
+        },
+        {
+          "symbol": "512200",
+          "pnl_cny": 3186.0,
+          "prior_equity_contribution": 0.00327556
+        }
+      ]
+    },
+    {
+      "date": "2025-01-14",
+      "portfolio_return": 0.04532366,
+      "equity_change_cny": 42875.29,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "159851",
+          "pnl_cny": 13323.74,
+          "prior_equity_contribution": 0.01408458
+        },
+        {
+          "symbol": "562500",
+          "pnl_cny": 10285.32,
+          "prior_equity_contribution": 0.01087266
+        },
+        {
+          "symbol": "159869",
+          "pnl_cny": 7652.61,
+          "prior_equity_contribution": 0.00808961
+        },
+        {
+          "symbol": "512880",
+          "pnl_cny": 6564.69,
+          "prior_equity_contribution": 0.00693957
+        },
+        {
+          "symbol": "588200",
+          "pnl_cny": 5048.93,
+          "prior_equity_contribution": 0.00533725
+        }
+      ]
+    },
+    {
+      "date": "2025-02-28",
+      "portfolio_return": -0.04394693,
+      "equity_change_cny": -49444.1,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "562500",
+          "pnl_cny": -14275.8,
+          "prior_equity_contribution": -0.01268862
+        },
+        {
+          "symbol": "159851",
+          "pnl_cny": -10262.6,
+          "prior_equity_contribution": -0.00912161
+        },
+        {
+          "symbol": "159869",
+          "pnl_cny": -10103.6,
+          "prior_equity_contribution": -0.00898029
+        },
+        {
+          "symbol": "588200",
+          "pnl_cny": -9923.1,
+          "prior_equity_contribution": -0.00881986
+        },
+        {
+          "symbol": "512880",
+          "pnl_cny": -4879.0,
+          "prior_equity_contribution": -0.00433656
+        }
+      ]
+    },
+    {
+      "date": "2025-04-07",
+      "portfolio_return": -0.07963041,
+      "equity_change_cny": -81355.58,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "159869",
+          "pnl_cny": -16457.58,
+          "prior_equity_contribution": -0.01610859
+        },
+        {
+          "symbol": "588200",
+          "pnl_cny": -16385.17,
+          "prior_equity_contribution": -0.01603772
+        },
+        {
+          "symbol": "159819",
+          "pnl_cny": -16233.57,
+          "prior_equity_contribution": -0.01588934
+        },
+        {
+          "symbol": "515250",
+          "pnl_cny": -16183.11,
+          "prior_equity_contribution": -0.01583995
+        },
+        {
+          "symbol": "562500",
+          "pnl_cny": -16096.14,
+          "prior_equity_contribution": -0.01575481
+        }
+      ]
+    },
+    {
+      "date": "2025-09-11",
+      "portfolio_return": 0.0434666,
+      "equity_change_cny": 46889.2,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "515880",
+          "pnl_cny": 17158.5,
+          "prior_equity_contribution": 0.01590604
+        },
+        {
+          "symbol": "588200",
+          "pnl_cny": 13115.0,
+          "prior_equity_contribution": 0.01215769
+        },
+        {
+          "symbol": "159819",
+          "pnl_cny": 12093.5,
+          "prior_equity_contribution": 0.01121076
+        },
+        {
+          "symbol": "515790",
+          "pnl_cny": 5401.2,
+          "prior_equity_contribution": 0.00500695
+        },
+        {
+          "symbol": "159992",
+          "pnl_cny": -879.0,
+          "prior_equity_contribution": -0.00081484
+        }
+      ]
+    },
+    {
+      "date": "2025-10-10",
+      "portfolio_return": -0.04035244,
+      "equity_change_cny": -49128.36,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "159755",
+          "pnl_cny": -14300.04,
+          "prior_equity_contribution": -0.01174559
+        },
+        {
+          "symbol": "588200",
+          "pnl_cny": -13356.8,
+          "prior_equity_contribution": -0.01097084
+        },
+        {
+          "symbol": "159819",
+          "pnl_cny": -9429.21,
+          "prior_equity_contribution": -0.00774485
+        },
+        {
+          "symbol": "159915",
+          "pnl_cny": -8314.12,
+          "prior_equity_contribution": -0.00682895
+        },
+        {
+          "symbol": "515880",
+          "pnl_cny": -3728.19,
+          "prior_equity_contribution": -0.00306222
+        }
+      ]
+    },
+    {
+      "date": "2026-02-02",
+      "portfolio_return": -0.04185759,
+      "equity_change_cny": -55237.92,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "512400",
+          "pnl_cny": -23928.71,
+          "prior_equity_contribution": -0.01813244
+        },
+        {
+          "symbol": "588200",
+          "pnl_cny": -11167.63,
+          "prior_equity_contribution": -0.00846249
+        },
+        {
+          "symbol": "515880",
+          "pnl_cny": -7034.84,
+          "prior_equity_contribution": -0.00533078
+        },
+        {
+          "symbol": "159732",
+          "pnl_cny": -5738.78,
+          "prior_equity_contribution": -0.00434867
+        },
+        {
+          "symbol": "515790",
+          "pnl_cny": -3905.37,
+          "prior_equity_contribution": -0.00295937
+        }
+      ]
+    },
+    {
+      "date": "2026-03-03",
+      "portfolio_return": -0.03525179,
+      "equity_change_cny": -46718.7,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "512400",
+          "pnl_cny": -13147.22,
+          "prior_equity_contribution": -0.00992029
+        },
+        {
+          "symbol": "588200",
+          "pnl_cny": -11724.84,
+          "prior_equity_contribution": -0.00884703
+        },
+        {
+          "symbol": "512980",
+          "pnl_cny": -10314.06,
+          "prior_equity_contribution": -0.00778251
+        },
+        {
+          "symbol": "515880",
+          "pnl_cny": -6663.53,
+          "prior_equity_contribution": -0.00502799
+        },
+        {
+          "symbol": "515790",
+          "pnl_cny": -4869.06,
+          "prior_equity_contribution": -0.00367397
+        }
+      ]
+    },
+    {
+      "date": "2026-04-08",
+      "portfolio_return": 0.04118936,
+      "equity_change_cny": 49035.95,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "159363",
+          "pnl_cny": 18360.18,
+          "prior_equity_contribution": 0.01542224
+        },
+        {
+          "symbol": "515880",
+          "pnl_cny": 13939.2,
+          "prior_equity_contribution": 0.01170869
+        },
+        {
+          "symbol": "512660",
+          "pnl_cny": 9518.21,
+          "prior_equity_contribution": 0.00799513
+        },
+        {
+          "symbol": "159611",
+          "pnl_cny": 3906.59,
+          "prior_equity_contribution": 0.00328147
+        },
+        {
+          "symbol": "159870",
+          "pnl_cny": 3311.78,
+          "prior_equity_contribution": 0.00278184
+        }
+      ]
+    },
+    {
+      "date": "2026-05-21",
+      "portfolio_return": -0.02792492,
+      "equity_change_cny": -39451.46,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "588200",
+          "pnl_cny": -12462.26,
+          "prior_equity_contribution": -0.00882116
+        },
+        {
+          "symbol": "515880",
+          "pnl_cny": -11380.63,
+          "prior_equity_contribution": -0.00805555
+        },
+        {
+          "symbol": "159363",
+          "pnl_cny": -9310.01,
+          "prior_equity_contribution": -0.0065899
+        },
+        {
+          "symbol": "159732",
+          "pnl_cny": -5166.73,
+          "prior_equity_contribution": -0.00365717
+        },
+        {
+          "symbol": "562500",
+          "pnl_cny": -1131.84,
+          "prior_equity_contribution": -0.00080115
+        }
+      ]
+    },
+    {
+      "date": "2026-05-22",
+      "portfolio_return": 0.03006165,
+      "equity_change_cny": 41284.2,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "159732",
+          "pnl_cny": 15057.9,
+          "prior_equity_contribution": 0.01096462
+        },
+        {
+          "symbol": "515880",
+          "pnl_cny": 9629.4,
+          "prior_equity_contribution": 0.00701178
+        },
+        {
+          "symbol": "159363",
+          "pnl_cny": 8047.8,
+          "prior_equity_contribution": 0.00586012
+        },
+        {
+          "symbol": "588200",
+          "pnl_cny": 4603.2,
+          "prior_equity_contribution": 0.00335188
+        },
+        {
+          "symbol": "562500",
+          "pnl_cny": 3945.9,
+          "prior_equity_contribution": 0.00287326
+        }
+      ]
+    },
+    {
+      "date": "2026-05-25",
+      "portfolio_return": 0.03030577,
+      "equity_change_cny": 42870.59,
+      "reconciliation_error_cny": 0.0,
+      "largest_contributors": [
+        {
+          "symbol": "588200",
+          "pnl_cny": 16672.74,
+          "prior_equity_contribution": 0.01178617
+        },
+        {
+          "symbol": "159732",
+          "pnl_cny": 8813.72,
+          "prior_equity_contribution": 0.00623053
+        },
+        {
+          "symbol": "515880",
+          "pnl_cny": 8163.06,
+          "prior_equity_contribution": 0.00577057
+        },
+        {
+          "symbol": "159363",
+          "pnl_cny": 7723.13,
+          "prior_equity_contribution": 0.00545958
+        },
+        {
+          "symbol": "562500",
+          "pnl_cny": 1497.94,
+          "prior_equity_contribution": 0.00105891
+        }
+      ]
+    }
+  ],
+  "pnl_reconciliation": {
+    "all_curve_days_checked": 726,
+    "max_absolute_error_cny": 0.0
+  },
+  "independent_source": "Sina CN_MarketData.getKLineData daily scale=240; downloaded 2026-10-02",
+  "source_files": [
+    {
+      "symbol": "159363",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159363&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sz159363-daily.json",
+      "sha256": "fcf356ab70d2ee63c7ec9c575af4567e4daaed04843dcf0da4f01e9b6ff5d64b",
+      "raw_rows": 436,
+      "raw_first_date": "2024-12-16",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 436
+    },
+    {
+      "symbol": "515880",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh515880&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sh515880-daily.json",
+      "sha256": "683f729943dda24b22afa764e6109b26dfc61777c652759d591e8965e8973d68",
+      "raw_rows": 1500,
+      "raw_first_date": "2020-07-28",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 968
+    },
+    {
+      "symbol": "588200",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh588200&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sh588200-daily.json",
+      "sha256": "d28e553be6fb66cee30b5a18c6b171ca8c4d43f5884b46fbec43e24353970b8a",
+      "raw_rows": 956,
+      "raw_first_date": "2022-10-26",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 956
+    },
+    {
+      "symbol": "159732",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159732&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sz159732-daily.json",
+      "sha256": "5244091c27d2a51b9f955d0da3ea1f69adb12f8634e4b95700e917f3f8322e6d",
+      "raw_rows": 1238,
+      "raw_first_date": "2021-08-23",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 968
+    },
+    {
+      "symbol": "512400",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh512400&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sh512400-daily.json",
+      "sha256": "2e8c851ec2cef5ed03923bf258bfa8b554073c21f5223d353ea91fb82135e4f6",
+      "raw_rows": 1500,
+      "raw_first_date": "2020-07-28",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 968
+    },
+    {
+      "symbol": "159851",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159851&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sz159851-daily.json",
+      "sha256": "1b906c38dc35697caf8d3298b7398af1419e2eb38efb9d15856997db27657216",
+      "raw_rows": 1344,
+      "raw_first_date": "2021-03-19",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 968
+    },
+    {
+      "symbol": "159869",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159869&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sz159869-daily.json",
+      "sha256": "369b6e902b9767ec3000dcb30cf0f6f266fab7d46220a204787b1495c4946456",
+      "raw_rows": 1354,
+      "raw_first_date": "2021-03-05",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 968
+    },
+    {
+      "symbol": "159755",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159755&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sz159755-daily.json",
+      "sha256": "73c224f67ad5d160a56c4afe02c9db438ed9562b0b7a325979cbef90f40b8ff3",
+      "raw_rows": 1280,
+      "raw_first_date": "2021-06-24",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 968
+    },
+    {
+      "symbol": "562500",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh562500&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sh562500-daily.json",
+      "sha256": "a6471c392317233cbf2895cf0583a8b5e5ed75e6ae29d500f04ca291888f36b1",
+      "raw_rows": 1153,
+      "raw_first_date": "2021-12-29",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 968
+    },
+    {
+      "symbol": "512200",
+      "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh512200&scale=240&ma=no&datalen=1500",
+      "http_status": 200,
+      "raw_file": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sh512200-daily.json",
+      "sha256": "1b9e7b0284d82d6f464a01391e097c8b6d544c18767032d464a45e4114451ed9",
+      "raw_rows": 1500,
+      "raw_first_date": "2020-07-28",
+      "raw_last_date": "2026-09-30",
+      "frozen_overlap_rows": 968
+    }
+  ],
+  "targeted_comparisons": {
+    "rows": 137,
+    "symbols": 10,
+    "dates": 14,
+    "file": "outputs/strategy-research-20261002-round3/winner-price-audit/targeted-comparisons.json",
+    "sha256": "46ca08053973637185d8ebdb47c4f09e8b815839aaa35c164fa239a823e45565",
+    "exact_daily_return_matches": 93,
+    "nonexact_daily_return_matches": 44,
+    "within_half_percentage_point": 135,
+    "max_absolute_daily_return_difference": 0.00988824,
+    "max_difference_case": {
+      "date": "2025-04-07",
+      "symbol": "512400",
+      "frozen_close": 0.853,
+      "sina_close": 0.948,
+      "frozen_return": -0.10960334,
+      "sina_return": -0.0997151,
+      "absolute_return_difference": 0.00988824,
+      "close_ratio": 0.899789,
+      "frozen_ohlc": [
+        0.888,
+        0.894,
+        0.853,
+        0.853
+      ],
+      "sina_ohlc": [
+        0.983,
+        0.989,
+        0.948,
+        0.948
+      ]
+    },
+    "over_half_percentage_point_cases": [
+      {
+        "date": "2024-10-09",
+        "symbol": "512400",
+        "frozen_close": 0.934,
+        "sina_close": 1.029,
+        "frozen_return": -0.10877863,
+        "sina_return": -0.09973753,
+        "absolute_return_difference": 0.00904109,
+        "close_ratio": 0.907677,
+        "frozen_ohlc": [
+          1.0,
+          1.0,
+          0.934,
+          0.934
+        ],
+        "sina_ohlc": [
+          1.095,
+          1.095,
+          1.029,
+          1.029
+        ]
+      },
+      {
+        "date": "2025-04-07",
+        "symbol": "512400",
+        "frozen_close": 0.853,
+        "sina_close": 0.948,
+        "frozen_return": -0.10960334,
+        "sina_return": -0.0997151,
+        "absolute_return_difference": 0.00988824,
+        "close_ratio": 0.899789,
+        "frozen_ohlc": [
+          0.888,
+          0.894,
+          0.853,
+          0.853
+        ],
+        "sina_ohlc": [
+          0.983,
+          0.989,
+          0.948,
+          0.948
+        ]
+      }
+    ],
+    "differences_over_one_percentage_point": 0
+  },
+  "largest_contributor_cross_checks": [
+    {
+      "date": "2024-10-08",
+      "symbol": "159732",
+      "pnl_cny": 17681.31,
+      "frozen_return": 0.1005291,
+      "sina_return": 0.1005291,
+      "absolute_return_difference": 0.0
+    },
+    {
+      "date": "2024-10-09",
+      "symbol": "512200",
+      "pnl_cny": -16031.01,
+      "frozen_return": -0.09993943,
+      "sina_return": -0.09993943,
+      "absolute_return_difference": 0.0
+    },
+    {
+      "date": "2024-10-18",
+      "symbol": "588200",
+      "pnl_cny": 26523.0,
+      "frozen_return": 0.17156863,
+      "sina_return": 0.17156863,
+      "absolute_return_difference": 0.0
+    },
+    {
+      "date": "2025-01-14",
+      "symbol": "159851",
+      "pnl_cny": 13323.74,
+      "frozen_return": 0.08709176,
+      "sina_return": 0.08793774,
+      "absolute_return_difference": 0.00084599
+    },
+    {
+      "date": "2025-02-28",
+      "symbol": "562500",
+      "pnl_cny": -14275.8,
+      "frozen_return": -0.07541626,
+      "sina_return": -0.07541626,
+      "absolute_return_difference": 0.0
+    },
+    {
+      "date": "2025-04-07",
+      "symbol": "159869",
+      "pnl_cny": -16457.58,
+      "frozen_return": -0.10035524,
+      "sina_return": -0.10035524,
+      "absolute_return_difference": 0.0
+    },
+    {
+      "date": "2025-09-11",
+      "symbol": "515880",
+      "pnl_cny": 17158.5,
+      "frozen_return": 0.1002445,
+      "sina_return": 0.09991843,
+      "absolute_return_difference": 0.00032606
+    },
+    {
+      "date": "2025-10-10",
+      "symbol": "159755",
+      "pnl_cny": -14300.04,
+      "frozen_return": -0.06954225,
+      "sina_return": -0.06954225,
+      "absolute_return_difference": 0.0
+    },
+    {
+      "date": "2026-02-02",
+      "symbol": "512400",
+      "pnl_cny": -23928.71,
+      "frozen_return": -0.10358566,
+      "sina_return": -0.10004275,
+      "absolute_return_difference": 0.0035429
+    },
+    {
+      "date": "2026-03-03",
+      "symbol": "512400",
+      "pnl_cny": -13147.22,
+      "frozen_return": -0.05624483,
+      "sina_return": -0.05444355,
+      "absolute_return_difference": 0.00180128
+    },
+    {
+      "date": "2026-04-08",
+      "symbol": "159363",
+      "pnl_cny": 18360.18,
+      "frozen_return": 0.0968661,
+      "sina_return": 0.0968661,
+      "absolute_return_difference": 0.0
+    },
+    {
+      "date": "2026-05-21",
+      "symbol": "588200",
+      "pnl_cny": -12462.26,
+      "frozen_return": -0.05179283,
+      "sina_return": -0.05231014,
+      "absolute_return_difference": 0.00051731
+    },
+    {
+      "date": "2026-05-22",
+      "symbol": "159732",
+      "pnl_cny": 15057.9,
+      "frozen_return": 0.06725543,
+      "sina_return": 0.06725543,
+      "absolute_return_difference": 0.0
+    },
+    {
+      "date": "2026-05-25",
+      "symbol": "588200",
+      "pnl_cny": 16672.74,
+      "frozen_return": 0.07166392,
+      "sina_return": 0.0722329,
+      "absolute_return_difference": 0.00056898
+    }
+  ],
+  "price_basis_observations": [
+    "159363 frozen/Sina close ratio changes from about 1/2 before 2025-07-21 to 1 after; 515880 changes from about 1/6 to 1/2 on 2026-02-03. These are consistent with vendor adjustments around unit changes, not proof of the corporate actions.",
+    "588200 is about 1/3 of Sina raw prices through the checked 2026 dates. 159732, 159869, 159755 and 562500 match Sina close levels on checked days.",
+    "512400 has an approximately 0.095 CNY additive adjusted/raw gap on 2025-04-07: both series fall 0.105 CNY but percentage returns differ by 0.9888 percentage points. Its level difference should not be mistaken for an erroneous raw trade price."
+  ],
+  "event_rows": 0,
+  "conclusion": "The high-impact daily moves, including the April-May 2026 jumps, are corroborated by targeted independent raw-price histories: 93 of 137 daily-return pairs match exactly and 44 differ, with the largest difference 0.9888 percentage points for 512400 on 2025-04-07. Adjusted price scales explain level differences and can change percentage-return denominators. This price-path check does not establish full correctness of all 305 ETFs, historical corporate actions, the adjusted-price execution model, or point-in-time tradability."
+}

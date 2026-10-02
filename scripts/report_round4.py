@@ -268,7 +268,8 @@ def render(docs: Path, protocol, selection, lookup):
               "<p>单独改变宽度进出阈值的四组配置在本样本中做出了相同决定。与原策略相比，仅在 2026-06-12、"
               "宽度为 45% 时出现一次不同的周度目标：原策略清仓，新规则继续持有。"
               "因此宽度缓冲带来的增益集中于一次判断，不能把四组相同结果当成四份独立的稳健证据。"
-              "<a href='hysteresis-diagnostic.json'>完整历史上下文的信号核对</a>。</p>"
+              "<a href='hysteresis-diagnostic.json'>完整历史上下文的信号核对</a>；"
+              "<a href='june-price-audit.json'>关键 6 月行情的独立价格核对</a>。</p>"
               "<p>本轮方法假设参考 <a href='https://www.nber.org/papers/w22208'>Moreira 与 Muir 的波动率管理研究</a>；"
               "这里使用当前候选篮子的过去 60 日波动率，只减仓、不加杠杆。论文中的市场与本 ETF 样本不同，实测结果见下表。</p></section>",
               "<section class='panel'><h2>全期间净值与回撤</h2><p>实线为开发和验证期预选的三组配置，虚线为两个基准；均为正常成本。</p>"
@@ -281,7 +282,9 @@ def render(docs: Path, protocol, selection, lookup):
               table(("基准", "Full CAGR", "Full 回撤", "Full Sharpe", "开发收益", "验证收益", "后段收益", "平均仓位", "交易成本/元"), baseline_rows), "</section>",
               "<section class='panel'><h2>双倍交易成本压力测试</h2><p>佣金率、最低佣金和滑点均乘以 2；收益列 Full 为 CAGR，后段为区间收益。"
               "追加邻域检查是在查看正常成本结果后进行的诊断，不改变预选名单；"
-              "<a href='neighbor_stress_plan.json'>追加方案</a> · <a href='neighbor_stress.json'>核验结果</a>。</p>",
+              "<a href='neighbor_stress_plan.json'>追加方案</a> · <a href='neighbor_stress.json'>核验结果</a>。"
+              "费用变化还可能改变整手数量与超限减仓后的执行路径，所以个别高成本收益反而更高；"
+              "<a href='../2026-10-02-round3/cost-path-diagnostic.json'>原策略已有逐日诊断</a>。本轮三个组合的双倍成本收益均下降。</p>",
               table(("配置", "区间", "正常收益", "双倍成本收益", "收益差", "双倍成本回撤", "双倍成本 Sharpe", "双倍交易成本/元"), stress_rows), "</section>",
               workbench_links(docs, selected + neighbors),
               "<small>数值按审计结果生成；表内四舍五入仅用于展示。交易成本为佣金与滑点之和。</small></main></body></html>"]

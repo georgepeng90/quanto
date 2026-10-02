@@ -1,0 +1,674 @@
+{
+  "scope": "Five June 12 proposed basket symbols; 2026-06-12 through 2026-06-26 close-to-close returns",
+  "method": "Compute each daily return against the immediately previous observed date in each full source history, then compare only when current and prior dates match. Frozen closes are adjusted cache values; Sina scale=240 closes are independent raw values. Constant price-level ratios and apparent scale jumps are described separately from return differences.",
+  "frozen_source": {
+    "path": "outputs/etf-expansion-20261002/shared-cache/dataset/prices.parquet",
+    "sha256": "7c3d13eda441150a0bf8a86ea3ed3985b6b7b34d0806504ba7985609666cae82"
+  },
+  "window": {
+    "first": "2026-06-12",
+    "last": "2026-06-26"
+  },
+  "symbols": [
+    {
+      "symbol": "515880",
+      "independent_source": {
+        "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh515880&scale=240&ma=no&datalen=1500",
+        "saved_path": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sh515880-daily.json",
+        "sha256": "683f729943dda24b22afa764e6109b26dfc61777c652759d591e8965e8973d68",
+        "raw_rows": 1500,
+        "raw_first_date": "2020-07-28",
+        "raw_last_date": "2026-09-30"
+      },
+      "coverage": {
+        "frozen_rows_in_window": 10,
+        "raw_rows_in_window": 10,
+        "aligned_return_pairs": 10,
+        "frozen_and_raw_history_overlap_rows": 968
+      },
+      "return_comparison": {
+        "exact_pairs_tolerance_1e-12": 1,
+        "max_absolute_difference": 0.0006313131,
+        "max_difference_date": "2026-06-15"
+      },
+      "level_basis": {
+        "observation": "approximately one-half raw close in checked window",
+        "median_frozen_to_raw_close_ratio": 0.5002672478,
+        "min_ratio": 0.5,
+        "max_ratio": 0.5002960332,
+        "apparent_ratio_steps_over_10_percent_in_full_overlap": [
+          {
+            "date": "2026-02-03",
+            "previous_ratio": 0.1667721519,
+            "new_ratio": 0.5,
+            "relative_ratio_change": 1.9981024668,
+            "inside_checked_window": false
+          },
+          {
+            "date": "2026-07-06",
+            "previous_ratio": 0.5003166561,
+            "new_ratio": 1.0,
+            "relative_ratio_change": 0.9987341772,
+            "inside_checked_window": false
+          }
+        ],
+        "ratio_steps_inside_checked_window": 0
+      },
+      "daily": [
+        {
+          "date": "2026-06-12",
+          "previous_date": "2026-06-11",
+          "frozen_close": 0.792,
+          "raw_close": 1.584,
+          "frozen_return": -0.0124688279,
+          "raw_return": -0.011852776,
+          "absolute_return_difference": 0.0006160519
+        },
+        {
+          "date": "2026-06-15",
+          "previous_date": "2026-06-12",
+          "frozen_close": 0.845,
+          "raw_close": 1.689,
+          "frozen_return": 0.0669191919,
+          "raw_return": 0.0662878788,
+          "absolute_return_difference": 0.0006313131
+        },
+        {
+          "date": "2026-06-16",
+          "previous_date": "2026-06-15",
+          "frozen_close": 0.865,
+          "raw_close": 1.729,
+          "frozen_return": 0.0236686391,
+          "raw_return": 0.0236826525,
+          "absolute_return_difference": 1.40134e-05
+        },
+        {
+          "date": "2026-06-17",
+          "previous_date": "2026-06-16",
+          "frozen_close": 0.879,
+          "raw_close": 1.758,
+          "frozen_return": 0.0161849711,
+          "raw_return": 0.016772701,
+          "absolute_return_difference": 0.0005877299
+        },
+        {
+          "date": "2026-06-18",
+          "previous_date": "2026-06-17",
+          "frozen_close": 0.911,
+          "raw_close": 1.822,
+          "frozen_return": 0.0364050057,
+          "raw_return": 0.0364050057,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-22",
+          "previous_date": "2026-06-18",
+          "frozen_close": 0.93,
+          "raw_close": 1.859,
+          "frozen_return": 0.020856202,
+          "raw_return": 0.0203073546,
+          "absolute_return_difference": 0.0005488474
+        },
+        {
+          "date": "2026-06-23",
+          "previous_date": "2026-06-22",
+          "frozen_close": 0.897,
+          "raw_close": 1.794,
+          "frozen_return": -0.035483871,
+          "raw_return": -0.034965035,
+          "absolute_return_difference": 0.000518836
+        },
+        {
+          "date": "2026-06-24",
+          "previous_date": "2026-06-23",
+          "frozen_close": 0.914,
+          "raw_close": 1.827,
+          "frozen_return": 0.0189520624,
+          "raw_return": 0.0183946488,
+          "absolute_return_difference": 0.0005574136
+        },
+        {
+          "date": "2026-06-25",
+          "previous_date": "2026-06-24",
+          "frozen_close": 0.942,
+          "raw_close": 1.883,
+          "frozen_return": 0.0306345733,
+          "raw_return": 0.030651341,
+          "absolute_return_difference": 1.67677e-05
+        },
+        {
+          "date": "2026-06-26",
+          "previous_date": "2026-06-25",
+          "frozen_close": 0.879,
+          "raw_close": 1.757,
+          "frozen_return": -0.0668789809,
+          "raw_return": -0.0669144981,
+          "absolute_return_difference": 3.55172e-05
+        }
+      ]
+    },
+    {
+      "symbol": "588200",
+      "independent_source": {
+        "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sh588200&scale=240&ma=no&datalen=1500",
+        "saved_path": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sh588200-daily.json",
+        "sha256": "d28e553be6fb66cee30b5a18c6b171ca8c4d43f5884b46fbec43e24353970b8a",
+        "raw_rows": 956,
+        "raw_first_date": "2022-10-26",
+        "raw_last_date": "2026-09-30"
+      },
+      "coverage": {
+        "frozen_rows_in_window": 10,
+        "raw_rows_in_window": 10,
+        "aligned_return_pairs": 10,
+        "frozen_and_raw_history_overlap_rows": 956
+      },
+      "return_comparison": {
+        "exact_pairs_tolerance_1e-12": 0,
+        "max_absolute_difference": 0.0005615395,
+        "max_difference_date": "2026-06-12"
+      },
+      "level_basis": {
+        "observation": "approximately one-third raw close in checked window",
+        "median_frozen_to_raw_close_ratio": 0.3332934609,
+        "min_ratio": 0.3332379863,
+        "max_ratio": 0.3334121542,
+        "apparent_ratio_steps_over_10_percent_in_full_overlap": [
+          {
+            "date": "2026-07-21",
+            "previous_ratio": 0.3334275219,
+            "new_ratio": 1.0,
+            "relative_ratio_change": 1.9991525424,
+            "inside_checked_window": false
+          }
+        ],
+        "ratio_steps_inside_checked_window": 0
+      },
+      "daily": [
+        {
+          "date": "2026-06-12",
+          "previous_date": "2026-06-11",
+          "frozen_close": 1.165,
+          "raw_close": 3.496,
+          "frozen_return": -0.0127118644,
+          "raw_return": -0.012150325,
+          "absolute_return_difference": 0.0005615395
+        },
+        {
+          "date": "2026-06-15",
+          "previous_date": "2026-06-12",
+          "frozen_close": 1.236,
+          "raw_close": 3.708,
+          "frozen_return": 0.060944206,
+          "raw_return": 0.0606407323,
+          "absolute_return_difference": 0.0003034737
+        },
+        {
+          "date": "2026-06-16",
+          "previous_date": "2026-06-15",
+          "frozen_close": 1.247,
+          "raw_close": 3.742,
+          "frozen_return": 0.0088996764,
+          "raw_return": 0.0091693635,
+          "absolute_return_difference": 0.0002696872
+        },
+        {
+          "date": "2026-06-17",
+          "previous_date": "2026-06-16",
+          "frozen_close": 1.316,
+          "raw_close": 3.949,
+          "frozen_return": 0.0553327987,
+          "raw_return": 0.0553180118,
+          "absolute_return_difference": 1.4787e-05
+        },
+        {
+          "date": "2026-06-18",
+          "previous_date": "2026-06-17",
+          "frozen_close": 1.375,
+          "raw_close": 4.126,
+          "frozen_return": 0.0448328267,
+          "raw_return": 0.0448214738,
+          "absolute_return_difference": 1.1353e-05
+        },
+        {
+          "date": "2026-06-22",
+          "previous_date": "2026-06-18",
+          "frozen_close": 1.41,
+          "raw_close": 4.229,
+          "frozen_return": 0.0254545455,
+          "raw_return": 0.0249636452,
+          "absolute_return_difference": 0.0004909003
+        },
+        {
+          "date": "2026-06-23",
+          "previous_date": "2026-06-22",
+          "frozen_close": 1.393,
+          "raw_close": 4.18,
+          "frozen_return": -0.0120567376,
+          "raw_return": -0.0115866635,
+          "absolute_return_difference": 0.0004700741
+        },
+        {
+          "date": "2026-06-24",
+          "previous_date": "2026-06-23",
+          "frozen_close": 1.459,
+          "raw_close": 4.377,
+          "frozen_return": 0.0473797559,
+          "raw_return": 0.0471291866,
+          "absolute_return_difference": 0.0002505693
+        },
+        {
+          "date": "2026-06-25",
+          "previous_date": "2026-06-24",
+          "frozen_close": 1.517,
+          "raw_close": 4.55,
+          "frozen_return": 0.0397532557,
+          "raw_return": 0.0395247887,
+          "absolute_return_difference": 0.000228467
+        },
+        {
+          "date": "2026-06-26",
+          "previous_date": "2026-06-25",
+          "frozen_close": 1.496,
+          "raw_close": 4.487,
+          "frozen_return": -0.0138431114,
+          "raw_return": -0.0138461538,
+          "absolute_return_difference": 3.0424e-06
+        }
+      ]
+    },
+    {
+      "symbol": "159967",
+      "independent_source": {
+        "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159967&scale=240&ma=no&datalen=1500",
+        "saved_path": "outputs/strategy-research-20261002-round4/price-audit/sina-sz159967-daily.json",
+        "sha256": "0f73fa74f7ed4a50df01ccbe8d864a412eb59ebe34978f6bfe78e9c1557d9c68",
+        "raw_rows": 1500,
+        "raw_first_date": "2020-07-28",
+        "raw_last_date": "2026-09-30"
+      },
+      "coverage": {
+        "frozen_rows_in_window": 10,
+        "raw_rows_in_window": 10,
+        "aligned_return_pairs": 10,
+        "frozen_and_raw_history_overlap_rows": 968
+      },
+      "return_comparison": {
+        "exact_pairs_tolerance_1e-12": 10,
+        "max_absolute_difference": 0.0,
+        "max_difference_date": "2026-06-12"
+      },
+      "level_basis": {
+        "observation": "same close level in checked window",
+        "median_frozen_to_raw_close_ratio": 1.0,
+        "min_ratio": 1.0,
+        "max_ratio": 1.0,
+        "apparent_ratio_steps_over_10_percent_in_full_overlap": [],
+        "ratio_steps_inside_checked_window": 0
+      },
+      "daily": [
+        {
+          "date": "2026-06-12",
+          "previous_date": "2026-06-11",
+          "frozen_close": 0.896,
+          "raw_close": 0.896,
+          "frozen_return": -0.0044444444,
+          "raw_return": -0.0044444444,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-15",
+          "previous_date": "2026-06-12",
+          "frozen_close": 0.96,
+          "raw_close": 0.96,
+          "frozen_return": 0.0714285714,
+          "raw_return": 0.0714285714,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-16",
+          "previous_date": "2026-06-15",
+          "frozen_close": 0.981,
+          "raw_close": 0.981,
+          "frozen_return": 0.021875,
+          "raw_return": 0.021875,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-17",
+          "previous_date": "2026-06-16",
+          "frozen_close": 1.013,
+          "raw_close": 1.013,
+          "frozen_return": 0.0326197757,
+          "raw_return": 0.0326197757,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-18",
+          "previous_date": "2026-06-17",
+          "frozen_close": 1.031,
+          "raw_close": 1.031,
+          "frozen_return": 0.017769003,
+          "raw_return": 0.017769003,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-22",
+          "previous_date": "2026-06-18",
+          "frozen_close": 1.059,
+          "raw_close": 1.059,
+          "frozen_return": 0.0271580989,
+          "raw_return": 0.0271580989,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-23",
+          "previous_date": "2026-06-22",
+          "frozen_close": 1.016,
+          "raw_close": 1.016,
+          "frozen_return": -0.0406043437,
+          "raw_return": -0.0406043437,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-24",
+          "previous_date": "2026-06-23",
+          "frozen_close": 1.041,
+          "raw_close": 1.041,
+          "frozen_return": 0.0246062992,
+          "raw_return": 0.0246062992,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-25",
+          "previous_date": "2026-06-24",
+          "frozen_close": 1.088,
+          "raw_close": 1.088,
+          "frozen_return": 0.0451488953,
+          "raw_return": 0.0451488953,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-26",
+          "previous_date": "2026-06-25",
+          "frozen_close": 1.037,
+          "raw_close": 1.037,
+          "frozen_return": -0.046875,
+          "raw_return": -0.046875,
+          "absolute_return_difference": 0.0
+        }
+      ]
+    },
+    {
+      "symbol": "159732",
+      "independent_source": {
+        "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159732&scale=240&ma=no&datalen=1500",
+        "saved_path": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sz159732-daily.json",
+        "sha256": "5244091c27d2a51b9f955d0da3ea1f69adb12f8634e4b95700e917f3f8322e6d",
+        "raw_rows": 1238,
+        "raw_first_date": "2021-08-23",
+        "raw_last_date": "2026-09-30"
+      },
+      "coverage": {
+        "frozen_rows_in_window": 10,
+        "raw_rows_in_window": 10,
+        "aligned_return_pairs": 10,
+        "frozen_and_raw_history_overlap_rows": 968
+      },
+      "return_comparison": {
+        "exact_pairs_tolerance_1e-12": 10,
+        "max_absolute_difference": 0.0,
+        "max_difference_date": "2026-06-12"
+      },
+      "level_basis": {
+        "observation": "same close level in checked window",
+        "median_frozen_to_raw_close_ratio": 1.0,
+        "min_ratio": 1.0,
+        "max_ratio": 1.0,
+        "apparent_ratio_steps_over_10_percent_in_full_overlap": [],
+        "ratio_steps_inside_checked_window": 0
+      },
+      "daily": [
+        {
+          "date": "2026-06-12",
+          "previous_date": "2026-06-11",
+          "frozen_close": 1.482,
+          "raw_close": 1.482,
+          "frozen_return": -0.0106809079,
+          "raw_return": -0.0106809079,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-15",
+          "previous_date": "2026-06-12",
+          "frozen_close": 1.594,
+          "raw_close": 1.594,
+          "frozen_return": 0.0755735493,
+          "raw_return": 0.0755735493,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-16",
+          "previous_date": "2026-06-15",
+          "frozen_close": 1.624,
+          "raw_close": 1.624,
+          "frozen_return": 0.0188205772,
+          "raw_return": 0.0188205772,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-17",
+          "previous_date": "2026-06-16",
+          "frozen_close": 1.705,
+          "raw_close": 1.705,
+          "frozen_return": 0.0498768473,
+          "raw_return": 0.0498768473,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-18",
+          "previous_date": "2026-06-17",
+          "frozen_close": 1.746,
+          "raw_close": 1.746,
+          "frozen_return": 0.0240469208,
+          "raw_return": 0.0240469208,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-22",
+          "previous_date": "2026-06-18",
+          "frozen_close": 1.772,
+          "raw_close": 1.772,
+          "frozen_return": 0.0148911798,
+          "raw_return": 0.0148911798,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-23",
+          "previous_date": "2026-06-22",
+          "frozen_close": 1.709,
+          "raw_close": 1.709,
+          "frozen_return": -0.0355530474,
+          "raw_return": -0.0355530474,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-24",
+          "previous_date": "2026-06-23",
+          "frozen_close": 1.795,
+          "raw_close": 1.795,
+          "frozen_return": 0.0503218256,
+          "raw_return": 0.0503218256,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-25",
+          "previous_date": "2026-06-24",
+          "frozen_close": 1.884,
+          "raw_close": 1.884,
+          "frozen_return": 0.0495821727,
+          "raw_return": 0.0495821727,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-26",
+          "previous_date": "2026-06-25",
+          "frozen_close": 1.835,
+          "raw_close": 1.835,
+          "frozen_return": -0.0260084926,
+          "raw_return": -0.0260084926,
+          "absolute_return_difference": 0.0
+        }
+      ]
+    },
+    {
+      "symbol": "159363",
+      "independent_source": {
+        "url": "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz159363&scale=240&ma=no&datalen=1500",
+        "saved_path": "outputs/strategy-research-20261002-round3/winner-price-audit/sina-sz159363-daily.json",
+        "sha256": "fcf356ab70d2ee63c7ec9c575af4567e4daaed04843dcf0da4f01e9b6ff5d64b",
+        "raw_rows": 436,
+        "raw_first_date": "2024-12-16",
+        "raw_last_date": "2026-09-30"
+      },
+      "coverage": {
+        "frozen_rows_in_window": 10,
+        "raw_rows_in_window": 10,
+        "aligned_return_pairs": 10,
+        "frozen_and_raw_history_overlap_rows": 436
+      },
+      "return_comparison": {
+        "exact_pairs_tolerance_1e-12": 10,
+        "max_absolute_difference": 0.0,
+        "max_difference_date": "2026-06-12"
+      },
+      "level_basis": {
+        "observation": "same close level in checked window",
+        "median_frozen_to_raw_close_ratio": 1.0,
+        "min_ratio": 1.0,
+        "max_ratio": 1.0,
+        "apparent_ratio_steps_over_10_percent_in_full_overlap": [
+          {
+            "date": "2025-07-21",
+            "previous_ratio": 0.5004198153,
+            "new_ratio": 1.0,
+            "relative_ratio_change": 0.9983221477,
+            "inside_checked_window": false
+          }
+        ],
+        "ratio_steps_inside_checked_window": 0
+      },
+      "daily": [
+        {
+          "date": "2026-06-12",
+          "previous_date": "2026-06-11",
+          "frozen_close": 1.336,
+          "raw_close": 1.336,
+          "frozen_return": -0.0029850746,
+          "raw_return": -0.0029850746,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-15",
+          "previous_date": "2026-06-12",
+          "frozen_close": 1.439,
+          "raw_close": 1.439,
+          "frozen_return": 0.0770958084,
+          "raw_return": 0.0770958084,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-16",
+          "previous_date": "2026-06-15",
+          "frozen_close": 1.463,
+          "raw_close": 1.463,
+          "frozen_return": 0.0166782488,
+          "raw_return": 0.0166782488,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-17",
+          "previous_date": "2026-06-16",
+          "frozen_close": 1.486,
+          "raw_close": 1.486,
+          "frozen_return": 0.015721121,
+          "raw_return": 0.015721121,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-18",
+          "previous_date": "2026-06-17",
+          "frozen_close": 1.537,
+          "raw_close": 1.537,
+          "frozen_return": 0.034320323,
+          "raw_return": 0.034320323,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-22",
+          "previous_date": "2026-06-18",
+          "frozen_close": 1.575,
+          "raw_close": 1.575,
+          "frozen_return": 0.0247234873,
+          "raw_return": 0.0247234873,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-23",
+          "previous_date": "2026-06-22",
+          "frozen_close": 1.515,
+          "raw_close": 1.515,
+          "frozen_return": -0.0380952381,
+          "raw_return": -0.0380952381,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-24",
+          "previous_date": "2026-06-23",
+          "frozen_close": 1.542,
+          "raw_close": 1.542,
+          "frozen_return": 0.0178217822,
+          "raw_return": 0.0178217822,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-25",
+          "previous_date": "2026-06-24",
+          "frozen_close": 1.593,
+          "raw_close": 1.593,
+          "frozen_return": 0.03307393,
+          "raw_return": 0.03307393,
+          "absolute_return_difference": 0.0
+        },
+        {
+          "date": "2026-06-26",
+          "previous_date": "2026-06-25",
+          "frozen_close": 1.51,
+          "raw_close": 1.51,
+          "frozen_return": -0.0521029504,
+          "raw_return": -0.0521029504,
+          "absolute_return_difference": 0.0
+        }
+      ]
+    }
+  ],
+  "limitations": "This narrow historical source comparison does not validate all prices, corporate actions, adjusted-price execution, signal logic, or point-in-time tradability.",
+  "totals": {
+    "symbols": 5,
+    "checked_dates_per_symbol": 10,
+    "aligned_return_pairs": 50,
+    "exact_pairs_tolerance_1e-12": 31,
+    "max_absolute_return_difference": 0.0006313131,
+    "max_difference_case": {
+      "symbol": "515880",
+      "date": "2026-06-15",
+      "previous_date": "2026-06-12",
+      "frozen_close": 0.845,
+      "raw_close": 1.689,
+      "frozen_return": 0.0669191919,
+      "raw_return": 0.0662878788,
+      "absolute_return_difference": 0.0006313131
+    },
+    "missing_or_misaligned_pairs": 0
+  }
+}

@@ -3,7 +3,7 @@ import { api, describeError } from '../api'
 import type { LearningArtifact, LearningChart, LearningTablePage } from '../learningTypes'
 import { taskTime } from './timePresentation'
 
-export const learningMetricLabels: Record<string, string> = { final_equity: '最终资产', total_return: '总收益率', annualized_return: '年化收益（日末）', sharpe: 'Sharpe（日末）', max_drawdown: '最大回撤（日末）', minute_max_drawdown: '盘中最大回撤', test_loss: '测试损失', validation_loss: '验证损失', best_validation_loss: '最佳验证损失', 'test.mse': '测试均方误差', 'test.mae': '测试绝对误差', 'test.samples': '测试样本数', 'train.mse': '训练均方误差', 'train.mae': '训练绝对误差', 'train.samples': '训练样本数', 'validation.mse': '验证均方误差', 'validation.mae': '验证绝对误差', 'validation.samples': '验证样本数' }
+export const learningMetricLabels: Record<string, string> = { cash_interest: '现金利息', commissions: '佣金总额', final_cash: '期末现金', initial_cash: '初始资金', slippage_cost: '滑点成本', trading_days: '交易日数', turnover: '换手倍数', 'samples.train': '训练样本数', 'samples.validation': '验证样本数', 'samples.test': '测试样本数', final_equity: '最终资产', total_return: '总收益率', annualized_return: '年化收益（日末）', sharpe: 'Sharpe（日末）', max_drawdown: '最大回撤（日末）', minute_max_drawdown: '盘中最大回撤', test_loss: '测试损失', validation_loss: '验证损失', best_validation_loss: '最佳验证损失', 'test.mse': '测试均方误差', 'test.mae': '测试绝对误差', 'test.samples': '测试样本数', 'train.mse': '训练均方误差', 'train.mae': '训练绝对误差', 'train.samples': '训练样本数', 'validation.mse': '验证均方误差', 'validation.mae': '验证绝对误差', 'validation.samples': '验证样本数' }
 export function metricText(key: string, value: unknown) {
   if (typeof value !== 'number' || !Number.isFinite(value)) return '—'
   if (/return|drawdown/.test(key)) return `${(value * 100).toFixed(2)}%`

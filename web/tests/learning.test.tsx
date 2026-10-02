@@ -247,3 +247,9 @@ test('saved in-sample research stays visible in list, comparison and results ind
   await waitFor(() => expect(api.learningOverview).toHaveBeenCalledTimes(2))
   expect(within(panel).getByText('样本内研究 · 非独立留出证据')).toBeInTheDocument()
 })
+
+test('actual financial totals and sample-count metrics use Chinese labels', async () => {
+  vi.mocked(api.learningOverview).mockResolvedValue({ ...overview, models: [{ ...model, manifest: { ...model.manifest, metrics: { samples: { train: 100, validation: 20, test: 30 } } } }], backtests: [{ ...result, manifest: { ...result.manifest, metrics: { cash_interest: 50, commissions: 20, final_cash: 100, initial_cash: 1000, slippage_cost: 10, trading_days: 5, turnover: .5 } } }] } as never)
+  render(<LearningPage />)
+  for (const label of ['现金利息', '佣金总额', '期末现金', '初始资金', '滑点成本', '交易日数', '换手倍数', '训练样本数', '验证样本数', '测试样本数']) expect(await screen.findByText(label, { selector: 'dt' })).toBeInTheDocument()
+})

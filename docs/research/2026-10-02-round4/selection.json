@@ -1,0 +1,13 @@
+{
+  "protocol_sha256": "fc7d85f556bc393e28cb0c16597adbd832b1f8615f31f9e7a040471ab2c3343b",
+  "selected_by_family": {
+    "hysteresis": "h55_40",
+    "volatility": "vol10",
+    "combined": "h55_45_vol10"
+  },
+  "selected": [
+    "h55_40",
+    "vol10",
+    "h55_45_vol10"
+  ]
+}

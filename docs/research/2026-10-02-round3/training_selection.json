@@ -1,0 +1,15 @@
+{
+  "protocol_sha256": "d1cb996f248148f93e92e53145d3729e519fb645867684154a2f1b730de52075",
+  "selected_by_family": {
+    "momentum": "momentum_v0",
+    "dual_momentum": "dual_momentum_v1",
+    "ma_trend": "ma_trend_v1",
+    "breakout": "breakout_v1",
+    "low_vol": "low_vol_v1",
+    "regression": "regression_v0",
+    "pullback": "pullback_v1",
+    "sector_rotation": "sector_rotation_v1",
+    "breadth_timing": "breadth_timing_v1",
+    "correlation": "correlation_v1"
+  }
+}

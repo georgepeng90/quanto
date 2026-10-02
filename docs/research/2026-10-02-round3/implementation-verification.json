@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-02",
+  "focused_tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_research_round3.py tests/unit/test_research_round3_candidates.py tests/unit/test_research_round2_candidates.py tests/unit/test_strategy_contract.py tests/unit/test_risk_policy.py tests/unit/test_metrics.py tests/integration/test_backtest_no_lookahead.py -q",
+    "passed": 85
+  },
+  "full_suite": {
+    "command": ".venv/Scripts/python.exe -m pytest -q",
+    "passed": 456,
+    "skipped": 1,
+    "warnings": 2,
+    "warning_scope": "Existing mixed timestamp unit test: conversion discards nonzero nanoseconds in data/storage.py:82.",
+    "seconds": 172.82
+  },
+  "independent_review": {
+    "blocking_findings": 0,
+    "causality": "StrategyContext clips history to asof; signals execute at the next open.",
+    "minimum_history_note": "A 120-session return needs 121 own price observations; 200 needs 201. Dataset base eligibility also applies.",
+    "metric_count_note": "The runner audit text says 12; the actual independent reconciliation covers 11 reported metrics plus equity/curve agreement. Report the actual count."
+  },
+  "data_reuse_checks": {
+    "dataset": "outputs/etf-expansion-20261002/shared-cache/dataset",
+    "symbols": 305,
+    "price_rows": 238070,
+    "observed_dates": 968,
+    "first": "2022-10-10",
+    "last": "2026-09-30",
+    "data_file_hashes_matched": 7,
+    "null_prices": 0,
+    "duplicate_symbol_dates": 0,
+    "prelisting_rows": 0,
+    "nonpositive_closes": 0,
+    "negative_volume_or_amount": 0,
+    "inconsistent_ohlc": 0,
+    "qualification_symbol_set_matches": true,
+    "status_caveat": "All observed status rows assume trading allowed; this is not independent historical suspension evidence."
+  }
+}

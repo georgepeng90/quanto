@@ -1,0 +1,9 @@
+{
+  "protocol_sha256": "d1cb996f248148f93e92e53145d3729e519fb645867684154a2f1b730de52075",
+  "training_selection_sha256": "78ae60e928520b9cacdf18ad056ae70205b950874711ba9c85c5847363605325",
+  "selected": [
+    "pullback_v1",
+    "breadth_timing_v1",
+    "low_vol_v1"
+  ]
+}

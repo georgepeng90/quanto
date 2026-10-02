@@ -1,0 +1,99 @@
+{
+  "purpose": "post-hoc w120_v12 full/late workbench follow-up",
+  "plan_sha256": "fda765c3a21f25cb3008572b26f5096deba3113ca4cf17bf77d1ee675e5a8261",
+  "protocol_sha256": "24d23b73ef572375b2e3fcdb99c02a2590b7d9dee58e358c52b265ba5c2bb1bc",
+  "selection_sha256": "46568b4b0de53bc8f71dc1c8b3c6e4f45705a62af346817ef0c8e08f6a96ea8a",
+  "main_results_sha256": "b404e73d5cd470963b96b2856faf997d7af636455f5963a71c7ffaa16eb067f3",
+  "candidate": "w120_v12",
+  "revisions": {
+    "w120_v12": "9ca91047-d0de-4411-8ee1-1af4553149a4"
+  },
+  "runs": [
+    {
+      "candidate": "w120_v12",
+      "period": "full",
+      "cost_multiplier": 1,
+      "summary_sha256": "c0f543cf03fae4fedf0f34715bee870036a168a2fd71542d53cfdc938f1cee30",
+      "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+      "strategy_revision_id": "9ca91047-d0de-4411-8ee1-1af4553149a4",
+      "idempotency_key": "f7936b8b-10f6-44f2-ba2f-157375044674",
+      "experiment_request_started": true,
+      "experiment_id": "024731fe-6546-4ccb-b651-e2335adaf44a",
+      "expected_revision": 1,
+      "attempts": [
+        {
+          "idempotency_key": "f7936b8b-10f6-44f2-ba2f-157375044674",
+          "run_id": "814fc60c-2151-4e28-8e6b-cbc90f906511",
+          "state": "succeeded",
+          "job_id": "ef131345-4896-4d41-a327-c78cd6d95c97",
+          "completed_through": "2026-09-30"
+        }
+      ],
+      "run_id": "814fc60c-2151-4e28-8e6b-cbc90f906511",
+      "verified": true,
+      "all_metrics_equal": true,
+      "url": "http://127.0.0.1:8767/runs/814fc60c-2151-4e28-8e6b-cbc90f906511"
+    },
+    {
+      "candidate": "w120_v12",
+      "period": "late",
+      "cost_multiplier": 1,
+      "summary_sha256": "b89cf4431db5bd854975f2137005e4e7c82424978282a78d835c0aba16a57193",
+      "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+      "strategy_revision_id": "9ca91047-d0de-4411-8ee1-1af4553149a4",
+      "idempotency_key": "3a1ea39c-89bc-492e-914a-5fc312742fa6",
+      "experiment_request_started": true,
+      "experiment_id": "0dddf1b0-055f-48a2-a521-6526eed8bd25",
+      "expected_revision": 1,
+      "attempts": [
+        {
+          "idempotency_key": "3a1ea39c-89bc-492e-914a-5fc312742fa6",
+          "run_id": "7633dd52-55ec-44b7-a042-7ee06faee8c8",
+          "state": "succeeded",
+          "job_id": "5b1484b4-1408-461a-9065-f8326ca66cca",
+          "completed_through": "2026-09-30"
+        }
+      ],
+      "run_id": "7633dd52-55ec-44b7-a042-7ee06faee8c8",
+      "verified": true,
+      "all_metrics_equal": true,
+      "url": "http://127.0.0.1:8767/runs/7633dd52-55ec-44b7-a042-7ee06faee8c8"
+    }
+  ],
+  "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+  "dataset_content_hash": "c48b9c10b292e4b5162de22df7312896b33c2a6d3b8daf66f7663ea6f777477c",
+  "dataset_verification": {
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "workbench_content_hash": "74525c485618e4c64f6e0a9f0d22dd6c0e065dfa7a262294a3126fa2b7cba4e8",
+    "normalized_content_hash": "c48b9c10b292e4b5162de22df7312896b33c2a6d3b8daf66f7663ea6f777477c",
+    "source_file_hashes": {
+      "benchmark.parquet": "b19a85aba7c852fc88835a2f9b61f580f64c1e1ed94599605c37947f0b3b726a",
+      "calendar.parquet": "e762ccd52b1f4fc6fa2ccc284043c27dc56e1a27212d8d8a2429b5900549d948",
+      "events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d",
+      "instruments.parquet": "8b660fd97289b2afba5794dfe19a312a98d5b68a805061b53d79fccab0b09c84",
+      "manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+      "prices.parquet": "7c3d13eda441150a0bf8a86ea3ed3985b6b7b34d0806504ba7985609666cae82",
+      "status.parquet": "bb814801a31d8209427fb114a0579136b798345fca26dcb860ded7d396c45e9f"
+    },
+    "canonical_file_hashes": {
+      "benchmark.parquet": "2b523aabba09912c0569dde4fe93c8558bf5cba037fdd5bfda6332e5ecbdce3c",
+      "calendar.parquet": "37c3ea20297ebe9c88db3d04552074838237d767fbb1a555f40d9cbbdfcadafc",
+      "events.parquet": "02f2842191d3c1722634129beb9ca48ddf836cf52b0f7f6d5a00ee224d28f517",
+      "instruments.parquet": "8b660fd97289b2afba5794dfe19a312a98d5b68a805061b53d79fccab0b09c84",
+      "manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+      "prices.parquet": "c278c99bd81116d640b3ae4467e7c148963d2e0305d03631f2a658a4af5998f8",
+      "status.parquet": "24a23f198147b571d0883a1e749a65cffdf9c1ae1fc22ea527d2aa92e99f8fa8"
+    },
+    "canonical_rows": {
+      "prices": 238070,
+      "benchmark": 968,
+      "calendar": 973,
+      "instruments": 305,
+      "status": 238070,
+      "events": 0
+    },
+    "job_receipt_sha256": "e7139ace4958ef3fb74f0f44fda4849d3b7a6246991cd8e19c06e401d662fa46",
+    "manifest_equal": true,
+    "tables_exact": true
+  }
+}

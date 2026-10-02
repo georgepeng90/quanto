@@ -19,7 +19,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 ROOT = PROJECT / "outputs/strategy-research-20261002-round4"
 DOCS = PROJECT / "docs/research/2026-10-02-round4"
 PERIODS = ("development", "validation", "late", "full")
-FAMILY_LABELS = {"hysteresis": "宽度滞回", "volatility": "波动率控制", "combined": "滞回与波动率"}
+FAMILY_LABELS = {"hysteresis": "不同进出场阈值", "volatility": "波动率控制", "combined": "进出阈值＋波动率"}
 BASELINE = "breadth_original"
 
 
@@ -106,6 +106,28 @@ def validate(root: Path, docs: Path):
                 f"Incomplete artifacts: {key}")
         lookup[key] = row
     require(set(lookup) == expected, "Result matrix is incomplete")
+    neighbor_path = docs / "neighbor_stress.json"
+    if neighbor_path.exists():
+        neighbors = read_json(neighbor_path)
+        plan_path = docs / "neighbor_stress_plan.json"
+        plan = read_json(plan_path)
+        require(neighbors.get("verified") is True and neighbors["protocol_sha256"] == protocol_hash,
+                "Neighbor audit is not verified against this protocol")
+        require(neighbors["plan_sha256"] == digest(plan_path), "Neighbor diagnostic plan changed")
+        expected_neighbors = {(name, period, 2) for name in plan["candidates"] for period in plan["periods"]}
+        seen = set()
+        for row in neighbors["runs"]:
+            key = row["candidate"], row["period"], row["cost_multiplier"]
+            require(key in expected_neighbors and key not in seen and key not in lookup, "Invalid neighbor result")
+            require(row["protocol_sha256"] == protocol_hash and row["parameters"] == candidates[key[0]],
+                    "Neighbor result identity differs")
+            folder = root / "runs" / f"{key[1]}__{key[0]}__cost2"
+            require(row == read_json(folder / "summary.json"), "Neighbor summary differs")
+            for filename, recorded_hash in row["artifacts"].items():
+                require(digest(folder / filename) == recorded_hash, "Neighbor artifact differs")
+            lookup[key] = row
+            seen.add(key)
+        require(seen == expected_neighbors, "Incomplete neighbor diagnostic")
     return protocol, selection, lookup
 
 
@@ -158,10 +180,11 @@ def table(headers, rows):
 
 
 def workbench_links(docs: Path, selected):
-    path = docs / "workbench_verified.json"
-    if not path.exists():
-        return ""
-    records = read_json(path)
+    records = []
+    for name in ("workbench_verified.json", "workbench_neighbors_verified.json"):
+        path = docs / name
+        if path.exists():
+            records.extend(read_json(path))
     links = []
     for row in records:
         if (row.get("candidate") in selected and row.get("period") in ("full", "late")
@@ -205,12 +228,14 @@ def render(docs: Path, protocol, selection, lookup):
                               fmt(m["sharpe"]), *(fmt(v, True) for v in sub),
                               fmt(m["average_invested_ratio"], True), fmt(m["execution_cost"])])
     stress_rows = []
-    for name in selected + [BASELINE]:
+    neighbors = [name for name in families["combined"] if name not in selected and (name, "full", 2) in lookup]
+    for name in selected + [BASELINE] + neighbors:
         for period in ("full", "late"):
             normal = lookup[name, period, 1]["metrics"]
             stress = lookup[name, period, 2]["metrics"]
             key = "annual_return" if period == "full" else "total_return"
-            stress_rows.append([esc(name), esc(period), fmt(normal[key], True), fmt(stress[key], True),
+            label = name + ("（追加邻域检查）" if name in neighbors else "")
+            stress_rows.append([esc(label), esc(period), fmt(normal[key], True), fmt(stress[key], True),
                                 fmt(difference(stress[key], normal[key]), True), fmt(stress["max_drawdown"], True),
                                 fmt(stress["sharpe"]), fmt(stress["execution_cost"])])
     evidence = " · ".join(f"<a href='{esc(name)}'>{esc(label)}</a>" for name, label in (
@@ -227,13 +252,25 @@ def render(docs: Path, protocol, selection, lookup):
               "th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(4),td:nth-child(4){text-align:left}"
               "tr:hover td{background:#f5f9f7}a{color:#176f74}img{max-width:100%;height:auto}small{color:#607277}</style></head><body><main>",
               "<h1>第四轮 · 市场宽度与波动率研究</h1>",
-              "<p class='lead'>固定协议下的 12 组配置、56 次回测；三组新策略在开发与验证期后预选。</p>",
+              "<p class='lead'>固定协议下的 12 组配置、56 次主回测；三组新策略在开发与验证期后预选。"
+              "相邻组合参数另追加 4 次成本诊断，单独标记。</p>",
               f"<p>{evidence} · <a href='http://127.0.0.1:8767/runs/6a2eab55-4495-4c3f-8e73-4220646a635a'>原始工作台基准</a></p>",
               "<p>全期：2023-10-09—2026-09-30；开发段：2023-10-09—2024-12-31；"
               "验证段：2025-01-02—2025-12-31；后段：2026-01-05—2026-09-30。收益均已扣佣金和滑点。</p>",
               "<div class='note'>开发、验证、后段均各自从现金和未激活宽度状态启动，区间收益不能连乘成 Full 收益。"
               "这些日期及历史数据已用于探索，不是独立留出样本。ETF 池按当前资料回溯筛选，含幸存者和目录偏差；"
               "历史复权口径及供应商价格锚点尚未完全核实，交易状态与结算规则是研究假设。</div>",
+              "<section class='panel'><h2>结论与取舍</h2>"
+              "<p>预选三组中，55% 进场、45% 退出并限制组合波动率至 10% 的配置通过了原先全部质量门槛。"
+              "12% 和 15% 是事先列入完整参数矩阵的相邻配置，其全期比较及追加成本检查属于事后探索；预选名单保持不变。</p>"
+              "<p>保留原宽度开关、仅加波动率控制的 12% 与 15% 配置也通过了正常成本门槛。"
+              "组合控制的平均仓位明显低于原策略，表内同时列出固定降仓对照，便于区分降低仓位和改变择时的效果。</p>"
+              "<p>单独改变宽度进出阈值的四组配置在本样本中做出了相同决定。与原策略相比，仅在 2026-06-12、"
+              "宽度为 45% 时出现一次不同的周度目标：原策略清仓，新规则继续持有。"
+              "因此宽度缓冲带来的增益集中于一次判断，不能把四组相同结果当成四份独立的稳健证据。"
+              "<a href='hysteresis-diagnostic.json'>完整历史上下文的信号核对</a>。</p>"
+              "<p>本轮方法假设参考 <a href='https://www.nber.org/papers/w22208'>Moreira 与 Muir 的波动率管理研究</a>；"
+              "这里使用当前候选篮子的过去 60 日波动率，只减仓、不加杠杆。论文中的市场与本 ETF 样本不同，实测结果见下表。</p></section>",
               "<section class='panel'><h2>全期间净值与回撤</h2><p>实线为开发和验证期预选的三组配置，虚线为两个基准；均为正常成本。</p>"
               "<img src='comparison.png' alt='五组配置的全期间净值与回撤曲线'></section>",
               "<section class='panel'><h2>全部候选配置</h2>",
@@ -242,9 +279,11 @@ def render(docs: Path, protocol, selection, lookup):
               "Full 与后段的其他优胜点属于事后探索，不改变预选名单。</p>", table(headers, rows), "</section>",
               "<section class='panel'><h2>两个基准</h2>",
               table(("基准", "Full CAGR", "Full 回撤", "Full Sharpe", "开发收益", "验证收益", "后段收益", "平均仓位", "交易成本/元"), baseline_rows), "</section>",
-              "<section class='panel'><h2>双倍交易成本压力测试</h2><p>佣金率、最低佣金和滑点均乘以 2；收益列 Full 为 CAGR，后段为区间收益。</p>",
+              "<section class='panel'><h2>双倍交易成本压力测试</h2><p>佣金率、最低佣金和滑点均乘以 2；收益列 Full 为 CAGR，后段为区间收益。"
+              "追加邻域检查是在查看正常成本结果后进行的诊断，不改变预选名单；"
+              "<a href='neighbor_stress_plan.json'>追加方案</a> · <a href='neighbor_stress.json'>核验结果</a>。</p>",
               table(("配置", "区间", "正常收益", "双倍成本收益", "收益差", "双倍成本回撤", "双倍成本 Sharpe", "双倍交易成本/元"), stress_rows), "</section>",
-              workbench_links(docs, selected),
+              workbench_links(docs, selected + neighbors),
               "<small>数值按审计结果生成；表内四舍五入仅用于展示。交易成本为佣金与滑点之和。</small></main></body></html>"]
     path = docs / "dashboard.html"
     path.write_text("\n".join(blocks), encoding="utf-8")

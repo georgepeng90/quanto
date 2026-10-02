@@ -240,6 +240,41 @@ def test_live_heartbeat_keeps_silent_computation_running(tmp_path):
         scheduler.stop()
 
 
+def test_worker_heartbeat_recovers_after_windows_replace_retries_exhausted(tmp_path, monkeypatch):
+    from quanto.workbench import worker
+
+    descriptor = {"job_id": "heartbeat-recovery", "kind": "test",
+                  "parent_pid": os.getpid(), "parent_start": worker.process_identity(os.getpid()),
+                  "heartbeat_interval": 0.01, "handshake_timeout": 1.0}
+    atomic_json(tmp_path / "job.json", descriptor)
+    atomic_json(tmp_path / "ack.json", {"job_id": descriptor["job_id"]})
+    recovered = threading.Event()
+    original_replace = os.replace
+    failures_left = 20
+
+    def temporarily_locked(source, destination):
+        nonlocal failures_left
+        if destination == tmp_path / "heartbeat.json":
+            if failures_left:
+                failures_left -= 1
+                raise PermissionError("Windows heartbeat file is temporarily locked")
+            original_replace(source, destination)
+            recovered.set()
+        else:
+            original_replace(source, destination)
+
+    def silent_computation(*args):
+        assert recovered.wait(3), "heartbeat thread did not recover from the temporary lock"
+        return {"completed": True}
+
+    monkeypatch.setattr(os, "replace", temporarily_locked)
+    monkeypatch.setitem(worker.JOB_HANDLERS, "test", silent_computation)
+    assert worker.worker_main(tmp_path / "job.json", tmp_path) == 0
+    assert worker.read_json(tmp_path / "heartbeat.json")["job_id"] == descriptor["job_id"]
+    assert worker.read_json(tmp_path / "receipt.json") == {
+        "job_id": descriptor["job_id"], "state": "succeeded", "result": {"completed": True}}
+
+
 def test_paused_snapshot_freeze_does_not_block_cancellation(tmp_path, monkeypatch):
     store, run = queued(tmp_path)
     entered, release, cancelled = threading.Event(), threading.Event(), threading.Event()

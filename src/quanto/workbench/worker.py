@@ -334,7 +334,12 @@ def worker_main(job_path: Path, control_dir: Path) -> int:
         while not stopped.is_set():
             if not same_process(descriptor["parent_pid"], descriptor["parent_start"]):
                 os._exit(75)
-            atomic_json(control_dir / "heartbeat.json", {"job_id": descriptor["job_id"], "monotonic": time.monotonic(), "at": datetime.now(timezone.utc).isoformat()})
+            try:
+                atomic_json(control_dir / "heartbeat.json", {"job_id": descriptor["job_id"], "monotonic": time.monotonic(), "at": datetime.now(timezone.utc).isoformat()})
+            except PermissionError:
+                # Windows locks can outlast atomic_json's short retries. Retry next
+                # interval; the scheduler still times out a persistently stale beat.
+                pass
             stopped.wait(descriptor["heartbeat_interval"])
     thread = threading.Thread(target=watchdog, daemon=True)
     thread.start()

@@ -1,0 +1,38 @@
+{
+  "created_at": "2026-10-02T13:50:07.385135+00:00",
+  "protocol_sha256": "fc7d85f556bc393e28cb0c16597adbd832b1f8615f31f9e7a040471ab2c3343b",
+  "classification": "post-hoc robustness diagnostic after all normal-cost runs; not a new selection or independent holdout",
+  "reason": "Check the already specified adjacent hybrid settings before discussing the return/drawdown tradeoff; no new parameter values",
+  "candidates": [
+    "h55_45_vol12",
+    "h55_45_vol15"
+  ],
+  "periods": [
+    "full",
+    "late"
+  ],
+  "cost_multiplier": 2,
+  "parameters": {
+    "h55_45_vol12": {
+      "kind": "breadth_risk",
+      "params": {
+        "entry_breadth": 0.55,
+        "exit_breadth": 0.45,
+        "target_vol": 0.12
+      }
+    },
+    "h55_45_vol15": {
+      "kind": "breadth_risk",
+      "params": {
+        "entry_breadth": 0.55,
+        "exit_breadth": 0.45,
+        "target_vol": 0.15
+      }
+    }
+  },
+  "preselected_unchanged": [
+    "h55_40",
+    "vol10",
+    "h55_45_vol10"
+  ]
+}

@@ -11,6 +11,7 @@ from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -112,8 +113,8 @@ def chart(root, docs, protocol, results, selected):
     scatter_ax.set_title("Full-period return and drawdown")
     scatter_ax.set_xlabel("Annual return")
     scatter_ax.set_ylabel("Maximum drawdown")
-    scatter_ax.xaxis.set_major_formatter(plt.PercentFormatter(1))
-    scatter_ax.yaxis.set_major_formatter(plt.PercentFormatter(1))
+    scatter_ax.xaxis.set_major_formatter(PercentFormatter(1))
+    scatter_ax.yaxis.set_major_formatter(PercentFormatter(1))
     scatter_ax.grid(alpha=.25)
     scatter_ax.legend(fontsize=9)
     fig.suptitle("Round 3: preselected finalists and complete comparison", fontsize=15)

@@ -1,0 +1,64 @@
+{
+  "verified": true,
+  "runs": 118,
+  "protocol_sha256": "d1cb996f248148f93e92e53145d3729e519fb645867684154a2f1b730de52075",
+  "checks": [
+    "source, data, audit and parameter hashes",
+    "selection rules and permitted periods",
+    "result identities and artifact hashes",
+    "11 equity, risk, exposure and cost metrics recomputed, plus equity/curve agreement"
+  ],
+  "results_sha256": "cea47567e3725a27673bc81c4adfe313571f51b6b5758fc5696adf1f21abacd9",
+  "previous_expanded_baselines": [
+    {
+      "candidate": "trend_20_20_k3",
+      "period": "development",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "guarded_momentum_200_v0.1",
+      "period": "development",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "diversified_200_inverse_vol",
+      "period": "development",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "buy_hold",
+      "period": "development",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "cash_buy_hold_40",
+      "period": "development",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "trend_20_20_k3",
+      "period": "full",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "guarded_momentum_200_v0.1",
+      "period": "full",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "diversified_200_inverse_vol",
+      "period": "full",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "buy_hold",
+      "period": "full",
+      "all_metrics_equal": true
+    },
+    {
+      "candidate": "cash_buy_hold_40",
+      "period": "full",
+      "all_metrics_equal": true
+    }
+  ]
+}

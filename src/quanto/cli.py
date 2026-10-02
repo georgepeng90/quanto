@@ -68,6 +68,18 @@ def build_parser() -> argparse.ArgumentParser:
                     entry.add_argument("--json", required=True)
     compare = commands.add_parser("compare", help="比较运行")
     compare.add_argument("run_ids", nargs="+")
+    learning = commands.add_parser("learning", help="分钟数据训练、模型和回测")
+    actions = learning.add_subparsers(dest="action", required=True)
+    actions.add_parser("overview")
+    for action in ("prepare", "train", "backtest"):
+        item = actions.add_parser(action)
+        item.add_argument("--json", required=True)
+    get = actions.add_parser("get")
+    get.add_argument("resource", choices=("datasets", "models", "backtests"))
+    get.add_argument("identity")
+    for action in ("logs", "cancel"):
+        item = actions.add_parser(action)
+        item.add_argument("identity")
     return parser
 
 
@@ -109,7 +121,19 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     client = WorkbenchClient(args.url, token)
     try:
-        if args.command == "compare":
+        if args.command == "learning":
+            if args.action == "overview":
+                result = client.get("/learning/overview")
+            elif args.action == "get":
+                result = client.get(f"/learning/{args.resource}/{args.identity}")
+            elif args.action == "logs":
+                result = client.get(f"/jobs/{args.identity}/logs")
+            elif args.action == "cancel":
+                result = client.post(f"/jobs/{args.identity}/cancel", {})
+            else:
+                route = {"prepare": "datasets", "train": "train", "backtest": "backtests"}[args.action]
+                result = client.post(f"/learning/{route}", json.loads(Path(args.json).read_text(encoding="utf-8")))
+        elif args.command == "compare":
             result = client.post("/comparisons", {"run_ids": args.run_ids})
         else:
             root = f"/{args.command}"

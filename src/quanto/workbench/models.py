@@ -57,7 +57,7 @@ class RunRecord:
 @dataclass(frozen=True)
 class JobRecord:
     id: str
-    kind: Literal["backtest", "demo", "fetch", "import", "validate_strategy"]
+    kind: Literal["backtest", "demo", "fetch", "import", "validate_strategy", "prepare_learning", "train", "model_backtest"]
     state: str
     run_id: str | None
     enqueue_seq: int

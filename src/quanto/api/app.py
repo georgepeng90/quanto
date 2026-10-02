@@ -22,7 +22,7 @@ class FrontendFiles(StaticFiles):
         if path == "api" or path.startswith("api/"):
             raise StarletteHTTPException(404)
         # Only known client routes fall back; missing assets/private paths stay 404.
-        is_page = path in {".", "", "datasets", "experiments", "runs", "compare"} or (path.startswith("runs/") and len(path.split("/")) == 2)
+        is_page = path in {".", "", "datasets", "experiments", "runs", "compare", "learning"} or (path.startswith("runs/") and len(path.split("/")) == 2)
         if is_page and scope["method"] in {"GET", "HEAD"}:
             return FileResponse(Path(self.directory) / "index.html", headers={"Cache-Control": "no-cache"})
         return await super().get_response(path, scope)
@@ -89,6 +89,8 @@ def create_app(root: Path, frontend_dir: Path | None = None, *, templates_dir: P
         message = "接口不存在" if exc.status_code == 404 else "请求无法完成"
         return JSONResponse({"code": code, "message": message, "details": {}}, status_code=exc.status_code)
 
+    from quanto.learning.api import router as learning_router
+    app.include_router(learning_router, prefix="/api")
     app.include_router(router, prefix="/api")
     if frontend_dir is not None:
         app.mount("/", FrontendFiles(directory=frontend_dir), name="frontend")

@@ -88,6 +88,8 @@ class WorkbenchStore:
             for column in ("created_at", "started_at", "finished_at"):
                 if column not in columns:
                     db.execute(f"ALTER TABLE jobs ADD COLUMN {column} TEXT")
+            from quanto.learning.registry import migrate_learning_schema
+            migrate_learning_schema(db)
 
     @property
     def market_root(self) -> Path:

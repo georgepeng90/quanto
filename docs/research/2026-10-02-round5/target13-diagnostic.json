@@ -1,0 +1,57 @@
+{
+  "scope": "Frozen Round 5 validation runs only: baseline target_vol=0.12 versus w60_v13 target_vol=0.13, both vol_window=60; no parameter search.",
+  "protocol_sha256": "24d23b73ef572375b2e3fcdb99c02a2590b7d9dee58e358c52b265ba5c2bb1bc",
+  "replay_verification": {
+    "method": "Two sequential in-memory run_backtest replays using frozen protocol/spec/dataset/strategy, followed by build_report; no replay artifacts written.",
+    "baseline_metric_dictionary_equal": true,
+    "w60_v13_metric_dictionary_equal": true,
+    "baseline_risk_event_count": 13,
+    "w60_v13_risk_event_count": 18
+  },
+  "metrics": {
+    "baseline": {
+      "annual_return": 0.2180367544033781,
+      "max_drawdown": 0.0865682166433498,
+      "sharpe": 1.7248618056570724,
+      "average_invested_ratio": 0.441264661859573,
+      "execution_cost": 8370.909551719493,
+      "final_equity": 1209486.6904482802
+    },
+    "w60_v13": {
+      "annual_return": 0.20839721992900628,
+      "max_drawdown": 0.09359381880476048,
+      "sharpe": 1.5777086078936453,
+      "average_invested_ratio": 0.47139624045300366,
+      "execution_cost": 8808.33437928947,
+      "final_equity": 1200255.3656207104
+    }
+  },
+  "trigger": {
+    "signal_date": "2025-07-11",
+    "execution_date": "2025-07-14",
+    "risk_code": "EXPOSURE_REDUCTION",
+    "risk_rule": "RiskPolicy repairs current holdings when actual exposure exceeds max_total_weight=0.8, before considering the fresh strategy target.",
+    "baseline_current_exposure": 0.7520269118258441,
+    "w60_v13_current_exposure": 0.8007570491622439,
+    "baseline_proposed_and_approved_target_total_approx": 0.63879,
+    "w60_v13_proposed_target_total_approx": 0.69202,
+    "w60_v13_approved_repair_total": 0.8,
+    "baseline_bought_515880_shares_on_execution": 544700,
+    "w60_v13_bought_515880_shares_on_execution": 0,
+    "baseline_july14_fills": 6,
+    "w60_v13_july14_fills": 5
+  },
+  "equity_gap_w60_v13_minus_baseline": {
+    "2025-07-11": 2589.6712107399944,
+    "2025-07-14": 1171.1932557096006,
+    "2025-07-15": -8887.706744290539,
+    "2025-07-17": -13785.806744290516,
+    "2025-12-31": -9231.32482756977
+  },
+  "largest_daily_gap_change": {
+    "date": "2025-07-15",
+    "change": -10058.90000000014
+  },
+  "interpretation": "The higher target raised actual exposure just above the 80% cap on July 11. Risk repair overrode its lower fresh target and kept the prior basket, while baseline rebalanced into 515880 on July 14. The ensuing price moves caused a 10,058.90 CNY relative equity swing on July 15 and materially explain the nonmonotonic validation outcome. Later path differences and costs also contribute to the final gap; event counts alone do not quantify attribution.",
+  "limitations": "This is a deterministic diagnosis of already-inspected historical runs, not independent validation or a changed selection."
+}

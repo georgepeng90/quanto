@@ -1,4 +1,6 @@
 :root{font-family:Inter,"Segoe UI","Microsoft YaHei",sans-serif;color:#1b2935;background:#f4f6f7;font-size:14px;line-height:1.55;font-synthesis:none}
+.learning-page fieldset{border:0;padding:0;margin:0;min-width:0}.learning-page .record-head{flex-wrap:wrap}.learning-page .record-head label{font-size:12px}.learning-page dd{margin:0}.learning-page form>fieldset>button{margin-top:12px}.learning-curve{width:100%;height:auto;max-height:300px;background:#f9fbfb;margin-top:16px}.learning-curve text{font-size:12px;fill:#566e79}
+.learning-assumptions{display:grid;gap:8px}.learning-assumptions div{display:grid;grid-template-columns:minmax(110px,20%) minmax(0,1fr);gap:12px}.learning-assumptions dt{font-weight:600}.learning-assumptions dd{overflow-wrap:anywhere}
 *{box-sizing:border-box}
 body{margin:0}
 button,input,select,textarea{font:inherit}

@@ -1,0 +1,9 @@
+import type { JobRecord } from './types'
+
+export type LearningArtifact = { id: string; kind: 'dataset' | 'model' | 'backtest'; created_at: string; job_id: string; state: 'succeeded'; manifest: Record<string, unknown> }
+export type MinuteSnapshot = { id: string; manifest_digest: string; frequency: string; instruments: { exchange: string; instrument_type: string; code: string }[]; start: string; end: string; price_basis: Record<string, unknown>; limitations: string[]; query: Record<string, unknown> }
+export type LearningOverview = { capabilities: { torch_available: boolean; cuda_available: boolean; device_name: string | null; torch_version: string | null; python_version: string; disk_free_bytes: number }; snapshots: MinuteSnapshot[]; datasets: LearningArtifact[]; models: LearningArtifact[]; backtests: LearningArtifact[]; jobs: JobRecord[] }
+export type TrainingSpec = { name: string; model_type: 'gru' | 'linear'; train_start: string; train_end: string; validation_start: string; validation_end: string; test_start: string; test_end: string; lookback: number; horizon: number; epochs: number; batch_size: number; learning_rate: number; hidden_size: number; layers: number; seed: number; device: 'auto' | 'cpu' | 'cuda'; patience: number }
+export type LearningBacktestSpec = { start: string; end: string; initial_cash: number; top_k: number; rebalance_every: number; max_total_weight: number; max_symbol_weight: number; commission_rate: number; minimum_commission: number; slippage_rate: number; participation_rate: number; settlement_days: number; lot_size: number; drawdown_pause: number; cash_rate: number; baseline: 'model' | 'equal_weight' | 'momentum' | 'cash' }
+export type LearningTablePage = { items: Record<string, unknown>[]; next_cursor: number | string | null }
+export type LearningChart = { points: { time: string; equity: number; drawdown: number }[]; total_count: number }

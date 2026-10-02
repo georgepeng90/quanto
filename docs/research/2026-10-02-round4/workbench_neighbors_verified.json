@@ -1,0 +1,102 @@
+[
+  {
+    "candidate": "h55_45_vol12",
+    "period": "full",
+    "cost_multiplier": 1,
+    "summary_sha256": "8e0c623d9127fec2b4272a5a2da714a2685f0cf976edc455941d02f2958a7242",
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "fb487329-4c2a-40e9-bf21-df29f66b516a",
+    "idempotency_key": "653da1ab-c949-471e-adab-b0ad7a63c699",
+    "experiment_request_started": true,
+    "experiment_id": "6b45b8c8-d07b-4d0d-b2b2-41c73d4b884c",
+    "expected_revision": 1,
+    "attempts": [
+      {
+        "idempotency_key": "653da1ab-c949-471e-adab-b0ad7a63c699",
+        "run_id": "8e32c5e8-43f1-4d0b-9f9d-0802f7e0672e",
+        "state": "succeeded",
+        "job_id": "3b821e66-c6d0-4d56-8fe8-0bcdc63dab1c",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "run_id": "8e32c5e8-43f1-4d0b-9f9d-0802f7e0672e",
+    "verified": true,
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/8e32c5e8-43f1-4d0b-9f9d-0802f7e0672e"
+  },
+  {
+    "candidate": "h55_45_vol15",
+    "period": "full",
+    "cost_multiplier": 1,
+    "summary_sha256": "a964d1328f8f2d723dd30074a7d80ad5c107630cd233d7ce20e54b43a38c3486",
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "b68b8e35-f806-45fa-8bb7-92be2c0c72a2",
+    "idempotency_key": "67fb54c9-d7fe-4196-af8d-0e960aaf9dc3",
+    "experiment_request_started": true,
+    "experiment_id": "36b2d2e8-33e9-4c5e-a5b2-3e4375e2d04f",
+    "expected_revision": 1,
+    "attempts": [
+      {
+        "idempotency_key": "67fb54c9-d7fe-4196-af8d-0e960aaf9dc3",
+        "run_id": "8017fbc5-76a9-4257-b773-965d3d37e1eb",
+        "state": "succeeded",
+        "job_id": "6ef4a0d0-9b98-4ea3-b7a2-70dcb3cf15b5",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "run_id": "8017fbc5-76a9-4257-b773-965d3d37e1eb",
+    "verified": true,
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/8017fbc5-76a9-4257-b773-965d3d37e1eb"
+  },
+  {
+    "candidate": "h55_45_vol12",
+    "period": "late",
+    "cost_multiplier": 1,
+    "summary_sha256": "49291b269b6f2c966325ec1038533c0646299720718ff0a47da6f40b69d2f46a",
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "fb487329-4c2a-40e9-bf21-df29f66b516a",
+    "idempotency_key": "bc29ba5b-b9fa-4adf-9e34-b2e222b30ff9",
+    "experiment_request_started": true,
+    "experiment_id": "fcf7c5b9-e6d5-4bac-a796-63e75f58163c",
+    "expected_revision": 1,
+    "attempts": [
+      {
+        "idempotency_key": "bc29ba5b-b9fa-4adf-9e34-b2e222b30ff9",
+        "run_id": "19e340a5-9ce7-474a-a8dd-ba17f3f54aae",
+        "state": "succeeded",
+        "job_id": "bad0dc49-f4cc-4ca8-93ae-a355589f720a",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "run_id": "19e340a5-9ce7-474a-a8dd-ba17f3f54aae",
+    "verified": true,
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/19e340a5-9ce7-474a-a8dd-ba17f3f54aae"
+  },
+  {
+    "candidate": "h55_45_vol15",
+    "period": "late",
+    "cost_multiplier": 1,
+    "summary_sha256": "5c35098071c9e51107f3dbf8c62718ac2b0244a2e6fe1705080b11679b703a28",
+    "dataset_version_id": "16dd1e21-836c-453a-95c0-958eef354a56",
+    "strategy_revision_id": "b68b8e35-f806-45fa-8bb7-92be2c0c72a2",
+    "idempotency_key": "f6cbbd32-9f5b-4cc3-b759-583cf8d9882d",
+    "experiment_request_started": true,
+    "experiment_id": "5b6552d1-0e28-4ba9-9f4c-026c11c285c6",
+    "expected_revision": 1,
+    "attempts": [
+      {
+        "idempotency_key": "f6cbbd32-9f5b-4cc3-b759-583cf8d9882d",
+        "run_id": "89e49090-c82c-4d75-9fa0-8141e0c25e94",
+        "state": "succeeded",
+        "job_id": "d26bd041-59e1-44f2-b6e0-981e909db090",
+        "completed_through": "2026-09-30"
+      }
+    ],
+    "run_id": "89e49090-c82c-4d75-9fa0-8141e0c25e94",
+    "verified": true,
+    "all_metrics_equal": true,
+    "url": "http://127.0.0.1:8767/runs/89e49090-c82c-4d75-9fa0-8141e0c25e94"
+  }
+]

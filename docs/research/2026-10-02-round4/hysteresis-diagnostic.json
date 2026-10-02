@@ -1,0 +1,412 @@
+{
+  "purpose": "Exact-history read-only weekly signal replay for Round 4 hysteresis comparisons; no holdings or engine risk feedback",
+  "method": {
+    "dataset_loader": "quanto.backtest.dataset_loaders.load_dataset_for_run",
+    "input": "frozen Round 4 protocol and hashed Round 3 cache",
+    "protocol_sha256": "fc7d85f556bc393e28cb0c16597adbd832b1f8615f31f9e7a040471ab2c3343b",
+    "prices_sha256": "7c3d13eda441150a0bf8a86ea3ed3985b6b7b34d0806504ba7985609666cae82",
+    "calendar": "sorted cached calendar and engine is_week_end rule",
+    "history": "full frozen prices passed for every context; StrategyContext applies date<=asof, no global-date truncation",
+    "warmup": "weekly evaluation only when observed.searchsorted(asof, side=left)>=200, as in engine",
+    "eligibility_groups": "cached per-date eligibility intersected with frozen spec symbols; instrument groups in risk_state",
+    "portfolio": "empty holdings and 1,000,000 cash; signal rules do not read holdings",
+    "period_state": "fresh strategy instances per period, initially inactive",
+    "baseline": "Round3Strategy(breadth_timing, variant=1, gross_target=.8)",
+    "variants": {
+      "h55_45": [
+        0.55,
+        0.45
+      ],
+      "h55_40": [
+        0.55,
+        0.4
+      ],
+      "h60_45": [
+        0.6,
+        0.45
+      ],
+      "h60_40": [
+        0.6,
+        0.4
+      ]
+    }
+  },
+  "periods": {
+    "development": {
+      "scheduled_weekly_dates": 63,
+      "warmup_skipped": 0,
+      "evaluated_weekly_dates": 63,
+      "breadth_available": 63,
+      "breadth_min": 0.0,
+      "breadth_max": 1.0,
+      "breadth_bins": {
+        "lt_0_40": 42,
+        "0_40_to_lt_0_45": 3,
+        "0_45_to_lt_0_50": 4,
+        "0_50_to_lt_0_55": 0,
+        "0_55_to_lt_0_60": 0,
+        "ge_0_60": 14
+      },
+      "variants": {
+        "h55_45": {
+          "active_state_divergence_count": 0,
+          "active_state_divergence_dates": [],
+          "proposed_weight_divergence_count": 0,
+          "proposed_weight_divergence_dates": []
+        },
+        "h55_40": {
+          "active_state_divergence_count": 0,
+          "active_state_divergence_dates": [],
+          "proposed_weight_divergence_count": 0,
+          "proposed_weight_divergence_dates": []
+        },
+        "h60_45": {
+          "active_state_divergence_count": 0,
+          "active_state_divergence_dates": [],
+          "proposed_weight_divergence_count": 0,
+          "proposed_weight_divergence_dates": []
+        },
+        "h60_40": {
+          "active_state_divergence_count": 0,
+          "active_state_divergence_dates": [],
+          "proposed_weight_divergence_count": 0,
+          "proposed_weight_divergence_dates": []
+        }
+      }
+    },
+    "validation": {
+      "scheduled_weekly_dates": 53,
+      "warmup_skipped": 0,
+      "evaluated_weekly_dates": 53,
+      "breadth_available": 53,
+      "breadth_min": 0.5,
+      "breadth_max": 1.0,
+      "breadth_bins": {
+        "lt_0_40": 0,
+        "0_40_to_lt_0_45": 0,
+        "0_45_to_lt_0_50": 0,
+        "0_50_to_lt_0_55": 1,
+        "0_55_to_lt_0_60": 2,
+        "ge_0_60": 50
+      },
+      "variants": {
+        "h55_45": {
+          "active_state_divergence_count": 0,
+          "active_state_divergence_dates": [],
+          "proposed_weight_divergence_count": 0,
+          "proposed_weight_divergence_dates": []
+        },
+        "h55_40": {
+          "active_state_divergence_count": 0,
+          "active_state_divergence_dates": [],
+          "proposed_weight_divergence_count": 0,
+          "proposed_weight_divergence_dates": []
+        },
+        "h60_45": {
+          "active_state_divergence_count": 0,
+          "active_state_divergence_dates": [],
+          "proposed_weight_divergence_count": 0,
+          "proposed_weight_divergence_dates": []
+        },
+        "h60_40": {
+          "active_state_divergence_count": 0,
+          "active_state_divergence_dates": [],
+          "proposed_weight_divergence_count": 0,
+          "proposed_weight_divergence_dates": []
+        }
+      }
+    },
+    "late": {
+      "scheduled_weekly_dates": 38,
+      "warmup_skipped": 0,
+      "evaluated_weekly_dates": 38,
+      "breadth_available": 38,
+      "breadth_min": 0.2,
+      "breadth_max": 0.9,
+      "breadth_bins": {
+        "lt_0_40": 11,
+        "0_40_to_lt_0_45": 3,
+        "0_45_to_lt_0_50": 2,
+        "0_50_to_lt_0_55": 7,
+        "0_55_to_lt_0_60": 4,
+        "ge_0_60": 11
+      },
+      "variants": {
+        "h55_45": {
+          "active_state_divergence_count": 1,
+          "active_state_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9
+            }
+          ],
+          "proposed_weight_divergence_count": 1,
+          "proposed_weight_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9,
+              "baseline_weights": {},
+              "variant_weights": {
+                "515880": 0.16,
+                "588200": 0.16,
+                "159967": 0.16,
+                "159732": 0.16,
+                "159363": 0.16
+              }
+            }
+          ]
+        },
+        "h55_40": {
+          "active_state_divergence_count": 1,
+          "active_state_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9
+            }
+          ],
+          "proposed_weight_divergence_count": 1,
+          "proposed_weight_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9,
+              "baseline_weights": {},
+              "variant_weights": {
+                "515880": 0.16,
+                "588200": 0.16,
+                "159967": 0.16,
+                "159732": 0.16,
+                "159363": 0.16
+              }
+            }
+          ]
+        },
+        "h60_45": {
+          "active_state_divergence_count": 1,
+          "active_state_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9
+            }
+          ],
+          "proposed_weight_divergence_count": 1,
+          "proposed_weight_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9,
+              "baseline_weights": {},
+              "variant_weights": {
+                "515880": 0.16,
+                "588200": 0.16,
+                "159967": 0.16,
+                "159732": 0.16,
+                "159363": 0.16
+              }
+            }
+          ]
+        },
+        "h60_40": {
+          "active_state_divergence_count": 1,
+          "active_state_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9
+            }
+          ],
+          "proposed_weight_divergence_count": 1,
+          "proposed_weight_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9,
+              "baseline_weights": {},
+              "variant_weights": {
+                "515880": 0.16,
+                "588200": 0.16,
+                "159967": 0.16,
+                "159732": 0.16,
+                "159363": 0.16
+              }
+            }
+          ]
+        }
+      }
+    },
+    "full": {
+      "scheduled_weekly_dates": 154,
+      "warmup_skipped": 0,
+      "evaluated_weekly_dates": 154,
+      "breadth_available": 154,
+      "breadth_min": 0.0,
+      "breadth_max": 1.0,
+      "breadth_bins": {
+        "lt_0_40": 53,
+        "0_40_to_lt_0_45": 6,
+        "0_45_to_lt_0_50": 6,
+        "0_50_to_lt_0_55": 8,
+        "0_55_to_lt_0_60": 6,
+        "ge_0_60": 75
+      },
+      "variants": {
+        "h55_45": {
+          "active_state_divergence_count": 1,
+          "active_state_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9
+            }
+          ],
+          "proposed_weight_divergence_count": 1,
+          "proposed_weight_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9,
+              "baseline_weights": {},
+              "variant_weights": {
+                "515880": 0.16,
+                "588200": 0.16,
+                "159967": 0.16,
+                "159732": 0.16,
+                "159363": 0.16
+              }
+            }
+          ]
+        },
+        "h55_40": {
+          "active_state_divergence_count": 1,
+          "active_state_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9
+            }
+          ],
+          "proposed_weight_divergence_count": 1,
+          "proposed_weight_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9,
+              "baseline_weights": {},
+              "variant_weights": {
+                "515880": 0.16,
+                "588200": 0.16,
+                "159967": 0.16,
+                "159732": 0.16,
+                "159363": 0.16
+              }
+            }
+          ]
+        },
+        "h60_45": {
+          "active_state_divergence_count": 1,
+          "active_state_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9
+            }
+          ],
+          "proposed_weight_divergence_count": 1,
+          "proposed_weight_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9,
+              "baseline_weights": {},
+              "variant_weights": {
+                "515880": 0.16,
+                "588200": 0.16,
+                "159967": 0.16,
+                "159732": 0.16,
+                "159363": 0.16
+              }
+            }
+          ]
+        },
+        "h60_40": {
+          "active_state_divergence_count": 1,
+          "active_state_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9
+            }
+          ],
+          "proposed_weight_divergence_count": 1,
+          "proposed_weight_divergence_dates": [
+            {
+              "date": "2026-06-12",
+              "breadth": 0.45,
+              "baseline_budget": 0.0,
+              "variant_budget": 0.8,
+              "baseline_signalled_groups": 9,
+              "variant_signalled_groups": 9,
+              "baseline_weights": {},
+              "variant_weights": {
+                "515880": 0.16,
+                "588200": 0.16,
+                "159967": 0.16,
+                "159732": 0.16,
+                "159363": 0.16
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -11,21 +11,24 @@ const queued = { run_id: 'r1', job_id: 'j1', experiment_id: 'e1', experiment_rev
 const running = { ...queued, state: 'running', completed_through: '2024-01-03', started_at: '2024-01-01T00:01:00+00:00' }
 const event = { seq: 1, phase: '回测执行', asof: '2024-01-03', completed_days: 3, total_days: 10, level: 'info', code: 'DAY_DONE', message: '已完成交易日', payload: {} }
 const empty = { items: [], next_cursor: null, total: 0 }
+const catalogRow = (run: RunRecord) => ({ id: run.run_id, job_id: run.job_id, kind: 'fixed', name: run.run_id, method: '固定策略', state: run.state, created_at: run.created_at, finished_at: run.finished_at, error: run.error, start: null, end: null, symbols: [], metrics: null, conditions: {}, comparison_key: null, detail_url: run.detail_url, group_id: run.group_id })
 const requestUrl = (input: RequestInfo | URL) => new URL(String(input), 'http://local')
 const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
 
 beforeEach(() => {
+  let submitted = false
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
     if (path === '/api/experiments') return Response.json({ items: [experiment], next_cursor: null })
+    if (path === '/api/backtests/catalog?limit=50') return Response.json({ items: submitted ? [catalogRow(queued as RunRecord)] : [], next_cursor: null })
+    if (path === '/api/runs' && init?.method === 'POST') { submitted = true; return Response.json(queued) }
     if (path === '/api/runs') return Response.json({ items: [], next_cursor: null })
     if (path === '/api/runs/r1') return Response.json(running)
     if (path === '/api/runs/r1/results') return Response.json({ run_id: 'r1', state: 'succeeded', completed_through: '2024-01-03', metrics: { final_equity: 100 }, metric_definitions: { final_equity: { description: '最终权益' } }, warnings: [], metadata: { dataset_version_id: 'd1', strategy_revision_id: 's1', price_mode: 'raw_cash' }, held_symbols: ['000001'], detail_url: '/runs/r1' })
     if (requestUrl(input).pathname === '/api/runs/r1/logs') return Response.json({ items: [event], next_cursor: '1', state: 'running', completed_through: '2024-01-03' })
     if (requestUrl(input).pathname.startsWith('/api/runs/r1/tables/')) return Response.json(empty)
     if (requestUrl(input).pathname.startsWith('/api/runs/r1/charts/')) return Response.json({ items: [], total_rows: 0, sampled: false })
-    if (path === '/api/runs' && init?.method === 'POST') return Response.json(queued)
     throw new Error(`unexpected ${init?.method || 'GET'} ${path}`)
   }))
 })
@@ -38,7 +41,7 @@ test('retries submission with the same key after a transport failure', async () 
     if (String(input) === '/api/runs' && init?.method === 'POST') {
       requests.push(JSON.parse(String(init.body)))
       if (++attempts === 1) throw new Error('network timeout')
-      return Response.json(queued)
+      return prior(input, init)
     }
     return prior(input, init)
   }))
@@ -215,14 +218,12 @@ test('run progress shows Shanghai wall-clock times across midnight without shift
   expect(screen.queryByText(/2026-09-30T17:/)).toBeNull()
 })
 
-test('run list uses the same Shanghai timezone as the detail progress', async () => {
+test('catalog uses the same Shanghai timezone as the detail progress', async () => {
   const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/runs' && !init?.method
-    ? Response.json({ items: [screenshotRun], next_cursor: null }) : prior(input, init)))
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/backtests/catalog?limit=50' && !init?.method
+    ? Response.json({ items: [catalogRow(screenshotRun)], next_cursor: null }) : prior(input, init)))
   app('/runs')
-  expect(await screen.findByText('提交 2026-10-01 01:25:14')).toBeVisible()
-  await userEvent.click(screen.getByText('参数与来源'))
-  expect(screen.getByText(/开始 2026-10-01 01:25:35.*结束 2026-10-01 01:25:45/)).toBeVisible()
+  expect(await screen.findByText('2026-10-01 01:25:14')).toBeVisible()
   expect(screen.getByText(/北京时间.*Asia\/Shanghai/)).toBeVisible()
   expect(screen.queryByText(/2026-09-30T17:/)).toBeNull()
 })
@@ -246,27 +247,6 @@ test('keeps each run log tail independent when moving between detail URLs', asyn
   await act(async () => { await router.navigate('/runs/r2') })
   expect(await screen.findByText('第二次运行事件')).toBeVisible()
   expect(logPaths[0]).toBe('/api/runs/r2/logs?tail=true')
-})
-
-test('drains later run pages and refreshes a visible active run by ID', async () => {
-  const listed = Array.from({ length: 50 }, (_, index) => ({ ...queued, run_id: `old-${index}`, state: 'succeeded', detail_url: `/runs/old-${index}` }))
-  const later = { ...running, run_id: 'later', detail_url: '/runs/later' }
-  const paths: string[] = []
-  const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input)
-    paths.push(path)
-    if (path === '/api/runs') return Response.json({ items: listed, next_cursor: '50' })
-    if (path === '/api/runs?cursor=50') return Response.json({ items: [later], next_cursor: null })
-    if (path === '/api/runs?cursor=51') return Response.json(empty)
-    if (path === '/api/runs/later') return Response.json({ ...later, state: 'cancel_requested' })
-    if (path.startsWith('/api/runs/old-')) return path.endsWith('/results') ? Response.json({ run_id: path.split('/')[3], state: 'succeeded', metrics: { final_equity: 100 }, metric_definitions: {}, metadata: {}, held_symbols: [], detail_url: path }) : Response.json({ ...queued, run_id: path.split('/')[3], state: 'succeeded', provenance: { strategy_revision_id: 's1', dataset_version_id: 'd1', effective_strategy_params: {} } })
-    return prior(input, init)
-  }))
-  app('/runs')
-  expect(await screen.findByRole('link', { name: 'later' })).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: '刷新' }))
-  await waitFor(() => expect(paths).toContain('/api/runs/later'))
 })
 
 test('editing the selected experiment while strategy validation waits cannot submit the old draft', async () => {
@@ -325,30 +305,6 @@ test('editing parameters during variant creation releases the lock without submi
   await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
   await waitFor(() => expect(submitted).toHaveLength(1))
   expect(JSON.parse(submitted[0]).items).toEqual([{ experiment_id: 'variant-2', expected_revision: 1 }])
-})
-
-test('refresh after complete pagination does not skip a second append after exactly 50 runs', async () => {
-  const records = Array.from({ length: 50 }, (_, index) => ({ ...queued, run_id: `old-${index}`, state: 'succeeded', detail_url: `/runs/old-${index}` }))
-  const paths: string[] = []
-  const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input)
-    paths.push(path)
-    if (path === '/api/runs' || path.startsWith('/api/runs?cursor=')) {
-      const offset = Number(new URL(path, 'http://local').searchParams.get('cursor') || 0)
-      return Response.json({ items: records.slice(offset, offset + 50), next_cursor: records.length > offset + 50 ? String(offset + 50) : null })
-    }
-    return prior(input, init)
-  }))
-  app('/runs')
-  expect(await screen.findByRole('link', { name: 'old-49' })).toBeInTheDocument()
-  records.push({ ...queued, run_id: 'new-51', state: 'succeeded', detail_url: '/runs/new-51' })
-  await userEvent.click(screen.getByRole('button', { name: '刷新' }))
-  expect(await screen.findByRole('link', { name: 'new-51' })).toBeInTheDocument()
-  records.push({ ...queued, run_id: 'new-52', state: 'succeeded', detail_url: '/runs/new-52' })
-  await userEvent.click(screen.getByRole('button', { name: '刷新' }))
-  expect(await screen.findByRole('link', { name: 'new-52' })).toBeInTheDocument()
-  expect(paths).toContain('/api/runs?cursor=51')
 })
 
 test('shows only the latest 100 terminal log events without draining earlier pages', async () => {

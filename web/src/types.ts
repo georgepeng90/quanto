@@ -20,6 +20,13 @@ export type JobResult = { state?: 'complete' | 'incomplete'; dataset_version_id?
 export type JobRecord = { id: string; kind: 'backtest' | 'demo' | 'fetch' | 'import' | 'validate_strategy' | 'prepare_learning' | 'train' | 'model_backtest' | 'train_policy' | 'policy_backtest'; state: string; run_id: string | null; enqueue_seq: number; heartbeat: string | null; completed_through: string | null; error: string | null; created_at: string | null; started_at: string | null; finished_at: string | null; result?: JobResult; request?: Record<string, unknown>; checkpoint_available?: boolean }
 export type Preflight = Pick<DatasetManifest, 'price_mode' | 'is_demo' | 'event_coverage' | 'calendar_start' | 'calendar_end' | 'data_start' | 'data_end' | 'limitations'> & { missing_tables: string[]; validation: 'metadata_only' }
 export type RunState = 'queued' | 'running' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted'
+export type BacktestCatalogRow = {
+  id: string; job_id: string; kind: 'fixed' | 'policy' | 'model'; name: string; method: string
+  state: RunState; created_at: string | null; finished_at: string | null; error: string | null
+  start: string | null; end: string | null; symbols: string[]; metrics: Record<string, number | null> | null
+  conditions: Record<string, unknown>; comparison_key: string | null; detail_url: string
+  result_error?: string | null; group_id?: string | null
+}
 export type RunRecord = { run_id: string; job_id: string; experiment_id: string; experiment_revision: number; manifest_hash: string; source: string; parent_run_id: string | null; group_id: string | null; state: RunState; completed_through: string | null; error: string | null; created_at: string | null; started_at: string | null; finished_at: string | null; detail_url: string; provenance?: Record<string, unknown> }
 export type RunEvent = { seq: number; phase: string; asof: string | null; completed_days: number; total_days: number; level: string; code: string; message: string; payload: Record<string, unknown> }
 export type LogPage = Page<RunEvent> & { state: RunState; completed_through: string | null }

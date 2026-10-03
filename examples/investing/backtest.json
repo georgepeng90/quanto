@@ -1,0 +1,10 @@
+{
+  "dataset_id": "REPLACE_WITH_DAILY_DATASET_ID",
+  "policy_id": "REPLACE_WITH_POLICY_ID",
+  "spec": {
+    "start": "2025-01-01",
+    "end": "2026-09-30",
+    "baseline": "policy",
+    "cost_multiplier": 1
+  }
+}

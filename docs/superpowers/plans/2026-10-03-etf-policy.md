@@ -1,6 +1,6 @@
 # ETF 中长线自主交易 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 提供日线观察、周/月自主决策、净收益驱动的本地 ETF PPO 训练与冻结回测。
 
@@ -32,9 +32,9 @@
 
 **Interfaces:** SessionRunner(bundle, spec, cancelled, collect=True) 提供 advance_to_close、submit_close_intent、result；DailyETFEnv(bundle, spec, frequency, lookback, episode_sessions=None, training=False) 提供标准 Gymnasium reset/step，result() 导出本次回放。
 
-- [ ] 先建立固定策略与交互动作一致性、未来扰动、周/月边界、Hold、奖励、非决策日风险测试。
-- [ ] 机械提取日线循环，保留原 run_backtest 外部契约；实现因果观察和训练片段抽样。
-- [ ] 运行环境测试及现有日线账本/无未来信息测试，提交阶段成果。
+- [x] 先建立固定策略与交互动作一致性、未来扰动、周/月边界、Hold、奖励、非决策日风险测试。
+- [x] 机械提取日线循环，保留原 run_backtest 外部契约；实现因果观察和训练片段抽样。
+- [x] 运行环境测试及现有日线账本/无未来信息测试，提交阶段成果。
 
 ## Task 2: PPO 训练与冻结评估
 
@@ -42,9 +42,9 @@
 
 **Interfaces:** train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content_hash)；backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled)。模型 manifest kind=policy；回测 summary 包含 metrics/assumptions/counts/period/metadata，CSV 兼容学习结果索引。
 
-- [ ] 审查新需求的测试合同，测试日期顺序、权重学习、验证选择、save/load 一致、测试隔离、取消。
-- [ ] 锁定成熟依赖，实现 PPO MLP、验证 checkpoint、最终测试、确定性回测和三个基准。
-- [ ] 运行 CPU 真实小模型训练与冻结回测；执行适用单元测试后提交。
+- [x] 审查新需求的测试合同，测试日期顺序、权重学习、验证选择、save/load 一致、测试隔离、取消。
+- [x] 锁定成熟依赖，实现 PPO MLP、验证 checkpoint、最终测试、确定性回测和三个基准。
+- [x] 运行 CPU 真实小模型训练与冻结回测；执行适用单元测试后提交。
 
 ## Task 3: 作业、API 与 CLI
 
@@ -52,22 +52,26 @@
 
 **Interfaces:** `/api/investing/overview` 返回 capabilities/datasets/policies/backtests/jobs；POST train 接收 dataset_id/spec，POST backtests 接收 dataset_id/policy_id/spec；GET policies|backtests/{id}、backtests/{id}/tables/{name}|charts|export。
 
-- [ ] 先测试认证、日期/产物/请求拒绝、旧表迁移、取消不登记。
-- [ ] 复用 source freeze、dataset_objects、registry、结果索引；新增两种 job kind 与 investing CLI。
-- [ ] 通过真实监督子进程跑通提交至结果及导出，提交。
+- [x] 先测试认证、日期/产物/请求拒绝、旧表迁移、取消不登记。
+- [x] 复用 source freeze、dataset_objects、registry、结果索引；新增两种 job kind 与 investing CLI。
+- [x] 通过真实监督子进程跑通提交至结果及导出，提交。
 
 ## Task 4: ETF 自主投资页面
 
 **Files:** `web/src/pages/InvestingPage.tsx`, `web/src/investingTypes.ts`, `web/src/api.ts`, `web/src/App.tsx`, `web/src/styles.css`, `web/tests/investing.test.tsx`。
 
-- [ ] 页面显式说明“日线观察，周/月决策，净收益学习”，支持现有日线数据版本与日期选择。
-- [ ] 实现训练配置、任务查询/取消、模型指标、冻结回测/基准、每日结果/导出；区分既有分钟预测入口。
-- [ ] 验证表单合同与失败反馈，运行前端测试/typecheck/build，并进行真实浏览器验收后提交。
+- [x] 页面显式说明“日线观察，周/月决策，净收益学习”，支持现有日线数据版本与日期选择。
+- [x] 实现训练配置、任务查询/取消、模型指标、冻结回测/基准、每日结果/导出；区分既有分钟预测入口。
+- [x] 验证表单合同与失败反馈，运行前端测试/typecheck/build，并进行真实浏览器验收后提交。
 
 ## Task 5: 可复现验收与指南
 
 **Files:** `scripts/verify_investing_system.py`, `examples/investing/`, `docs/07_ETF自主投资训练指南.md`, `docs/research/2026-10-03-etf-policy/acceptance.md`, `README.md`。
 
-- [ ] 隔离生成多时期多 ETF 日线，真实 PPO 训练与周/月冻结回测、对照、奖励和文件完整性检查。
-- [ ] 审查已有真实日线版本，能满足覆盖时完成小规模真实实跑，记录数据限制与资源消耗。
-- [ ] 独立代码审查、适用全套回归、浏览器验证；保留成果与明确限制，提交并更新本计划。
+- [x] 隔离生成多时期多 ETF 日线，真实 PPO 训练与周/月冻结回测、对照、奖励和文件完整性检查。
+- [x] 审查已有真实日线版本，能满足覆盖时完成小规模真实实跑，记录数据限制与资源消耗。
+- [x] 独立代码审查、适用全套回归、浏览器验证；保留成果与明确限制，提交并更新本计划。
+
+## Verification record
+
+See `docs/research/2026-10-03-etf-policy/acceptance.md` for exact commands, results, local artifact paths and limitations. Existing untracked PRD was preserved.

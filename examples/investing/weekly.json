@@ -1,0 +1,48 @@
+{
+  "name": "ETF 周度 PPO 研究",
+  "frequency": "weekly",
+  "lookback": 120,
+  "backtest": {
+    "start": "2019-01-01",
+    "end": "2026-09-30",
+    "symbols": ["512660", "512880", "512800", "159928", "512400", "512580"],
+    "initial_cash": 1000000,
+    "seed": 42,
+    "execution": {
+      "commission_rate": 0.0003,
+      "minimum_commission": 5,
+      "slippage_rate": 0.0005,
+      "max_stale_sessions": 5,
+      "model": "next_open"
+    },
+    "risk": {
+      "max_total_weight": 0.9,
+      "max_symbol_weight": 0.3,
+      "group_caps": {"financials": 0.4},
+      "stress_scenarios": [],
+      "drawdown_pause": 0.3,
+      "pause_action": "block_new",
+      "recovery_mode": "never"
+    },
+    "metrics": {"annual_sessions": 252, "risk_free_rate": 0, "cash_rate": 0, "definition_version": "v1"}
+  },
+  "train_start": "2019-01-01",
+  "train_end": "2023-12-31",
+  "validation_start": "2024-01-01",
+  "validation_end": "2024-12-31",
+  "test_start": "2025-01-01",
+  "test_end": "2026-09-30",
+  "episode_sessions": 252,
+  "total_timesteps": 4096,
+  "n_steps": 128,
+  "batch_size": 64,
+  "n_epochs": 10,
+  "learning_rate": 0.0003,
+  "gamma": 1,
+  "gae_lambda": 0.95,
+  "ent_coef": 0.01,
+  "hidden_size": 64,
+  "seed": 42,
+  "device": "cpu",
+  "eval_every_timesteps": 512
+}

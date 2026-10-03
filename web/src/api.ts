@@ -1,3 +1,4 @@
+import type { InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage, PolicyBacktestSpec, PolicyTrainingSpec } from './investingTypes'
 import type { ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
 import type { LearningArtifact, LearningBacktestSpec, LearningChart, LearningOverview, LearningTablePage, TrainingSpec } from './learningTypes'
 
@@ -62,6 +63,13 @@ const json = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'Cont
 const list = <T>(name: string, cursor?: string) => request<Page<T>>(`/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)
 
 export const api = {
+  investingOverview: (signal?: AbortSignal) => request<InvestingOverview>('/investing/overview', { signal }),
+  investingArtifact: (resource: 'policies' | 'backtests', id: string, signal?: AbortSignal) => request<InvestingArtifact>(`/investing/${resource}/${encodeURIComponent(id)}`, { signal }),
+  trainInvesting: (body: { dataset_id: string; spec: PolicyTrainingSpec }) => request<JobRecord>('/investing/train', json(body)),
+  backtestInvesting: (body: { dataset_id: string; policy_id: string; spec: PolicyBacktestSpec }) => request<JobRecord>('/investing/backtests', json(body)),
+  investingChart: (id: string, signal?: AbortSignal) => request<InvestingChart>(`/investing/backtests/${encodeURIComponent(id)}/charts?max_points=1000`, { signal }),
+  investingTable: (id: string, name: string, cursor: number | string = 0, signal?: AbortSignal) => request<InvestingTablePage>(`/investing/backtests/${encodeURIComponent(id)}/tables/${encodeURIComponent(name)}?cursor=${encodeURIComponent(cursor)}&limit=100`, { signal }),
+  exportInvesting: (id: string, signal?: AbortSignal) => download(`/investing/backtests/${encodeURIComponent(id)}/export`, signal),
   learningOverview: (signal?: AbortSignal) => request<LearningOverview>('/learning/overview', { signal }),
   learningArtifacts: (resource: 'datasets' | 'models' | 'backtests', cursor: number | string = 0, signal?: AbortSignal) => request<{ items: LearningArtifact[]; next_cursor: number | string | null }>(`/learning/${resource}?cursor=${encodeURIComponent(cursor)}&limit=50`, { signal }),
   learningArtifact: (resource: 'datasets' | 'models' | 'backtests', id: string, signal?: AbortSignal) => request<LearningArtifact>(`/learning/${resource}/${encodeURIComponent(id)}`, { signal }),
@@ -74,7 +82,7 @@ export const api = {
   jobLogs: (id: string, cursor?: string, signal?: AbortSignal) => request<LogPage>(`/jobs/${encodeURIComponent(id)}/logs${queryString({ cursor })}`, { signal }),
   cancelJob: (id: string) => request<JobRecord>(`/jobs/${encodeURIComponent(id)}/cancel`, json({})),
   datasets: (cursor?: string) => list<DatasetVersion>('datasets', cursor),
-  dataset: (id: string) => request<DatasetVersion>(`/datasets/${encodeURIComponent(id)}`),
+  dataset: (id: string, signal?: AbortSignal) => request<DatasetVersion>(`/datasets/${encodeURIComponent(id)}`, { signal }),
   strategies: (cursor?: string) => list<StrategyRevision>('strategies', cursor),
   strategy: (id: string) => request<StrategyRevision>(`/strategies/${encodeURIComponent(id)}`),
   registerStrategy: (manifest: StrategyManifest, files: Record<string, string>) => request<StrategyRevision>('/strategies', json({ manifest, files })),

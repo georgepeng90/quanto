@@ -90,3 +90,6 @@ label input,label select,label textarea{margin-top:4px;font-weight:400}
 .editor-layout{grid-template-columns:1fr}
 .file-list{border-right:0;border-bottom:1px solid #d9e2e6}
 }
+.investing-page details > summary { cursor: pointer; margin: 1rem 0; }
+.investing-page details .form-grid { margin-bottom: 1rem; }
+.investing-page .record + .record { margin-top: .75rem; }

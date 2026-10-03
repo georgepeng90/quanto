@@ -47,7 +47,10 @@ def execute_learning_job(descriptor: dict, control_dir: Path, emit, cancelled) -
         verify_runtime(payload['environment'])
         kind = descriptor['kind']
         request = payload['request']
-        if kind == 'prepare_learning':
+        if kind in {'train_policy', 'policy_backtest'}:
+            from quanto.investing.jobs import execute_policy_job
+            execute_policy_job(kind, payload, artifact, progress, cancelled)
+        elif kind == 'prepare_learning':
             from quanto.learning.dataset import prepare_dataset
             prepare_dataset(request['spec'], Path(payload['market_root']), artifact, progress, cancelled)
         else:
@@ -108,7 +111,7 @@ def validate_learning_output(kind: str, final: Path, result: dict) -> None:
     if saved != {key: value for key, value in result.items() if key != 'hashes'}:
         raise ValueError('INVALID_OUTPUT: learning receipt mismatch')
     root = final / 'artifact'
-    if kind == 'model_backtest':
+    if kind in {'model_backtest', 'policy_backtest'}:
         required = {'summary.json', 'equity.csv', 'daily_equity.csv', 'orders.csv', 'fills.csv', 'signals.csv', 'positions.csv', 'results.sqlite3'}
         if not required.issubset({path.name for path in root.iterdir()}):
             raise ValueError('INVALID_OUTPUT: incomplete intraday results')

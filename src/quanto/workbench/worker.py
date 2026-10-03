@@ -300,11 +300,12 @@ JOB_HANDLERS = {"backtest": run_frozen_backtest,
                 "demo": run_data_job, "fetch": run_data_job,
                 "import": run_data_job, "validate_strategy": run_data_job,
                 "prepare_learning": run_learning_job, "train": run_learning_job,
-                "model_backtest": run_learning_job}
+                "model_backtest": run_learning_job, "train_policy": run_learning_job,
+                "policy_backtest": run_learning_job}
 
 
 def validate_job_output(kind: str, root: Path, receipt: dict) -> None:
-    if kind in {"prepare_learning", "train", "model_backtest"}:
+    if kind in {"prepare_learning", "train", "model_backtest", "train_policy", "policy_backtest"}:
         from quanto.learning.jobs import validate_learning_output
         validate_learning_output(kind, root / "final", receipt["result"])
     elif kind == "backtest":

@@ -80,6 +80,18 @@ def build_parser() -> argparse.ArgumentParser:
     for action in ("logs", "cancel"):
         item = actions.add_parser(action)
         item.add_argument("identity")
+    investing = commands.add_parser("investing", help="ETF 周/月自主策略训练与冻结回测")
+    actions = investing.add_subparsers(dest="action", required=True)
+    actions.add_parser("overview")
+    for action in ("train", "backtest"):
+        item = actions.add_parser(action)
+        item.add_argument("--json", required=True)
+    get = actions.add_parser("get")
+    get.add_argument("resource", choices=("policies", "backtests"))
+    get.add_argument("identity")
+    for action in ("logs", "cancel"):
+        item = actions.add_parser(action)
+        item.add_argument("identity")
     return parser
 
 
@@ -121,18 +133,19 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     client = WorkbenchClient(args.url, token)
     try:
-        if args.command == "learning":
+        if args.command in {"learning", "investing"}:
+            prefix = f"/{args.command}"
             if args.action == "overview":
-                result = client.get("/learning/overview")
+                result = client.get(f"{prefix}/overview")
             elif args.action == "get":
-                result = client.get(f"/learning/{args.resource}/{args.identity}")
+                result = client.get(f"{prefix}/{args.resource}/{args.identity}")
             elif args.action == "logs":
                 result = client.get(f"/jobs/{args.identity}/logs")
             elif args.action == "cancel":
                 result = client.post(f"/jobs/{args.identity}/cancel", {})
             else:
                 route = {"prepare": "datasets", "train": "train", "backtest": "backtests"}[args.action]
-                result = client.post(f"/learning/{route}", json.loads(Path(args.json).read_text(encoding="utf-8")))
+                result = client.post(f"{prefix}/{route}", json.loads(Path(args.json).read_text(encoding="utf-8")))
         elif args.command == "compare":
             result = client.post("/comparisons", {"run_ids": args.run_ids})
         else:

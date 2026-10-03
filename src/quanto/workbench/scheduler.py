@@ -169,7 +169,7 @@ class Scheduler:
             seed = manifest["seed"]
         else:
             # A T7 submission freezes its own kind/input descriptor with source_root.
-            if job.kind in {'prepare_learning', 'train', 'model_backtest'}:
+            if job.kind in {'prepare_learning', 'train', 'model_backtest', 'train_policy', 'policy_backtest'}:
                 from quanto.learning.registry import verify_submission
                 verify_submission(self.store, job.id, Path(job.input_path))
             frozen = read_json(Path(job.input_path))
@@ -251,7 +251,7 @@ class Scheduler:
                     error = "INVALID_OUTPUT: 最终产物校验失败"
             if valid and job.kind in {"demo", "fetch", "import"}:
                 committed = self.store.finish_data_job(job.id, control.parent / "final", receipt["result"])
-            elif valid and job.kind in {"prepare_learning", "train", "model_backtest"}:
+            elif valid and job.kind in {"prepare_learning", "train", "model_backtest", "train_policy", "policy_backtest"}:
                 from quanto.learning.registry import finish_learning_job
                 committed = finish_learning_job(self.store, job.id, control.parent / "final", receipt["result"])
             else:

@@ -10,14 +10,16 @@ import platform
 from quanto.workbench.revisions import json_bytes
 
 
-LEARNING_KINDS = {"prepare_learning": "dataset", "train": "model", "model_backtest": "backtest"}
+LEARNING_KINDS = {"prepare_learning": "dataset", "train": "model", "model_backtest": "backtest",
+                  "train_policy": "policy", "policy_backtest": "policy_backtest"}
 
 
 def migrate_learning_schema(db) -> None:
     ddl = db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='jobs'").fetchone()[0]
-    if "'prepare_learning'" not in ddl:
+    missing = [kind for kind in LEARNING_KINDS if f"'{kind}'" not in ddl]
+    if missing:
         replacement = ddl.replace("CREATE TABLE jobs", "CREATE TABLE jobs_learning_migration", 1)
-        replacement = replacement.replace("'validate_strategy'", "'validate_strategy','prepare_learning','train','model_backtest'", 1)
+        replacement = replacement.replace("'validate_strategy'", "'validate_strategy'," + ','.join(f"'{kind}'" for kind in missing), 1)
         db.execute(replacement)
         columns = ','.join(row[1] for row in db.execute('PRAGMA table_info(jobs)'))
         db.execute(f'INSERT INTO jobs_learning_migration ({columns}) SELECT {columns} FROM jobs')
@@ -33,7 +35,7 @@ def migrate_learning_schema(db) -> None:
 
 def runtime_versions() -> dict:
     versions = {'python': platform.python_version()}
-    for name in ('numpy', 'pandas', 'pyarrow', 'torch'):
+    for name in ('numpy', 'pandas', 'pyarrow', 'torch', 'stable-baselines3', 'gymnasium', 'cloudpickle'):
         try:
             versions[name] = version(name)
         except PackageNotFoundError:
@@ -86,7 +88,7 @@ def finish_learning_job(store, identity: str, final: Path, result: dict) -> bool
     expected = {name.removeprefix('artifact/'): value for name, value in result['hashes'].items() if name.startswith('artifact/')}
     if files != expected:
         raise ValueError('INVALID_ARTIFACT: publication hash mismatch')
-    name = 'summary.json' if kind == 'backtest' else 'manifest.json'
+    name = 'summary.json' if kind in {'backtest', 'policy_backtest'} else 'manifest.json'
     manifest = json.loads((root / name).read_text(encoding='utf-8'))
     with store.transaction() as db:
         state = db.execute('SELECT state FROM jobs WHERE id=?', (identity,)).fetchone()

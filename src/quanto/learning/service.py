@@ -63,6 +63,8 @@ def capabilities() -> dict:
 
 
 class LearningService:
+    resources = RESOURCES
+
     def __init__(self, workbench):
         self.workbench = workbench
         self.store = workbench.store
@@ -87,11 +89,11 @@ class LearningService:
         return ref
 
     def detail(self, resource, identity):
-        if resource not in RESOURCES:
+        if resource not in self.resources:
             raise KeyError(resource)
-        row = self._row(identity, RESOURCES[resource])
+        row = self._row(identity, self.resources[resource])
         result = self._public(row)
-        if resource == 'models':
+        if resource in {'models', 'policies'}:
             path = Path(row['path']) / 'curves.json'
             if path.is_file():
                 verify_result_file(path, json.loads(row['files_json'])['curves.json'])
@@ -99,14 +101,14 @@ class LearningService:
         return result
 
     def listing(self, resource, cursor=None, limit=50):
-        if resource not in RESOURCES or type(limit) is not int or not 1 <= limit <= 100:
+        if resource not in self.resources or type(limit) is not int or not 1 <= limit <= 100:
             raise ValueError('invalid artifact resource or page size')
         offset = int(cursor or '0')
         if offset < 0:
             raise ValueError('invalid cursor')
         with self.store.transaction() as db:
             rows = db.execute('SELECT * FROM learning_artifacts WHERE kind=? ORDER BY rowid DESC LIMIT ? OFFSET ?',
-                              (RESOURCES[resource], limit + 1, offset)).fetchall()
+                              (self.resources[resource], limit + 1, offset)).fetchall()
         return {'items': [self._public(row) for row in rows[:limit]],
                 'next_cursor': str(offset + limit) if len(rows) > limit else None}
 
@@ -256,7 +258,7 @@ class LearningService:
         return self.workbench.get_resource('jobs', identity)
 
     def result_root(self, identity):
-        row = self._row(identity, 'backtest')
+        row = self._row(identity, self.resources['backtests'])
         root = Path(row['path'])
         # Queries verify the compact index; full exports verify every original row file.
         expected = json.loads(row['files_json'])['results.sqlite3']

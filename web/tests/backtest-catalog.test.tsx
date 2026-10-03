@@ -35,6 +35,9 @@ beforeEach(() => {
 test('loads every catalog page and links each backtest to its detail view', async () => {
   app()
   expect(await screen.findByRole('link', { name: /研究 model-1/ })).toHaveAttribute('href', '/learning?backtest=model-1')
+  const scrollArea = screen.getByRole('region', { name: '全部回测表格' })
+  expect(scrollArea).toHaveAttribute('tabindex', '0')
+  expect(within(scrollArea).getByRole('table', { name: '全部回测' })).toBeVisible()
   expect(screen.getByRole('link', { name: /研究 fixed-1/ })).toHaveAttribute('href', '/runs/fixed-1')
   expect(screen.getByRole('link', { name: /研究 policy-1/ })).toHaveAttribute('href', '/investing?backtest=policy-1')
   expect(screen.getByText(/4 条回测/)).toBeVisible()

@@ -138,7 +138,7 @@ export function RunsPage() {
     try { await sendPrepared(request) }
     finally { preparing.current = false; setBusy(false) }
   }
-  return <div className="page-stack"><header className="page-heading"><h1>回测任务</h1><p>固定策略、PPO 策略与分钟模型共用回测目录；比较前请核对冻结条件。</p></header>
+  return <div className="page-stack runs-page"><header className="page-heading"><h1>回测任务</h1><p>固定策略、PPO 策略与分钟模型共用回测目录；比较前请核对冻结条件。</p></header>
     {error && <p role="alert" className="error callout">{error}</p>}
     <section className="panel"><h2>发起固定策略回测</h2><div className="form-grid"><label>实验草稿<select value={selected} onChange={event => { inputGeneration.current++; setSelected(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }}><option value="">选择实验</option>{experiments.map(item => <option key={item.id} value={item.id}>{item.id} · 修订 {item.revision}</option>)}</select></label><label className="wide">参数列表 JSON<textarea value={parameters} onChange={event => { inputGeneration.current++; setParameters(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }} placeholder={'[{"window":4},{"window":8}]'} /></label></div>
       <div className="inline-actions"><button type="button" disabled={busy} onClick={() => submit(false)}>运行</button><button type="button" disabled={busy} onClick={() => submit(true)}>运行参数列表</button>{retry && <button type="button" disabled={busy} onClick={retryPrepared}>重试提交</button>}{experimentCursor && <button type="button" onClick={loadMoreExperiments}>加载更多实验草稿</button>}</div><p className="muted">参数列表最多 100 组。先逐组保存为独立实验草稿，再提交一个批次；重试沿用已准备的草稿和幂等键。</p></section>

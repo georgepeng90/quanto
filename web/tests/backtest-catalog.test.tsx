@@ -83,6 +83,19 @@ test('a succeeded row with a damaged saved result never appears directly compara
   expect(screen.getByText('结果文件缺失')).toBeVisible()
 })
 
+test('large fixed baskets stay compact in a row while the full list remains available', async () => {
+  const symbols = Array.from({ length: 314 }, (_, index) => `ETF${String(index).padStart(3, '0')}`)
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/backtests/catalog?limit=50'
+    ? Response.json({ items: [row('fixed-with-a-long-id', 'fixed', .1, { symbols })], next_cursor: null }) : prior(input, init)))
+  app()
+  const link = await screen.findByRole('link', { name: /研究 fixed-with-a-long-id/ })
+  const tableRow = link.closest('tr')!
+  expect(within(tableRow).getByText('314 只 · ETF000、ETF001、ETF002…')).toHaveAttribute('title', symbols.join('、'))
+  expect(tableRow).not.toHaveTextContent('ETF313')
+  expect(within(tableRow).getByTitle('fixed-with-a-long-id')).toHaveTextContent('fixed-wi…')
+})
+
 test('refreshes the catalog from the first page after a new job is submitted elsewhere', async () => {
   let firstPageReads = 0
   const prior = globalThis.fetch

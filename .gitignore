@@ -89,6 +89,7 @@ $RECYCLE.BIN/
 # Generated market cache and research artifacts never enter Git.
 /market/
 /outputs/
+/workbench.local.json
 /data/workbench/
 /web/node_modules/
 /web/dist/

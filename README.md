@@ -30,17 +30,21 @@
 在使用该版本代码的 checkout 根目录执行（Python 3.13、Node.js 24、uv）：
 
 ```powershell
-uv sync --locked --extra dev --extra web --extra data
+uv sync --locked --extra dev --extra web --extra data --extra learning
 npm.cmd --prefix web ci
 npm.cmd --prefix web run build
 .\scripts\start-workbench.ps1
 ```
 
-打开 [本地工作台](http://127.0.0.1:8765)。一键脚本检查依赖，CLI 检查构建源码/产物哈希并明确拒绝缺失、过期构建或占用端口；不另开前端端口。直接启动等价命令为 `uv run --no-sync quanto serve --host 127.0.0.1 --port 8765 --workspace data/workbench`，须从当前 checkout 根目录执行。默认数据位于 `data/workbench`，产物位于 `outputs/workbench`，路径保存在工作区的 `workspace.json`。
+本机统一入口为 [回测任务](http://127.0.0.1:8770/runs)，固定策略和 ETF 自主投资共用 `data/research-20261001`。一键脚本读取未纳入 Git 的 `workbench.local.json`：`{"port":8770,"workspace":"data/research-20261001"}`；显式 `-Port`、`-Workspace` 参数优先。没有本机配置的新安装仍默认使用 `8765` 和 `data/workbench`。脚本只检查依赖，并保留已安装的可选训练依赖；CLI 检查构建源码/产物哈希并拒绝缺失、过期构建或占用端口。
 
-若 `8765` 被已有服务占用，可明确使用 `.\scripts\start-workbench.ps1 -Port 8767`，然后访问 [8767 工作台](http://127.0.0.1:8767)。Git 合并不会迁移被忽略的本地数据库和运行产物；主目录默认工作区与此前 worktree 的工作区各自独立。2026-09-30 的当前 `8765` 预览已切换到主仓 `v2` 源码和前端，继续使用旧 worktree 的 Python 环境、历史数据及产物；应保留该目录。继续使用这份预览的重启命令和验收结果见[切换记录](docs/superpowers/plans/2026-09-30-preview-cutover.md)。
+本机直接启动命令为 `uv run --no-sync quanto serve --host 127.0.0.1 --port 8770 --workspace data/research-20261001`。只启动这一份服务；不要为不同策略类型另建工作区。产物位置由工作区内的 `workspace.json` 管理。
+
+Git 分支切换不会迁移被忽略的本地数据库。调整端口时仍应指向同一个工作区，避免历史记录看起来消失。早期预览切换过程保留在[历史切换记录](docs/superpowers/plans/2026-09-30-preview-cutover.md)，其中的旧端口不是本机当前入口。
 
 首次启动自动登记两套策略模板。首次回测前，在“数据版本”获取 ETF 真实行情或导入符合契约的 ZIP；确认登记版本的实际覆盖后，进入“策略与实验”选择数据、模板及覆盖中的标的和日期，填写资金与用途并保存。随后在“回测任务”运行，查看订单、图表、克隆实验、比较和下载。示例金额和参数只用于说明操作。
+
+“回测任务 → 全部回测”汇总固定策略、PPO 及分钟模型的回测任务，训练任务留在各自训练页。支持类型/状态/批次筛选、收益/年化/回撤/Sharpe 排序，以及勾选后的指标对照和条件差异。区间、ETF 范围、数据内容、成本、风控或估值口径不同的结果不能直接排名；缺失和损坏的结果会保留任务并显示错误。Agent 可读取同一份 `GET /api/backtests/catalog` 分页目录。
 
 同源 `GET /api/session` 返回本机令牌；浏览器后续请求和 Agent CLI 均以 `Authorization: Bearer <token>` 调用 `/api`。CLI 可通过 `QUANTO_TOKEN` 环境变量读取令牌，例如 `uv run --extra web quanto datasets list`。任务提交和结果查询共用这套 API；`quanto runs --help` 可查看运行命令。
 

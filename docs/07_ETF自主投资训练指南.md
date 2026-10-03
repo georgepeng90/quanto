@@ -15,6 +15,8 @@ npm.cmd --prefix web run build
 .\scripts\start-workbench.ps1
 ```
 
+本机启动脚本读取 `workbench.local.json`，统一使用 `http://127.0.0.1:8770` 和 `data/research-20261001`；所有实验、训练和回测共用此工作区。新安装未配置时仍使用通用默认值，API 示例端口应与实际服务一致。
+
 强化学习依赖归在 `learning` extra。默认小型 MLP 使用 `device: "cpu"`；可显式选择 `cuda`，须先确认运行环境支持。CPU 能完成首轮研究，显卡利用率不是训练效果指标。运行时冻结依赖版本，提交后修改依赖应重新提交任务。
 
 ## 观察与交易语义
@@ -56,7 +58,8 @@ train_start < train_end < validation_start < validation_end < test_start < test_
 3. 填写策略名称、自然周/月、资金和三段日期。高级参数提供历史窗口、片段长度、PPO、设备、成本及风险设置，提交前展开检查完整配置。
 4. 提交训练，在任务区查看状态、日志或取消。取消训练不登记成功策略；成功后查看冻结策略的验证与测试报告。
 5. 选择参考冻结策略、版本、回测区间、方法及成本倍数，提交冻结回测。开始日期必须严格晚于该策略的 `validation_end`。
-6. 查看每日净值、订单、成交、信号和持仓，下载完整 ZIP；比较前确认版本、日期、成本和实验配置一致。
+6. 在“回测任务 → 全部回测”统一查看固定策略、PPO 和基准，按指标排序或勾选比较。页面会列出不同区间、ETF 范围、数据、成本和风控的差异；条件不同不能直接排名。
+7. 点击结果名称进入每日净值、订单、成交、信号和持仓，下载完整 ZIP。固定策略与训练功能共用一个工作区，无需另启动服务。
 
 冻结回测仅执行确定性 `predict`，不调用 `learn`。`policy`、`cash`、`equal_weight`、`buy_hold` 分别为冻结策略、现金、周期等权、首次决策买入后持有。所有基准都必须引用 `policy_id`，沿用该实验的固定篮子、资金、频率、成交与风险配置。成本倍数默认 1，可显式进行压力实验，报告保留实际倍数。
 
@@ -65,9 +68,9 @@ train_start < train_end < validation_start < validation_end < test_start < test_
 浏览器、Agent 和 CLI 使用同一套本机 API 与队列，没有另一条绕过版本校验的训练入口。Agent 可调用标准 HTTP 或 `quanto investing`。认证沿用工作台令牌：
 
 ```powershell
-$session = Invoke-RestMethod http://127.0.0.1:8765/api/session
+$session = Invoke-RestMethod http://127.0.0.1:8770/api/session
 $env:QUANTO_TOKEN = $session.token
-uv run --no-sync quanto investing overview
+uv run --no-sync quanto --url http://127.0.0.1:8770 investing overview
 ```
 
 [weekly.json](../examples/investing/weekly.json) 是完整训练 **spec**，不是提交请求。先按实际版本修改日期、篮子与覆盖，再包装 `dataset_id`；示例范围不表示当前版本已有足够数据。以下写入无 BOM 的请求文件，供 CLI 读取：
@@ -76,10 +79,10 @@ uv run --no-sync quanto investing overview
 $spec = Get-Content examples/investing/weekly.json -Raw | ConvertFrom-Json
 $request = @{ dataset_id = '替换为日线版本ID'; spec = $spec } | ConvertTo-Json -Depth 30
 [IO.File]::WriteAllText((Join-Path $PWD 'train-request.json'), $request, [Text.UTF8Encoding]::new($false))
-uv run --no-sync quanto investing train --json train-request.json
-uv run --no-sync quanto investing logs <训练任务ID>
-uv run --no-sync quanto investing get policies <训练任务ID>
-uv run --no-sync quanto investing cancel <运行中任务ID>
+uv run --no-sync quanto --url http://127.0.0.1:8770 investing train --json train-request.json
+uv run --no-sync quanto --url http://127.0.0.1:8770 investing logs <训练任务ID>
+uv run --no-sync quanto --url http://127.0.0.1:8770 investing get policies <训练任务ID>
+uv run --no-sync quanto --url http://127.0.0.1:8770 investing cancel <运行中任务ID>
 ```
 
 改成月度时将 `frequency` 设为 `monthly`，并确认三段和训练片段均包含可执行月末决策。不要把训练片段长度换算为固定每 20 日动作。
@@ -100,8 +103,8 @@ uv run --no-sync quanto investing cancel <运行中任务ID>
 ```
 
 ```powershell
-uv run --no-sync quanto investing backtest --json backtest-request.json
-uv run --no-sync quanto investing get backtests <回测任务ID>
+uv run --no-sync quanto --url http://127.0.0.1:8770 investing backtest --json backtest-request.json
+uv run --no-sync quanto --url http://127.0.0.1:8770 investing get backtests <回测任务ID>
 ```
 
 这里的日期以示例验证截止 `2024-12-31` 为前提；实际应改成所选策略和版本允许的区间。换用现金等基准时仍保留 `policy_id`。

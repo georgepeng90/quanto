@@ -6,6 +6,7 @@ from importlib.metadata import PackageNotFoundError, version
 import json
 from pathlib import Path
 import platform
+import re
 
 from quanto.workbench.revisions import json_bytes
 
@@ -18,7 +19,8 @@ def migrate_learning_schema(db) -> None:
     ddl = db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='jobs'").fetchone()[0]
     missing = [kind for kind in LEARNING_KINDS if f"'{kind}'" not in ddl]
     if missing:
-        replacement = ddl.replace("CREATE TABLE jobs", "CREATE TABLE jobs_learning_migration", 1)
+        replacement = re.sub(r'CREATE TABLE (?:"jobs"|jobs)(?=\s|\()',
+                             'CREATE TABLE jobs_learning_migration', ddl, count=1, flags=re.IGNORECASE)
         replacement = replacement.replace("'validate_strategy'", "'validate_strategy'," + ','.join(f"'{kind}'" for kind in missing), 1)
         db.execute(replacement)
         columns = ','.join(row[1] for row in db.execute('PRAGMA table_info(jobs)'))

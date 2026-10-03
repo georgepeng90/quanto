@@ -19,10 +19,15 @@ def isolated_market(tmp_path, monkeypatch):
     monkeypatch.setenv('QUANTO_MARKET_CONFIG', str(config))
 
 
-def test_minute_jobs_survive_policy_migration(tmp_path):
+@pytest.mark.parametrize('renamed', [False, True])
+def test_minute_jobs_survive_policy_migration(tmp_path, renamed):
     with sqlite3.connect(tmp_path / 'workbench.sqlite3') as db:
         db.execute("CREATE TABLE jobs (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK (kind IN ('backtest','demo','fetch','import','validate_strategy','prepare_learning','train','model_backtest')), state TEXT NOT NULL, run_id TEXT UNIQUE, enqueue_seq INTEGER NOT NULL UNIQUE, artifact_root TEXT NOT NULL, pid INTEGER, process_start TEXT, heartbeat TEXT, completed_through TEXT, error TEXT)")
         db.execute("INSERT INTO jobs(id,kind,state,enqueue_seq,artifact_root) VALUES ('old','train','succeeded',1,?)", (str(tmp_path),))
+        if renamed:
+            # SQLite quotes the resulting table name after the earlier minute migration.
+            db.execute('ALTER TABLE jobs RENAME TO jobs_previous')
+            db.execute('ALTER TABLE jobs_previous RENAME TO jobs')
     WorkbenchStore(tmp_path)
     store = WorkbenchStore(tmp_path)
     with store.transaction() as db:

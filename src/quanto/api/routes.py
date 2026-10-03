@@ -14,6 +14,12 @@ def service(request: Request):
     return request.app.state.service
 
 
+@router.get("/backtests/catalog")
+def backtest_catalog(request: Request, cursor: str | None = None, limit: int = 50):
+    from quanto.workbench.backtest_catalog import catalog
+    return catalog(service(request), cursor, limit)
+
+
 @router.get("/session")
 def session(request: Request):
     return {"token": request.app.state.token, "api_base": "/api", "timezone": "Asia/Shanghai"}

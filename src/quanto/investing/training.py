@@ -5,6 +5,7 @@ import math
 import os
 from pathlib import Path
 import platform
+import shutil
 
 import pandas as pd
 
@@ -12,7 +13,7 @@ from quanto.backtest.dataset_loaders import load_dataset
 from quanto.config import BacktestSpec
 from quanto.investing.contracts import PolicyTrainingSpec
 from quanto.investing.evaluation import evaluate_policy
-from quanto.learning.artifacts import write_manifest
+from quanto.learning.artifacts import read_manifest, write_manifest
 from quanto.learning.contracts import check_cancelled
 from quanto.learning.models import resolve_device
 from quanto.objects import json_bytes
@@ -43,7 +44,8 @@ def validate_training_data(config, bundle):
         env.close()
 
 
-def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content_hash):
+def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content_hash, *,
+                 resume_dir=None, model_id=None, evaluate_test=True):
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     import torch
     from stable_baselines3 import PPO
@@ -63,22 +65,54 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     history, best_score, best_timesteps, best_metrics = [], -math.inf, 0, None
-    last_evaluated_updates, next_evaluation = 0, config.eval_every_timesteps
+    parent, best_source_content_id = None, None
+    metric_name = "sharpe" if config.selection_metric == "validation_sharpe" else "net_log_return"
+    expected = dict(feature_version=FEATURE_VERSION, action_version=ACTION_VERSION,
+                    environment_version=ENVIRONMENT_VERSION, execution_version=EXECUTION_VERSION)
+    if resume_dir is not None:
+        resume_dir = Path(resume_dir)
+        parent = read_manifest(resume_dir, "policy")
+        if "last.zip" not in parent["files"]:
+            raise ValueError("resume requires a verified last.zip training state")
+        previous = PolicyTrainingSpec.model_validate(parent["config"])
+        fixed = config.model_dump(mode="json", exclude={"total_timesteps", "device"})
+        if fixed != previous.model_dump(mode="json", exclude={"total_timesteps", "device"}):
+            raise ValueError("resume configuration must match the fixed model identity")
+        if (parent["dataset_content_hash"] != dataset_content_hash or parent.get("model_id") != model_id
+                or parent["basket"] != config.backtest.symbols or parent.get("price_mode") != bundle.price_mode
+                or any(parent.get(name) != value for name, value in expected.items())):
+            raise ValueError("resume dataset, model, basket or environment identity mismatch")
+        history = list(parent["history"])
+        best_timesteps, best_metrics = parent["best_timesteps"], parent["metrics"]["validation"]
+        score = best_metrics[metric_name]
+        if score is not None and math.isfinite(score):
+            best_score = score
+        best_source_content_id = parent.get("best_source_content_id") or parent["id"]
+        shutil.copyfile(resume_dir / "policy.zip", output_dir / "policy.zip")
     validation = split_spec(config, "validation")
 
     def select(model):
-        nonlocal best_score, best_timesteps, best_metrics, last_evaluated_updates, next_evaluation
+        nonlocal best_score, best_timesteps, best_metrics, best_source_content_id, last_evaluated_updates, next_evaluation
         check_cancelled(cancelled)
         metrics, _, _ = evaluate_policy(model, bundle, validation, config.frequency, config.lookback, cancelled)
+        if not math.isfinite(metrics["net_log_return"]):
+            raise ValueError("nonfinite validation net log return")
+        if metrics["sharpe"] is not None and not math.isfinite(metrics["sharpe"]):
+            metrics["sharpe"] = None
+        score = metrics[metric_name]
+        valid = score is not None
         history.append(dict(timesteps=model.num_timesteps, updates=model._n_updates,
-                            validation_net_log_return=metrics["net_log_return"]))
-        if metrics["net_log_return"] > best_score:
-            best_score, best_timesteps, best_metrics = metrics["net_log_return"], model.num_timesteps, metrics
+                            validation_net_log_return=metrics["net_log_return"], validation_sharpe=metrics["sharpe"],
+                            validation_total_return=metrics["total_return"], validation_max_drawdown=metrics["max_drawdown"],
+                            selection_valid=valid))
+        if best_metrics is None or valid and score > best_score:
+            best_score = score if valid else -math.inf
+            best_timesteps, best_metrics, best_source_content_id = model.num_timesteps, metrics, None
             model.save(output_dir / "policy.zip")
         last_evaluated_updates = model._n_updates
         next_evaluation = model.num_timesteps + config.eval_every_timesteps
         emit(dict(kind="progress", message="policy validation after PPO update",
-                  progress=min(model.num_timesteps / config.total_timesteps, 1.), **history[-1]))
+                  progress=min((model.num_timesteps - started) / config.total_timesteps, 1.), **history[-1]))
         check_cancelled(cancelled)
 
     class TrainingCallback(BaseCallback):
@@ -95,26 +129,36 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
                       lookback=config.lookback, episode_sessions=config.episode_sessions,
                       training=True, cancelled=cancelled, collect=False)
     try:
-        model = PPO("MlpPolicy", env, learning_rate=config.learning_rate, n_steps=config.n_steps,
-                    batch_size=config.batch_size, n_epochs=config.n_epochs, gamma=config.gamma,
-                    gae_lambda=config.gae_lambda, ent_coef=config.ent_coef,
-                    policy_kwargs=dict(net_arch=dict(pi=[config.hidden_size, config.hidden_size],
-                                                     vf=[config.hidden_size, config.hidden_size])),
-                    seed=config.seed, device=device, verbose=0)
+        if parent is not None:
+            model = PPO.load(resume_dir / "last.zip", env=env, device=device)
+            if model.num_timesteps != parent["timesteps_completed"]:
+                raise ValueError("resume last state timesteps disagree with its manifest")
+        else:
+            model = PPO("MlpPolicy", env, learning_rate=config.learning_rate, n_steps=config.n_steps,
+                        batch_size=config.batch_size, n_epochs=config.n_epochs, gamma=config.gamma,
+                        gae_lambda=config.gae_lambda, ent_coef=config.ent_coef,
+                        policy_kwargs=dict(net_arch=dict(pi=[config.hidden_size, config.hidden_size],
+                                                         vf=[config.hidden_size, config.hidden_size])),
+                        seed=config.seed, device=device, verbose=0)
+        started = model.num_timesteps
+        last_evaluated_updates, next_evaluation = model._n_updates, started + config.eval_every_timesteps
         emit(dict(kind="progress", message="PPO training started", progress=0., device=device))
         check_cancelled(cancelled)
-        model.learn(total_timesteps=config.total_timesteps, callback=TrainingCallback())
+        model.learn(total_timesteps=config.total_timesteps, callback=TrainingCallback(), reset_num_timesteps=False)
         check_cancelled(cancelled)
         if model._n_updates > last_evaluated_updates:
             select(model)
         completed = model.num_timesteps
+        model.save(output_dir / "last.zip")
     except torch.cuda.OutOfMemoryError as exc:
         raise ValueError("CUDA memory exhausted; reduce PPO batch_size or hidden_size, or choose CPU") from exc
     finally:
         env.close()
-    selected = PPO.load(output_dir / "policy.zip", device=device)
-    test_metrics, _, _ = evaluate_policy(selected, bundle, split_spec(config, "test"),
-                                         config.frequency, config.lookback, cancelled)
+    test_metrics = None
+    if evaluate_test:
+        selected = PPO.load(output_dir / "policy.zip", device=device)
+        test_metrics, _, _ = evaluate_policy(selected, bundle, split_spec(config, "test"),
+                                             config.frequency, config.lookback, cancelled)
     check_cancelled(cancelled)
     (output_dir / "curves.json").write_bytes(json_bytes(history))
     runtime = dict(python=platform.python_version(), torch=torch.__version__,
@@ -123,16 +167,19 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
                    cuda_version=torch.version.cuda, seed=config.seed, deterministic_algorithms=True,
                    device_name=torch.cuda.get_device_name() if device == "cuda" else "CPU")
     manifest = dict(kind="policy", version=1, name=config.name, config=config.model_dump(mode="json"),
-                    basket=config.backtest.symbols, dataset_content_hash=dataset_content_hash,
+                    basket=config.backtest.symbols, dataset_content_hash=dataset_content_hash, price_mode=bundle.price_mode,
+                    model_id=model_id, parent_content_id=parent["id"] if parent else None,
                     cutoff=config.validation_end.isoformat(), feature_version=FEATURE_VERSION,
                     action_version=ACTION_VERSION, environment_version=ENVIRONMENT_VERSION,
-                    execution_version=EXECUTION_VERSION, selection_metric="validation_net_log_return",
+                    execution_version=EXECUTION_VERSION, selection_metric=config.selection_metric,
+                    selection_valid=math.isfinite(best_score), best_source_content_id=best_source_content_id,
                     metrics=dict(validation=best_metrics, test=test_metrics), best_timesteps=best_timesteps,
-                    timesteps_completed=completed, history=history, runtime=runtime,
+                    timesteps_started=started, timesteps_completed=completed, session_timesteps=completed - started,
+                    history=history, runtime=runtime,
                     limitations=bundle.manifest.limitations,
-                    research_limits=["test evaluated once after checkpoint selection within this run",
+                    research_limits=(["test evaluated once after checkpoint selection within this run"] if evaluate_test else []) + [
                                      "no protection against repeated research on the test period",
-                                     "save/load does not support exact training resume"])
+                                     "continuation resets sampling environment and account; not exact uninterrupted replay"])
     check_cancelled(cancelled)
     emit(dict(kind="progress", message="policy training evaluated", progress=1., metrics=manifest["metrics"]))
     check_cancelled(cancelled)

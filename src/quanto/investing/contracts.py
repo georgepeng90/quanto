@@ -32,6 +32,7 @@ class PolicyTrainingSpec(StrictSpec):
     seed: int = Field(default=42, ge=0, le=2**32 - 1)
     device: Literal["cpu", "cuda"] = "cpu"
     eval_every_timesteps: int = Field(default=512, ge=1, le=10000000)
+    selection_metric: Literal["validation_net_log_return", "validation_sharpe"] = "validation_net_log_return"
 
     @model_validator(mode="after")
     def validate_experiment(self):

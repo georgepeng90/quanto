@@ -52,6 +52,7 @@ def evaluate_policy(model, bundle, spec, frequency="weekly", lookback=120,
             raise ValueError("policy rewards disagree with the shared daily account ledger")
         metrics = dict(net_log_return=net_log_return, total_return=report.metrics["total_return"],
                        final_equity=report.metrics["final_equity"], max_drawdown=report.metrics["max_drawdown"],
+                       sharpe=report.metrics["sharpe"],
                        decision_steps=steps, observed_sessions=len(result.equity))
         return metrics, result, report
     finally:
@@ -74,6 +75,8 @@ def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
     if any(manifest.get(name) != value for name, value in expected.items()) or manifest["basket"] != config.backtest.symbols:
         raise ValueError("policy observation, action, execution version or basket mismatch")
     bundle = load_dataset(Path(dataset_dir))
+    if "price_mode" in manifest and manifest["price_mode"] != bundle.price_mode:
+        raise ValueError("policy price mode mismatch")
     values = config.backtest.model_dump(mode="json")
     values.update(start=request.start.isoformat(), end=request.end.isoformat())
     for name in ("commission_rate", "minimum_commission", "slippage_rate"):

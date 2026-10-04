@@ -1,0 +1,59 @@
+{
+  "study": "four-sector-eight-etf-20261005",
+  "dataset_path": "D:/Projects/quanto/outputs/rl-four-sector-20261005/data-prep/dataset",
+  "rounds": 50,
+  "timesteps_per_round": 512,
+  "monitor_period": {"start": "2025-01-01", "end": "2025-12-31"},
+  "final_period": {"start": "2026-01-01", "end": "2026-09-30"},
+  "round_definition": "One successful continuation session on the same model; 512 additional weekly environment actions, four PPO rollouts. Failed sessions do not count.",
+  "evaluation_rule": "Freeze this protocol before training. Every ten successful sessions evaluate both cumulative validation-best policy.zip and latest last.zip on the monitoring period. Monitoring results do not change training, checkpoint selection or the basket. Evaluate the reserved final period only after round 50.",
+  "selection": [
+    {"slot": 1, "symbol": "516080", "name": "易方达中证创新药产业ETF", "group": "healthcare", "listing_date": "2021-02-23", "rating_3y": 5, "rating_5y": 3, "source": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-05-19/516080_20260519_CQLN.pdf"},
+    {"slot": 2, "symbol": "159898", "name": "招商中证全指医疗器械ETF", "group": "healthcare", "listing_date": "2021-06-04", "rating_3y": 4, "rating_5y": 3, "source": "https://static.cninfo.com.cn/finalpage/2026-02-27/1224985098.PDF"},
+    {"slot": 3, "symbol": "512760", "name": "国泰CES半导体芯片行业ETF", "group": "technology", "listing_date": "2019-06-12", "rating_3y": 4, "rating_5y": 3, "source": "https://static.cninfo.com.cn/finalpage/2019-06-06/1206339753.PDF"},
+    {"slot": 4, "symbol": "515880", "name": "国泰中证全指通信设备ETF", "group": "technology", "listing_date": "2019-09-06", "rating_3y": 5, "rating_5y": 4, "source": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-19/515880_20260319_6M3M.pdf"},
+    {"slot": 5, "symbol": "516090", "name": "易方达中证新能源ETF", "group": "energy", "listing_date": "2021-03-19", "rating_3y": 5, "rating_5y": 3, "source": "https://static.cninfo.com.cn/finalpage/2024-06-26/1220458089.PDF"},
+    {"slot": 6, "symbol": "159806", "name": "国泰中证新能源汽车ETF", "group": "energy", "listing_date": "2020-03-20", "rating_3y": 4, "rating_5y": 3, "source": "https://static.cninfo.com.cn/finalpage/2025-03-21/1222855202.PDF"},
+    {"slot": 7, "symbol": "515020", "name": "华夏中证银行ETF", "group": "financials", "listing_date": "2019-12-03", "rating_3y": 4, "rating_5y": 4, "source": "https://pdf.dfcfw.com/pdf/H2_AN202605281822956526_1.pdf"},
+    {"slot": 8, "symbol": "515010", "name": "华夏中证全指证券公司ETF", "group": "financials", "listing_date": "2019-11-07", "rating_3y": 4, "rating_5y": 4, "source": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-03-28/515010_20240328_TW3R.pdf"}
+  ],
+  "rating_evidence": {
+    "institution": "济安金信",
+    "report": "2026年第二季度基金评级报告",
+    "asof": "2026-06-30",
+    "measure": "综合评级；三年与五年分别列示",
+    "source": "http://www.jajxfund.com/d/file/ajajxfundup/zhongxindongtai/2026/07-26/049031b89e2a82bed5336c3110127c66.pdf",
+    "pages_3y": [315, 322, 317, 313, 315, 317, 318, 318],
+    "pages_5y": [354, 355, 350, 345, 354, 351, 346, 346]
+  },
+  "limitations": [
+    "The basket was selected retrospectively with 2026 ratings. Historical holdouts concern model fitting only, not point-in-time basket selection; they are not prospective evidence.",
+    "Adjusted vendor prices are research inputs. Corporate-action cash flows and historical adjustment anchors are not fully verified; do not describe this as raw-price executable performance.",
+    "Energy means the new-energy industry chain here. New energy and new-energy vehicles overlap and are not two independent macro exposures.",
+    "Training reward is after-cost account log return. Checkpoint selection uses validation Sharpe. Neither guarantees rising out-of-sample return or Sharpe.",
+    "Continuation restores parameters, optimizer and cumulative steps, but starts a fresh sampling environment/account; it is not bit-identical to an uninterrupted trajectory.",
+    "Repeated evaluation of 2025 is monitoring, not a new independent experiment each time. No tuning from these reports during this run.",
+    "Target risk limits are applied through the existing next-open engine. Market moves can temporarily exceed a limit before a reduction fills."
+  ],
+  "spec": {
+    "name": "四领域8ETF · 周度PPO · 20261005",
+    "frequency": "weekly",
+    "lookback": 120,
+    "backtest": {
+      "start": "2022-01-01", "end": "2026-09-30",
+      "symbols": ["516080", "159898", "512760", "515880", "516090", "159806", "515020", "515010"],
+      "initial_cash": 1000000, "seed": 42,
+      "execution": {"commission_rate": 0.0003, "minimum_commission": 5, "slippage_rate": 0.0005, "max_stale_sessions": 5, "model": "next_open"},
+      "risk": {"max_total_weight": 0.9, "max_symbol_weight": 0.25, "group_caps": {"healthcare": 0.4, "technology": 0.4, "energy": 0.4, "financials": 0.4}, "stress_scenarios": [], "max_stress_loss": null, "drawdown_pause": null, "pause_action": "block_new", "pause_target_weight": null, "recovery_mode": "never"},
+      "metrics": {"annual_sessions": 252, "risk_free_rate": 0, "cash_rate": 0, "definition_version": "v1"}
+    },
+    "train_start": "2022-01-01", "train_end": "2023-12-31",
+    "validation_start": "2024-01-01", "validation_end": "2024-12-31",
+    "test_start": "2026-01-01", "test_end": "2026-09-30",
+    "episode_sessions": 126,
+    "total_timesteps": 512, "n_steps": 128, "batch_size": 64, "n_epochs": 10,
+    "learning_rate": 0.0003, "gamma": 1, "gae_lambda": 0.95, "ent_coef": 0.01,
+    "hidden_size": 64, "seed": 42, "device": "cpu",
+    "eval_every_timesteps": 512, "selection_metric": "validation_sharpe"
+  }
+}

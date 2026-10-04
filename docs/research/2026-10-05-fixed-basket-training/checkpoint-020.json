@@ -1,0 +1,223 @@
+{
+  "round": 20,
+  "model_id": "65fdcd5c-cc6d-4e93-9426-157dbca29e86",
+  "dataset_id": "fb354d66-b09f-4cad-bf1b-17ff8fe78890",
+  "protocol_hash": "86e79f4d16aac2722faa8205b9eb31ef9165b129f32be238955f71cc48c8bd45",
+  "training": {
+    "round": 20,
+    "version_id": "137e8580-9267-4a60-898c-3aa8b6594c09",
+    "content_id": "cebc06b9ff72cd9a2fa31d71f03fcb988394ab6ce4cc7e86538a90bbd3a07418",
+    "base_version_id": "7981b3b8-8890-41e5-ab51-5b716c9c49a8",
+    "validation_latest": {
+      "max_drawdown": 0.0,
+      "net_log_return": 0.0,
+      "sharpe": null,
+      "total_return": 0.0
+    },
+    "validation_best": {
+      "decision_steps": 51,
+      "final_equity": 1000000.0,
+      "max_drawdown": 0.0,
+      "net_log_return": 0.0,
+      "observed_sessions": 242,
+      "sharpe": null,
+      "total_return": 0.0
+    },
+    "elapsed_seconds": 35.315,
+    "timesteps_started": 9728,
+    "timesteps_completed": 10240,
+    "session_timesteps": 512,
+    "best_timesteps": 512,
+    "best_source_content_id": "e4f7ca5bbabcc7bf64d5f93667c4367bf4f52d2346a757acf17b43fbdf1e5fec",
+    "selection_valid": false
+  },
+  "artifact_path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\137e8580-9267-4a60-898c-3aa8b6594c09\\final\\artifact",
+  "checkpoint_sha256": {
+    "policy.zip": "e86fca98554ccff2ff00c6d2aebe97a85accd9203f5bf67b4c8b66bfee7dc674",
+    "last.zip": "ba92d30ad5146f38412b7a0ffc93893e9eb7a84a60a995be1fb116ef7f56dec1"
+  },
+  "evaluations": {
+    "monitor_020_best": {
+      "round": 20,
+      "period": "monitor",
+      "version_id": "137e8580-9267-4a60-898c-3aa8b6594c09",
+      "snapshot": "validation_best",
+      "job_id": "1f3eb19c-fe6f-4221-aa17-38df526ee0b8",
+      "period_dates": {
+        "end": "2025-12-31",
+        "start": "2025-01-01"
+      },
+      "metrics": {
+        "annual_return": 0.0,
+        "average_holding_sessions": null,
+        "average_invested_ratio": 0.0,
+        "benchmark_return": 0.21189927756255877,
+        "calmar": null,
+        "commission_paid": 0.0,
+        "decision_steps": 52,
+        "dividend_income": 0.0,
+        "execution_cost": 0.0,
+        "fill_count": 0,
+        "final_equity": 1000000.0,
+        "interest_income": 0.0,
+        "max_drawdown": 0.0,
+        "net_log_return": 0.0,
+        "observed_sessions": 243,
+        "open_lot_count": 0,
+        "realized_pnl": 0.0,
+        "relative_return_difference": -0.21189927756255877,
+        "round_trip_count": 0,
+        "sharpe": null,
+        "slippage_cost": 0.0,
+        "total_return": 0.0,
+        "turnover": 0.0,
+        "unrealized_pnl": 0.0,
+        "volatility": 0.0
+      },
+      "counts": {
+        "account_events": 243,
+        "daily_equity": 243,
+        "equity": 243,
+        "fills": 0,
+        "orders": 0,
+        "positions": 1944,
+        "risk_events": 0,
+        "signals": 243
+      }
+    },
+    "monitor_020_last": {
+      "round": 20,
+      "period": "monitor",
+      "version_id": "137e8580-9267-4a60-898c-3aa8b6594c09",
+      "snapshot": "last.zip_offline",
+      "period_dates": {
+        "start": "2025-01-01",
+        "end": "2025-12-31"
+      },
+      "metrics": {
+        "total_return": 0.0,
+        "annual_return": 0.0,
+        "volatility": 0.0,
+        "sharpe": null,
+        "max_drawdown": 0.0,
+        "calmar": null,
+        "final_equity": 1000000.0,
+        "fill_count": 0,
+        "round_trip_count": 0,
+        "open_lot_count": 0,
+        "realized_pnl": 0.0,
+        "unrealized_pnl": 0.0,
+        "turnover": 0.0,
+        "commission_paid": 0.0,
+        "slippage_cost": 0.0,
+        "execution_cost": 0.0,
+        "average_invested_ratio": 0.0,
+        "average_holding_sessions": null,
+        "dividend_income": 0.0,
+        "interest_income": 0.0,
+        "benchmark_return": 0.21189927756255877,
+        "relative_return_difference": -0.21189927756255877,
+        "net_log_return": 0.0,
+        "decision_steps": 52,
+        "observed_sessions": 243
+      },
+      "counts": null
+    },
+    "monitor_equal_weight": {
+      "round": 10,
+      "period": "monitor",
+      "version_id": "2a28ec25-e972-46c4-8a39-9d458eecb75b",
+      "snapshot": "equal_weight",
+      "job_id": "b544f584-d931-4df7-992d-852bc2a1df55",
+      "period_dates": {
+        "end": "2025-12-31",
+        "start": "2025-01-01"
+      },
+      "metrics": {
+        "annual_return": 0.40539380003696324,
+        "average_holding_sessions": 136.7407060293658,
+        "average_invested_ratio": 0.8920881612751989,
+        "benchmark_return": 0.21189927756255877,
+        "calmar": 3.236066246474079,
+        "commission_paid": 5194.179101185,
+        "decision_steps": 52,
+        "dividend_income": 0.0,
+        "execution_cost": 6161.748401184921,
+        "fill_count": 991,
+        "final_equity": 1388415.7515988152,
+        "interest_income": 0.0,
+        "max_drawdown": 0.12527364063658097,
+        "net_log_return": 0.3281633500857763,
+        "observed_sessions": 243,
+        "open_lot_count": 184,
+        "realized_pnl": 122083.75433705028,
+        "relative_return_difference": 0.17651647403625637,
+        "round_trip_count": 0,
+        "sharpe": 1.975445561568084,
+        "slippage_cost": 967.569299999921,
+        "total_return": 0.38841575159881514,
+        "turnover": 1.6400478783109989,
+        "unrealized_pnl": 266331.9972617656,
+        "volatility": 0.1807463110378616
+      },
+      "counts": {
+        "account_events": 243,
+        "daily_equity": 243,
+        "equity": 243,
+        "fills": 991,
+        "orders": 991,
+        "positions": 1944,
+        "risk_events": 124,
+        "signals": 243
+      }
+    },
+    "monitor_buy_hold": {
+      "round": 10,
+      "period": "monitor",
+      "version_id": "2a28ec25-e972-46c4-8a39-9d458eecb75b",
+      "snapshot": "buy_hold",
+      "job_id": "6c1d9bc5-88af-4fdd-a4b1-2a3dbb5cf347",
+      "period_dates": {
+        "end": "2025-12-31",
+        "start": "2025-01-01"
+      },
+      "metrics": {
+        "annual_return": 0.4287436942878815,
+        "average_holding_sessions": 114.72334682860999,
+        "average_invested_ratio": 0.8896046773207109,
+        "benchmark_return": 0.21189927756255877,
+        "calmar": 3.4354681135533656,
+        "commission_paid": 1790.211448205,
+        "decision_steps": 52,
+        "dividend_income": 0.0,
+        "execution_cost": 2264.2480982049437,
+        "fill_count": 312,
+        "final_equity": 1410653.151901795,
+        "interest_income": 0.0,
+        "max_drawdown": 0.12479920643024811,
+        "net_log_return": 0.3440528254321155,
+        "observed_sessions": 243,
+        "open_lot_count": 8,
+        "realized_pnl": 7227.171807555001,
+        "relative_return_difference": 0.1987538743392363,
+        "round_trip_count": 0,
+        "sharpe": 1.9992762067871082,
+        "slippage_cost": 474.03664999994396,
+        "total_return": 0.4106531519017951,
+        "turnover": 0.8013973234343801,
+        "unrealized_pnl": 403425.98009424045,
+        "volatility": 0.18746454554356962
+      },
+      "counts": {
+        "account_events": 243,
+        "daily_equity": 243,
+        "equity": 243,
+        "fills": 312,
+        "orders": 312,
+        "positions": 1944,
+        "risk_events": 39,
+        "signals": 243
+      }
+    }
+  }
+}

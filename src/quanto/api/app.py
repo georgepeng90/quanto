@@ -69,6 +69,8 @@ def create_app(root: Path, frontend_dir: Path | None = None, *, templates_dir: P
     @app.exception_handler(ValueError)
     async def invalid(request: Request, exc: ValueError):
         message = str(exc)
+        if message.startswith("model training conflict:"):
+            return JSONResponse({"code": "MODEL_TRAINING_CONFLICT", "message": "该模型已有训练任务，或保存版本发生变化。请刷新模型后重试。", "details": {}}, status_code=409)
         if "conflict" in message:
             return JSONResponse({"code": "CONFLICT", "message": "修订或幂等键冲突", "details": {}}, status_code=409)
         return JSONResponse({"code": "INVALID_ARGUMENT", "message": "请求参数无效", "details": {"reason": message}}, status_code=422)

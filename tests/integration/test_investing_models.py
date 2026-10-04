@@ -70,6 +70,8 @@ def test_only_one_active_session_per_model_and_no_identity_override(model_worksp
     with ThreadPoolExecutor(max_workers=2) as pool:
         responses = list(pool.map(lambda _: client.post(endpoint, headers=headers, json={'additional_timesteps': 8, 'device': 'cpu'}), range(2)))
     assert sorted(response.status_code for response in responses) == [200, 409]
+    conflict = next(response for response in responses if response.status_code == 409)
+    assert conflict.json()['code'] == 'MODEL_TRAINING_CONFLICT'
     job = next(response.json() for response in responses if response.status_code == 200)
     assert job['state'] == 'queued'
     assert len(app.state.service.store.list_jobs()) == 1

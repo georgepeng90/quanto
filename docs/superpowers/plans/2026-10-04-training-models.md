@@ -34,9 +34,9 @@
 
 **Interfaces:** `train_policy(..., dataset_content_hash, *, resume_dir=None, model_id=None, evaluate_test=True)` returns a standard policy manifest. Managed model jobs pass `evaluate_test=False`. `resume_dir` is a verified previous successful policy directory. Add selection_metric to PolicyTrainingSpec. Final artifact contains policy.zip and last.zip. Manifest includes model_id, parent_content_id, timesteps_started, timesteps_completed (cumulative), session_timesteps, best_timesteps, history, selection metric and validation metrics (Sharpe included).
 
-- [ ] Review existing training tests; add failing continuation, incumbent selection, Sharpe-null and no-test-evaluation tests.
-- [ ] Implement PPO.load continuation with optimizer and fresh account, cumulative progress, best incumbent copy, last save after final update.
-- [ ] Verify unit training suite and existing environment behavior with synthetic fixtures; commit owned files.
+- [x] Review existing training tests; add failing continuation, incumbent selection, Sharpe-null and no-test-evaluation tests.
+- [x] Implement PPO.load continuation with optimizer and fresh account, cumulative progress, best incumbent copy, last save after final update.
+- [x] Verify unit training suite and existing environment behavior with synthetic fixtures; commit owned files.
 
 ### Task 2: Persistent models, session API and Agent CLI
 
@@ -44,10 +44,10 @@
 
 **Interfaces:** Exact model API and response fields in spec. DB tables `investing_models` and `investing_sessions`; session version equals succeeded job artifact id. Submission transaction hook associates session and rejects simultaneous writers. `policy_resume_ref` is frozen trusted previous artifact; `model_id` in managed requests controls evaluate_test=False. Existing policy backtest dispatch receives model_id provenance.
 
-- [ ] Add failing create/list/detail/continue/concurrency/wrong-version/CLI tests, updating obsolete unsupported models-route test.
-- [ ] Add idempotent schema and model service; validate data and ordered symbols before create; share atomic job insertion transaction with session association.
-- [ ] Freeze latest successful continuation ref and invoke Task 1; managed backtests require explicit owned version.
-- [ ] Verify integration tests with temporary workspaces, including real short train → continue → frozen version backtest; commit owned files.
+- [x] Add failing create/list/detail/continue/concurrency/wrong-version/CLI tests, updating obsolete unsupported models-route test.
+- [x] Add idempotent schema and model service; validate data and ordered symbols before create; share atomic job insertion transaction with session association.
+- [x] Freeze latest successful continuation ref and invoke Task 1; managed backtests require explicit owned version.
+- [x] Verify integration tests with temporary workspaces, including real short train → continue → frozen version backtest; commit owned files.
 
 ### Task 3: Four-domain UX, models list/detail and model backtests
 
@@ -55,22 +55,30 @@
 
 **Interfaces:** Task 2 APIs as specified. `/models`, `/models/:id`, `/runs?model=ID&version=ID`; old report deep links remain readable in result-only routes. Backtest history receives refresh after submission.
 
-- [ ] Review existing tests against four-domain requirements; write failing nav/create-without-training/continue/version-choice cases.
-- [ ] Build list/detail with creation separate from training, frozen ordered basket, additive budget, cancellation copy and explicit version backtests.
-- [ ] Put history first and new-backtest forms under a secondary action; retain fixed batch submissions and historical report detail/export.
-- [ ] Run frontend tests, typecheck, build; commit owned files.
+- [x] Review existing tests against four-domain requirements; write failing nav/create-without-training/continue/version-choice cases.
+- [x] Build list/detail with creation separate from training, frozen ordered basket, additive budget, cancellation copy and explicit version backtests.
+- [x] Put history first and new-backtest forms under a secondary action; retain fixed batch submissions and historical report detail/export.
+- [x] Run frontend tests, typecheck, build; commit owned files.
 
 ### Task 4: Integrated acceptance, review, and documentation
 
 **Files:** docs/07_ETF自主投资训练指南.md, README.md, new acceptance record; focused fixes as needed.
 
-- [ ] Run full Python and web suites, production build, isolated browser/e2e checks covering created model and report navigation.
-- [ ] Independent whole-branch review; address material findings with regression coverage.
-- [ ] Update guides/Agent API examples, describe session budgets and cancellation/resume boundary, record tests and no actual training.
-- [ ] Commit docs/fixes; verify clean stage scope and branch, leave actual model creation/training to user's future basket discussion.
+- [x] Run full Python and web suites, production build, isolated browser/e2e checks covering created model and report navigation.
+- [x] Independent whole-branch review; address material findings with regression coverage.
+- [x] Update guides/Agent API examples, describe session budgets and cancellation/resume boundary, record tests and no actual training.
+- [x] Commit docs/fixes; verify clean stage scope and branch, leave actual model creation/training to user's future basket discussion.
 
 ## Progress
 
 - Design: two independent UX/investment-platform reviews complete; no approvals required by user.
 - Pre-flight: Task 1 manifest -> Task 2 registry uses existing policy artifact; Task 2 response -> Task 3 matches explicit field contract. No known conflicts.
 - Decision: finite additive sessions with successful-version continuation; cancelling discards unpublished current progress. This avoids introducing an infinite queue or claiming exact replay/recovery that is not implemented.
+- Task 2 service/CLI integration committed `fe2db2d`: 29 integration/static tests passed, including isolated real 8 + 8 step continuation and explicit first-version backtest. First failing API/CLI tests observed before implementation. Actual research workspace untouched.
+- Task 1 committed `869b273`: parameter/optimizer continuation, cumulative state, validation incumbent and no automatic test evaluation. Full Python suite: 653 passed, 1 skipped.
+- Running cancellation regression committed `5779cc6`; conflict-message correction committed `c695a13`. Final model/API/static route regression: 24 passed.
+- Task 3 committed `a42130b`: four-domain model UI and explicit-version backtests. Frontend: 117 tests passed; TypeScript and production build passed.
+- Browser fixture/locator corrections committed `39734e2`: Chrome full E2E 3/3 passed, including isolated 16 + 16 step continuation and first-version backtest. Mobile screenshot and original desktop report inspected.
+- Independent whole-change review found no blocking issues. Inherited overview selector limit of 100 datasets recorded without unrelated scope expansion.
+- Actual workspace read checks found 51 historical backtests and no active jobs. Database backed up; service restart was rejected by tool policy (`blocked by policy`), so actual-workspace backend activation remains a separate startup action. No model or training submitted there.
+- Final guides and evidence are in `docs/research/2026-10-04-training-models/acceptance.md`. Original untracked PRD is excluded; no push.

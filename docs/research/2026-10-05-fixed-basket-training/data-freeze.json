@@ -1,0 +1,198 @@
+{
+  "dataset": "D:\\Projects\\quanto\\outputs\\rl-four-sector-20261005\\data-prep\\dataset",
+  "history_start": "2021-01-01",
+  "end": "2026-09-30",
+  "common_start": "2021-06-04",
+  "common_calendar_sessions": 1293,
+  "first_decision": "2022-01-07",
+  "checks": [
+    {
+      "symbol": "159806",
+      "rows": 1393,
+      "first": "2021-01-04",
+      "last": "2026-09-30",
+      "duplicate_dates": 0,
+      "common_missing_dates": [],
+      "unexplained_missing_dates": [],
+      "absolute_daily_returns_over_20_percent": [],
+      "invalid_ohlc_rows": 0,
+      "warmup_bars_before_2022_first_decision": 246,
+      "warmup_120_passed": true,
+      "average_amount_last_60_sessions_CNY": 13844145.0
+    },
+    {
+      "symbol": "159898",
+      "rows": 1293,
+      "first": "2021-06-04",
+      "last": "2026-09-30",
+      "duplicate_dates": 0,
+      "common_missing_dates": [],
+      "unexplained_missing_dates": [],
+      "absolute_daily_returns_over_20_percent": [],
+      "invalid_ohlc_rows": 0,
+      "warmup_bars_before_2022_first_decision": 146,
+      "warmup_120_passed": true,
+      "average_amount_last_60_sessions_CNY": 13270613.333333334
+    },
+    {
+      "symbol": "512760",
+      "rows": 1393,
+      "first": "2021-01-04",
+      "last": "2026-09-30",
+      "duplicate_dates": 0,
+      "common_missing_dates": [],
+      "unexplained_missing_dates": [],
+      "absolute_daily_returns_over_20_percent": [],
+      "invalid_ohlc_rows": 0,
+      "warmup_bars_before_2022_first_decision": 246,
+      "warmup_120_passed": true,
+      "average_amount_last_60_sessions_CNY": 534064130.0
+    },
+    {
+      "symbol": "515010",
+      "rows": 1393,
+      "first": "2021-01-04",
+      "last": "2026-09-30",
+      "duplicate_dates": 0,
+      "common_missing_dates": [],
+      "unexplained_missing_dates": [],
+      "absolute_daily_returns_over_20_percent": [],
+      "invalid_ohlc_rows": 0,
+      "warmup_bars_before_2022_first_decision": 246,
+      "warmup_120_passed": true,
+      "average_amount_last_60_sessions_CNY": 61072783.333333336
+    },
+    {
+      "symbol": "515020",
+      "rows": 1393,
+      "first": "2021-01-04",
+      "last": "2026-09-30",
+      "duplicate_dates": 0,
+      "common_missing_dates": [],
+      "unexplained_missing_dates": [],
+      "absolute_daily_returns_over_20_percent": [],
+      "invalid_ohlc_rows": 0,
+      "warmup_bars_before_2022_first_decision": 246,
+      "warmup_120_passed": true,
+      "average_amount_last_60_sessions_CNY": 142372301.66666666
+    },
+    {
+      "symbol": "515880",
+      "rows": 1393,
+      "first": "2021-01-04",
+      "last": "2026-09-30",
+      "duplicate_dates": 0,
+      "common_missing_dates": [],
+      "unexplained_missing_dates": [],
+      "absolute_daily_returns_over_20_percent": [],
+      "invalid_ohlc_rows": 0,
+      "warmup_bars_before_2022_first_decision": 246,
+      "warmup_120_passed": true,
+      "average_amount_last_60_sessions_CNY": 3987226691.6666665
+    },
+    {
+      "symbol": "516080",
+      "rows": 1362,
+      "first": "2021-02-23",
+      "last": "2026-09-30",
+      "duplicate_dates": 0,
+      "common_missing_dates": [],
+      "unexplained_missing_dates": [],
+      "absolute_daily_returns_over_20_percent": [],
+      "invalid_ohlc_rows": 0,
+      "warmup_bars_before_2022_first_decision": 215,
+      "warmup_120_passed": true,
+      "average_amount_last_60_sessions_CNY": 255086458.33333334
+    },
+    {
+      "symbol": "516090",
+      "rows": 1343,
+      "first": "2021-03-19",
+      "last": "2026-09-30",
+      "duplicate_dates": 0,
+      "common_missing_dates": [
+        "2021-11-26"
+      ],
+      "unexplained_missing_dates": [],
+      "absolute_daily_returns_over_20_percent": [],
+      "invalid_ohlc_rows": 0,
+      "warmup_bars_before_2022_first_decision": 196,
+      "warmup_120_passed": true,
+      "average_amount_last_60_sessions_CNY": 42952998.333333336
+    }
+  ],
+  "energy_daily_return_correlation": 0.9249882113323246,
+  "energy_correlation_observations": 1290,
+  "event_rows": 0,
+  "price_mode": "adjusted_research",
+  "limitations": [
+    "Benchmark feed amount units are unknown; ETF unit conversion is supported only by recent per-symbol spot checks; historical unit conventions are assumed.",
+    "Tencent price modes are consistent within each full refreshed ETF window; adjustment anchors remain unverified.",
+    "unknown_availability",
+    "unknown_units",
+    "unverified_price_basis",
+    "交易标志、每手数量和结算周期为研究模型假设，不是真实可交易状态证据。",
+    "供应商价格口径仅用于研究，不模拟真实分红和拆分现金流。",
+    "首次观测日期仅是研究覆盖边界，未核实真实上市日。",
+    "Expanded universe chosen using current rankings/news has survivorship and retrospective selection bias.",
+    "Official listing dates come from the selected catalog; trading flags, lot size and T+1 remain research assumptions.",
+    "Official fund announcements document 512760 suspension on 2020-09-09 (before study) and 516090 suspension on 2021-11-26; the latter is represented as suspended with no quote and no buying/selling. Other daily trading flags remain research assumptions. Healthcare Tencent day mode is supported by third-party pages reporting no distributions/splits; complete official corporate-action coverage remains unverified."
+  ],
+  "documented_suspensions": {
+    "512760": {
+      "date": "2020-09-09",
+      "official_url": "https://static.cninfo.com.cn/finalpage/2020-09-03/1208381264.PDF"
+    },
+    "516090": {
+      "date": "2021-11-26",
+      "official_url": "https://pdf.dfcfw.com/pdf/H2_AN202111291531775489_1.pdf"
+    }
+  },
+  "passed": true,
+  "data_files": {
+    "benchmark.parquet": "e06ee223a0f6772b184c1477a0442040f2ea3e905472ca44871b501d4993794e",
+    "calendar.parquet": "1796147b184179ff30842f94196ed0ece2d9fddbada70de55cf68c01778bad35",
+    "events.parquet": "4a1a3a8a392d48df72107368372bed5d975426835124c5fb93a18b805c642f6d",
+    "instruments.parquet": "6b86aef7d1d134d281751d4c4c690da5d2cf4729f34981f37f48bae823b2599e",
+    "manifest.json": "6795647328dba10159b72a46bbb3f1196af755f8b913891121cd282d655cffcd",
+    "prices.parquet": "386ab35d998619246e302f0af80f83e829c75c997610a205e924e525b0ad2c2e",
+    "status.parquet": "dd7ea433ab1fd5c045e94ae4707d23e16cf6fca13c93b960863b6633d3042893"
+  },
+  "source_audit_sha256": "e1ecad236b1ae2fd71126ad24c7c57859d9e5ec5786b8c5088a29d1a5a1b5847",
+  "snapshot_ids": {
+    "516080": "eaf6622cf1d0e940b4a7ccb0c550da6f978f836003793304c873488ce66e9f64",
+    "159898": "a2ce05695befbf0f4eed13831f2d2c4c3ff052920ef165b6ac45b9fc72e82239",
+    "512760": "b1e7dad92b9d2f94afbd511fcd35f37cfe58058321f28964b76bee7ea0c73f2a",
+    "515880": "fc48b6ca8db5381f1cf511909ff240f0f82f2268c105c7248ea5b647d3a31c92",
+    "516090": "b9ee1cec5c74150e428c1351dc7ed28f293c85905784d1e0a0ab38ba70f7d84f",
+    "159806": "087a734e81b825dc529c55eb19c820faac1b700a242f921656643a7a3d1ac001",
+    "515020": "cb7d10e00d9f4722d33d801e559060df97484b1187c02f00e271354b3974f6c5",
+    "515010": "7474b06a2d9769d6c843893b54555b60bd1c55643b7aed60898d6fc209d7ac89"
+  },
+  "official_suspension_evidence": {
+    "512760": {
+      "date": "2020-09-09",
+      "official_url": "https://static.cninfo.com.cn/finalpage/2020-09-03/1208381264.PDF",
+      "downloaded_pdf": "D:\\Projects\\quanto\\outputs\\rl-four-sector-20261005\\data-prep\\suspension-512760.pdf",
+      "sha256": "22587d7200d8783000a1a69d0664f726ab42af32827204fa062ba59a5cb0a982"
+    },
+    "516090": {
+      "date": "2021-11-26",
+      "official_url": "https://pdf.dfcfw.com/pdf/H2_AN202111291531775489_1.pdf",
+      "downloaded_pdf": "D:\\Projects\\quanto\\outputs\\rl-four-sector-20261005\\data-prep\\suspension-516090.pdf",
+      "sha256": "4aaea08a41ce45d5925d9a70fdb421812fbea6644da63d6a038e93d86ae73875"
+    }
+  },
+  "rating_evidence_files": [
+    {
+      "file": "D:\\Projects\\quanto\\outputs\\rl-four-sector-20261005\\research-evidence\\jajx-2026q2.pdf",
+      "sha256": "cb65976dcc7e767ed9edd6b9289b7f20066999b3ea5f71e9c20ecb3e7000bff3",
+      "bytes": 3167863
+    },
+    {
+      "file": "D:\\Projects\\quanto\\outputs\\rl-four-sector-20261005\\research-evidence\\rating-evidence.png",
+      "sha256": "93038638d22bfec22965344181dc3d565dba7bfe1487ae32d83fd2f607b73a33",
+      "bytes": 47843
+    }
+  ]
+}

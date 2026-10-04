@@ -14,6 +14,14 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
     data: { kind: 'demo', payload: { years: 1, seed: 7 } }
   })
   expect(demoResponse.ok()).toBeTruthy()
+  const demoJob = await demoResponse.json()
+  let demoDatasetId = ''
+  await expect.poll(async () => {
+    const job = await (await page.request.get(`/api/jobs/${demoJob.id}`, { headers: { Authorization: `Bearer ${token}` } })).json()
+    demoDatasetId = job.result?.dataset_version_id || ''
+    return job.state
+  }, { timeout: 60000 }).toBe('succeeded')
+  expect(demoDatasetId).not.toBe('')
   await page.goto('/datasets')
   await expect(page.getByRole('heading', { name: '数据版本', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: '生成演示数据', exact: true })).toHaveCount(0)
@@ -22,7 +30,7 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   await expect(page.getByLabel('种子', { exact: true })).toHaveCount(0)
   await expect(page.getByText(/已验证并登记数据版本/)).toBeVisible({ timeout: 60_000 })
   await page.getByRole('link', { name: '固定策略', exact: true }).click()
-  await page.getByRole('combobox', { name: '选择数据', exact: true }).selectOption({ index: 1 })
+  await page.getByRole('combobox', { name: '选择数据', exact: true }).selectOption(demoDatasetId)
   const strategies = page.getByRole('combobox', { name: '选择策略', exact: true })
   await strategies.selectOption({ label: await strategies.locator('option').filter({ hasText: 'buy_hold' }).innerText() })
   const editor = page.locator('.cm-content[contenteditable="true"]')

@@ -15,7 +15,7 @@ def test_spa_fallback_does_not_shadow_api(tmp_path):
     (frontend / "index.html").write_text("<html>工作台</html>", encoding="utf-8")
     (frontend / "app.js").write_text("window.workbench = true", encoding="utf-8")
     client = TestClient(create_app(tmp_path / "workspace", frontend), base_url="http://127.0.0.1:8765")
-    for path in ("/", "/runs/example", "/experiments"):
+    for path in ("/", "/runs/example", "/experiments", "/models", "/models/example"):
         response = client.get(path)
         assert response.status_code == 200
         assert "工作台" in response.text

@@ -220,7 +220,7 @@ class LearningService:
         request = {**body, 'spec': spec, 'allow_in_sample': body.get('allow_in_sample', False)}
         return self._submit('model_backtest', request, trusted)
 
-    def _submit(self, kind, request, trusted):
+    def _submit(self, kind, request, trusted, *, register=None):
         identity = str(uuid4())
         root = self.store.root / 'job-inputs' / identity
         root.mkdir(parents=True)
@@ -249,6 +249,8 @@ class LearningService:
                            (identity, kind, seq, str(self.store.artifact_root), str(root / 'input.json'), utc_now()))
                 db.execute('INSERT INTO learning_submissions VALUES (?,?)',
                            (identity, hashlib.sha256((root / 'input.json').read_bytes()).hexdigest()))
+                if register is not None:
+                    register(db, identity)
         except BaseException:
             # This newly created directory is never shared or registered on failure.
             if not root.resolve().is_relative_to((self.store.root / 'job-inputs').resolve()):

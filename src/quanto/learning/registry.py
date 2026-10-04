@@ -33,6 +33,12 @@ def migrate_learning_schema(db) -> None:
         files_json TEXT NOT NULL, created_at TEXT NOT NULL)''')
     db.execute('''CREATE TABLE IF NOT EXISTS learning_submissions (
         job_id TEXT PRIMARY KEY, input_hash TEXT NOT NULL)''')
+    db.execute('''CREATE TABLE IF NOT EXISTS investing_models (
+        id TEXT PRIMARY KEY, dataset_id TEXT NOT NULL,
+        spec_json TEXT NOT NULL, created_at TEXT NOT NULL)''')
+    db.execute('''CREATE TABLE IF NOT EXISTS investing_sessions (
+        job_id TEXT PRIMARY KEY, model_id TEXT NOT NULL, base_version_id TEXT)''')
+    db.execute('CREATE INDEX IF NOT EXISTS investing_sessions_model ON investing_sessions(model_id)')
 
 
 def runtime_versions() -> dict:

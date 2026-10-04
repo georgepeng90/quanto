@@ -47,7 +47,7 @@ def test_policy_overview_auth_and_separate_resources(tmp_path):
     assert body['datasets'] == body['policies'] == body['backtests'] == body['jobs'] == []
     assert body['capabilities']['algorithm'] == 'PPO'
     assert body['capabilities']['frequencies'] == ['weekly', 'monthly']
-    assert client.get('/api/investing/models', headers=headers).status_code == 422
+    assert client.get('/api/investing/models', headers=headers).json()['items'] == []
     assert client.get('/api/investing/policies/missing', headers=headers).status_code == 404
     for route in ('train', 'backtests'):
         response = client.post(f'/api/investing/{route}', headers=headers, json={'dataset_id': 'missing', 'spec': {}, 'path': 'C:/private'})

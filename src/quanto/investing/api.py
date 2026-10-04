@@ -18,6 +18,36 @@ def service(request):
     return InvestingService(request.app.state.service)
 
 
+def models(request):
+    from quanto.investing.models import InvestingModels
+    return InvestingModels(request.app.state.service)
+
+
+@router.get('/models')
+def list_models(request: Request, cursor: str | None = None, limit: int = 50):
+    return models(request).list_models(cursor, limit)
+
+
+@router.post('/models')
+def create_model(request: Request, body: dict):
+    return models(request).create_model(body)
+
+
+@router.get('/models/{identity}')
+def get_model(request: Request, identity: str):
+    return models(request).get_model(identity)
+
+
+@router.post('/models/{identity}/train')
+def train_model(request: Request, identity: str, body: dict):
+    return models(request).train_model(identity, body)
+
+
+@router.post('/models/{identity}/backtests')
+def backtest_model(request: Request, identity: str, body: dict):
+    return models(request).backtest_model(identity, body)
+
+
 @router.get('/overview')
 def overview(request: Request):
     return service(request).overview()

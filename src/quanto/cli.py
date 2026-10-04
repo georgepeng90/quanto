@@ -83,11 +83,18 @@ def build_parser() -> argparse.ArgumentParser:
     investing = commands.add_parser("investing", help="ETF 周/月自主策略训练与冻结回测")
     actions = investing.add_subparsers(dest="action", required=True)
     actions.add_parser("overview")
+    actions.add_parser("models")
+    create_model = actions.add_parser("create-model", help="创建固定篮子模型，不启动训练")
+    create_model.add_argument("--json", required=True)
+    for action in ("train-model", "model-backtest"):
+        item = actions.add_parser(action)
+        item.add_argument("identity")
+        item.add_argument("--json", required=True)
     for action in ("train", "backtest"):
         item = actions.add_parser(action)
         item.add_argument("--json", required=True)
     get = actions.add_parser("get")
-    get.add_argument("resource", choices=("policies", "backtests"))
+    get.add_argument("resource", choices=("models", "policies", "backtests"))
     get.add_argument("identity")
     for action in ("logs", "cancel"):
         item = actions.add_parser(action)
@@ -137,6 +144,13 @@ def main(argv: list[str] | None = None) -> int:
             prefix = f"/{args.command}"
             if args.action == "overview":
                 result = client.get(f"{prefix}/overview")
+            elif args.action == "models":
+                result = client.get(f"{prefix}/models")
+            elif args.action == "create-model":
+                result = client.post(f"{prefix}/models", json.loads(Path(args.json).read_text(encoding="utf-8")))
+            elif args.action in {"train-model", "model-backtest"}:
+                action = 'train' if args.action == 'train-model' else 'backtests'
+                result = client.post(f"{prefix}/models/{args.identity}/{action}", json.loads(Path(args.json).read_text(encoding="utf-8")))
             elif args.action == "get":
                 result = client.get(f"{prefix}/{args.resource}/{args.identity}")
             elif args.action == "logs":

@@ -96,14 +96,14 @@ def test_model_continues_and_backtests_explicit_immutable_version(model_workspac
     model = client.post('/api/investing/models', headers=headers, json=request).json()
     other = client.post('/api/investing/models', headers=headers, json=request).json()
 
-    def wait_job(response):
+    def wait_job(response, expected='succeeded'):
         assert response.status_code == 200, response.text
         job = response.json()
         deadline = time.monotonic() + 90
         while job['state'] in {'queued', 'running', 'cancel_requested'} and time.monotonic() < deadline:
             time.sleep(.05)
             job = client.get(f'/api/jobs/{job["id"]}', headers=headers).json()
-        if job['state'] != 'succeeded':
+        if job['state'] != expected:
             record = app.state.service.store.get_job(job['id'])
             trace = record.artifact_root / job['id'] / 'control' / 'traceback.txt'
             pytest.fail(f'{job}\n{trace.read_text(encoding="utf-8") if trace.exists() else "no traceback"}')
@@ -125,6 +125,24 @@ def test_model_continues_and_backtests_explicit_immutable_version(model_workspac
         assert detail['versions'][0]['manifest']['timesteps_started'] == 8
         assert detail['versions'][0]['manifest']['metrics']['test'] is None
         assert before == {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in first_root.iterdir() if path.is_file()}
+        interrupted = client.post(f'/api/investing/models/{model["id"]}/train', headers=headers,
+                                  json={'additional_timesteps': 100000, 'device': 'cpu'})
+        assert interrupted.status_code == 200
+        interrupted_id = interrupted.json()['id']
+        deadline = time.monotonic() + 15
+        while client.get(f'/api/jobs/{interrupted_id}', headers=headers).json()['state'] == 'queued' and time.monotonic() < deadline:
+            time.sleep(.05)
+        assert client.get(f'/api/jobs/{interrupted_id}', headers=headers).json()['state'] == 'running'
+        wait_job(client.post(f'/api/jobs/{interrupted_id}/cancel', headers=headers, json={}), expected='cancelled')
+        cancelled_detail = client.get(f'/api/investing/models/{model["id"]}', headers=headers).json()
+        assert cancelled_detail['latest_version_id'] == second
+        assert cancelled_detail['total_timesteps'] == 16 and cancelled_detail['version_count'] == 2
+        assert before == {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in first_root.iterdir() if path.is_file()}
+        third = wait_job(client.post(f'/api/investing/models/{model["id"]}/train', headers=headers,
+                                    json={'additional_timesteps': 8, 'device': 'cpu'}))
+        continued = client.get(f'/api/investing/models/{model["id"]}', headers=headers).json()
+        assert continued['latest_version_id'] == third and continued['total_timesteps'] == 24
+        assert continued['sessions'][0]['base_version_id'] == second
         backtest = {'dataset_id': request['dataset_id'], 'version_id': first,
                     'spec': {'start': request['spec']['test_start'], 'end': request['spec']['test_end'], 'baseline': 'policy'}}
         assert client.post(f'/api/investing/models/{other["id"]}/backtests', headers=headers, json=backtest).status_code == 422

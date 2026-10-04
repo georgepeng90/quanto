@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Ajv2020 from 'ajv/dist/2020.js'
+import { Link, useSearchParams } from 'react-router-dom'
 import { BacktestCatalog } from '../components/BacktestCatalog'
+import { ModelBacktestForm } from '../components/ModelBacktestForm'
 import { api, describeError } from '../api'
 import { terminalStates } from '../components/RunProgress'
 import type { BacktestCatalogRow, ExperimentDraft } from '../types'
@@ -10,6 +12,12 @@ type Prepared = { items: Item[]; key: string; batch: boolean }
 type PreparingBatch = { signature: string; values: Record<string, unknown>[]; items: Item[]; key: string }
 
 export function RunsPage() {
+  const [searchParams] = useSearchParams()
+  const initialModel = searchParams.get('model') || ''
+  const initialVersion = searchParams.get('version') || ''
+  const [creating, setCreating] = useState(!!initialModel)
+  const [source, setSource] = useState(initialModel ? 'model' : 'fixed')
+  useEffect(() => { if (initialModel) { setCreating(true); setSource('model') } }, [initialModel, initialVersion])
   const [experiments, setExperiments] = useState<ExperimentDraft[]>([])
   const [experimentCursor, setExperimentCursor] = useState<string | null>(null)
   const [selected, setSelected] = useState('')
@@ -138,10 +146,13 @@ export function RunsPage() {
     try { await sendPrepared(request) }
     finally { preparing.current = false; setBusy(false) }
   }
-  return <div className="page-stack runs-page"><header className="page-heading"><h1>回测任务</h1><p>固定策略、PPO 策略与分钟模型共用回测目录；比较前请核对冻结条件。</p></header>
+  return <div className="page-stack runs-page"><header className="page-heading section-heading"><div><h1>回测</h1><p>查看全部历史报告、比较冻结条件，或使用固定策略实验与模型保存版本发起回测。</p></div><button onClick={() => setCreating(value => !value)} aria-expanded={creating}>{creating ? '收起新建回测' : '新建回测'}</button></header>
     {error && <p role="alert" className="error callout">{error}</p>}
-    <section className="panel"><h2>发起固定策略回测</h2><div className="form-grid"><label>实验草稿<select value={selected} onChange={event => { inputGeneration.current++; setSelected(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }}><option value="">选择实验</option>{experiments.map(item => <option key={item.id} value={item.id}>{item.id} · 修订 {item.revision}</option>)}</select></label><label className="wide">参数列表 JSON<textarea value={parameters} onChange={event => { inputGeneration.current++; setParameters(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }} placeholder={'[{"window":4},{"window":8}]'} /></label></div>
-      <div className="inline-actions"><button type="button" disabled={busy} onClick={() => submit(false)}>运行</button><button type="button" disabled={busy} onClick={() => submit(true)}>运行参数列表</button>{retry && <button type="button" disabled={busy} onClick={retryPrepared}>重试提交</button>}{experimentCursor && <button type="button" onClick={loadMoreExperiments}>加载更多实验草稿</button>}</div><p className="muted">参数列表最多 100 组。先逐组保存为独立实验草稿，再提交一个批次；重试沿用已准备的草稿和幂等键。</p></section>
     <BacktestCatalog rows={catalog} complete={listComplete} busy={listBusy} refresh={() => void loadCatalog(mountController.current?.signal)} />
+    <Link to="/compare">固定策略曲线对比</Link>
+    {creating && <><section className="panel"><h2>新建回测</h2><label>回测来源<select value={source} onChange={event => setSource(event.target.value)}><option value="fixed">固定策略实验</option><option value="model">强化学习保存版本</option></select></label></section>
+    {source === 'model' ? <ModelBacktestForm key={`${initialModel}:${initialVersion}`} initialModel={initialModel} initialVersion={initialVersion} onSubmitted={() => void loadCatalog(mountController.current?.signal)} /> : <section className="panel"><h2>发起固定策略回测</h2><div className="form-grid"><label>实验草稿<select value={selected} onChange={event => { inputGeneration.current++; setSelected(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }}><option value="">选择实验</option>{experiments.map(item => <option key={item.id} value={item.id}>{item.id} · 修订 {item.revision}</option>)}</select></label><label className="wide">参数列表 JSON<textarea value={parameters} onChange={event => { inputGeneration.current++; setParameters(event.target.value); prepared.current = null; preparingBatch.current = null; setRetry(false) }} placeholder={'[{"window":4},{"window":8}]'} /></label></div>
+      <div className="inline-actions"><button type="button" disabled={busy} onClick={() => submit(false)}>运行</button><button type="button" disabled={busy} onClick={() => submit(true)}>运行参数列表</button>{retry && <button type="button" disabled={busy} onClick={retryPrepared}>重试提交</button>}{experimentCursor && <button type="button" onClick={loadMoreExperiments}>加载更多实验草稿</button>}</div><p className="muted">参数列表最多 100 组。先逐组保存为独立实验草稿，再提交一个批次；重试沿用已准备的草稿和幂等键。</p></section>
+    }</>}
   </div>
 }

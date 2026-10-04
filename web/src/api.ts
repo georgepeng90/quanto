@@ -1,4 +1,4 @@
-import type { InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage, PolicyBacktestSpec, PolicyTrainingSpec } from './investingTypes'
+import type { InvestingModel, InvestingModelDetail, InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage, PolicyBacktestSpec, PolicyTrainingSpec } from './investingTypes'
 import type { BacktestCatalogRow, ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
 import type { LearningArtifact, LearningBacktestSpec, LearningChart, LearningOverview, LearningTablePage, TrainingSpec } from './learningTypes'
 
@@ -63,6 +63,11 @@ const json = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'Cont
 const list = <T>(name: string, cursor?: string) => request<Page<T>>(`/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)
 
 export const api = {
+  investingModels: (cursor?: string, signal?: AbortSignal) => request<Page<InvestingModel>>(`/investing/models${queryString({ cursor })}`, { signal }),
+  investingModel: (id: string, signal?: AbortSignal) => request<InvestingModelDetail>(`/investing/models/${encodeURIComponent(id)}`, { signal }),
+  createInvestingModel: (body: { dataset_id: string; spec: PolicyTrainingSpec }) => request<InvestingModel>('/investing/models', json(body)),
+  trainInvestingModel: (id: string, body: { additional_timesteps: number; device: 'cpu' | 'cuda' }) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/train`, json(body)),
+  backtestInvestingModel: (id: string, body: { version_id: string; dataset_id: string; spec: PolicyBacktestSpec }) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/backtests`, json(body)),
   backtestCatalog: (cursor?: string, signal?: AbortSignal) => request<Page<BacktestCatalogRow>>(`/backtests/catalog${queryString({ cursor, limit: 50 })}`, { signal }),
   investingOverview: (signal?: AbortSignal) => request<InvestingOverview>('/investing/overview', { signal }),
   investingArtifact: (resource: 'policies' | 'backtests', id: string, signal?: AbortSignal) => request<InvestingArtifact>(`/investing/${resource}/${encodeURIComponent(id)}`, { signal }),

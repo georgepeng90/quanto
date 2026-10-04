@@ -96,3 +96,14 @@ label input,label select,label textarea{margin-top:4px;font-weight:400}
 .investing-page details > summary { cursor: pointer; margin: 1rem 0; }
 .investing-page details .form-grid { margin-bottom: 1rem; }
 .investing-page .record + .record { margin-top: .75rem; }
+.models-page{grid-template-columns:minmax(0,1fr);min-inline-size:0;overflow-wrap:anywhere}
+.models-page fieldset,.runs-page fieldset{border:0;padding:0;margin:0;min-width:0}
+.models-page .record-head{flex-wrap:wrap}
+.models-page .metric dd{margin:0;font-size:18px;font-variant-numeric:tabular-nums}
+.models-page .metric dt{font-size:12px;color:#566e79}
+.models-page details>summary{cursor:pointer;margin:12px 0}
+.models-page details .form-grid{margin-bottom:12px}
+.models-page .model-basket{font-size:18px;font-weight:600}
+.models-page .record-head a{font-weight:600;color:#1e5968}
+.models-page input,.models-page select,.models-page .panel{min-inline-size:0;max-inline-size:100%}
+@media(max-width:650px){.models-page .section-heading,.runs-page>.section-heading{flex-wrap:wrap}.models-page .metric-grid{grid-template-columns:1fr}}

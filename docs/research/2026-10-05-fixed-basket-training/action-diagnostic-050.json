@@ -1,0 +1,58 @@
+{
+  "kind": "inference_only_action_diagnostic",
+  "is_final": true,
+  "generated_at": "2026-10-04T22:33:49.148486+00:00",
+  "model_id": "65fdcd5c-cc6d-4e93-9426-157dbca29e86",
+  "latest_round_frozen_at_start": 50,
+  "basket_order": [
+    "516080",
+    "159898",
+    "512760",
+    "515880",
+    "516090",
+    "159806",
+    "515020",
+    "515010"
+  ],
+  "sample_method": "Four seeded random training episodes and four quarterly validation resets; both checkpoints use identical cash-state observations. No environment step after reset.",
+  "weight_expectation_definition": "Marginal raw target weights before joint normalization and risk limits; not expected executed portfolio weights.",
+  "no_oos_returns_evaluated": true,
+  "checkpoint_summaries": [
+    {
+      "version_id": "464b3a72-73fb-4439-8b13-3b7407d5fcae",
+      "round": 1,
+      "timesteps": 512,
+      "sample_count": 8,
+      "greedy_hold_count": 8,
+      "all_zero_weight_argmax_count": 0,
+      "hypothetical_target_eligible_and_risk_allowed_count": 8,
+      "hold_probability_range": [
+        0.5183846354484558,
+        0.5378549098968506
+      ]
+    },
+    {
+      "version_id": "3fb434e3-b39c-427c-b63a-800b5e86673e",
+      "round": 50,
+      "timesteps": 25600,
+      "sample_count": 8,
+      "greedy_hold_count": 8,
+      "all_zero_weight_argmax_count": 0,
+      "hypothetical_target_eligible_and_risk_allowed_count": 8,
+      "hold_probability_range": [
+        0.8857465386390686,
+        0.9997175335884094
+      ]
+    }
+  ],
+  "limitations": [
+    "Eight cash-start states per checkpoint are not exhaustive and do not inspect invested states.",
+    "Gate probabilities explain sampled deterministic actions; they do not establish why optimization learned those logits.",
+    "A feasible hypothetical Target does not guarantee order fill; no execution was simulated.",
+    "No 2025/2026 returns, rewards, or model selection were consulted."
+  ],
+  "full_evidence": {
+    "path": "D:\\Projects\\quanto\\outputs\\rl-four-sector-20261005\\training\\action-diagnostic-050.json",
+    "sha256": "7ba31b816d2f1009aba8547af27fbcacba883fcdd9b0fa5bff796e734f3b09ca"
+  }
+}

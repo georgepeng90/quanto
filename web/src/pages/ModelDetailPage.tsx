@@ -189,8 +189,9 @@ function ModelDetailContent({ id }: { id: string }) {
       <CurrentModelSnapshot model={model} />
       <section className="panel"><h2>固定研究条件</h2><p className="model-basket">{model.spec.backtest.symbols.join(' → ')}</p>
         <p>数据 {model.dataset_id} · {model.spec.frequency === 'weekly' ? '自然周' : '自然月'} 决策 · 已保存累计决策步数 {model.total_timesteps.toLocaleString('zh-CN')} 步</p>
-        <p>训练 {model.spec.train_start}–{model.spec.train_end} · 验证 {model.spec.validation_start}–{model.spec.validation_end} · 留出测试 {model.spec.test_start}–{model.spec.test_end}</p>
+        <p>训练 {model.spec.train_start}–{model.spec.train_end} · 验证 {model.spec.validation_start}–{model.spec.validation_end} · 留出测试 {model.spec.test_start && model.spec.test_end ? `${model.spec.test_start}–${model.spec.test_end}` : '未设置留出测试期'}</p>
         <p>选模：{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}</p>
+        <p>奖励目标：{rewardLabel(model.spec.reward_version)}</p>
         <p className="muted">篮子顺序、观察窗口、网络、日期、成本和风控均已固定。训练过程不自动评估测试段。</p><JsonDetails title="完整固定配置" value={model.spec} />
       </section>
       <section className="panel"><h2>{model.version_count ? '追加训练' : '开始训练'}</h2>{!model.version_count && <p className="empty">待训练：尚无保存版本。首次训练成功后才能回测。</p>}
@@ -238,4 +239,13 @@ function ModelDetailContent({ id }: { id: string }) {
       </section>}
     </>}
   </div>
+}
+
+function rewardLabel(rewardVersion: string | undefined) {
+  switch (rewardVersion ?? 'net-log-return-v1') {
+    case 'net-log-return-v1': return '净对数收益（现有）'
+    case 'net-log-return-with-state-v1': return '净对数收益 + 状态输入（研究对照）'
+    case 'differential-sharpe-v1': return 'Differential Sharpe Ratio（DSR）'
+    default: return rewardVersion
+  }
 }

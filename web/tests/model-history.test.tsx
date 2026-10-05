@@ -49,6 +49,23 @@ test('shows one paginated training history containing saved rounds', async () =>
   expect(calls.filter(path => path.includes('/history?kind=versions'))).toHaveLength(1)
 })
 
+test('detail shows the configured reward and states when no holdout test period is set', async () => {
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(String(input), 'http://local')
+    if (url.pathname === '/api/investing/models/m1') return Response.json({ ...summary, spec: { ...spec, reward_version: 'differential-sharpe-v1', test_start: null, test_end: null } })
+    return prior(input, init)
+  }))
+  renderPage()
+  expect(await screen.findByText(/奖励目标：Differential Sharpe Ratio（DSR）/)).toBeVisible()
+  expect(screen.getByText((_, element) => element?.tagName === 'P' && element.textContent?.includes('未设置留出测试期') === true)).toBeVisible()
+})
+
+test('detail treats a missing reward version as the legacy net log return', async () => {
+  renderPage()
+  expect(await screen.findByText(/奖励目标：净对数收益（现有）/)).toBeVisible()
+})
+
 test('successful attempts show current-round performance and snapshot changes before technical details', async () => {
   const prior = globalThis.fetch
   const rows = [

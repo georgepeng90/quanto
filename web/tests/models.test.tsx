@@ -58,6 +58,50 @@ test('creation requires an explicit ordered basket and creates without training'
   expect(posts.some(item => item.path.endsWith('/train'))).toBe(false)
 })
 
+test('creation defaults to the legacy reward and allows training without a holdout test period', async () => {
+  app('/models')
+  await userEvent.click(await screen.findByRole('button', { name: '新建模型' }))
+  await userEvent.selectOptions(await screen.findByLabelText('日线数据版本'), 'd1')
+  fireEvent.change(screen.getByLabelText('训练开始'), { target: { value: '2021-01-01' } })
+  fireEvent.change(screen.getByLabelText('训练结束'), { target: { value: '2022-12-31' } })
+  fireEvent.change(screen.getByLabelText('验证开始'), { target: { value: '2023-01-01' } })
+  fireEvent.change(screen.getByLabelText('验证结束'), { target: { value: '2023-12-31' } })
+  fireEvent.change(screen.getByLabelText('固定 ETF 篮子（按顺序，逗号分隔）'), { target: { value: 'ETF1' } })
+  expect(screen.getByLabelText('奖励方案')).toHaveValue('net-log-return-v1')
+  await userEvent.click(screen.getByRole('button', { name: '创建模型' }))
+  await waitFor(() => expect(posts).toHaveLength(1))
+  expect(posts[0].body.spec).toMatchObject({ reward_version: 'net-log-return-v1', seed: 42, backtest: { end: '2023-12-31' } })
+  expect(posts[0].body.spec).not.toHaveProperty('test_start')
+  expect(posts[0].body.spec).not.toHaveProperty('test_end')
+})
+
+test('creation rejects a partial holdout test period', async () => {
+  app('/models')
+  await userEvent.click(await screen.findByRole('button', { name: '新建模型' }))
+  await userEvent.selectOptions(await screen.findByLabelText('日线数据版本'), 'd1')
+  ;[['训练开始', '2021-01-01'], ['训练结束', '2022-12-31'], ['验证开始', '2023-01-01'], ['验证结束', '2023-12-31'], ['测试开始', '2024-01-01'], ['固定 ETF 篮子（按顺序，逗号分隔）', 'ETF1']].forEach(([label, value]) => fireEvent.change(screen.getByLabelText(label), { target: { value } }))
+  await userEvent.click(screen.getByRole('button', { name: '创建模型' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('测试开始和结束日期必须同时填写')
+  expect(posts).toHaveLength(0)
+})
+
+test('new reward choices enforce gamma one and zero risk-free rate', async () => {
+  app('/models')
+  await userEvent.click(await screen.findByRole('button', { name: '新建模型' }))
+  const reward = await screen.findByLabelText('奖励方案')
+  expect(within(reward).getByRole('option', { name: /净对数收益 \+ 状态输入.*研究对照/ })).toBeInTheDocument()
+  expect(within(reward).getByRole('option', { name: /Differential Sharpe.*DSR/ })).toBeInTheDocument()
+  await userEvent.selectOptions(reward, 'differential-sharpe-v1')
+  await userEvent.click(screen.getByText('高级训练、成交与风险参数'))
+  expect(screen.getByLabelText('奖励折扣')).toHaveValue(1)
+  expect(screen.getByLabelText('奖励折扣')).toBeDisabled()
+  await userEvent.selectOptions(screen.getByLabelText('日线数据版本'), 'd1')
+  ;[['训练开始', '2021-01-01'], ['训练结束', '2022-12-31'], ['验证开始', '2023-01-01'], ['验证结束', '2023-12-31'], ['固定 ETF 篮子（按顺序，逗号分隔）', 'ETF1']].forEach(([label, value]) => fireEvent.change(screen.getByLabelText(label), { target: { value } }))
+  await userEvent.click(screen.getByRole('button', { name: '创建模型' }))
+  await waitFor(() => expect(posts).toHaveLength(1))
+  expect(posts[0].body.spec).toMatchObject({ reward_version: 'differential-sharpe-v1', gamma: 1, seed: 42, backtest: { metrics: { risk_free_rate: 0 } } })
+})
+
 test('detail keeps configuration read only and adds only session budget and device', async () => {
   app('/models/m1')
   expect(await screen.findByText('ETF2 → ETF1')).toBeVisible()
@@ -80,6 +124,24 @@ test('backtest requires explicit version instead of choosing the latest', async 
   await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(posts[0]).toEqual({ path: '/api/investing/models/m1/backtests', body: { dataset_id: 'd1', version_id: 'v1', spec: { start: '2024-01-01', end: '2024-12-31', baseline: 'policy', cost_multiplier: 1 } } })
+})
+
+test('backtest dates start blank when the selected model has no holdout test period', async () => {
+  const prior = globalThis.fetch
+  const noTestModel = { ...model, id: 'm2', name: '无留出期模型', spec: { ...spec, validation_end: '2023-12-31', test_start: null, test_end: null } }
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/investing/models') return Response.json({ items: [model, noTestModel], next_cursor: null })
+    if (path === '/api/investing/models/m2?include_history=false' || path === '/api/investing/models/m2') return Response.json(noTestModel)
+    return prior(input, init)
+  }))
+  app('/runs?model=m1')
+  await screen.findByRole('option', { name: /研究模型/ })
+  expect(screen.getByLabelText('回测开始')).toHaveValue('2024-01-01')
+  await userEvent.selectOptions(screen.getByLabelText('强化学习模型'), 'm2')
+  await screen.findByRole('option', { name: /无留出期模型/ })
+  await waitFor(() => expect(screen.getByLabelText('回测开始')).toHaveValue(''))
+  expect(screen.getByLabelText('回测结束')).toHaveValue('')
 })
 
 test('new session starts with model defaults and unscored versions disclose unavailable validation score', async () => {

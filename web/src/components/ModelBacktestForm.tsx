@@ -27,13 +27,13 @@ export function ModelBacktestForm({ initialModel, initialVersion, onSubmitted }:
     return () => controller.abort()
   }, [])
   useEffect(() => {
-    setDetail(null); setDatasetId(''); setNotice(''); setError('')
+    setDetail(null); setDatasetId(''); setNotice(''); setError(''); setSpec(old => ({ ...old, start: '', end: '' }))
     if (!modelId) return
     const controller = new AbortController()
     api.investingModel(modelId, controller.signal).then(model => {
       if (controller.signal.aborted) return
       setDetail(model); setDatasetId(model.dataset_id)
-      setSpec(old => ({ ...old, start: model.spec.test_start, end: model.spec.test_end }))
+      setSpec(old => ({ ...old, start: model.spec.test_start ?? '', end: model.spec.test_end ?? '' }))
     }).catch(value => { if (!controller.signal.aborted) setError(describeError(value)) })
     return () => controller.abort()
   }, [modelId])

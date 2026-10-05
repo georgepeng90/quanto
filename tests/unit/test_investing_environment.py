@@ -342,3 +342,156 @@ def test_future_split_does_not_adjust_current_price_features():
     _, _, _, _, info = right.step(np.array([1, 4]))
     assert info["equity"] == 1000
     assert right.result().fills.iloc[0].quantity == 200
+
+
+STATE_REWARDS = ["net-log-return-with-state-v1", "differential-sharpe-v1"]
+
+
+@pytest.mark.parametrize("reward_version", STATE_REWARDS)
+def test_state_reward_prefix_updates_moments_without_rewarding_first_action(reward_version):
+    bundle = daily_case(days=12, symbols=("A",))
+    spec = spec_case(bundle, metrics={"cash_rate": 2.52})
+    env = env_for(bundle, spec=spec, reward_version=reward_version)
+    observation, prefix = env.reset()
+    assert observation.shape == (18,)
+    assert prefix["prefix_net_log_return"] == pytest.approx(5 * math.log(1.01))
+    assert prefix["reward_daily_count"] == 5
+    assert observation[-2:] == pytest.approx([.000490099501 / .010490099501, .5])
+    _, reward, _, _, first = env.step(np.array([0, 0]))
+    assert first["elapsed_sessions"] == first["reward_daily_count"] == 5
+    assert first["step_net_log_return"] == pytest.approx(5 * math.log(1.01))
+    if reward_version == STATE_REWARDS[0]:
+        assert reward == pytest.approx(first["step_net_log_return"])
+    _, last_reward, done, _, last = env.step(np.array([0, 0]))
+    assert done and last["reward_daily_count"] == last["elapsed_sessions"] == 2
+    assert prefix["prefix_net_log_return"] + first["step_net_log_return"] + last["step_net_log_return"] == pytest.approx(12 * math.log(1.01))
+    assert env.reward_diagnostics["reward_daily_count"] == 12
+    assert env.reward_diagnostics["reward_sum"] == pytest.approx(reward + last_reward)
+
+
+def test_dsr_aggregates_daily_account_returns_with_costs_and_matches_control_state():
+    bundle = daily_case(days=12, symbols=("A",))
+    for day, close in [("2024-01-08", 11.), ("2024-01-09", 9.), ("2024-01-10", 12.)]:
+        bundle.prices.loc[bundle.prices.date == day, ["open", "high", "low", "close"]] = close
+    spec = spec_case(bundle, execution={"minimum_commission": 1., "slippage_rate": .001})
+    control, dsr = [env_for(bundle, spec=spec, reward_version=version) for version in STATE_REWARDS]
+    np.testing.assert_array_equal(control.reset()[0], dsr.reset()[0])
+    observation, reward, _, _, info = dsr.step(np.array([1, 4]))
+    other, log_reward, _, _, control_info = control.step(np.array([1, 4]))
+    np.testing.assert_array_equal(observation, other)
+    assert log_reward == info["step_net_log_return"] == control_info["step_net_log_return"]
+    # 90 shares at 11.011 plus one unit commission leaves 8.01 cash.
+    # The boundary close is not exported until its intent is submitted.
+    equities = [1000.] * 5 + [998.01, 818.01, 1088.01, 908.01, 908.01]
+    mean, second = 0., .0001
+    expected, max_abs = 0., 0.
+    for index, equity in enumerate(equities):
+        daily = equity / (equities[index - 1] if index else spec.initial_cash) - 1.
+        delta_mean, delta_second = daily - mean, daily * daily - second
+        daily_dsr = (second * delta_mean - .5 * mean * delta_second) / max(second - mean * mean, 1e-8)**1.5
+        mean += .01 * delta_mean
+        second += .01 * delta_second
+        if index >= 5:
+            expected += daily_dsr
+            max_abs = max(max_abs, abs(daily_dsr))
+    assert reward == pytest.approx(expected)
+    assert info["reward_dsr_max_abs"] == pytest.approx(max_abs)
+    assert info["step_net_log_return"] == pytest.approx(math.log(equities[-1] / equities[4]))
+    assert_frame_equal(control.result().equity, dsr.result().equity)
+
+
+@pytest.mark.parametrize("reward_version", STATE_REWARDS)
+def test_state_reward_collect_false_and_reset_keep_session_diagnostics(reward_version):
+    bundle = daily_case(days=12, symbols=("A",))
+    bundle.prices.loc[bundle.prices.date >= "2024-01-09", ["open", "high", "low", "close"]] = 12.
+    collected, light = [env_for(bundle, reward_version=reward_version, collect=collect) for collect in (True, False)]
+    first_observation, _ = light.reset(seed=5)
+    collected.reset(seed=5)
+    done = False
+    while not done:
+        observation, reward, done, _, info = light.step(np.array([1, 4]))
+        other, other_reward, other_done, _, other_info = collected.step(np.array([1, 4]))
+        np.testing.assert_array_equal(observation, other)
+        assert reward == other_reward and done == other_done and info == other_info
+    assert light.result().equity.empty
+    total = light.reward_diagnostics.copy()
+    observation, prefix = light.reset(seed=5)
+    np.testing.assert_array_equal(observation, first_observation)
+    assert light.reward_diagnostics["reward_sum"] == total["reward_sum"]
+    assert light.reward_diagnostics["reward_daily_count"] == total["reward_daily_count"] + prefix["reward_daily_count"]
+
+
+@pytest.mark.parametrize("reward_version", STATE_REWARDS)
+def test_state_observation_and_statistics_ignore_future_prices(reward_version):
+    bundle = daily_case(days=12, symbols=("A",))
+    changed = replace(bundle, prices=bundle.prices.copy())
+    changed.prices.loc[changed.prices.date > "2024-01-05", ["open", "high", "low", "close"]] = 999.
+    left, right = [env_for(data, reward_version=reward_version) for data in (bundle, changed)]
+    np.testing.assert_array_equal(left.reset()[0], right.reset()[0])
+    assert left.reward_diagnostics == right.reward_diagnostics
+
+
+@pytest.mark.parametrize("reward_version", STATE_REWARDS)
+def test_state_monthly_reward_covers_terminal_short_interval(reward_version):
+    bundle = daily_case(days=45, symbols=("A",))
+    spec = spec_case(bundle, metrics={"cash_rate": 2.52})
+    env = env_for(bundle, spec=spec, frequency="monthly", reward_version=reward_version)
+    _, prefix = env.reset()
+    _, _, done, _, first = env.step(np.array([0, 0]))
+    assert not done and prefix["reward_daily_count"] == 23 and first["reward_daily_count"] == 21
+    _, _, done, _, last = env.step(np.array([0, 0]))
+    assert done and last["reward_daily_count"] == last["elapsed_sessions"] == 1
+    assert prefix["prefix_net_log_return"] + first["step_net_log_return"] + last["step_net_log_return"] == pytest.approx(45 * math.log(1.01))
+
+
+def test_reward_identity_preserves_legacy_and_shares_new_state_shape():
+    from quanto.investing.environment import feature_version, environment_version
+    assert feature_version(61) == "daily-etf-v2"
+    assert feature_version(3) == "daily-etf-v3"
+    assert environment_version() == "daily-session-v1"
+    for version in STATE_REWARDS:
+        assert feature_version(61, version) == "daily-etf-v2-dsr-state-v1"
+        assert feature_version(3, version) == "daily-etf-v3-dsr-state-v1"
+        assert environment_version(version) == "daily-session-reward-state-v2"
+
+
+def test_environment_rejects_unknown_reward_version():
+    with pytest.raises(ValueError, match="reward version"):
+        env_for(daily_case(days=12), reward_version="unknown")
+
+
+@pytest.mark.parametrize("equity", [0., -1., float("nan"), float("inf")])
+@pytest.mark.parametrize("reward_version", STATE_REWARDS)
+def test_state_rewards_fail_on_invalid_daily_equity_at_prefix_close(monkeypatch, equity, reward_version):
+    advance = engine.SessionRunner.advance_to_close
+
+    def invalid_close(runner):
+        context = advance(runner)
+        if context.asof == pd.Timestamp("2024-01-03"):
+            return replace(context, portfolio=replace(context.portfolio, equity=equity))
+        return context
+
+    monkeypatch.setattr(engine.SessionRunner, "advance_to_close", invalid_close)
+    env = env_for(daily_case(days=12), reward_version=reward_version, collect=False)
+    with pytest.raises(ValueError, match="Positive finite daily equity"):
+        env.reset()
+
+
+@pytest.mark.parametrize("reward_version", STATE_REWARDS)
+def test_state_rewards_include_dividend_receivables_without_double_counting(reward_version):
+    bundle = daily_case(days=12, symbols=("A",))
+    bundle.prices.loc[bundle.prices.date >= "2024-01-09", ["open", "high", "low", "close"]] = 9.
+    events = pd.DataFrame([dict(symbol="A", event_type="dividend", record_date=pd.Timestamp("2024-01-08"),
+        ex_date=pd.Timestamp("2024-01-09"), pay_date=pd.Timestamp("2024-01-10"), cash_per_share=1., split_ratio=1.)])
+    env = env_for(replace(bundle, events=events), reward_version=reward_version)
+    env.reset()
+    _, reward, _, _, info = env.step(np.array([1, 4]))
+    assert reward == pytest.approx(0.)
+    assert info["step_net_log_return"] == pytest.approx(0.)
+    assert info["equity"] == 1000.
+
+
+@pytest.mark.parametrize("reward_version", STATE_REWARDS)
+def test_state_rewards_satisfy_gymnasium_contract(reward_version):
+    from gymnasium.utils.env_checker import check_env
+    check_env(env_for(daily_case(days=20), reward_version=reward_version), skip_render_check=True)

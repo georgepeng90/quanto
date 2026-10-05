@@ -14,6 +14,8 @@ from quanto.backtest.engine import SessionRunner
 from quanto.backtest.models import BacktestResult
 from quanto.config import BacktestSpec
 from quanto.investing.contracts import CASH_ACTION_VERSION, LEGACY_ACTION_VERSION
+from quanto.investing.rewards import (LEGACY_REWARD_VERSION, STATE_REWARD_VERSIONS,
+    DSR_REWARD_VERSION, DifferentialSharpeState, reward_parameters)
 from quanto.strategies.base import Hold, TargetPortfolio, validate_intent
 
 
@@ -23,9 +25,16 @@ ENVIRONMENT_VERSION = "daily-session-v1"
 EXECUTION_VERSION = "next-open-ledger-v1"
 
 
-def feature_version(lookback: int) -> str:
+def feature_version(lookback: int, reward_version: str = LEGACY_REWARD_VERSION) -> str:
     # Only shorter windows change observations when fixed horizons retain 61 bars.
-    return "daily-etf-v3" if lookback < 61 else FEATURE_VERSION
+    reward_parameters(reward_version)
+    version = "daily-etf-v3" if lookback < 61 else FEATURE_VERSION
+    return version + "-dsr-state-v1" if reward_version in STATE_REWARD_VERSIONS else version
+
+
+def environment_version(reward_version: str = LEGACY_REWARD_VERSION) -> str:
+    reward_parameters(reward_version)
+    return "daily-session-reward-state-v2" if reward_version in STATE_REWARD_VERSIONS else ENVIRONMENT_VERSION
 
 
 def decision_dates(calendar, start, end, frequency: str) -> pd.DatetimeIndex:
@@ -58,7 +67,7 @@ class DailyETFEnv(gym.Env):
     def __init__(self, bundle: DatasetBundle, spec: BacktestSpec, frequency: str = "weekly",
                  lookback: int = 120, episode_sessions: int | None = None, training: bool = False,
                  *, action_version: str = ACTION_VERSION, cancelled: Callable[[], bool] = lambda: False,
-                 collect: bool = True):
+                 collect: bool = True, reward_version: str = LEGACY_REWARD_VERSION):
         super().__init__()
         spec.validate_for_dataset(bundle)
         if isinstance(lookback, bool) or not isinstance(lookback, int) or lookback < 2:
@@ -67,9 +76,14 @@ class DailyETFEnv(gym.Env):
             raise ValueError("episode_sessions must be an integer of at least 2")
         if action_version not in {ACTION_VERSION, CASH_ACTION_VERSION}:
             raise ValueError("unknown action version")
+        reward_parameters(reward_version)
         self.bundle, self.backtest_spec = bundle, spec
         self.frequency, self.lookback = frequency, lookback
         self.action_version = action_version
+        self.reward_version = reward_version
+        self._has_reward_state = reward_version in STATE_REWARD_VERSIONS
+        self.reward_diagnostics = dict(reward_daily_count=0, reward_variance_floor_count=0,
+                                       reward_dsr_max_abs=0., reward_sum=0.)
         self.episode_sessions, self.training = episode_sessions, training
         self.cancelled, self.collect = cancelled, collect
         self.calendar = pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
@@ -93,7 +107,7 @@ class DailyETFEnv(gym.Env):
         self._history = {symbol: frame.sort_values("date").set_index("date")
                          for symbol, frame in bundle.prices.groupby("symbol") if symbol in spec.symbols}
         self.action_space = spaces.MultiDiscrete(np.array([3 if action_version == CASH_ACTION_VERSION else 2] + [5] * len(spec.symbols)))
-        self.observation_space = spaces.Box(-10., 10., shape=(12 * len(spec.symbols) + 4,), dtype=np.float32)
+        self.observation_space = spaces.Box(-10., 10., shape=(12 * len(spec.symbols) + (6 if self._has_reward_state else 4),), dtype=np.float32)
         self.runner = None
         self.context = None
         self._done = True
@@ -147,12 +161,19 @@ class DailyETFEnv(gym.Env):
         drawdown = 1. - equity / reference if reference else 0.
         features.extend([portfolio.cash / equity if equity else 0., portfolio.receivables / equity if equity else 0.,
                          float(self.runner.risk.state["paused"]), drawdown])
+        if self._has_reward_state:
+            features.extend([self._reward_state.mean / (.01 + abs(self._reward_state.mean)),
+                             self._reward_state.second_moment / (.0001 + self._reward_state.second_moment)])
         return np.clip(np.asarray(features, dtype=np.float64), -10., 10.).astype(np.float32)
 
-    def _info(self, elapsed=0) -> dict:
-        return dict(asof=self.context.asof.date().isoformat(), equity=self.context.portfolio.equity,
+    def _info(self, elapsed=0, *, interval=None, prefix=False) -> dict:
+        info = dict(asof=self.context.asof.date().isoformat(), equity=self.context.portfolio.equity,
                     elapsed_sessions=int(elapsed), episode_start=self.runner.spec.start.isoformat(),
-                    episode_end=self.runner.spec.end.isoformat())
+                    episode_end=self.runner.spec.end.isoformat(), reward_version=self.reward_version)
+        if interval is not None:
+            info.update({key: interval[key] for key in ("reward_daily_count", "reward_variance_floor_count", "reward_dsr_max_abs")})
+            info["prefix_net_log_return" if prefix else "step_net_log_return"] = interval["net_log_return"]
+        return info
 
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
@@ -165,18 +186,43 @@ class DailyETFEnv(gym.Env):
         self._done = False
         self._reward_equity = self.backtest_spec.initial_cash
         self._reward_session_index = -1
-        self._advance_to_boundary()
-        return self._observation(), self._info()
+        self._daily_equity = np.float64(self.backtest_spec.initial_cash)
+        self._reward_state = DifferentialSharpeState() if self._has_reward_state else None
+        interval = self._advance_to_boundary()
+        if self._has_reward_state:
+            self._reward_session_index = self.runner.dates.get_loc(self.context.asof)
+        return self._observation(), self._info(interval=interval, prefix=True)
 
     def _advance_to_boundary(self):
+        interval = dict(net_log_return=0., dsr_sum=0., reward_daily_count=0,
+                        reward_variance_floor_count=0, reward_dsr_max_abs=0.)
         while True:
             self.context = self.runner.advance_to_close()
+            interval["reward_daily_count"] += 1
+            self.reward_diagnostics["reward_daily_count"] += 1
+            if self._has_reward_state:
+                equity = np.float64(self.context.portfolio.equity)
+                if not np.isfinite(equity) or equity <= 0 or not np.isfinite(self._daily_equity) or self._daily_equity <= 0:
+                    raise ValueError("Positive finite daily equity required for reward")
+                with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+                    daily_return = equity / self._daily_equity - 1.
+                dsr, floored = self._reward_state.update(daily_return)
+                net_log_return = math.log(equity) - math.log(self._daily_equity)
+                interval["net_log_return"] += net_log_return
+                interval["dsr_sum"] += dsr
+                if not math.isfinite(interval["dsr_sum"]) or not math.isfinite(interval["net_log_return"]):
+                    raise ValueError("Interval reward must remain finite")
+                interval["reward_variance_floor_count"] += int(floored)
+                interval["reward_dsr_max_abs"] = max(interval["reward_dsr_max_abs"], abs(dsr))
+                self.reward_diagnostics["reward_variance_floor_count"] += int(floored)
+                self.reward_diagnostics["reward_dsr_max_abs"] = max(self.reward_diagnostics["reward_dsr_max_abs"], abs(dsr))
+                self._daily_equity = equity
             if self.context.asof in self._decision_set:
-                return
+                return interval
             self.runner.submit_close_intent(Hold("between policy decisions"))
             if self.context.asof == self.runner.dates[-1]:
                 self._done = True
-                return
+                return interval
 
     def step(self, action):
         if not self.action_space.contains(action):
@@ -212,16 +258,23 @@ class DailyETFEnv(gym.Env):
                 for symbol, weight in intent.weights.items()}
             intent = TargetPortfolio(weights, intent.reasons, intent.diagnostics)
         self.runner.submit_close_intent(intent)
-        self._advance_to_boundary()
+        interval = self._advance_to_boundary()
         equity = self.context.portfolio.equity
         if equity <= 0 or self._reward_equity <= 0:
             raise ValueError("Positive equity required for log-return reward")
-        reward = math.log(equity / self._reward_equity)
+        if self._has_reward_state:
+            reward = interval["dsr_sum"] if self.reward_version == DSR_REWARD_VERSION else interval["net_log_return"]
+        else:
+            reward = math.log(equity / self._reward_equity)
+            interval["net_log_return"] = reward
         self._reward_equity = equity
         session_index = self.runner.dates.get_loc(self.context.asof)
         elapsed = session_index - self._reward_session_index
         self._reward_session_index = session_index
-        return self._observation(), reward, self._done, False, self._info(elapsed)
+        self.reward_diagnostics["reward_sum"] += reward
+        if not math.isfinite(self.reward_diagnostics["reward_sum"]):
+            raise ValueError("Cumulative reward must remain finite")
+        return self._observation(), reward, self._done, False, self._info(elapsed, interval=interval)
 
     def result(self) -> BacktestResult:
         if self.runner is None:

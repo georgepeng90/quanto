@@ -12,6 +12,7 @@ from quanto.config import BacktestSpec
 from quanto.investing.contracts import PolicyBacktestSpec, PolicyTrainingSpec
 from quanto.learning.artifacts import read_manifest
 from quanto.learning.contracts import check_cancelled
+from quanto.learning.models import resolve_device
 from quanto.objects import json_bytes
 from quanto.reports.backtest_report import build_report
 
@@ -84,7 +85,13 @@ def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
     backtest = BacktestSpec.model_validate(values).validate_for_dataset(bundle)
     if output_dir.exists() and any(output_dir.iterdir()):
         raise ValueError("policy backtest output directory must be empty")
-    model = PPO.load(policy_dir / "policy.zip", device="cpu") if request.baseline == "policy" else None
+    model, policy_device = None, None
+    if request.baseline == "policy":
+        device = resolve_device(config.device)
+        model = PPO.load(policy_dir / "policy.zip", device=device)
+        if model.device.type != device:
+            raise ValueError(f"policy inference device must be {device}; loader selected {model.device}")
+        policy_device = str(model.device)
     metrics, result, report = evaluate_policy(model, bundle, backtest, config.frequency,
                                               config.lookback, cancelled, request.baseline, emit)
     check_cancelled(cancelled)
@@ -101,6 +108,7 @@ def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
         frame.to_csv(output_dir / f"{name}.csv", index=False)
     summary = dict(kind="policy_backtest", version=1, policy_content_id=manifest["id"],
                    training_dataset_content_hash=manifest["dataset_content_hash"], baseline=request.baseline,
+                   policy_device=policy_device,
                    frequency=config.frequency, cost_multiplier=request.cost_multiplier,
                    metrics={**report.metrics, **metrics}, metric_definitions=report.metric_definitions,
                    period=dict(start=request.start.isoformat(), end=request.end.isoformat()),

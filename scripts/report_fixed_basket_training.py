@@ -24,8 +24,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def monitoring_checkpoints(protocol):
     rounds = protocol["rounds"]
-    require(type(rounds) is int and rounds >= 50 and rounds % 10 == 0, "invalid monitoring budget")
-    return tuple(range(10, rounds + 1, 10))
+    start = protocol.get("monitor_start_round", 10)
+    history = protocol.get("historical_monitor_rounds", [])
+    require(type(rounds) is int and rounds >= 50 and type(start) is int
+            and 0 < start <= rounds and (rounds - start) % 10 == 0, "invalid monitoring budget")
+    require(all(type(n) is int and 0 < n < start for n in history)
+            and history == sorted(set(history)), "invalid historical monitoring checkpoints")
+    return tuple(history) + tuple(range(start, rounds + 1, 10))
 
 
 def evaluation_keys(protocol, extension=False):
@@ -45,6 +50,16 @@ def evaluation_role(key, rounds):
     number = int(suffix[:3]) if suffix[:3].isdigit() else (50 if historical else 10 if period == "monitor" else rounds)
     role = suffix[4:] if suffix[:3].isdigit() else suffix
     return period, number, role, historical
+
+
+def verify_inherited_evaluation(key, entry, source, source_path):
+    original_key = key
+    if original_key not in source["evaluations"]:
+        original_key = "final_" + key.removeprefix("historical_final_050_")
+    original = source["evaluations"][original_key]
+    subset(original, entry, "original evaluation")
+    expected = Path(original.get("source_summary_path") or source_path.parent / (original_key + ".json"))
+    require(Path(entry["source_summary_path"]).resolve() == expected.resolve(), "original evaluation source path changed")
 
 
 def verify_session_device(protocol, extension, number, manifest):
@@ -211,13 +226,16 @@ class Audit:
             source_path = Path(self.protocol["source_state_path"]).resolve()
             require(sha(source_path) == self.protocol["source_state_sha256"], "original state changed")
             source_state = read_json(source_path)
-            require(source_state.get("complete") is True and len(source_state["rounds"]) == 50,
-                    "extension requires completed original 50 rounds")
+            base_rounds = len(source_state["rounds"])
+            stop = source_state.get("stop", {})
+            stopped = stop.get("successful_rounds") == base_rounds and stop.get("active_job_id", "unknown") is None
+            require(base_rounds >= 50 and (source_state.get("complete") is True or stopped),
+                    "extension requires a completed or explicitly stopped successful prefix")
             require(extension["source_state_sha256"] == self.protocol["source_state_sha256"]
                     and Path(extension["source_state_path"]).resolve() == source_path
-                    and extension["base_rounds"] == 50 and extension["device_override"] == "cuda"
+                    and extension["base_rounds"] == base_rounds and extension["device_override"] == "cuda"
                     and self.protocol["device_override"] == "cuda", "extension provenance mismatch")
-            require(self.state["rounds"][:50] == source_state["rounds"], "original training prefix changed")
+            require(self.state["rounds"][:base_rounds] == source_state["rounds"], "original training prefix changed")
             require(all(self.state[key] == source_state[key] == extension[key] for key in ("model_id", "dataset_id")),
                     "extension created a different model or dataset")
             require(extension["base_version_id"] == source_state["rounds"][-1]["version_id"]
@@ -256,6 +274,11 @@ class Audit:
                 require(manifest.get(key) == value, f"round {number}: {key} mismatch")
             require(manifest["metrics"]["test"] is None, "training evaluated reserved test")
             verify_session_device(self.protocol, extension, number, manifest)
+            if self.protocol.get("require_sampling_algorithm") and number > extension["base_rounds"]:
+                subset(dict(algorithm=self.protocol["require_sampling_algorithm"], base_seed=spec["seed"],
+                            parent_timesteps=(number - 1) * budget,
+                            effective_env_seed=spec["seed"] + (number - 1) * budget),
+                       manifest.get("sampling_provenance", {}), "window sampling")
             require(entry["content_id"] == manifest["id"] and entry["validation_best"] == manifest["metrics"]["validation"],
                     "state/policy identity or validation metric mismatch")
             latest = {key.removeprefix("validation_"): value for key, value in manifest["history"][-1].items()
@@ -288,10 +311,7 @@ class Audit:
         for key in sorted(expected_keys):
             entry = self.state["evaluations"][key]
             if extension and (key.startswith("historical_final_050_") or key in source_state["evaluations"]):
-                original_key = "final_" + key.removeprefix("historical_final_050_") if key.startswith("historical_final_050_") else key
-                subset(source_state["evaluations"][original_key], entry, "original evaluation")
-                require(Path(entry["source_summary_path"]).resolve() == source_path.parent / (original_key + ".json"),
-                        "original evaluation source path changed")
+                verify_inherited_evaluation(key, entry, source_state, source_path)
             summary_path = Path(entry.get("source_summary_path") or self.state_path.parent / (key + ".json"))
             summary = read_json(summary_path)
             require(summary == entry["summary"], "state/local evaluation summary mismatch")
@@ -330,6 +350,10 @@ class Audit:
                 original_jobs = {e.get("job_id") for e in source_state["evaluations"].values() if e.get("job_id")}
                 require(not entry.get("job_id") or entry["job_id"] not in original_jobs,
                         "new final evaluation reused an original backtest job")
+            inference_device = self.protocol.get("execution_scope", {}).get("policy_inference_device")
+            if inference_device and number >= extension["base_rounds"] and (is_last or role == "best"):
+                actual_device = summary.get("runtime", {}).get("device") if is_last else summary.get("policy_device")
+                require(str(actual_device).split(":")[0] == inference_device, "policy inference device mismatch")
             actual_metrics, equity_rows = equity_metrics(equity_path, spec["backtest"])
             metrics_equal(summary["metrics"], actual_metrics)
             require(all(dates["start"] <= r["date"][:10] <= dates["end"] for r in equity_rows), "equity outside period")

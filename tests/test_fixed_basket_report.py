@@ -57,3 +57,27 @@ def test_cuda_extension_rejects_cpu_config_even_with_cuda_runtime_claim():
     with pytest.raises(ValueError, match="spec.device: changed"):
         module().verify_session_device(protocol, True, 51,
             {"config": {"device": "cpu"}, "runtime": {"device": "cuda", "cuda_version": "12.8"}})
+
+
+def test_restarted_monitoring_counts_ten_new_sessions_and_preserves_history():
+    report = module()
+    protocol = {"rounds": 305, "monitor_start_round": 115,
+                "historical_monitor_rounds": list(range(10, 101, 10))}
+    assert report.monitoring_checkpoints(protocol) == tuple(range(10, 101, 10)) + tuple(range(115, 306, 10))
+    keys = report.evaluation_keys(protocol, True)
+    assert len(keys) == 70
+    assert "monitor_110_last" not in keys and "monitor_115_last" in keys
+    assert "monitor_305_best" in keys and "final_305_best" in keys
+    assert "historical_final_050_last" in keys
+
+
+def test_inherited_evaluation_retains_original_absolute_file_reference(tmp_path):
+    report = module()
+    original = tmp_path / "original" / "monitor_010_last.json"
+    source_path = tmp_path / "stopped-105" / "state.json"
+    source = {"source_summary_path": str(original), "summary": {}, "round": 10}
+    entry = dict(source)
+    report.verify_inherited_evaluation("monitor_010_last", entry, {"evaluations": {"monitor_010_last": source}}, source_path)
+    with pytest.raises(ValueError, match="original evaluation"):
+        report.verify_inherited_evaluation("monitor_010_last", {**entry, "source_summary_path": str(tmp_path / "wrong.json")},
+                                          {"evaluations": {"monitor_010_last": source}}, source_path)

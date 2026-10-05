@@ -241,3 +241,137 @@ def test_extension_rejects_source_changes_after_seed(tmp_path):
     path.write_bytes(raw + b" ")
     with pytest.raises(ValueError, match="source state hash"):
         mod.Runner(protocol, tmp_path / "extension", "http://127.0.0.1:8770", api=FakeAPI())
+
+def stopped_extension_fixture(tmp_path):
+    protocol, original_path, _, spec, _ = extension_fixture(tmp_path)
+    mod = module()
+    seeded = mod.Runner(protocol, tmp_path / "stopped", "http://127.0.0.1:8770", api=FakeAPI())
+    source = seeded.state
+    for n in range(51, 106):
+        source["rounds"].append({"round": n, "version_id": f"v{n}", "content_id": f"c{n}",
+            "base_version_id": f"v{n-1}", "timesteps_started": (n-1)*512,
+            "timesteps_completed": n*512, "session_timesteps": 512})
+    for n in range(60, 101, 10):
+        for snapshot in ("best", "last"):
+            key = f"monitor_{n:03d}_{snapshot}"
+            source["evaluations"][key] = {"round": n, "version_id": f"v{n}", "period": "monitor",
+                "summary": {}, "snapshot": snapshot}
+            (seeded.output / (key + ".json")).write_text("{}")
+            if snapshot == "last":
+                (seeded.output / (key + ".equity.csv")).write_text("date,equity\n2025-01-03,1000000\n")
+    source["stop"] = {"successful_rounds": 105, "active_job_id": None}
+    seeded.save()
+    raw = seeded.state_path.read_bytes()
+    protocol.update(rounds=305, source_state_path=str(seeded.state_path),
+                    source_state_sha256=hashlib.sha256(raw).hexdigest(), monitor_start_round=115)
+    return protocol, seeded.state_path, raw, original_path, spec
+
+
+def test_stopped105_extension_preserves_inherited_paths_and_does_not_rename_history(tmp_path):
+    protocol, path, raw, original, _ = stopped_extension_fixture(tmp_path)
+    current = module().Runner(protocol, tmp_path / "append200", "http://127.0.0.1:8770", api=FakeAPI())
+    assert len(current.state["rounds"]) == 105
+    assert current.state["extension"]["base_rounds"] == 105
+    assert current.state["extension"]["base_version_id"] == "v105"
+    assert current.state["evaluations"]["historical_final_050_last"]["source_summary_path"] == str(original.parent / "final_last.json")
+    assert current.state["evaluations"]["monitor_010_last"]["source_equity_path"] == str(original.parent / "monitor_010_last.equity.csv")
+    assert current.state["evaluations"]["monitor_100_last"]["source_summary_path"] == str(path.parent / "monitor_100_last.json")
+    assert current.final_prefix() == "final_305"
+    assert not any("historical_final_105_historical" in key for key in current.state["evaluations"])
+    assert path.read_bytes() == raw
+
+
+def test_stopped105_new_monitors_follow_append_offset_without_backfilling110(tmp_path, monkeypatch):
+    protocol, _, _, _, spec = stopped_extension_fixture(tmp_path)
+    mod = module()
+    current = mod.Runner(protocol, tmp_path / "append200", "http://127.0.0.1:8770", api=FakeAPI())
+    # Pretend all appended receipts are durable: exercise scheduling without any training.
+    for n in range(106, 306):
+        current.state["rounds"].append({"round": n, "version_id": f"v{n}"})
+    monkeypatch.setattr(mod, "ensure_device", lambda _: None)
+    monkeypatch.setattr(current, "dataset", lambda: "dataset")
+    monkeypatch.setattr(current.api, "get", lambda _: {"spec": spec, "dataset_id": "dataset"})
+    monkeypatch.setattr(current, "verify_extension", lambda *_: None)
+    monkeypatch.setattr(current, "comparison", lambda: None)
+    seen = []
+    monkeypatch.setattr(current, "backtest", lambda key, number, *args: seen.append((key, number)))
+    monkeypatch.setattr(current, "offline_last", lambda key, number, *args: seen.append((key, number)))
+    current.run()
+    assert [number for key, number in seen if key.startswith("monitor_") and key.endswith("_best")] == list(range(115, 306, 10))
+    assert ("final_305_best", 305) in seen and ("final_305_last", 305) in seen
+    assert current.api.posts == 0
+
+@pytest.mark.parametrize("sampling", [None, {"algorithm": "base-seed-plus-parent-timesteps-v1", "base_seed": 42,
+    "parent_timesteps": 53760, "effective_env_seed": 42}])
+def test_append_rejects_old_worker_or_repeated_sampling_seed(tmp_path, monkeypatch, sampling):
+    protocol, _, _, _, spec = stopped_extension_fixture(tmp_path)
+    protocol["require_sampling_algorithm"] = "base-seed-plus-parent-timesteps-v1"
+    mod = module()
+    current = mod.Runner(protocol, tmp_path / "append200", "http://127.0.0.1:8770", api=FakeAPI())
+    monkeypatch.setattr(mod, "ensure_device", lambda _: None)
+    monkeypatch.setattr(current, "dataset", lambda: "dataset")
+    monkeypatch.setattr(current, "verify_extension", lambda *_: None)
+    manifest = {"model_id": "model", "parent_content_id": "c105", "timesteps_started": 53760,
+        "timesteps_completed": 54272, "session_timesteps": 512, "config": {"device": "cuda"},
+        "runtime": {"device": "cuda"}, "sampling_provenance": sampling}
+    monkeypatch.setattr(current.api, "get", lambda path: {"manifest": manifest} if "/policies/" in path else {
+        "spec": spec, "dataset_id": "dataset", "sessions": [{"id": "v106", "base_version_id": "v105"}],
+        "latest_version_id": "v106"})
+    def submit(key, path, body, kind, base):
+        assert key == "train_106" and base == "v105"
+        assert body == {"additional_timesteps": 512, "device": "cuda"}
+        return "v106"
+    monkeypatch.setattr(current, "submit", submit)
+    monkeypatch.setattr(current, "wait", lambda _: None)
+    with pytest.raises(RuntimeError, match="sampling algorithm"):
+        current.run()
+    assert len(current.state["rounds"]) == 105
+
+
+def test_offline_last_uses_explicit_cuda_for_inference(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import pandas as pd
+    import torch
+    from stable_baselines3 import PPO
+    import quanto.backtest.dataset_loaders as loaders
+    import quanto.investing.evaluation as evaluation
+    import quanto.learning.artifacts as artifacts
+
+    protocol, _, _, _, spec = stopped_extension_fixture(tmp_path)
+    mod = module()
+    current = mod.Runner(protocol, tmp_path / "append200", "http://127.0.0.1:8770", api=FakeAPI())
+    current.dataset_hash, current.dataset_path = "hash", tmp_path / "dataset"
+    monkeypatch.setattr(current, "db_row", lambda *_: {"path": str(tmp_path / "artifact")})
+    monkeypatch.setattr(artifacts, "read_manifest", lambda *_: {
+        "config": spec, "model_id": "model", "dataset_content_hash": "hash", "id": "content", "price_mode": "raw"})
+    devices = []
+    monkeypatch.setattr(mod, "ensure_device", lambda device: devices.append(device))
+    def load(path, device):
+        assert device == "cuda" and path.name == "last.zip"
+        return SimpleNamespace(device=torch.device("cuda:0"))
+    monkeypatch.setattr(PPO, "load", load)
+    monkeypatch.setattr(loaders, "load_dataset", lambda _: None)
+    monkeypatch.setattr(evaluation, "evaluate_policy", lambda *args: ({"sharpe": None},
+        SimpleNamespace(equity=pd.DataFrame({"date": ["2025-01-03"], "equity": [1000000]})),
+        SimpleNamespace(metrics={}, metric_definitions={}, warnings=[])))
+    monkeypatch.setattr(current, "comparison", lambda: None)
+    current.offline_last("monitor_115_last", 115, "v115", "monitor", protocol["monitor_period"])
+    assert devices == ["cuda"]
+    assert current.state["evaluations"]["monitor_115_last"]["summary"]["runtime"]["device"] == "cuda:0"
+
+@pytest.mark.parametrize("change", ["active", "parent", "missing_monitor"])
+def test_stopped105_rejects_unsafe_source_before_any_post(tmp_path, change):
+    protocol, path, _, _, _ = stopped_extension_fixture(tmp_path)
+    source = json.loads(path.read_text(encoding="utf-8"))
+    if change == "active":
+        source["stop"]["active_job_id"] = "running"
+    elif change == "parent":
+        source["rounds"][-1]["base_version_id"] = "wrong"
+    else:
+        source["evaluations"].pop("monitor_100_last")
+    path.write_text(json.dumps(source))
+    protocol["source_state_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    api = FakeAPI()
+    with pytest.raises(ValueError):
+        module().Runner(protocol, tmp_path / "append200", "http://127.0.0.1:8770", api=api)
+    assert api.posts == 0

@@ -116,10 +116,16 @@ class Runner:
         if hashlib.sha256(raw).hexdigest() != self.protocol.get("source_state_sha256"):
             raise ValueError("source state hash does not match pinned provenance")
         source = json.loads(raw)
-        if source.get("complete") is not True or len(source.get("rounds", [])) != 50:
-            raise ValueError("extension requires a completed 50-round source")
-        if self.protocol.get("rounds") != 250 or self.protocol.get("timesteps_per_round") != 512:
-            raise ValueError("extension requires cumulative 250 rounds at 512 steps")
+        base_rounds = len(source.get("rounds", []))
+        stopped = source.get("stop", {})
+        if not (base_rounds == 50 and source.get("complete") is True or
+                base_rounds == 105 and stopped.get("successful_rounds") == 105
+                and "active_job_id" in stopped and stopped["active_job_id"] is None):
+            raise ValueError("extension requires a completed 50-round or stopped successful 105-round source")
+        if self.protocol.get("rounds") != base_rounds + 200 or self.protocol.get("timesteps_per_round") != 512:
+            raise ValueError("extension requires 200 additional rounds at 512 steps")
+        if base_rounds == 105 and self.protocol.get("monitor_start_round") != 115:
+            raise ValueError("105-round extension monitoring must start at round 115")
         if self.protocol.get("device_override") != "cuda":
             raise ValueError("this extension requires explicit CUDA execution")
         from quanto.investing.contracts import PolicyTrainingSpec
@@ -133,8 +139,10 @@ class Runner:
                     or entry["base_version_id"] != previous):
                 raise ValueError("source continuation chain is inconsistent")
             previous = entry["version_id"]
-        expected = {f"monitor_{n:03d}_{snapshot}" for n in range(10, 51, 10) for snapshot in ("best", "last")}
-        expected |= {"monitor_equal_weight", "monitor_buy_hold", "final_best", "final_last", "final_equal_weight", "final_buy_hold"}
+        expected = {f"monitor_{n:03d}_{snapshot}" for n in range(10, base_rounds + 1, 10) for snapshot in ("best", "last")}
+        prefix = "final" if base_rounds == 50 else "historical_final_050"
+        expected |= {"monitor_equal_weight", "monitor_buy_hold"}
+        expected |= {prefix + "_" + snapshot for snapshot in ("best", "last", "equal_weight", "buy_hold")}
         if set(source["evaluations"]) != expected:
             raise ValueError("completed source evaluations are incomplete")
         return source
@@ -143,17 +151,17 @@ class Runner:
         path = Path(self.protocol["source_state_path"]).resolve()
         evaluations, operations = {}, {}
         for key, entry in source["evaluations"].items():
-            summary = path.parent / (key + ".json")
+            summary = Path(entry.get("source_summary_path", path.parent / (key + ".json"))).resolve()
             if json.loads(summary.read_text(encoding="utf-8")) != entry["summary"]:
                 raise ValueError("source evaluation summary changed")
             entry["source_summary_path"] = str(summary)
             if not entry.get("job_id"):
-                equity = path.parent / (key + ".equity.csv")
+                equity = Path(entry.get("source_equity_path", path.parent / (key + ".equity.csv"))).resolve()
                 if key.endswith("_last") and not equity.is_file():
                     raise ValueError("source offline equity file missing")
                 if equity.is_file():
                     entry["source_equity_path"] = str(equity)
-            evaluations["historical_final_050_" + key[6:] if key.startswith("final_") else key] = entry
+            evaluations[f"historical_final_{entry['round']:03d}_" + key[6:] if key.startswith("final_") else key] = entry
         for key, receipt in source["operations"].items():
             operations["historical_final_050_" + key[6:] if key.startswith("final_") else key] = receipt
         last = source["rounds"][-1]
@@ -161,7 +169,7 @@ class Runner:
                 "evaluations": evaluations, "model_id": source["model_id"], "dataset_id": source["dataset_id"],
                 "complete": False, "extension": {"source_state_path": str(path),
                     "source_state_sha256": self.protocol["source_state_sha256"], "source_protocol_hash": source["protocol_hash"],
-                    "base_rounds": 50, "base_version_id": last["version_id"], "base_content_id": last["content_id"],
+                    "base_rounds": len(source["rounds"]), "base_version_id": last["version_id"], "base_content_id": last["content_id"],
                     "model_id": source["model_id"], "dataset_id": source["dataset_id"],
                     "device_override": self.protocol["device_override"], "source_elapsed_seconds": source.get("elapsed_seconds")}}
 
@@ -400,12 +408,16 @@ class Runner:
         values = config.backtest.model_dump(mode="json")
         values.update(dates)
         spec = BacktestSpec.model_validate(values)
-        model = PPO.load(directory / "last.zip", device="cpu")
+        device = self.protocol.get("device_override", config.device)
+        ensure_device(device)
+        model = PPO.load(directory / "last.zip", device=device)
+        if device == "cuda" and model.device.type != "cuda":
+            raise RuntimeError("CUDA inference was not honored; CPU fallback is forbidden")
         metrics, result, report = evaluate_policy(model, load_dataset(self.dataset_path), spec,
                                                    config.frequency, config.lookback)
         summary = {"kind": "offline_last_evaluation", "registered_in_workbench": False,
                    "version_id": version_id, "policy_content_id": manifest["id"], "period": dates,
-                   "snapshot": "last.zip", "metrics": {**report.metrics, **metrics},
+                   "snapshot": "last.zip", "runtime": {"device": str(model.device)}, "metrics": {**report.metrics, **metrics},
                    "metric_definitions": report.metric_definitions, "selection_use": "none",
                    "assumptions": {"execution": spec.execution.model_dump(mode="json"),
                                    "price_mode": manifest["price_mode"], "limitations": report.warnings}}
@@ -426,6 +438,9 @@ class Runner:
         spec = config.model_dump(mode="json")
         rounds, budget = self.protocol["rounds"], self.protocol["timesteps_per_round"]
         monitor, final = self.protocol["monitor_period"], self.protocol["final_period"]
+        monitor_start = self.protocol.get("monitor_start_round", 10)
+        if type(monitor_start) is not int or monitor_start < 10 or monitor_start > rounds:
+            raise ValueError("monitor_start_round must be an integer from 10 through the target round")
         if (type(rounds) is not int or rounds < 50 or type(budget) is not int or budget % config.n_steps
                 or budget < config.n_steps):
             raise ValueError("require at least 50 rounds and a positive complete-rollout budget")
@@ -464,6 +479,12 @@ class Runner:
                     raise RuntimeError("training unexpectedly evaluated the final test")
                 if device == "cuda" and (manifest["config"]["device"] != "cuda" or manifest["runtime"]["device"] != "cuda"):
                     raise RuntimeError("CUDA training was not honored; CPU fallback is forbidden")
+                if self.protocol.get("require_sampling_algorithm"):
+                    expected_sampling = dict(algorithm=self.protocol["require_sampling_algorithm"], base_seed=config.seed,
+                        parent_timesteps=manifest["timesteps_started"],
+                        effective_env_seed=config.seed + manifest["timesteps_started"])
+                    if manifest.get("sampling_provenance") != expected_sampling:
+                        raise RuntimeError("required continuation sampling algorithm was not honored")
                 latest = manifest["history"][-1]
                 latest_metrics = {key.removeprefix("validation_"): value for key, value in latest.items()
                                   if key.startswith("validation_")}
@@ -472,7 +493,7 @@ class Runner:
                          "validation_best": manifest["metrics"]["validation"],
                          "elapsed_seconds": round(time.monotonic() - round_started, 3),
                          **{key: manifest.get(key) for key in ("timesteps_started", "timesteps_completed",
-                            "session_timesteps", "best_timesteps", "best_source_content_id", "selection_valid")}}
+                            "session_timesteps", "best_timesteps", "best_source_content_id", "selection_valid", "sampling_provenance")}}
                 self.state["rounds"].append(entry)
                 self.save()
                 atomic_json(self.output / f"round_{number:03d}.json", manifest)
@@ -481,7 +502,7 @@ class Runner:
                          f"round_elapsed_seconds={entry['elapsed_seconds']}; "
                          f"run_elapsed_seconds={self.state['elapsed_seconds']}")
             version = self.state["rounds"][number - 1]["version_id"]
-            if number % 10 == 0:
+            if number >= monitor_start and (number - monitor_start) % 10 == 0:
                 self.backtest(f"monitor_{number:03d}_best", number, version, "monitor", monitor)
                 self.offline_last(f"monitor_{number:03d}_last", number, version, "monitor", monitor)
                 for baseline in ("equal_weight", "buy_hold"):

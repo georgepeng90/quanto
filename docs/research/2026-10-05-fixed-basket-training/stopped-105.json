@@ -1,0 +1,37 @@
+{
+  "observed_at": "2026-10-05T05:32:56.867069+00:00",
+  "reason": "user_requested_stop_to_fix_repeated_sampling",
+  "model_id": "65fdcd5c-cc6d-4e93-9426-157dbca29e86",
+  "state": "stopped_incomplete",
+  "planned_cumulative_rounds": 250,
+  "successful_rounds": 105,
+  "additional_gpu_rounds": 55,
+  "active_job_id": null,
+  "real_training_restarted": false,
+  "latest_version_id": "d86ab078-8eac-4964-be99-3d195848c9ba",
+  "latest_content_id": "83800d316c447d68132927578fa75d481222c4d7efd1450a5c288fcda1bcd11c",
+  "round_105_job": {
+    "state": "succeeded",
+    "created_at": "2026-10-05T05:25:57.037872+00:00",
+    "started_at": "2026-10-05T05:25:57.068509+00:00",
+    "finished_at": "2026-10-05T05:26:37.252976+00:00",
+    "base_version_id": "c425d73e-c667-44da-9549-62f1d6a4cab3"
+  },
+  "last_checkpoint": {
+    "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\d86ab078-8eac-4964-be99-3d195848c9ba\\final\\artifact\\last.zip",
+    "zip_sha256": "62b5bdfcdc8003282dc61c6fb340a8ff8c67472d45e82003b9997fe0c311ec5c",
+    "weights_sha256": "21f43d275ff4f2402c94af87e17059f6d05270e30d1b1c4f22e0d684a18d7d4e",
+    "optimizer_sha256": "df57cebd0c67ba23c44e8cc349515a2c8c83773b95908ac4e3516bb3c379b6b5",
+    "num_timesteps": 53760,
+    "ppo_n_updates": 4200
+  },
+  "runtime_device_counts": {
+    "cuda": 55,
+    "cpu": 50
+  },
+  "registered_artifact_hashes_verified": true,
+  "original_50_state_sha256": "103b06bcb55540db8e0c9a197d8084928e0a226a4623aadc368c3a4ebe9871e8",
+  "extension_state_before_reconciliation_sha256": "101f8fec29c8854c080933ebda3859c1b4ad5213fe27a287b7f3f35a3026eed3",
+  "extension_state_after_reconciliation_sha256": "3c25bd1e51bbb86181df687f9d351359ef98ae48a74b386885e6565bed1b0042",
+  "reconciliation": "Round 105 succeeded while the runner was being stopped. Its existing receipt was reconciled using read-only API and verified registered artifact; no job submitted."
+}

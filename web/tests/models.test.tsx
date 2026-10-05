@@ -8,14 +8,23 @@ const spec = { name: '研究模型', frequency: 'weekly', backtest: { symbols: [
 const model = { id: 'm1', name: '研究模型', dataset_id: 'd1', spec, state: 'ready', active_job_id: null, total_timesteps: 4096, session_count: 1, version_count: 1, latest_version_id: 'v1', created_at: '2024-01-01T00:00:00Z', sessions: [], versions: [{ id: 'v1', created_at: '2024-01-01T00:00:00Z', manifest: { metrics: { validation: { total_return: .1, sharpe: null, max_drawdown: -.1 } }, timesteps_completed: 4096 } }] }
 const datasets = [{ id: 'd1', manifest: { data_start: '2020-01-01', data_end: '2025-12-31', price_mode: 'adjusted_research', limitations: [] } }]
 const posts: { path: string; body: any }[] = []
+const savedVersion = { id: 'v1', round_number: 1, session_number: 1, state: 'succeeded', created_at: '2024-01-01T00:00:00Z', timesteps_completed: 4096, runtime_device: 'cpu', selection_valid: true, validation_best: { total_return: .1, sharpe: null, max_drawdown: -.1 }, validation_latest: {} }
+let versionItems: Record<string, unknown>[] = []
 const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
 beforeEach(() => {
   posts.length = 0
+  versionItems = [savedVersion]
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api' })
     if (init?.method === 'POST') { posts.push({ path, body: JSON.parse(String(init.body)) }); return Response.json(path === '/api/investing/models' ? { ...model, state: 'pending', versions: [] } : { id: 'j1', state: 'queued' }) }
-    if (path.startsWith('/api/investing/models/m1')) return Response.json(model)
+    if (path.startsWith('/api/investing/models/m1/history?')) {
+      const items = new URL(path, 'http://local').searchParams.get('kind') === 'versions' ? versionItems : []
+      return Response.json({ items, total: items.length, page: 1, page_size: 10, total_pages: 1, anchor: 10 })
+    }
+    if (path === '/api/investing/models/m1?include_history=false') return Response.json({ ...model, active_session: null, capabilities: { cuda_available: false } })
+    if (path.startsWith('/api/investing/policies/')) return Response.json(model.versions[0])
+    if (path === '/api/investing/models/m1') return Response.json(model)
     if (path.startsWith('/api/investing/models')) return Response.json({ items: [model], next_cursor: null })
     if (path === '/api/investing/overview') return Response.json({ datasets, policies: [], jobs: [], backtests: [], capabilities: { cuda_available: false } })
     if (path === '/api/backtests/catalog?limit=50' || path === '/api/experiments') return Response.json({ items: [], next_cursor: null })
@@ -57,7 +66,7 @@ test('detail keeps configuration read only and adds only session budget and devi
   await userEvent.click(screen.getByRole('button', { name: '继续训练' }))
   expect(posts[0]).toEqual({ path: '/api/investing/models/m1/train', body: { additional_timesteps: 8192, device: 'cpu' } })
   expect(screen.getByRole('link', { name: '使用此版本回测' })).toHaveAttribute('href', '/runs?model=m1&version=v1')
-  expect(screen.getByText('夏普比率（日末）').nextElementSibling).toHaveTextContent('—')
+  expect(screen.getByText('选定快照验证夏普率 —')).toBeVisible()
 })
 
 test('backtest requires explicit version instead of choosing the latest', async () => {
@@ -75,7 +84,8 @@ test('backtest requires explicit version instead of choosing the latest', async 
 
 test('new session starts with model defaults and unscored versions disclose unavailable validation score', async () => {
   const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1'
+  versionItems = [{ ...savedVersion, selection_valid: false }]
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1?include_history=false'
     ? Response.json({ ...model, spec: { ...spec, total_timesteps: 128 }, versions: [{ ...model.versions[0], manifest: { ...model.versions[0].manifest, selection_valid: false } }] }) : prior(input, init)))
   app('/models/m1')
   await screen.findByText('ETF2 → ETF1')
@@ -85,7 +95,7 @@ test('new session starts with model defaults and unscored versions disclose unav
 
 test('active sessions block overlapping training and explain cancellation progress loss', async () => {
   const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1'
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1?include_history=false'
     ? Response.json({ ...model, active_job_id: 'active', sessions: [{ id: 'active', state: 'running', base_version_id: 'v1' }] }) : prior(input, init)))
   app('/models/m1')
   await screen.findByText('ETF2 → ETF1')
@@ -105,25 +115,21 @@ test('a deep link pins its specified version and changing models clears it', asy
 })
 
 test('version separates latest parameters from retained best and reports its actual device', async () => {
-  const prior = globalThis.fetch
-  const earlier = { ...model.versions[0], id: 'earlier', manifest: { ...model.versions[0].manifest, id: 'source-content' } }
-  const latest = { ...model.versions[0], manifest: { ...model.versions[0].manifest,
-    runtime: { device: 'cuda' }, best_timesteps: 512, best_source_content_id: 'source-content',
-    history: [{ timesteps: 4096, validation_total_return: 0, validation_sharpe: null, validation_max_drawdown: 0, validation_net_log_return: 0 }] } }
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1'
-    ? Response.json({ ...model, versions: [latest, earlier] }) : prior(input, init)))
+  versionItems = [{ ...savedVersion, round_number: 2, runtime_device: 'cuda', best_timesteps: 512, best_round_number: 1,
+    validation_latest: { total_return: 0, sharpe: null, max_drawdown: 0, net_log_return: 0 } }]
   app('/models/m1')
   await screen.findByText('ETF2 → ETF1')
   const link = screen.getAllByRole('link', { name: '使用此版本回测' })[0]
   const version = link.closest('article')!
+  await userEvent.click(within(version).getByRole('button', { name: '展开详情' }))
   const current = within(version).getByRole('heading', { name: '本轮最终参数验证' }).nextElementSibling!
   const best = within(version).getByRole('heading', { name: '选定快照验证' }).nextElementSibling!
   expect(current).toHaveTextContent('0.00%')
   expect(within(current as HTMLElement).getByText('夏普比率（日末）').nextElementSibling).toHaveTextContent('—')
   expect(best).toHaveTextContent('10.00%')
-  expect(within(version).getByText(/本版本实际训练设备 CUDA/)).toBeVisible()
+  expect(within(version).getByText(/实际设备 CUDA/)).toBeVisible()
   expect(within(version).getByText(/选定快照步数 512/)).toBeVisible()
-  expect(within(version).getByText(/沿用此前快照.*earlier/)).toBeVisible()
+  expect(within(version).getByText(/选定快照来源：第1轮/)).toBeVisible()
   expect(screen.getByLabelText('下次提交设备')).toHaveValue('cpu')
 })
 
@@ -132,7 +138,7 @@ test('idle detail discovers external training and stops polling after unmount', 
   const prior = globalThis.fetch
   let calls = 0
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    if (String(input) !== '/api/investing/models/m1') return prior(input, init)
+    if (String(input) !== '/api/investing/models/m1?include_history=false') return prior(input, init)
     calls += 1
     return Response.json(calls === 1 ? model : { ...model, active_job_id: 'external', state: 'running' })
   }))
@@ -155,7 +161,7 @@ test('detail retries a transient read error without submitting training', async 
   const prior = globalThis.fetch
   let calls = 0
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    if (String(input) !== '/api/investing/models/m1') return prior(input, init)
+    if (String(input) !== '/api/investing/models/m1?include_history=false') return prior(input, init)
     calls += 1
     if (calls === 1) throw new Error('temporary timeout')
     return Response.json(model)
@@ -174,7 +180,7 @@ test('polling waits for a slow response instead of overlapping model requests', 
   const prior = globalThis.fetch
   let calls = 0, release: () => void = () => {}
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    if (String(input) !== '/api/investing/models/m1') return prior(input, init)
+    if (String(input) !== '/api/investing/models/m1?include_history=false') return prior(input, init)
     calls += 1
     if (calls === 2) await new Promise<void>(resolve => { release = resolve })
     return Response.json(model)

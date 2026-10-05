@@ -1,4 +1,4 @@
-import type { InvestingModel, InvestingModelDetail, InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage, PolicyBacktestSpec, PolicyTrainingSpec } from './investingTypes'
+import type { InvestingModel, InvestingModelDetail, InvestingModelSummary, TrainingHistoryPage, TrainingHistoryQuery, InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage, PolicyBacktestSpec, PolicyTrainingSpec } from './investingTypes'
 import type { BacktestCatalogRow, ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
 import type { LearningArtifact, LearningBacktestSpec, LearningChart, LearningOverview, LearningTablePage, TrainingSpec } from './learningTypes'
 
@@ -65,6 +65,8 @@ const list = <T>(name: string, cursor?: string) => request<Page<T>>(`/${name}${c
 export const api = {
   investingModels: (cursor?: string, signal?: AbortSignal) => request<Page<InvestingModel>>(`/investing/models${queryString({ cursor })}`, { signal }),
   investingModel: (id: string, signal?: AbortSignal) => request<InvestingModelDetail>(`/investing/models/${encodeURIComponent(id)}`, { signal }),
+  investingModelSummary: (id: string, signal?: AbortSignal) => request<InvestingModelSummary>(`/investing/models/${encodeURIComponent(id)}?include_history=false`, { signal }),
+  investingModelHistory: (id: string, query: TrainingHistoryQuery, signal?: AbortSignal) => request<TrainingHistoryPage>(`/investing/models/${encodeURIComponent(id)}/history${queryString(query)}`, { signal }),
   createInvestingModel: (body: { dataset_id: string; spec: PolicyTrainingSpec }) => request<InvestingModel>('/investing/models', json(body)),
   trainInvestingModel: (id: string, body: { additional_timesteps: number; device: 'cpu' | 'cuda' }) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/train`, json(body)),
   backtestInvestingModel: (id: string, body: { version_id: string; dataset_id: string; spec: PolicyBacktestSpec }) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/backtests`, json(body)),

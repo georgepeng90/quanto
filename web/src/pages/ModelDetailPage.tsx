@@ -1,51 +1,136 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, describeError } from '../api'
-import { JsonDetails, Metrics, record } from '../components/LearningResults'
+import { JsonDetails, Metrics } from '../components/LearningResults'
 import { taskTime } from '../components/timePresentation'
-import type { InvestingModelDetail } from '../investingTypes'
+import type { InvestingArtifact, InvestingModelSummary, TrainingHistoryItem, TrainingHistoryPage, TrainingHistoryQuery } from '../investingTypes'
 import type { RunEvent } from '../types'
 
-const states: Record<string, string> = { queued: '排队中', running: '运行中', cancel_requested: '取消中', cancelled: '已取消', interrupted: '已中断', failed: '失败', succeeded: '成功' }
-function latestValidation(manifest: Record<string, unknown>) {
-  const latest = record(Array.isArray(manifest.history) ? manifest.history.at(-1) : undefined)
-  return Object.fromEntries(Object.entries(latest).filter(([key]) => key.startsWith('validation_')).map(([key, value]) => [key.slice('validation_'.length), value]))
+const stateLabels: Record<string, string> = { queued: '排队中', running: '运行中', cancel_requested: '取消中', cancelled: '已取消', interrupted: '已中断', failed: '失败', succeeded: '成功' }
+type Kind = TrainingHistoryQuery['kind']
+type PanelState = { page: number; size: number; anchor?: number; data: TrainingHistoryPage | null; loading: boolean; error: string; lookup?: number; request: number }
+const initialPanel = (): PanelState => ({ page: 1, size: 10, data: null, loading: true, error: '', request: 0 })
+
+function Pagination({ label, value, onPage, onSize, onJump, compact = false }: { label: string; value: PanelState; onPage: (page: number) => void; onSize?: (size: number) => void; onJump?: (page: number) => void; compact?: boolean }) {
+  const [pageInput, setPageInput] = useState('')
+  const [pageError, setPageError] = useState('')
+  const data = value.data
+  const page = data?.page ?? value.page
+  const size = data?.page_size ?? value.size
+  const totalPages = data?.total_pages || 1
+  if (data?.total === 0) return null
+  if (compact) return <div className="history-pagination compact" aria-label={`${label}翻页下方`}>
+    <button disabled={value.loading || page <= 1} onClick={() => onPage(page - 1)}>上一页</button>
+    <span>第{page}页 / 共{totalPages}页</span>
+    <button disabled={value.loading || page >= totalPages} onClick={() => onPage(page + 1)}>下一页</button>
+  </div>
+  return <>
+    <div className="history-pagination" aria-label={`${label}翻页上方`}>
+      <button disabled={value.loading || page <= 1} onClick={() => onPage(page - 1)}>上一页</button>
+      <span>第{page}页 / 共{totalPages}页 · 显示 {(page - 1) * size + 1}–{Math.min(page * size, data?.total || 0)} 条，共 {data?.total || 0} 条</span>
+      <button disabled={value.loading || page >= totalPages} onClick={() => onPage(page + 1)}>下一页</button>
+      {onSize && <label>每页条数<select aria-label={`${label}每页条数`} disabled={value.loading} value={size} onChange={event => onSize(Number(event.target.value))}>{[10, 20, 50].map(size => <option key={size}>{size}</option>)}</select></label>}
+      {onJump && <form onSubmit={event => { event.preventDefault(); const page = Number(pageInput); if (Number.isInteger(page) && page >= 1 && page <= totalPages) { onJump(page); setPageError('') } else setPageError(`请输入 1 到 ${totalPages} 之间的页码。`); setPageInput('') }}>
+        <label>跳转页码<input aria-label={`${label}跳转页码`} inputMode="numeric" value={pageInput} onChange={event => setPageInput(event.target.value)} /></label>
+        <button disabled={value.loading}>跳转</button>
+        {pageError && <span role="alert">{pageError}</span>}
+      </form>}
+    </div>
+  </>
 }
+
 export function ModelDetailPage() {
   const { id = '' } = useParams()
-  const [model, setModel] = useState<InvestingModelDetail | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState('')
-  const [busy, setBusy] = useState(false), [refresh, setRefresh] = useState(0), [budget, setBudget] = useState(4096), [device, setDevice] = useState<'cpu' | 'cuda'>('cpu')
-  const [cudaAvailable, setCudaAvailable] = useState(false), [selectedLog, setSelectedLog] = useState(''), [logs, setLogs] = useState<RunEvent[]>([]), [logError, setLogError] = useState('')
-  const initialized = useRef('')
+  return <ModelDetailContent key={id} id={id} />
+}
+
+function ModelDetailContent({ id }: { id: string }) {
+  const [model, setModel] = useState<InvestingModelSummary | null>(null)
+  const [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false)
+  const [refresh, setRefresh] = useState(0), [budget, setBudget] = useState(4096), [device, setDevice] = useState<'cpu' | 'cuda'>('cpu')
+  const [cudaAvailable, setCudaAvailable] = useState(false)
+  const [versions, setVersions] = useState<PanelState>(initialPanel), [sessions, setSessions] = useState<PanelState>(initialPanel)
+  const [expanded, setExpanded] = useState(''), [artifacts, setArtifacts] = useState<Record<string, InvestingArtifact>>({}), [artifactErrors, setArtifactErrors] = useState<Record<string, string>>({})
+  const [selectedLog, setSelectedLog] = useState<TrainingHistoryItem | null>(null), [logs, setLogs] = useState<RunEvent[]>([]), [logError, setLogError] = useState('')
+  const [roundInput, setRoundInput] = useState(''), [attemptInput, setAttemptInput] = useState('')
+  const [artifactLoading, setArtifactLoading] = useState(''), [artifactRetry, setArtifactRetry] = useState(0)
+  const initializedModel = useRef(''), focusTarget = useRef(''), previousActive = useRef<string | null>(null)
+  const activeId = model?.active_job_id
+  const newCounts = {
+    versions: versions.data ? Math.max(0, (model?.version_count || 0) - versions.data.total) : 0,
+    sessions: sessions.data ? Math.max(0, (model?.session_count || 0) - sessions.data.total) : 0,
+  }
+  const logActive = !!selectedLog && selectedLog.id === activeId
+
   useEffect(() => {
     const controller = new AbortController(); let timer: ReturnType<typeof setTimeout>
     const load = async () => {
       let delay = 10000
       try {
-        const value = await api.investingModel(id, controller.signal)
+        const value = await api.investingModelSummary(id, controller.signal)
         if (controller.signal.aborted) return
-        setModel(value); setError('')
-        if (initialized.current !== id) { setBudget(value.spec.total_timesteps); setDevice(value.spec.device); initialized.current = id }
+        setModel(value); setError(''); setCudaAvailable(value.capabilities?.cuda_available || false)
+        if (initializedModel.current !== id) { setBudget(value.spec.total_timesteps); setDevice(value.spec.device); initializedModel.current = id }
         if (value.active_job_id) delay = 3000
+        if (previousActive.current && previousActive.current !== value.active_job_id) {
+          setSessions(old => ({ ...old, request: old.request + 1 }))
+        }
+        previousActive.current = value.active_job_id
       } catch (value) { if (!controller.signal.aborted) setError(describeError(value)) }
       finally { if (!controller.signal.aborted) timer = setTimeout(load, delay) }
     }
     void load()
     return () => { controller.abort(); clearTimeout(timer) }
   }, [id, refresh])
-  useEffect(() => {
+
+  const fetchHistory = (kind: Kind, value: PanelState, update: (state: PanelState | ((old: PanelState) => PanelState)) => void) => {
     const controller = new AbortController()
-    api.investingOverview(controller.signal).then(value => { if (!controller.signal.aborted) setCudaAvailable(value.capabilities.cuda_available) }).catch(() => {})
+    update(old => ({ ...old, loading: true, error: '' }))
+    const query: TrainingHistoryQuery = { kind, page: value.page, page_size: value.size, anchor: value.anchor }
+    if (value.lookup !== undefined) {
+      if (kind === 'versions') query.round_number = value.lookup
+      else query.session_number = value.lookup
+      delete query.anchor
+    }
+    api.investingModelHistory(id, query, controller.signal).then(data => {
+      if (controller.signal.aborted) return
+      update(old => ({ ...old, page: data.page, anchor: old.lookup === undefined ? (old.anchor ?? data.anchor) : data.anchor, data, loading: false, lookup: undefined }))
+      if (value.lookup !== undefined) {
+        const target = data.items.find(item => kind === 'versions' ? item.round_number === value.lookup : item.session_number === value.lookup)
+        if (target) {
+          if (kind === 'versions') setExpanded(target.id)
+          focusTarget.current = `history-${kind}-${target.id}`
+        } else update(old => ({ ...old, error: `未找到第${value.lookup}${kind === 'versions' ? '轮' : '次训练尝试'}。` }))
+      }
+    }).catch(reason => { if (!controller.signal.aborted) update(old => ({ ...old, loading: false, error: describeError(reason) })) })
     return () => controller.abort()
-  }, [])
-  const logActive = model?.sessions.some(job => job.id === selectedLog && ['queued', 'running', 'cancel_requested'].includes(job.state))
+  }
+  useEffect(() => fetchHistory('versions', versions, setVersions), [id, refresh, versions.request])
+  useEffect(() => fetchHistory('sessions', sessions, setSessions), [id, refresh, sessions.request])
+  useEffect(() => {
+    if (!focusTarget.current) return
+    const target = document.getElementById(focusTarget.current)
+    if (target) { target.focus({ preventScroll: true }); target.scrollIntoView?.({ block: 'center' }); focusTarget.current = '' }
+  }, [versions.data, sessions.data, selectedLog])
+  useEffect(() => {
+    if (!expanded || artifacts[expanded]) return
+    const controller = new AbortController()
+    setArtifactLoading(expanded); setArtifactErrors(old => ({ ...old, [expanded]: '' }))
+    api.investingArtifact('policies', expanded, controller.signal).then(value => {
+      if (!controller.signal.aborted) setArtifacts(old => ({ ...old, [expanded]: value }))
+    }).catch(reason => {
+      if (!controller.signal.aborted) setArtifactErrors(old => ({ ...old, [expanded]: describeError(reason) }))
+    }).finally(() => { if (!controller.signal.aborted) setArtifactLoading('') })
+    return () => controller.abort()
+  }, [expanded, artifactRetry])
+
   useEffect(() => {
     if (!selectedLog) return
     const controller = new AbortController(); let timer: ReturnType<typeof setTimeout>; let cursor: string | undefined
     setLogs([]); setLogError('')
     const load = async () => {
       try {
-        const page = await api.jobLogs(selectedLog, cursor, controller.signal)
+        const page = await api.jobLogs(selectedLog.id, cursor, controller.signal)
         if (controller.signal.aborted) return
         setLogs(old => [...old, ...page.items].filter((event, index, array) => array.findIndex(other => other.seq === event.seq) === index).slice(-500)); setLogError('')
         if (page.next_cursor !== null) cursor = page.next_cursor
@@ -55,47 +140,106 @@ export function ModelDetailPage() {
     void load()
     return () => { controller.abort(); clearTimeout(timer) }
   }, [selectedLog, logActive])
-  const train = async () => {
-    if (!model || model.active_job_id || busy) return
+
+  const submitTraining = async () => {
+    if (!model || activeId || busy) return
     setError(''); setBusy(true)
     try {
-      if (!Number.isInteger(budget) || budget < 2 || budget > 10000000) throw new Error('追加决策步数必须为 2–10000000 的整数。')
+      if (!Number.isInteger(budget) || budget < 2 || budget > 10000000) throw new Error('追加决策步数必须是 2–10000000 的整数。')
       const job = await api.trainInvestingModel(id, { additional_timesteps: budget, device })
-      setModel(old => old && ({ ...old, active_job_id: job.id, sessions: [{ ...job, base_version_id: old.latest_version_id }, ...old.sessions] }))
-      setNotice(`训练会话 ${job.id} 已提交。`); setRefresh(value => value + 1)
+      setModel(old => old && ({ ...old, active_job_id: job.id }))
+      setNotice(`训练任务 ${job.id} 已提交。`); setRefresh(value => value + 1)
     } catch (value) { setError(describeError(value)) }
     finally { setBusy(false) }
   }
-  const cancel = async () => {
-    if (!model?.active_job_id || busy) return
+  const cancelTraining = async () => {
+    if (!activeId || busy) return
     setBusy(true); setError('')
-    try {
-      const job = await api.cancelJob(model.active_job_id)
-      setModel(old => old && ({ ...old, sessions: old.sessions.map(value => value.id === job.id ? { ...value, ...job } : value) }))
-      setNotice('已请求取消；等待会话停止。本次未发布进度将丢弃。'); setRefresh(value => value + 1)
-    } catch (value) { setError(describeError(value)) }
+    try { await api.cancelJob(activeId); setNotice('已请求取消训练；本次未发布的进度将丢弃。'); setRefresh(value => value + 1) }
+    catch (value) { setError(describeError(value)) }
     finally { setBusy(false) }
   }
-  const sourceVersions = new Map((model?.versions || []).map(version => [String(version.manifest.id || ''), version.id]))
-  return <div className="page-stack models-page"><header className="page-heading section-heading"><div><Link to="/models">全部模型</Link><h1>{model?.name || '模型详情'}</h1></div><button onClick={() => setRefresh(value => value + 1)} disabled={busy}>刷新模型</button></header>{error && <p role="alert" className="error callout">{error}</p>}{notice && <p role="status" className="callout success">{notice}</p>}{!model && !error && <p>加载模型…</p>}
-    {model && <><section className="panel"><h2>固定研究条件</h2><p className="model-basket">{model.spec.backtest.symbols.join(' → ')}</p><p>数据 {model.dataset_id} · {model.spec.frequency === 'weekly' ? '自然周' : '自然月'}决策 · 已保存累计决策步数 {model.total_timesteps.toLocaleString('zh-CN')} 步</p><p>训练 {model.spec.train_start}–{model.spec.train_end} · 验证 {model.spec.validation_start}–{model.spec.validation_end} · 留出测试 {model.spec.test_start}–{model.spec.test_end}</p><p>选模：{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}</p><p className="muted">篮子顺序、观察窗口、网络、日期、成本和风控均已固定。修改研究条件需新建模型。训练过程不自动评估测试段。</p><JsonDetails title="完整固定配置" value={model.spec} /></section>
-    <section className="panel"><h2>{model.version_count ? '追加训练' : '开始训练'}</h2>{!model.version_count && <p className="empty">待训练：尚无保存版本。首次训练成功后才能回测。</p>}<form noValidate onSubmit={event => { event.preventDefault(); void train() }}><fieldset disabled={busy || !!model.active_job_id}><div className="form-grid"><label>追加决策步数<input type="number" min={2} max={10000000} step={1} value={budget} onChange={event => setBudget(Number(event.target.value))} /></label><label>下次提交设备<select value={device} onChange={event => setDevice(event.target.value as 'cpu' | 'cuda')}><option value="cpu">CPU</option><option value="cuda" disabled={!cudaAvailable}>CUDA</option></select></label></div><p className="muted">设备选择仅用于下次提交；各保存版本显示其实际训练设备。每次追加有限步数，成功后可继续追加。续训恢复上次成功版本的最终参数与优化器。</p><button>{model.version_count ? '继续训练' : '开始训练'}</button></fieldset></form>{model.active_job_id && <div className="callout"><p>当前会话 {model.active_job_id} · 同一模型同时只能有一次训练。</p><p>取消会丢弃本次未发布进度，已有版本继续可用；下次从上次成功版本继续。</p><button disabled={busy || model.sessions.some(job => job.id === model.active_job_id && job.state === 'cancel_requested')} onClick={() => void cancel()}>取消当前训练</button></div>}</section>
-    <section className="panel"><h2>保存版本 · {model.version_count}</h2><p className="muted">本轮指标对应最后一次更新后的参数；选定快照可能来自较早会话，因此其指标会重复。回测使用选定快照，续训使用本轮最终参数。已有版本不会被改写。缺失夏普率显示为 —。</p>{!model.versions.length && <p>暂无版本。失败或取消的会话不会发布新版本。</p>}<div className="record-list">{model.versions.map(version => {
-      const latest = latestValidation(version.manifest)
-      const actualDevice = record(version.manifest.runtime).device
-      const source = version.manifest.best_source_content_id
-      return <article className="record" key={version.id}>
-        <div className="record-head"><strong>{version.id}</strong><span>{taskTime(version.created_at)}</span><Link to={`/runs?model=${encodeURIComponent(id)}&version=${encodeURIComponent(version.id)}`}>使用此版本回测</Link></div>
-        <p>累计步数 {String(version.manifest.timesteps_completed ?? '—')} · 选定快照步数 {String(version.manifest.best_timesteps ?? '—')}</p>
-        <p>本版本实际训练设备 {actualDevice === 'cuda' ? 'CUDA（GPU）' : actualDevice === 'cpu' ? 'CPU' : '—'}</p>
-        <p className="muted">以下两组指标的验证区间：{model.spec.validation_start}–{model.spec.validation_end}</p>
-        <p className="muted">{source ? `沿用此前快照 · 来源版本 ${sourceVersions.get(String(source)) || String(source)}` : `本会话保留快照 · 来源版本 ${version.id}`}</p>
-        <h3>本轮最终参数验证</h3>{Object.keys(latest).length ? <Metrics values={latest} /> : <p className="muted">暂无本轮最终参数验证记录。</p>}
-        <h3>选定快照验证</h3><Metrics values={record(record(version.manifest.metrics).validation)} />
-        {version.manifest.selection_valid === false && <p className="callout warn">无有效验证评分：选模指标无定义，此版本仅保留一个可用策略快照。</p>}
-        <JsonDetails title="验证轮次与版本完整信息" value={version.manifest} />
-      </article>
-    })}</div></section>
-    <section className="panel"><h2>训练会话 · {model.session_count}</h2>{!model.sessions.length && <p>尚未提交训练。</p>}<div className="record-list">{model.sessions.map(job => <article className="record" key={job.id}><div className="record-head"><strong>{job.id}</strong><span className="badge">{states[job.state] || job.state}</span><button onClick={() => setSelectedLog(job.id)}>查看日志 {job.id}</button></div><p className="muted">基础版本 {job.base_version_id || '首次初始化'} · 进度 {job.completed_through || '—'} · 心跳 {taskTime(job.heartbeat)}</p>{job.error && <p className="error">{job.error}</p>}</article>)}</div>{selectedLog && <div><h3>任务日志 · {selectedLog}</h3>{logError && <p role="alert" className="error">{logError}</p>}<ol className="event-timeline">{logs.map(event => <li key={event.seq}><small>{event.phase}</small><p>{event.message}</p>{typeof event.payload.progress === 'number' && <progress aria-label="训练会话进度" max={1} value={event.payload.progress} />}{event.payload.timesteps !== undefined && <small>累计步数 {String(event.payload.timesteps)}</small>}{event.payload.validation_sharpe !== undefined && <small> 验证夏普 {String(event.payload.validation_sharpe ?? '—')}</small>}</li>)}</ol><p className="muted">保留最近 500 条事件。</p></div>}</section></>}
+  const updatePanel = (kind: Kind, next: Partial<PanelState>) => (kind === 'versions' ? setVersions : setSessions)(old => ({ ...old, ...next, request: old.request + 1 }))
+  const setPageSize = (kind: Kind, size: number) => {
+    const state = kind === 'versions' ? versions : sessions
+    const firstIndex = ((state.data?.page ?? state.page) - 1) * (state.data?.page_size ?? state.size)
+    updatePanel(kind, { size, page: Math.floor(firstIndex / size) + 1, anchor: state.data?.anchor, lookup: undefined })
+  }
+  const lookup = (kind: Kind, raw: string) => {
+    const number = Number(raw)
+    if (!Number.isInteger(number) || number < 1) { (kind === 'versions' ? setVersions : setSessions)(old => ({ ...old, error: '请输入大于 0 的整数。' })); return }
+    const count = kind === 'versions' ? model?.version_count || 0 : model?.session_count || 0
+    if (number > count) { (kind === 'versions' ? setVersions : setSessions)(old => ({ ...old, error: `当前共有 ${count} 条记录。` })); return }
+    updatePanel(kind, { anchor: undefined, lookup: number, error: '' })
+  }
+  const showLatest = (kind: Kind) => {
+    updatePanel(kind, { page: 1, anchor: undefined, lookup: undefined })
+  }
+
+  const renderPagination = (kind: Kind, state: PanelState, compact = false) => <Pagination label={kind === 'versions' ? '保存版本' : '训练会话'} value={state} compact={compact}
+    onPage={page => updatePanel(kind, { page, size: state.data?.page_size ?? state.size, anchor: state.data?.anchor, lookup: undefined })}
+    onJump={page => updatePanel(kind, { page, size: state.data?.page_size ?? state.size, anchor: state.data?.anchor, lookup: undefined })}
+    onSize={size => setPageSize(kind, size)} />
+
+  return <div className="page-stack models-page">
+    <header className="page-heading section-heading"><div><Link to="/models">全部模型</Link><h1>{model?.name || '模型详情'}</h1></div><button onClick={() => setRefresh(value => value + 1)} disabled={busy}>刷新模型</button></header>
+    {error && <p role="alert" className="error callout">{error}</p>}{notice && <p role="status" className="callout success">{notice}</p>}{!model && !error && <p>加载模型…</p>}
+    {model && <>
+      <section className="panel"><h2>固定研究条件</h2><p className="model-basket">{model.spec.backtest.symbols.join(' → ')}</p>
+        <p>数据 {model.dataset_id} · {model.spec.frequency === 'weekly' ? '自然周' : '自然月'} 决策 · 已保存累计决策步数 {model.total_timesteps.toLocaleString('zh-CN')} 步</p>
+        <p>训练 {model.spec.train_start}–{model.spec.train_end} · 验证 {model.spec.validation_start}–{model.spec.validation_end} · 留出测试 {model.spec.test_start}–{model.spec.test_end}</p>
+        <p>选模：{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}</p>
+        <p className="muted">篮子顺序、观察窗口、网络、日期、成本和风控均已固定。训练过程不自动评估测试段。</p><JsonDetails title="完整固定配置" value={model.spec} />
+      </section>
+      <section className="panel"><h2>{model.version_count ? '追加训练' : '开始训练'}</h2>{!model.version_count && <p className="empty">待训练：尚无保存版本。首次训练成功后才能回测。</p>}
+        <form noValidate onSubmit={event => { event.preventDefault(); void submitTraining() }}><fieldset disabled={busy || !!activeId}><div className="form-grid">
+          <label>追加决策步数<input type="number" min={2} max={10000000} step={1} value={budget} onChange={event => setBudget(Number(event.target.value))} /></label>
+          <label>下次提交设备<select value={device} onChange={event => setDevice(event.target.value as 'cpu' | 'cuda')}><option value="cpu">CPU</option><option value="cuda" disabled={!cudaAvailable}>CUDA</option></select></label>
+        </div><p className="muted">设备选择仅用于下次提交；每次追加有步数上限，成功后可继续追加。续训从上次成功版本的最终参数和优化器状态恢复。</p><button>{model.version_count ? '继续训练' : '开始训练'}</button></fieldset></form>
+        {activeId && <div className="callout"><p>当前会话 {activeId} · {model.active_session ? stateLabels[model.active_session.state] || model.active_session.state : '已提交，状态待刷新'}</p><p>取消会丢弃本次未发布进度，已有版本继续可用。</p><button disabled={busy || model.active_session?.state === 'cancel_requested'} onClick={() => void cancelTraining()}>取消当前训练</button></div>}
+      </section>
+      <section className="panel" aria-label="保存版本"><div className="section-heading"><div><h2>保存版本 · {versions.data?.total ?? model.version_count} 轮</h2><p className="muted">成功保存一次计为一轮。回测使用选定快照，可能沿用较早轮次；续训使用本轮最终参数。</p></div></div>
+        {newCounts.versions > 0 && <p role="status" className="new-history-notice">有{newCounts.versions}条新记录，<button onClick={() => showLatest('versions')}>查看最新</button></p>}
+        <form className="history-search" onSubmit={event => { event.preventDefault(); lookup('versions', roundInput) }}><label>查找训练轮次<input inputMode="numeric" placeholder="例如 53" value={roundInput} onChange={event => setRoundInput(event.target.value)} /></label><button disabled={versions.loading}>查找轮次</button></form>
+        {renderPagination('versions', versions)}
+        {versions.error && <p role="alert" className="error">{versions.error} <button disabled={versions.loading} onClick={() => updatePanel('versions', {})}>重试加载</button></p>}{versions.loading && <p>加载保存版本…</p>}
+        {!versions.loading && !versions.error && !versions.data?.items.length && <p className="empty">暂无版本。失败或取消的会话不会发布新版本。</p>}
+        <div className="record-list">{versions.data?.items.map(item => {
+          const artifact = artifacts[item.id], manifest = artifact?.manifest || {}
+          return <article className="record history-record" id={`history-versions-${item.id}`} tabIndex={-1} key={item.id}>
+            <div className="record-head"><strong>第{item.round_number}轮</strong><span>{taskTime(item.saved_at || item.created_at)}</span><Link to={`/runs?model=${encodeURIComponent(id)}&version=${encodeURIComponent(item.id)}`}>使用此版本回测</Link><button aria-expanded={expanded === item.id} onClick={() => setExpanded(expanded === item.id ? '' : item.id)}>{expanded === item.id ? '收起详情' : '展开详情'}</button></div>
+            <p>累计步数 {String(item.timesteps_completed ?? '—')} · 实际设备 {item.runtime_device === 'cuda' ? 'CUDA（GPU）' : item.runtime_device === 'cpu' ? 'CPU' : '—'}</p>
+            <p>选定快照验证夏普率 {typeof item.validation_best?.sharpe === 'number' ? item.validation_best.sharpe.toFixed(3) : '—'}</p>
+            {item.selection_valid === false && <p className="callout warn">无有效验证评分：本版本保留了可用策略快照。</p>}
+            {expanded === item.id && <div className="history-detail">
+              <p className="muted">以下指标的验证区间：{model.spec.validation_start}–{model.spec.validation_end}</p>
+              <h3>本轮最终参数验证</h3><Metrics values={item.validation_latest || {}} /><h3>选定快照验证</h3><Metrics values={item.validation_best || {}} />
+              <p>选定快照来源：{item.best_round_number ? `第${item.best_round_number}轮` : item.best_source_version_id || '—'} · 选定快照步数 {item.best_timesteps ?? '—'}</p>
+              <p className="muted">完整版本ID {item.id}</p>
+              {artifactLoading === item.id && <p role="status">加载版本完整信息…</p>}
+              {artifactErrors[item.id] && <p role="alert" className="error">{artifactErrors[item.id]} <button onClick={() => setArtifactRetry(value => value + 1)}>重试详情</button></p>}
+              {artifact && <JsonDetails title="验证评估记录与版本完整信息" value={manifest} />}
+            </div>}
+          </article>
+        })}</div>{renderPagination('versions', versions, true)}
+      </section>
+      <section className="panel" aria-label="训练会话"><h2>训练会话 · {sessions.data?.total ?? model.session_count} 次尝试</h2>
+        {newCounts.sessions > 0 && <p role="status" className="new-history-notice">有{newCounts.sessions}条新记录，<button onClick={() => showLatest('sessions')}>查看最新</button></p>}
+        <form className="history-search" onSubmit={event => { event.preventDefault(); lookup('sessions', attemptInput) }}><label>查找训练尝试<input inputMode="numeric" placeholder="例如 55" value={attemptInput} onChange={event => setAttemptInput(event.target.value)} /></label><button disabled={sessions.loading}>查找尝试</button></form>
+        {renderPagination('sessions', sessions)}
+        {sessions.error && <p role="alert" className="error">{sessions.error} <button disabled={sessions.loading} onClick={() => updatePanel('sessions', {})}>重试加载</button></p>}{sessions.loading && <p>加载训练会话…</p>}{!sessions.loading && !sessions.error && !sessions.data?.items.length && <p>尚未提交训练。</p>}
+        <div className="record-list">{sessions.data?.items.map(savedItem => {
+          const item = model.active_session?.id === savedItem.id ? model.active_session : savedItem
+          return <article className="record history-record" id={`history-sessions-${item.id}`} tabIndex={-1} key={item.id}>
+            <div className="record-head"><strong>第{item.session_number}次训练尝试</strong><span className="badge">{stateLabels[item.state] || item.state}</span><span>{taskTime(item.created_at)}</span><button onClick={() => { focusTarget.current = 'training-log'; setSelectedLog(item) }}>查看日志</button></div>
+            <p className="muted">基础版本 {item.base_round_number ? `第${item.base_round_number}轮` : item.base_version_id || '首次初始化'} · {item.round_number ? <button className="history-round-link" onClick={() => lookup('versions', String(item.round_number))}>已保存第{item.round_number}轮</button> : '未保存新版本'}</p>
+            <details><summary>{item.error ? `失败或中断原因：${item.error.slice(0, 120)}` : '会话详情'}</summary><p>进度 {item.completed_through || '—'} · 心跳 {taskTime(item.heartbeat)}</p><p className="muted">任务 ID {item.id}</p>{item.error && <p className="error">{item.error}</p>}</details>
+          </article>
+        })}</div>{renderPagination('sessions', sessions, true)}
+      </section>
+      {selectedLog && <section className="panel" id="training-log" tabIndex={-1} aria-label="训练日志"><div className="section-heading"><h2>第{selectedLog.session_number}次尝试 · 训练日志</h2><button onClick={() => setSelectedLog(null)}>关闭日志</button></div>
+        {logError && <p role="alert" className="error">{logError}</p>}<ol className="event-timeline">{logs.map(event => <li key={event.seq}><small>{event.phase}</small><p>{event.message}</p>{typeof event.payload.progress === 'number' && <progress aria-label="训练会话进度" max={1} value={event.payload.progress} />}{event.payload.timesteps !== undefined && <small>累计步数 {String(event.payload.timesteps)}</small>}{event.payload.validation_sharpe !== undefined && <small> 验证夏普 {String(event.payload.validation_sharpe ?? '—')}</small>}</li>)}</ol><p className="muted">保留最近 500 条事件。</p>
+      </section>}
+    </>}
   </div>
 }

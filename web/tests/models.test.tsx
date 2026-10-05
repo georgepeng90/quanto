@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
-import { beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { App } from '../src/App'
 
 const spec = { name: '研究模型', frequency: 'weekly', backtest: { symbols: ['ETF2', 'ETF1'] }, validation_end: '2023-12-31', test_start: '2024-01-01', test_end: '2024-12-31', total_timesteps: 4096, device: 'cpu', selection_metric: 'validation_sharpe' }
@@ -22,6 +22,7 @@ beforeEach(() => {
     throw new Error(`Unexpected ${path}`)
   }))
 })
+afterEach(() => vi.useRealTimers())
 
 test('has exactly four domain links and opens models before creation', async () => {
   app('/models')
@@ -101,4 +102,91 @@ test('a deep link pins its specified version and changing models clears it', asy
   expect(screen.getByLabelText('保存版本')).toHaveValue('v1')
   await userEvent.selectOptions(screen.getByLabelText('强化学习模型'), '')
   expect(screen.getByLabelText('保存版本')).toHaveValue('')
+})
+
+test('version separates latest parameters from retained best and reports its actual device', async () => {
+  const prior = globalThis.fetch
+  const earlier = { ...model.versions[0], id: 'earlier', manifest: { ...model.versions[0].manifest, id: 'source-content' } }
+  const latest = { ...model.versions[0], manifest: { ...model.versions[0].manifest,
+    runtime: { device: 'cuda' }, best_timesteps: 512, best_source_content_id: 'source-content',
+    history: [{ timesteps: 4096, validation_total_return: 0, validation_sharpe: null, validation_max_drawdown: 0, validation_net_log_return: 0 }] } }
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1'
+    ? Response.json({ ...model, versions: [latest, earlier] }) : prior(input, init)))
+  app('/models/m1')
+  await screen.findByText('ETF2 → ETF1')
+  const link = screen.getAllByRole('link', { name: '使用此版本回测' })[0]
+  const version = link.closest('article')!
+  const current = within(version).getByRole('heading', { name: '本轮最终参数验证' }).nextElementSibling!
+  const best = within(version).getByRole('heading', { name: '选定快照验证' }).nextElementSibling!
+  expect(current).toHaveTextContent('0.00%')
+  expect(within(current as HTMLElement).getByText('Sharpe（日末）').nextElementSibling).toHaveTextContent('—')
+  expect(best).toHaveTextContent('10.00%')
+  expect(within(version).getByText(/本版本实际训练设备 CUDA/)).toBeVisible()
+  expect(within(version).getByText(/选定快照步数 512/)).toBeVisible()
+  expect(within(version).getByText(/沿用此前快照.*earlier/)).toBeVisible()
+  expect(screen.getByLabelText('下次提交设备')).toHaveValue('cpu')
+})
+
+test('idle detail discovers external training and stops polling after unmount', async () => {
+  vi.useFakeTimers()
+  const prior = globalThis.fetch
+  let calls = 0
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) !== '/api/investing/models/m1') return prior(input, init)
+    calls += 1
+    return Response.json(calls === 1 ? model : { ...model, active_job_id: 'external', state: 'running' })
+  }))
+  let view: ReturnType<typeof app>
+  await act(async () => { view = app('/models/m1') })
+  expect(calls).toBe(1)
+  await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
+  expect(calls).toBe(2)
+  expect(screen.getByText(/当前会话 external/)).toBeVisible()
+  await act(async () => { await vi.advanceTimersByTimeAsync(3000) })
+  expect(calls).toBe(3)
+  view!.unmount()
+  await act(async () => { await vi.advanceTimersByTimeAsync(30000) })
+  expect(calls).toBe(3)
+  expect(posts).toHaveLength(0)
+})
+
+test('detail retries a transient read error without submitting training', async () => {
+  vi.useFakeTimers()
+  const prior = globalThis.fetch
+  let calls = 0
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) !== '/api/investing/models/m1') return prior(input, init)
+    calls += 1
+    if (calls === 1) throw new Error('temporary timeout')
+    return Response.json(model)
+  }))
+  await act(async () => { app('/models/m1') })
+  expect(screen.getByRole('alert')).toHaveTextContent('temporary timeout')
+  await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
+  expect(calls).toBe(2)
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(screen.getByText('ETF2 → ETF1')).toBeVisible()
+  expect(posts).toHaveLength(0)
+})
+
+test('polling waits for a slow response instead of overlapping model requests', async () => {
+  vi.useFakeTimers()
+  const prior = globalThis.fetch
+  let calls = 0, release: () => void = () => {}
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) !== '/api/investing/models/m1') return prior(input, init)
+    calls += 1
+    if (calls === 2) await new Promise<void>(resolve => { release = resolve })
+    return Response.json(model)
+  }))
+  let view: ReturnType<typeof app>
+  await act(async () => { view = app('/models/m1') })
+  await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
+  expect(calls).toBe(2)
+  await act(async () => { await vi.advanceTimersByTimeAsync(30000) })
+  expect(calls).toBe(2)
+  await act(async () => { release() })
+  await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
+  expect(calls).toBe(3)
+  view!.unmount()
 })

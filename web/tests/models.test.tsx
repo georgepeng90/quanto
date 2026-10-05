@@ -19,7 +19,7 @@ beforeEach(() => {
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api' })
     if (init?.method === 'POST') { posts.push({ path, body: JSON.parse(String(init.body)) }); return Response.json(path === '/api/investing/models' ? { ...model, state: 'pending', versions: [] } : { id: 'j1', state: 'queued' }) }
     if (path.startsWith('/api/investing/models/m1/history?')) {
-      const items = new URL(path, 'http://local').searchParams.get('kind') === 'versions' ? versionItems : []
+      const items = versionItems
       return Response.json({ items, total: items.length, page: 1, page_size: 10, total_pages: 1, anchor: 10 })
     }
     if (path === '/api/investing/models/m1?include_history=false') return Response.json({ ...model, active_session: null, capabilities: { cuda_available: false } })
@@ -66,7 +66,7 @@ test('detail keeps configuration read only and adds only session budget and devi
   await userEvent.click(screen.getByRole('button', { name: '继续训练' }))
   expect(posts[0]).toEqual({ path: '/api/investing/models/m1/train', body: { additional_timesteps: 8192, device: 'cpu' } })
   expect(screen.getByRole('link', { name: '使用此版本回测' })).toHaveAttribute('href', '/runs?model=m1&version=v1')
-  expect(screen.getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('—')
+  expect(within(screen.getByRole('region', { name: '训练历史' })).getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('—')
 })
 
 test('backtest requires explicit version instead of choosing the latest', async () => {
@@ -90,7 +90,7 @@ test('new session starts with model defaults and unscored versions disclose unav
   app('/models/m1')
   await screen.findByText('ETF2 → ETF1')
   expect(screen.getByLabelText('追加决策步数')).toHaveValue(128)
-  expect(screen.getByText(/无有效验证评分/)).toBeVisible()
+  expect(within(screen.getByRole('region', { name: '训练历史' })).getByText(/无有效验证评分/)).toBeVisible()
 })
 
 test('active sessions block overlapping training and explain cancellation progress loss', async () => {

@@ -13,11 +13,12 @@ function setup() {
     if (url.pathname === '/api/session') return Response.json({ token: 'token', api_base: '/api' })
     if (url.pathname === '/api/investing/models/m1') return Response.json({
       id: 'm1', name: 'Model', dataset_id: 'd1', state: 'ready', active_job_id: null, active_session: null,
-      total_timesteps: 156160, version_count: count, session_count: count, capabilities: { cuda_available: true },
+      total_timesteps: 156160, version_count: count, session_count: count, latest_version_id: 'latest-job', capabilities: { cuda_available: true },
       spec: { backtest: { symbols: ['ETF1'] }, total_timesteps: 512, device: 'cuda', frequency: 'weekly' },
     })
     if (url.pathname.endsWith('/history')) {
       historyCalls.push(url.search)
+      if (url.searchParams.get('kind') === 'versions') return Response.json({ items: [{ id: 'latest-job', round_number: count, best_round_number: count, selection_valid: true, validation_best: {} }], total: count, page: 1, page_size: 1, total_pages: count, anchor: 610 })
       return Response.json({ items: [], total: 305, page: 1, page_size: 10, total_pages: 31, anchor: 610 })
     }
     throw new Error(`Unexpected request ${url.pathname}`)
@@ -26,11 +27,13 @@ function setup() {
   return { historyCalls, view, add: () => { count += 1 } }
 }
 
-test('initial loading fetches each compact history once and polling only refreshes the summary', async () => {
+test('initial loading fetches one history page and polling only refreshes the summary', async () => {
   vi.useFakeTimers()
   let state!: ReturnType<typeof setup>
   await act(async () => { state = setup() })
   expect(state.historyCalls).toHaveLength(2)
+  expect(state.historyCalls.filter(query => query.includes('kind=sessions'))).toHaveLength(1)
+  expect(state.historyCalls.filter(query => query.includes('kind=versions'))).toHaveLength(1)
   await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
   expect(state.historyCalls).toHaveLength(2)
   state.view.unmount()
@@ -42,10 +45,10 @@ test('successive new rounds are counted against frozen pages, not the preceding 
   await act(async () => { state = setup() })
   state.add()
   await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
-  expect(screen.getAllByText(/有1条新记录/)).toHaveLength(2)
+  expect(screen.getAllByText(/有1条新记录/)).toHaveLength(1)
   state.add()
   await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
-  expect(screen.getAllByText(/有2条新记录/)).toHaveLength(2)
+  expect(screen.getAllByText(/有2条新记录/)).toHaveLength(1)
   state.view.unmount()
 })
 

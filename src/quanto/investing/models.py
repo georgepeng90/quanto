@@ -67,8 +67,65 @@ class InvestingModels(InvestingService):
         return {'items': [self._summary(row, self._sessions(row['id'])) for row in rows[:limit]],
                 'next_cursor': str(offset + limit) if len(rows) > limit else None}
 
-    def get_model(self, identity):
+    def _history_index(self, identity):
+        # Read bounded metadata, never cumulative validation histories or checkpoint files.
+        with self.store.transaction() as db:
+            rows = db.execute('''SELECT j.id, s.base_version_id, j.enqueue_seq, j.state,
+                j.created_at, j.started_at, j.finished_at, j.heartbeat, j.completed_through, j.error,
+                a.kind AS artifact_kind, a.created_at AS saved_at,
+                json_extract(a.manifest_json, '$.id') AS content_id,
+                json_extract(a.manifest_json, '$.best_source_content_id') AS source_content_id,
+                json_extract(a.manifest_json, '$.timesteps_completed') AS timesteps_completed,
+                json_extract(a.manifest_json, '$.session_timesteps') AS session_timesteps,
+                json_extract(a.manifest_json, '$.best_timesteps') AS best_timesteps,
+                json_extract(a.manifest_json, '$.runtime.device') AS runtime_device,
+                json_extract(a.manifest_json, '$.selection_valid') AS selection_valid,
+                json_extract(a.manifest_json, '$.metrics.validation') AS validation_best,
+                json_extract(a.manifest_json, '$.history[#-1]') AS validation_latest
+                FROM investing_sessions s JOIN jobs j ON j.id=s.job_id
+                LEFT JOIN learning_artifacts a ON a.id=s.job_id
+                WHERE s.model_id=? ORDER BY j.enqueue_seq''', (identity,)).fetchall()
+        items, by_id, by_content, number = [], {}, {}, 0
+        for attempt, row in enumerate(rows, 1):
+            item = dict(row)
+            published = item.pop('artifact_kind') == 'policy' and item['state'] == 'succeeded'
+            if published:
+                number += 1
+                item['selection_valid'] = bool(item['selection_valid'])
+                item['validation_best'] = json.loads(item['validation_best'] or '{}')
+                latest = json.loads(item['validation_latest'] or '{}')
+                item['validation_latest'] = {key.removeprefix('validation_'): value
+                                             for key, value in latest.items() if key.startswith('validation_')}
+            item.update(session_number=attempt, round_number=number if published else None)
+            items.append(item)
+            by_id[item['id']] = item
+            if published:
+                by_content[item['content_id']] = item
+        for item in items:
+            base = by_id.get(item['base_version_id'])
+            source = by_content.get(item.pop('source_content_id') or item['content_id'])
+            item.pop('content_id')
+            item['base_round_number'] = base['round_number'] if base else None
+            item['best_round_number'] = source['round_number'] if source else None
+            item['best_source_version_id'] = source['id'] if source else None
+        return items[::-1]
+
+    def get_model(self, identity, include_history=True):
         row = self._model(identity)
+        if not include_history:
+            from quanto.learning.service import capabilities
+
+            items = self._history_index(identity)
+            versions = [item for item in items if item['round_number'] is not None]
+            active = next((item for item in items if item['state'] in ACTIVE_STATES), None)
+            latest = versions[0] if versions else None
+            spec = json.loads(row['spec_json'])
+            return dict(id=identity, name=spec['name'], dataset_id=row['dataset_id'], spec=spec,
+                        created_at=row['created_at'], state=active['state'] if active else 'ready' if latest else 'untrained',
+                        active_job_id=active['id'] if active else None, active_session=active,
+                        session_count=len(items), version_count=len(versions),
+                        total_timesteps=latest['timesteps_completed'] if latest else 0,
+                        latest_version_id=latest['id'] if latest else None, capabilities=capabilities())
         sessions = self._sessions(identity)
         result = self._summary(row, sessions)
         result['sessions'] = [{**self.workbench.get_resource('jobs', item['job_id']),
@@ -76,6 +133,36 @@ class InvestingModels(InvestingService):
         result['versions'] = [self.detail('policies', item['job_id']) for item in sessions
                               if item['state'] == 'succeeded' and item['manifest_json']]
         return result
+
+    def history(self, identity, kind='versions', page=1, page_size=10, anchor=None,
+                round_number=None, session_number=None):
+        self._model(identity)
+        if kind not in {'versions', 'sessions'} or type(page) is not int or page < 1:
+            raise ValueError('invalid history kind or page')
+        if type(page_size) is not int or not 1 <= page_size <= 50:
+            raise ValueError('history page size must be between 1 and 50')
+        for value, minimum in ((anchor, 0), (round_number, 1), (session_number, 1)):
+            if value is not None and (type(value) is not int or value < minimum):
+                raise ValueError('invalid history position')
+        if session_number is not None and (kind != 'sessions' or round_number is not None):
+            raise ValueError('session lookup requires sessions history and no round lookup')
+        items = [item for item in self._history_index(identity)
+                 if kind == 'sessions' or item['round_number'] is not None]
+        if anchor is None:
+            anchor = items[0]['enqueue_seq'] if items else 0
+        items = [item for item in items if item['enqueue_seq'] <= anchor]
+        lookup = round_number if round_number is not None else session_number
+        if lookup is not None:
+            field = 'round_number' if round_number is not None else 'session_number'
+            index = next((index for index, item in enumerate(items) if item[field] == lookup), None)
+            if index is None:
+                raise ValueError('requested training record does not exist in this history')
+            page = index // page_size + 1
+        total = len(items)
+        total_pages = max(1, (total + page_size - 1) // page_size)
+        page = min(page, total_pages)
+        return dict(items=items[(page - 1) * page_size:page * page_size], total=total,
+                    page=page, page_size=page_size, total_pages=total_pages, anchor=anchor)
 
     def create_model(self, body):
         if not isinstance(body, dict) or set(body) != {'dataset_id', 'spec'}:

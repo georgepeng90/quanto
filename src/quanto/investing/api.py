@@ -34,8 +34,15 @@ def create_model(request: Request, body: dict):
 
 
 @router.get('/models/{identity}')
-def get_model(request: Request, identity: str):
-    return models(request).get_model(identity)
+def get_model(request: Request, identity: str, include_history: bool = True):
+    return models(request).get_model(identity, include_history)
+
+
+@router.get('/models/{identity}/history')
+def model_history(request: Request, identity: str, kind: str = 'versions', page: int = 1,
+                  page_size: int = 10, anchor: int | None = None,
+                  round_number: int | None = None, session_number: int | None = None):
+    return models(request).history(identity, kind, page, page_size, anchor, round_number, session_number)
 
 
 @router.post('/models/{identity}/train')

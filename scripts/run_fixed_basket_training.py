@@ -51,6 +51,16 @@ def validate_manifest(manifest, model_id, parent_id, started, budget):
             raise ValueError(f"continuation mismatch: {key}")
 
 
+def ensure_device(device):
+    if device not in {"cpu", "cuda"}:
+        raise ValueError("device override must be cpu or cuda")
+    if device == "cuda":
+        import torch
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA unavailable; CPU fallback is forbidden")
+        torch.zeros(1, device="cuda")  # Fail before submitting any job if initialization fails.
+
+
 class API:
     def __init__(self, url):
         self.client = httpx.Client(base_url=url.rstrip("/") + "/api/", timeout=60)
@@ -82,17 +92,115 @@ class Runner:
         self.output.mkdir(parents=True, exist_ok=True)
         self.state_path = self.output / "state.json"
         identity = digest({"protocol": protocol, "url": self.url})
+        source = self.extension_source() if protocol.get("source_state_path") else None
         if self.state_path.exists():
             self.state = json.loads(self.state_path.read_text(encoding="utf-8"))
             if self.state["protocol_hash"] != identity:
                 raise ValueError("protocol or URL changed; use a different output directory")
+            if source and self.state.get("extension", {}).get("source_state_sha256") != protocol["source_state_sha256"]:
+                raise ValueError("extension provenance changed")
         else:
-            self.state = {"protocol_hash": identity, "operations": {}, "rounds": [], "evaluations": {}}
+            self.state = self.seed_extension(source, identity) if source else {
+                "protocol_hash": identity, "operations": {}, "rounds": [], "evaluations": {}}
             self.save()
         self.elapsed_before = self.state.get("elapsed_seconds", 0.)
         self.api = api or API(self.url)
         config = json.loads((ROOT / "workbench.local.json").read_text(encoding="utf-8"))
         self.workspace = Path(protocol.get("workspace_path", ROOT / config["workspace"])).resolve()
+
+    def extension_source(self):
+        path = Path(self.protocol["source_state_path"]).resolve()
+        if path.parent == self.output:
+            raise ValueError("extension requires a new output directory")
+        raw = path.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != self.protocol.get("source_state_sha256"):
+            raise ValueError("source state hash does not match pinned provenance")
+        source = json.loads(raw)
+        if source.get("complete") is not True or len(source.get("rounds", [])) != 50:
+            raise ValueError("extension requires a completed 50-round source")
+        if self.protocol.get("rounds") != 250 or self.protocol.get("timesteps_per_round") != 512:
+            raise ValueError("extension requires cumulative 250 rounds at 512 steps")
+        if self.protocol.get("device_override") != "cuda":
+            raise ValueError("this extension requires explicit CUDA execution")
+        from quanto.investing.contracts import PolicyTrainingSpec
+        spec = PolicyTrainingSpec.model_validate(self.protocol["spec"]).model_dump(mode="json")
+        if source["operations"]["model"]["body"] != {"dataset_id": source["dataset_id"], "spec": spec}:
+            raise ValueError("extension must preserve original model specification and dataset")
+        previous = None
+        for number, entry in enumerate(source["rounds"], 1):
+            if (entry["round"] != number or entry["timesteps_started"] != (number - 1) * 512
+                    or entry["timesteps_completed"] != number * 512 or entry["session_timesteps"] != 512
+                    or entry["base_version_id"] != previous):
+                raise ValueError("source continuation chain is inconsistent")
+            previous = entry["version_id"]
+        expected = {f"monitor_{n:03d}_{snapshot}" for n in range(10, 51, 10) for snapshot in ("best", "last")}
+        expected |= {"monitor_equal_weight", "monitor_buy_hold", "final_best", "final_last", "final_equal_weight", "final_buy_hold"}
+        if set(source["evaluations"]) != expected:
+            raise ValueError("completed source evaluations are incomplete")
+        return source
+
+    def seed_extension(self, source, identity):
+        path = Path(self.protocol["source_state_path"]).resolve()
+        evaluations, operations = {}, {}
+        for key, entry in source["evaluations"].items():
+            summary = path.parent / (key + ".json")
+            if json.loads(summary.read_text(encoding="utf-8")) != entry["summary"]:
+                raise ValueError("source evaluation summary changed")
+            entry["source_summary_path"] = str(summary)
+            if not entry.get("job_id"):
+                equity = path.parent / (key + ".equity.csv")
+                if key.endswith("_last") and not equity.is_file():
+                    raise ValueError("source offline equity file missing")
+                if equity.is_file():
+                    entry["source_equity_path"] = str(equity)
+            evaluations["historical_final_050_" + key[6:] if key.startswith("final_") else key] = entry
+        for key, receipt in source["operations"].items():
+            operations["historical_final_050_" + key[6:] if key.startswith("final_") else key] = receipt
+        last = source["rounds"][-1]
+        return {"protocol_hash": identity, "operations": operations, "rounds": source["rounds"],
+                "evaluations": evaluations, "model_id": source["model_id"], "dataset_id": source["dataset_id"],
+                "complete": False, "extension": {"source_state_path": str(path),
+                    "source_state_sha256": self.protocol["source_state_sha256"], "source_protocol_hash": source["protocol_hash"],
+                    "base_rounds": 50, "base_version_id": last["version_id"], "base_content_id": last["content_id"],
+                    "model_id": source["model_id"], "dataset_id": source["dataset_id"],
+                    "device_override": self.protocol["device_override"], "source_elapsed_seconds": source.get("elapsed_seconds")}}
+
+    def final_prefix(self):
+        return f"final_{self.protocol['rounds']}" if self.state.get("extension") else "final"
+
+    def verify_extension(self, model, budget):
+        if not self.state.get("extension"):
+            return
+        from quanto.learning.artifacts import read_manifest
+        sessions = {entry["id"]: entry for entry in model["sessions"]}
+        versions = {entry["id"]: entry["manifest"] for entry in model["versions"]}
+        previous_id = previous_content = None
+        for number, entry in enumerate(self.state["rounds"], 1):
+            session = sessions.get(entry["version_id"])
+            if not session or session["state"] != "succeeded" or session["base_version_id"] != previous_id:
+                raise RuntimeError("extension recorded session/parent is not successful")
+            manifest = versions[entry["version_id"]]
+            validate_manifest(manifest, self.state["model_id"], previous_content, (number - 1) * budget, budget)
+            if manifest["id"] != entry["content_id"] or manifest["dataset_content_hash"] != self.dataset_hash:
+                raise RuntimeError("extension dataset or content identity mismatch")
+            previous_id, previous_content = entry["version_id"], manifest["id"]
+        row = self.db_row("learning_artifacts", previous_id)
+        if read_manifest(Path(row["path"]), "policy")["id"] != previous_content:
+            raise RuntimeError("extension checkpoint files changed")
+        pending = self.state["operations"].get(f"train_{len(self.state['rounds']) + 1:03d}")
+        allowed_ids = {previous_id}
+        if pending:
+            recovered = [pending["id"]] if pending.get("id") else self.recover(pending)
+            if len(recovered) != 1:
+                raise RuntimeError("ambiguous pending extension session; no POST repeated")
+            allowed_ids.update(recovered)
+        if model["latest_version_id"] not in allowed_ids or (model.get("active_job_id") and model["active_job_id"] not in allowed_ids):
+            raise RuntimeError("extension model head changed outside this runner")
+        for entry in self.state["evaluations"].values():
+            if entry.get("source_summary_path") and entry.get("job_id"):
+                registered = self.db_row("learning_artifacts", entry["job_id"])
+                entry["source_equity_path"] = str((Path(registered["path"]) / "equity.csv").resolve())
+        self.save()
 
     def save(self):
         if hasattr(self, "elapsed_before"):
@@ -325,6 +433,8 @@ class Runner:
             raise ValueError("validation, monitoring and final periods must be ordered and disjoint")
         if final != {"start": str(config.test_start), "end": str(config.test_end)}:
             raise ValueError("final period must equal the fixed test partition")
+        device = self.protocol.get("device_override", config.device)
+        ensure_device(device)
         dataset_id = self.dataset()
         if not self.state.get("model_id"):
             self.state["model_id"] = self.submit("model", "/investing/models", {"dataset_id": dataset_id, "spec": spec}, "model")
@@ -333,6 +443,7 @@ class Runner:
         model = self.api.get("/investing/models/" + model_id)
         if model["spec"] != spec or model["dataset_id"] != dataset_id:
             raise RuntimeError("saved model configuration differs from protocol")
+        self.verify_extension(model, budget)
         for number in range(1, rounds + 1):
             if len(self.state["rounds"]) < number:
                 round_started = time.monotonic()
@@ -340,7 +451,7 @@ class Runner:
                 base = previous["version_id"] if previous else None
                 self.log(f"round {number}/{rounds}: append {budget} timesteps")
                 job_id = self.submit(f"train_{number:03d}", f"/investing/models/{model_id}/train",
-                                     {"additional_timesteps": budget, "device": config.device}, "train", base)
+                                     {"additional_timesteps": budget, "device": device}, "train", base)
                 self.wait(job_id)
                 model = self.api.get("/investing/models/" + model_id)
                 session = next(item for item in model["sessions"] if item["id"] == job_id)
@@ -351,6 +462,8 @@ class Runner:
                                   previous["timesteps_completed"] if previous else 0, budget)
                 if manifest.get("metrics", {}).get("test") is not None:
                     raise RuntimeError("training unexpectedly evaluated the final test")
+                if device == "cuda" and (manifest["config"]["device"] != "cuda" or manifest["runtime"]["device"] != "cuda"):
+                    raise RuntimeError("CUDA training was not honored; CPU fallback is forbidden")
                 latest = manifest["history"][-1]
                 latest_metrics = {key.removeprefix("validation_"): value for key, value in latest.items()
                                   if key.startswith("validation_")}
@@ -374,10 +487,11 @@ class Runner:
                 for baseline in ("equal_weight", "buy_hold"):
                     self.backtest("monitor_" + baseline, number, version, "monitor", monitor, baseline)
         version = self.state["rounds"][-1]["version_id"]
-        self.backtest("final_best", rounds, version, "final", final)
-        self.offline_last("final_last", rounds, version, "final", final)
+        final_prefix = self.final_prefix()
+        self.backtest(final_prefix + "_best", rounds, version, "final", final)
+        self.offline_last(final_prefix + "_last", rounds, version, "final", final)
         for baseline in ("equal_weight", "buy_hold"):
-            self.backtest("final_" + baseline, rounds, version, "final", final, baseline)
+            self.backtest(final_prefix + "_" + baseline, rounds, version, "final", final, baseline)
         self.state["complete"] = True
         self.save()
         self.comparison()

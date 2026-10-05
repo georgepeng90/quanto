@@ -21,7 +21,42 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CHECKPOINTS = (10, 20, 30, 40, 50)
+
+def monitoring_checkpoints(protocol):
+    rounds = protocol["rounds"]
+    require(type(rounds) is int and rounds >= 50 and rounds % 10 == 0, "invalid monitoring budget")
+    return tuple(range(10, rounds + 1, 10))
+
+
+def evaluation_keys(protocol, extension=False):
+    keys = {f"monitor_{n:03d}_{snapshot}" for n in monitoring_checkpoints(protocol) for snapshot in ("best", "last")}
+    keys |= {"monitor_equal_weight", "monitor_buy_hold"}
+    prefix = f"final_{protocol['rounds']:03d}_" if extension else "final_"
+    keys |= {prefix + snapshot for snapshot in ("best", "last", "equal_weight", "buy_hold")}
+    if extension:
+        keys |= {"historical_final_050_" + snapshot for snapshot in ("best", "last", "equal_weight", "buy_hold")}
+    return keys
+
+
+def evaluation_role(key, rounds):
+    historical = key.startswith("historical_final_050_")
+    period = "monitor" if key.startswith("monitor_") else "final"
+    suffix = key.removeprefix("historical_final_050_" if historical else period + "_")
+    number = int(suffix[:3]) if suffix[:3].isdigit() else (50 if historical else 10 if period == "monitor" else rounds)
+    role = suffix[4:] if suffix[:3].isdigit() else suffix
+    return period, number, role, historical
+
+
+def verify_session_device(protocol, extension, number, manifest):
+    expected = dict(protocol["spec"])
+    device = protocol["device_override"] if extension and number > 50 else expected["device"]
+    expected["device"] = device
+    subset(expected, manifest["config"])
+    require(manifest["runtime"]["device"] == device, f"round {number}: runtime device mismatch")
+    if extension:
+        require(device == ("cpu" if number <= 50 else "cuda"), "CPU/CUDA session boundary changed")
+        if number > 50:
+            require(bool(manifest["runtime"].get("cuda_version")), "CUDA session lacks CUDA runtime evidence")
 
 
 def read_json(path):
@@ -104,7 +139,7 @@ def metrics_equal(expected, actual):
                     f"equity disagrees with {key}")
 
 
-def plot_monitoring(rows, path):
+def plot_monitoring(rows, path, actions_per_round=512):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -129,8 +164,8 @@ def plot_monitoring(rows, path):
         if metric == "sharpe" and all(row[metric] is None for row in policy_rows):
             axis.text(.5, .15, "Policy Sharpe undefined (zero variance)", ha="center", transform=axis.transAxes)
     axes[0].set_title("Fixed-basket PPO: 2025 monitoring period")
-    axes[-1].set_xlabel("Successful continuation sessions (512 actions each)")
-    axes[-1].set_xticks(CHECKPOINTS)
+    axes[-1].set_xlabel(f"Successful continuation sessions ({actions_per_round} actions each)")
+    axes[-1].set_xticks(sorted({int(row["round"]) for row in rows if row["snapshot"] in {"validation_best", "last.zip_offline"}}))
     figure.savefig(path, dpi=160)
     plt.close(figure)
 
@@ -165,19 +200,44 @@ class Audit:
 
     def run(self):
         require(self.state.get("complete") is True, "not complete")
-        require(self.protocol["rounds"] == 50 and self.protocol["timesteps_per_round"] == 512, "unexpected protocol budget")
-        require(len(self.state["rounds"]) == 50, "expected 50 recorded rounds")
+        rounds, budget = self.protocol["rounds"], self.protocol["timesteps_per_round"]
+        checkpoints = monitoring_checkpoints(self.protocol)
+        require(type(budget) is int and budget > 0, "invalid action budget")
+        require(len(self.state["rounds"]) == rounds, "recorded round count disagrees with protocol")
+        extension = self.state.get("extension")
+        require(bool(extension) == bool(self.protocol.get("source_state_path")), "extension protocol/state mismatch")
+        source_state = None
+        if extension:
+            source_path = Path(self.protocol["source_state_path"]).resolve()
+            require(sha(source_path) == self.protocol["source_state_sha256"], "original state changed")
+            source_state = read_json(source_path)
+            require(source_state.get("complete") is True and len(source_state["rounds"]) == 50,
+                    "extension requires completed original 50 rounds")
+            require(extension["source_state_sha256"] == self.protocol["source_state_sha256"]
+                    and Path(extension["source_state_path"]).resolve() == source_path
+                    and extension["base_rounds"] == 50 and extension["device_override"] == "cuda"
+                    and self.protocol["device_override"] == "cuda", "extension provenance mismatch")
+            require(self.state["rounds"][:50] == source_state["rounds"], "original training prefix changed")
+            require(all(self.state[key] == source_state[key] == extension[key] for key in ("model_id", "dataset_id")),
+                    "extension created a different model or dataset")
+            require(extension["base_version_id"] == source_state["rounds"][-1]["version_id"]
+                    and extension["base_content_id"] == source_state["rounds"][-1]["content_id"], "extension base changed")
+            require(extension["source_protocol_hash"] == source_state["protocol_hash"], "original protocol identity changed")
         model = self.row("investing_models", self.state["model_id"])
         require(model["dataset_id"] == self.state["dataset_id"], "model dataset mismatch")
         spec = json.loads(model["spec_json"])
         subset(self.protocol["spec"], spec)
+        require(budget % spec["n_steps"] == 0, "budget must contain complete PPO rollouts")
         monitor, final = self.protocol["monitor_period"], self.protocol["final_period"]
         require(spec["validation_end"] < monitor["start"] < monitor["end"] < final["start"] < final["end"],
                 "monitoring/final cutoffs overlap validation or each other")
         require(final == {"start": spec["test_start"], "end": spec["test_end"]}, "final test partition changed")
         sessions = self.db.execute("SELECT s.*, j.state FROM investing_sessions s JOIN jobs j ON j.id=s.job_id "
                                    "WHERE model_id=? ORDER BY j.enqueue_seq", (model["id"],)).fetchall()
-        require(len(sessions) == 50 and all(s["state"] == "succeeded" for s in sessions), "model must have exactly 50 successful sessions")
+        # An immutable original audit can still verify its prefix after authorized continuation.
+        require(len(sessions) >= rounds and all(s["state"] == "succeeded" for s in sessions[:rounds]),
+                "model has insufficient successful ordered sessions")
+        sessions = sessions[:rounds]
         dataset = self.row("datasets", self.state["dataset_id"])
         # Dataset content hash uses the same canonical map of actual member hashes.
         directory = Path(dataset["path"])
@@ -191,24 +251,25 @@ class Audit:
             require(session["base_version_id"] == prior_id, "session parent mismatch")
             manifest, record = self.registered(entry["version_id"], "policy")
             for key, value in {"model_id": model["id"], "parent_content_id": prior_content,
-                               "dataset_content_hash": dataset["content_hash"], "timesteps_started": (number - 1) * 512,
-                               "timesteps_completed": number * 512, "session_timesteps": 512}.items():
+                               "dataset_content_hash": dataset["content_hash"], "timesteps_started": (number - 1) * budget,
+                               "timesteps_completed": number * budget, "session_timesteps": budget}.items():
                 require(manifest.get(key) == value, f"round {number}: {key} mismatch")
             require(manifest["metrics"]["test"] is None, "training evaluated reserved test")
-            subset(self.protocol["spec"], manifest["config"])
+            verify_session_device(self.protocol, extension, number, manifest)
             require(entry["content_id"] == manifest["id"] and entry["validation_best"] == manifest["metrics"]["validation"],
                     "state/policy identity or validation metric mismatch")
             latest = {key.removeprefix("validation_"): value for key, value in manifest["history"][-1].items()
                       if key.startswith("validation_")}
             require(entry["validation_latest"] == latest, "latest validation metrics changed")
             record["round"] = number
+            record["runtime_device"] = manifest["runtime"]["device"]
             record.update({key: manifest[key] for key in ("best_timesteps", "best_source_content_id", "selection_valid")})
             record["validation_best"] = manifest["metrics"]["validation"]
             record["validation_latest"] = latest
             record["last"] = checkpoint(Path(record["path"]) / "last.zip")
             record["best"] = checkpoint(Path(record["path"]) / "policy.zip")
-            require(record["last"]["num_timesteps"] == number * 512, "last.zip timestep counter mismatch")
-            expected_updates = number * (512 // spec["n_steps"]) * spec["n_epochs"]
+            require(record["last"]["num_timesteps"] == number * budget, "last.zip timestep counter mismatch")
+            expected_updates = number * (budget // spec["n_steps"]) * spec["n_epochs"]
             require(record["last"]["ppo_n_updates"] == expected_updates, "last.zip PPO epoch update counter mismatch")
             require(record["best"]["num_timesteps"] == manifest["best_timesteps"], "best.zip timestep counter mismatch")
             source_id = manifest["best_source_content_id"]
@@ -222,34 +283,36 @@ class Audit:
             records_by_content[manifest["id"]] = record
             prior_id, prior_content = entry["version_id"], manifest["id"]
         evaluations, monitoring = {}, []
-        expected_keys = {f"monitor_{n:03d}_{snapshot}" for n in CHECKPOINTS for snapshot in ("best", "last")}
-        expected_keys |= {"monitor_equal_weight", "monitor_buy_hold", "final_best", "final_last", "final_equal_weight", "final_buy_hold"}
+        expected_keys = evaluation_keys(self.protocol, bool(extension))
         require(set(self.state["evaluations"]) == expected_keys, "missing or unexpected evaluations")
         for key in sorted(expected_keys):
             entry = self.state["evaluations"][key]
-            summary_path = self.state_path.parent / (key + ".json")
+            if extension and (key.startswith("historical_final_050_") or key in source_state["evaluations"]):
+                original_key = "final_" + key.removeprefix("historical_final_050_") if key.startswith("historical_final_050_") else key
+                subset(source_state["evaluations"][original_key], entry, "original evaluation")
+                require(Path(entry["source_summary_path"]).resolve() == source_path.parent / (original_key + ".json"),
+                        "original evaluation source path changed")
+            summary_path = Path(entry.get("source_summary_path") or self.state_path.parent / (key + ".json"))
             summary = read_json(summary_path)
             require(summary == entry["summary"], "state/local evaluation summary mismatch")
-            period_name = "monitor" if key.startswith("monitor_") else "final"
+            period_name, expected_round, role, historical = evaluation_role(key, rounds)
             dates = self.protocol["monitor_period" if period_name == "monitor" else "final_period"]
             require(summary["period"] == dates and entry["period"] == period_name, "evaluation period mismatch")
             number = entry["round"]
-            require(number in CHECKPOINTS and (period_name != "final" or number == 50), "evaluation round mismatch")
-            suffix = key.removeprefix(period_name + "_")
-            expected_round = int(suffix[:3]) if suffix[:3].isdigit() else (10 if period_name == "monitor" else 50)
+            require(number in checkpoints and (period_name != "final" or number == (50 if historical else rounds)), "evaluation round mismatch")
             require(number == expected_round, "evaluation key/round mismatch")
             require(entry["version_id"] == self.state["rounds"][number - 1]["version_id"], "evaluation version mismatch")
             training = manifests[entry["version_id"]]
             is_last = key.endswith("_last")
             require(bool(entry.get("job_id")) != is_last, "registered/offline evaluation role mismatch")
-            expected_snapshot = "last.zip_offline" if is_last else "validation_best" if key.endswith("_best") else suffix
+            expected_snapshot = "last.zip_offline" if is_last else "validation_best" if key.endswith("_best") else role
             require(entry["snapshot"] == expected_snapshot, "snapshot role mismatch")
             if entry.get("job_id"):
                 actual, record = self.registered(entry["job_id"], "policy_backtest")
                 require(actual == summary and actual["model_id"] == model["id"], "registered backtest mismatch")
                 require(actual["policy_id"] == entry["version_id"] and actual["dataset_id"] == dataset["id"], "backtest references mismatch")
                 require(actual["policy_content_id"] == training["id"], "backtest policy content mismatch")
-                expected_baseline = "policy" if key.endswith("_best") else key.removeprefix(period_name + "_")
+                expected_baseline = "policy" if key.endswith("_best") else role
                 require(actual["baseline"] == expected_baseline and actual["cost_multiplier"] == 1, "baseline/cost mismatch")
                 equity_path = Path(record["path"]) / "equity.csv"
             else:
@@ -257,15 +320,23 @@ class Audit:
                         "offline result mislabeled")
                 require(summary["policy_content_id"] == training["id"] and summary["version_id"] == entry["version_id"],
                         "offline source mismatch")
-                equity_path = self.state_path.parent / (key + ".equity.csv")
+                equity_path = Path(entry.get("source_equity_path") or self.state_path.parent / (key + ".equity.csv"))
                 record = {"registered": False, "summary_path": str(summary_path), "summary_sha256": sha(summary_path),
                           "equity_path": str(equity_path), "equity_sha256": sha(equity_path),
                           "integrity_limit": "Offline files have no independently pinned publication hash."}
+            if extension and period_name == "final" and not historical:
+                require(not entry.get("source_summary_path") and not entry.get("source_equity_path"),
+                        "new final evaluation reused original output paths")
+                original_jobs = {e.get("job_id") for e in source_state["evaluations"].values() if e.get("job_id")}
+                require(not entry.get("job_id") or entry["job_id"] not in original_jobs,
+                        "new final evaluation reused an original backtest job")
             actual_metrics, equity_rows = equity_metrics(equity_path, spec["backtest"])
             metrics_equal(summary["metrics"], actual_metrics)
             require(all(dates["start"] <= r["date"][:10] <= dates["end"] for r in equity_rows), "equity outside period")
             record.update(version_id=entry["version_id"], round=number, period=period_name,
                           snapshot=entry["snapshot"], metrics=summary["metrics"])
+            if extension and period_name == "final":
+                record["evaluation_context"] = "original round-50 historical evaluation" if historical else "repeated historical evaluation after CUDA continuation; not untouched holdout"
             record["no_trades"] = summary["metrics"].get("fill_count") == 0
             record["all_cash"] = summary["metrics"].get("average_invested_ratio") == 0
             evaluations[key] = record
@@ -287,12 +358,13 @@ class Audit:
                      else "improved_on_all_available_metrics" if improvements and all(v >= 0 for v in improvements) and any(v > 0 for v in improvements)
                      else "deteriorated_on_all_available_metrics" if improvements and all(v <= 0 for v in improvements) and any(v < 0 for v in improvements)
                      else "mixed_or_undefined")
-            trend[snapshot] = {"round_10_to_50_deltas": deltas, "description": label}
+            trend[snapshot] = {f"round_{checkpoints[0]}_to_{checkpoints[-1]}_deltas": deltas, "description": label}
         scores = [record["validation_best"]["sharpe"] for record in policies if record["selection_valid"]]
         require(all(score is not None for score in scores), "valid selection has undefined score")
         require(all(b >= a for a, b in zip(scores, scores[1:])), "validation-selected score decreased")
-        result = {"audit_passed": True, "successful_rounds": 50, "timesteps": 25600,
-                  "monitoring_checkpoint_counts": {"registered_policy": 5, "offline_last": 5},
+        result = {"audit_passed": True, "successful_rounds": rounds, "timesteps": rounds * budget,
+                  "extension": extension,
+                  "monitoring_checkpoint_counts": {"registered_policy": len(checkpoints), "offline_last": len(checkpoints)},
                   "model": {"id": model["id"], "dataset_id": dataset["id"], "spec": spec,
                             "sqlite_path": str(self.workspace / "workbench.sqlite3"),
                             "ui_url": "http://127.0.0.1:8770/models/" + model["id"]},
@@ -305,7 +377,7 @@ class Audit:
                                         "first_to_last_latest_optimizer_changed": policies[0]["last"]["optimizer_sha256"] != policies[-1]["last"]["optimizer_sha256"],
                                         "final_latest_num_timesteps": policies[-1]["last"]["num_timesteps"],
                                         "final_latest_ppo_epoch_updates": policies[-1]["last"]["ppo_n_updates"],
-                                        "expected_gradient_batch_steps": 50 * (512 // spec["n_steps"]) * spec["n_epochs"] * (spec["n_steps"] // spec["batch_size"]),
+                                        "expected_gradient_batch_steps": rounds * (budget // spec["n_steps"]) * spec["n_epochs"] * (spec["n_steps"] // spec["batch_size"]),
                                         "optimizer_step_tensors_loaded": False},
                   "valid_validation_selection": manifests[prior_id]["selection_valid"],
                   "validation_selected_score_non_decreasing": True if scores else None,
@@ -313,7 +385,8 @@ class Audit:
                                      "Monitoring compares the same historical 2025 period; endpoint changes are descriptive, not statistical evidence of generalization.",
                                      "Undefined Sharpe remains null. No fills and all-cash exposure are reported explicitly.",
                                      "Identical policy.zip hashes mean byte-identical selected snapshots, even when version IDs differ.",
-                                     "Final test was not used by training; this audit cannot certify absence of human research leakage."]}
+                                     ("2026 is a repeated historical evaluation after the original round-50 evaluation; it is no longer an untouched holdout."
+                                      if extension else "Final test was not used by training; this audit cannot certify absence of human research leakage.")]}
         return result, monitoring
 
 
@@ -326,6 +399,7 @@ def main():
     parser.add_argument("--plot-python", type=Path)
     parser.add_argument("--plot-csv", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--plot-file", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--plot-actions", type=int, default=512, help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.plot_csv:
         with args.plot_csv.open(encoding="utf-8-sig", newline="") as stream:
@@ -333,7 +407,7 @@ def main():
         for row in rows:
             for metric in ("total_return", "sharpe", "max_drawdown"):
                 row[metric] = None if not row[metric] else float(row[metric])
-        plot_monitoring(rows, args.plot_file)
+        plot_monitoring(rows, args.plot_file, args.plot_actions)
         return 0
     require(args.state is not None, "--state is required")
     state = read_json(args.state)
@@ -358,14 +432,15 @@ def main():
         writer.writerows(rows)
     figure = output / "training-progress.png"
     if args.plot_python:
-        subprocess.run([str(args.plot_python), str(Path(__file__).resolve()), "--plot-csv", str(csv_path), "--plot-file", str(figure)], check=True)
+        subprocess.run([str(args.plot_python), str(Path(__file__).resolve()), "--plot-csv", str(csv_path), "--plot-file", str(figure),
+                        "--plot-actions", str(protocol["timesteps_per_round"])], check=True)
     else:
-        plot_monitoring(rows, figure)
+        plot_monitoring(rows, figure, protocol["timesteps_per_round"])
     result["outputs"] = {"monitoring_csv": str(csv_path), "training_plot": str(figure)}
     temporary = output / "final-audit.json.tmp"
     temporary.write_text(json.dumps(result, ensure_ascii=False, allow_nan=False, indent=2), encoding="utf-8")
     os.replace(temporary, output / "final-audit.json")
-    print(json.dumps({"status": "audited", "model_id": state["model_id"], "timesteps": 25600,
+    print(json.dumps({"status": "audited", "model_id": state["model_id"], "timesteps": result["timesteps"],
                       "valid_validation_selection": result["valid_validation_selection"],
                       "monitoring_trend": result["monitoring_trend"], "output": str(output)}, ensure_ascii=False))
     return 0

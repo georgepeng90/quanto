@@ -1,0 +1,20 @@
+{
+  "base_version_id": "3fb434e3-b39c-427c-b63a-800b5e86673e",
+  "base_content_id": "0c332d5f3afbc572af6f9d9469b9bb9eab152e33cdeab64b4227e7ae3f0f4e24",
+  "num_timesteps": 25600,
+  "ppo_updates": 2000,
+  "parameter_devices": [
+    "cuda:0"
+  ],
+  "optimizer_moment_devices": [
+    "cuda:0"
+  ],
+  "optimizer_step_counts": [
+    4000.0
+  ],
+  "device_name": "NVIDIA GeForce RTX 5070 Ti",
+  "torch_version": "2.11.0+cu128",
+  "cuda_version": "12.8",
+  "source_state_sha256": "103b06bcb55540db8e0c9a197d8084928e0a226a4623aadc368c3a4ebe9871e8",
+  "probe_type": "read_only_checkpoint_load_no_training"
+}

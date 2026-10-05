@@ -1,0 +1,557 @@
+{
+  "research_date": "2026-10-05",
+  "scope": "Mainland stock growth/consumer/healthcare/industrials industry coverage",
+  "recommended_core_count": 13,
+  "optional_overlap_count": 2,
+  "candidates": [
+    {
+      "symbol": "512480",
+      "official_name": "国联安中证全指半导体产品与设备交易型开放式指数证券投资基金",
+      "exposure": "半导体产品与设备",
+      "tracking_index": "中证全指半导体产品与设备指数",
+      "inception_date": "2019-05-08",
+      "listing_date": "2019-06-12",
+      "status": "core",
+      "selection_reason": "覆盖跨板块半导体行业；比科创专属设备或芯片主题更宽。当前缓存不完整不作为排除理由。",
+      "official_evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-24/512480_20260324_KW7A.pdf",
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/512480_20260331_YMBE.pdf",
+        "https://etf.sse.com.cn/disclosure/ssenotice/c/c_20251028_10796183.shtml"
+      ],
+      "scale_cny_catalogue": 19262360000.0,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 1152470549.0,
+      "current_liquidity_60d": {
+        "symbol": "512480",
+        "qualified": false,
+        "cache_state": "incomplete",
+        "reason": "cache not ready"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      }
+    },
+    {
+      "symbol": "515880",
+      "official_name": "国泰中证全指通信设备交易型开放式指数证券投资基金",
+      "exposure": "通信设备",
+      "tracking_index": "中证全指通信设备指数",
+      "inception_date": "2019-08-16",
+      "listing_date": "2019-09-06",
+      "status": "core",
+      "selection_reason": "代表通信设备行业；规模和60日成交额强于515050，保留单一通信代表。",
+      "official_evidence_urls": [
+        "https://etf.sse.com.cn/disclosure/ssenotice/c/c_20260420_10815874.shtml",
+        "https://etf.sse.com.cn/fundlist/"
+      ],
+      "scale_cny_catalogue": 41821670000.0,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 1965845582.0,
+      "current_liquidity_60d": {
+        "symbol": "515880",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 3987226691.6666665,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      },
+      "listing_evidence": "Official local sse_funds.json record and manager2021interim report:2019-09-06; inception2019-08-16."
+    },
+    {
+      "symbol": "159852",
+      "official_name": "嘉实中证软件服务交易型开放式指数证券投资基金",
+      "exposure": "软件开发与IT服务",
+      "tracking_index": "中证软件服务指数",
+      "inception_date": "2021-01-29",
+      "listing_date": "2021-02-09",
+      "status": "core",
+      "selection_reason": "覆盖软件开发、软件服务30只样本；避免再叠加计算机、云计算、金融科技或AI应用主题。",
+      "official_evidence_urls": [
+        "https://www.szse.cn/disclosure/notice/t20210204_584665.html",
+        "https://www.jsfund.cn/main/a/20260119/484065.shtml",
+        "https://www.jsfund.cn/Services/cn/jsp/pcf/index.jsp?SiteID=1&fundcode=159852"
+      ],
+      "scale_cny_catalogue": 9082458208.576801,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 300368817.0,
+      "current_liquidity_60d": {
+        "symbol": "159852",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 489118278.3333333,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      }
+    },
+    {
+      "symbol": "512660",
+      "official_name": "国泰中证军工交易型开放式指数证券投资基金",
+      "exposure": "国防军工",
+      "tracking_index": "中证军工指数",
+      "inception_date": "2016-07-26",
+      "listing_date": "2016-08-08",
+      "status": "core",
+      "selection_reason": "军工宽行业代表；不用军工龙头、国防和航空航天多个相邻基金堆数量。",
+      "official_evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-11-26/512660_20251126_6NDH.pdf"
+      ],
+      "scale_cny_catalogue": 7519920000.0,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 133252229.0,
+      "current_liquidity_60d": {
+        "symbol": "512660",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 308331060.0,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": 0.005,
+        "custody_rate_pa": 0.001,
+        "source_date": "2025-11-26",
+        "status": "primary product summary verified; combined0.60% before other expenses"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence",
+        "contract_target": "Daily mean absolute deviation<=0.2%, annual TE<=2%; target only, not realized quality."
+      }
+    },
+    {
+      "symbol": "512170",
+      "official_name": "华宝中证医疗交易型开放式指数证券投资基金",
+      "exposure": "医疗服务、器械及医疗产业",
+      "tracking_index": "中证医疗指数",
+      "inception_date": "2019-05-20",
+      "listing_date": "2019-06-17",
+      "status": "core",
+      "selection_reason": "医疗产业代表；比单独创新药宽，和医药制造不是完全相同暴露。缓存不完整应补数据。",
+      "official_evidence_urls": [
+        "https://www.fsfund.com/fund/512170/fundDetail.shtml",
+        "https://etf.sse.com.cn/fundlist/"
+      ],
+      "scale_cny_catalogue": 24353160000.0,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 571038434.0,
+      "current_liquidity_60d": {
+        "symbol": "512170",
+        "qualified": false,
+        "cache_state": "incomplete",
+        "reason": "cache not ready"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      },
+      "listing_evidence": "Official manager IPO listing announcement and local SSE directory both2019-06-17; inception2019-05-20."
+    },
+    {
+      "symbol": "512010",
+      "official_name": "易方达沪深300医药卫生交易型开放式指数证券投资基金",
+      "exposure": "医药卫生大盘龙头",
+      "tracking_index": "沪深300医药卫生指数",
+      "inception_date": "2013-09-23",
+      "listing_date": "2013-10-28",
+      "status": "core",
+      "selection_reason": "补医药制造及大盘医药龙头；和512170存在交集但行业链条有差异，须约束组内集中度。",
+      "official_evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-08-16/512010_20240816_ISHG.pdf"
+      ],
+      "scale_cny_catalogue": 14930510000.000002,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 515480275.0,
+      "current_liquidity_60d": {
+        "symbol": "512010",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 496205825.0,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      }
+    },
+    {
+      "symbol": "159928",
+      "official_name": "中证主要消费交易型开放式指数证券投资基金",
+      "exposure": "必需消费",
+      "tracking_index": "中证主要消费指数",
+      "inception_date": "2013-08-23",
+      "listing_date": "2013-09-16",
+      "status": "core",
+      "selection_reason": "选择宽必需消费而非酒或食品饮料重复配置；酒类权重偏高，不代表均匀覆盖消费行业。",
+      "official_evidence_urls": [
+        "https://www.99fund.com/upload/20250828/202508281756383691033.pdf"
+      ],
+      "scale_cny_catalogue": 14624867051.784,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 196382215.0,
+      "current_liquidity_60d": {
+        "symbol": "159928",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 325712631.6666667,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      }
+    },
+    {
+      "symbol": "159996",
+      "official_name": "国泰中证全指家用电器交易型开放式指数证券投资基金",
+      "exposure": "家用电器",
+      "tracking_index": "中证全指家用电器指数",
+      "inception_date": "2020-02-27",
+      "listing_date": "2020-03-16",
+      "status": "core",
+      "selection_reason": "填补耐用消费品行业，60日成交额约6668万元；比再加酒类主题增加更多不同企业。",
+      "official_evidence_urls": [
+        "https://www.szse.cn/disclosure/notice/fund/t20200311_574954.html"
+      ],
+      "scale_cny_catalogue": 637304909.5314,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 23492348.0,
+      "current_liquidity_60d": {
+        "symbol": "159996",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 66682798.333333336,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      }
+    },
+    {
+      "symbol": "159825",
+      "official_name": "富国中证农业主题交易型开放式指数证券投资基金",
+      "exposure": "农业种植、养殖及相关产业",
+      "tracking_index": "中证农业主题指数",
+      "inception_date": "2020-12-10",
+      "listing_date": "2020-12-29",
+      "status": "core",
+      "selection_reason": "宽农业代表优先于更大但更窄的畜牧养殖ETF159865；实际成交额足够。",
+      "official_evidence_urls": [
+        "https://www.fullgoal.com.cn/wbs-file/fund_report/20260324/CN_50100000_159825_FA010080_20260003.pdf",
+        "https://www.fullgoal.com.cn/wbs-file/fund_report/20250830/CN_50100000_159825_FB020010_20250006.pdf"
+      ],
+      "scale_cny_catalogue": 1596686098.9317,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 75254788.0,
+      "current_liquidity_60d": {
+        "symbol": "159825",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 96408698.33333333,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence",
+        "contract_target": "Daily mean absolute deviation<=0.2%, annual TE<=2%; target only."
+      }
+    },
+    {
+      "symbol": "512980",
+      "official_name": "广发中证传媒交易型开放式指数证券投资基金",
+      "exposure": "传媒",
+      "tracking_index": "中证传媒指数",
+      "inception_date": "2017-12-27",
+      "listing_date": "2018-01-19",
+      "status": "core",
+      "selection_reason": "传媒宽行业代表，减少游戏主题单独占位；包含数字内容及其他传媒业务。",
+      "official_evidence_urls": [
+        "https://www.gffunds.com.cn/jjgg/flwj/202503/P020250321377326808726.pdf"
+      ],
+      "scale_cny_catalogue": 4681880000.0,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 231035836.0,
+      "current_liquidity_60d": {
+        "symbol": "512980",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 313087890.0,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      }
+    },
+    {
+      "symbol": "516110",
+      "official_name": "国泰中证800汽车与零部件交易型开放式指数证券投资基金",
+      "exposure": "汽车整车与零部件",
+      "tracking_index": "中证800汽车与零部件指数",
+      "inception_date": "2021-04-07",
+      "listing_date": "2021-05-07",
+      "status": "core",
+      "selection_reason": "选择整车和零部件宽行业，区别新能源车电池链或智能驾驶主题；规模较小但60日均成交2505万元。",
+      "official_evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-11-27/516110_20251127_SGMT.pdf"
+      ],
+      "scale_cny_catalogue": 256990000.0,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 14291079.0,
+      "current_liquidity_60d": {
+        "symbol": "516110",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 25053188.333333332,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      }
+    },
+    {
+      "symbol": "159766",
+      "official_name": "富国中证旅游主题交易型开放式指数证券投资基金",
+      "exposure": "旅游与服务消费",
+      "tracking_index": "中证旅游主题指数",
+      "inception_date": "2021-07-15",
+      "listing_date": "2021-07-23",
+      "status": "core_with_entry_mask",
+      "selection_reason": "补足线下服务消费；上市晚于偏好截止，可在120条真实日线后参与，不能回填上市前数据。",
+      "official_evidence_urls": [
+        "https://www.szse.cn/disclosure/notice/fund/t20210720_587057.html",
+        "https://www.fullgoal.com.cn/wbs-file/fund_report/20260331/CN_50100000_159766_FB010010_20260002.pdf"
+      ],
+      "scale_cny_catalogue": 2938085623.9977,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 110636681.0,
+      "current_liquidity_60d": {
+        "symbol": "159766",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 161673883.33333334,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      },
+      "warmup_note": "Not eligible2022-01-01 with120daily lookback; compute exact firsteligible from actual bars, approximately early2022."
+    },
+    {
+      "symbol": "562500",
+      "official_name": "华夏中证机器人交易型开放式指数证券投资基金",
+      "exposure": "机器人与工业自动化",
+      "tracking_index": "中证机器人指数",
+      "inception_date": "2021-12-17",
+      "listing_date": "2021-12-29",
+      "status": "core_with_entry_mask",
+      "selection_reason": "补工业自动化，当前规模164.2亿元、60日均成交5.86亿元优于159770；接受较晚进入样本，不假定2022年初已可交易。",
+      "official_evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-05-30/562500_20250530_PXMI.pdf",
+        "https://www.chinaamc.com/fund/562500/index.shtml?source=click",
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2022-08-30/562500_20220830_1_Hkq1SHsz.pdf"
+      ],
+      "scale_cny_catalogue": 16420200000.0,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 213473534.0,
+      "current_liquidity_60d": {
+        "symbol": "562500",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 585789433.3333334,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence"
+      },
+      "warmup_note": "Listed2021-12-29; cannot trade2022-01-01 under120lookback. Exact entry after120real bars, approximately mid2022."
+    },
+    {
+      "symbol": "159883",
+      "official_name": "永赢中证全指医疗器械交易型开放式指数证券投资基金",
+      "exposure": "医疗器械与诊断设备",
+      "tracking_index": "中证全指医疗器械指数",
+      "inception_date": "2021-04-22",
+      "listing_date": "2021-04-30",
+      "status": "optional_overlap",
+      "selection_reason": "器械和诊断设备专属暴露可与医疗服务或CRO区分，但512170已经含器械；若总池已有充分行业覆盖，此增量可优先删除。",
+      "official_evidence_urls": [
+        "https://static.cninfo.com.cn/finalpage/2026-01-23/1224946377.PDF",
+        "https://static.cninfo.com.cn/finalpage/2026-06-30/1225397511.PDF",
+        "https://disc.static.szse.cn/disc/disk03/finalpage/2026-08-06/4ff808d7-6953-4885-89e7-a88a1e9380e3.PDF"
+      ],
+      "scale_cny_catalogue": 3790582518.4695,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 66409000.0,
+      "current_liquidity_60d": {
+        "symbol": "159883",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 84098871.66666667,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": 0.005,
+        "custody_rate_pa": 0.001,
+        "source_date": "2026-06-30",
+        "status": "primary prospectus verified"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "annual_nav_minus_benchmark_percentage_points_2025": 1.13,
+        "q1_2026_nav_minus_benchmark_percentage_points": -0.17,
+        "source": "2026second prospectusp63",
+        "status": "realized cumulative tracking difference only; NOT annualized TE. Positive difference is not skill/performance selection evidence."
+      }
+    },
+    {
+      "symbol": "159997",
+      "official_name": "天弘中证电子交易型开放式指数证券投资基金",
+      "exposure": "电子行业（含半导体及消费硬件）",
+      "tracking_index": "中证电子指数",
+      "inception_date": "2020-02-27",
+      "listing_date": "2020-03-20",
+      "status": "optional_overlap",
+      "selection_reason": "增加电子制造、组件及消费硬件，但并非纯消费电子指数，和512480存在半导体重叠；可优先换成新行业。",
+      "official_evidence_urls": [
+        "https://static.cninfo.com.cn/finalpage/2026-03-31/1225053393.PDF"
+      ],
+      "scale_cny_catalogue": 1344159435.075,
+      "scale_valuation_date": "unspecified in official directory; collected2026-10-02",
+      "latest_turnover_cny_20260930": 56719948.0,
+      "current_liquidity_60d": {
+        "symbol": "159997",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 101424076.66666667,
+        "reason": "passed"
+      },
+      "fees": {
+        "management_rate_pa": null,
+        "custody_rate_pa": null,
+        "status": "not verified from current reliable primary source; do not assume0.5%+0.1%"
+      },
+      "tracking_quality": {
+        "observed_tracking_error": null,
+        "status": "not numerically verified; stated replication/targets are not realized quality evidence",
+        "contract_target": "Daily mean tracking deviation<=0.2%, annualized TE<=2%; target only."
+      }
+    }
+  ],
+  "data_sources": {
+    "catalogue": "outputs/etf-expansion-20261002/all_eligible.csv",
+    "official_SSE": "outputs/etf-expansion-20261002/sse_funds.json",
+    "official_SZSE": "outputs/etf-expansion-20261002/szse_funds.csv",
+    "liquidity": "outputs/etf-expansion-20261002/shared-cache/qualified_selection.json",
+    "liquidity_asof": "2026-09-30",
+    "liquidity_window": "2026-07-08..2026-09-30,60sessions",
+    "minimum_liquidity_mean_cny": 10000000
+  },
+  "selection_policy": [
+    "Prioritize different industry exposure before fund count; unique index is necessary but not sufficient to remove economic overlap.",
+    "Prefer larger/actively traded established ETF within exposure; do not select based on trailing returns or star ratings.",
+    "Listing later than2021-07-01 can fill missing real industry subject to listing and120realbar entry mask.",
+    "Missing/incomplete cached history is a data engineering issue, not rejection of a better representative.",
+    "Current size/liquidity screen is not point-in-time historical selection; fixed historical training pool has lookahead/survivorship bias and must be disclosed."
+  ],
+  "coverage_gaps": [
+    {
+      "exposure": "traditional machinery equipment",
+      "rejected_candidates": [
+        "516960",
+        "159886",
+        "516320",
+        "516800"
+      ],
+      "evidence": "Current catalogue size only12.71m,65.15m,79.08m,164.81m respectively; latest single-dayturnover100857,2965902,4719931,5008237 respectively.60dnotavailable. Small size/latestdaydata cannot establish robust10mmeanliquidity; do not force quota."
+    },
+    {
+      "exposure": "pure consumer electronics",
+      "note": "159997 is broad electronics, not pure consumer electronics;159732 listed2021-08-23 is newer thematic alternative but adds overlap.",
+      "alternative": "159732"
+    }
+  ],
+  "rejected_duplicate_or_overlap_additions": [
+    "159995/512760 duplicate semiconductor economic exposure if512480present",
+    "515050/159994 additional telecom funds if515880present",
+    "159819/515070/516510/159851 largely neighboring tech themes alongside selected semiconductor/telecom/software",
+    "159865 narrower husbandry instead of broad agriculture159825",
+    "159869 game-only exposure if broad media512980 present"
+  ],
+  "quality_limitations": [
+    "Official identity,trackingindex,listing/inception verified via primary sources. Fees leftnull unless primary numeric rate observed.",
+    "Actual annualized TE not obtained for most funds; fullreplication language and contractual<=2%targets are not proof of excellenttracking.",
+    "159883 realizedNAV-benchmark differences observed, but priceindex dividends/expenses/conventions mean positive difference cannot be called superiortracking.",
+    "No bidaskspread or premium/discount timeseries audit completed.",
+    "512480and512170 have incomplete cache in sharedqualifiedselection and lackactual60dmean in that file; size/latestdayevidence only until data stage resolves."
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "asof": "2026-10-05",
+  "purpose": "Verify exactly two missing daily bars against official ETF share-split trading suspensions; not a blanket missing-data classification.",
+  "evidence": [
+    {
+      "symbol": "512480",
+      "name": "国联安中证全指半导体产品与设备ETF",
+      "missing_date": "2021-03-26",
+      "status": "official_full_day_suspension",
+      "full_day_suspension": true,
+      "reason": "基金份额按1:2拆分",
+      "resumption_date": "2021-03-29",
+      "inference_note": "公告规定3月25日正常交易、3月26日停牌、下一工作日3月29日起复牌；因此3月26日整个交易日未开放交易。不是由行情缺失推断。",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2021-03-17/512480_20210317_1.pdf",
+          "authority": "上海证券交易所官方基金披露",
+          "announcement_date": "2021-03-17",
+          "title": "关于国联安中证全指半导体产品与设备交易型开放式指数证券投资基金实施基金份额拆分并调整最小申购、赎回单位的相关业务安排的公告",
+          "page_one_based": 2,
+          "section": "二、基金交易、申购赎回及其他相关业务安排，第1项",
+          "paraphrase": "权益登记日2021-03-25照常交易；拆分日2021-03-26停牌；拆分后的首个工作日2021-03-29起复牌。",
+          "short_quote": "2021年3月26日）停牌"
+        },
+        {
+          "url": "https://static.cninfo.com.cn/finalpage/2021-03-29/1209471570.PDF",
+          "authority": "巨潮资讯官方基金披露",
+          "announcement_date": "2021-03-29",
+          "title": "关于国联安中证全指半导体产品与设备交易型开放式指数证券投资基金基金份额拆分结果及恢复交易和申购、赎回的公告",
+          "page_one_based": 1,
+          "section": "二、恢复交易和申购、赎回公告",
+          "paraphrase": "基金已在2021-03-26完成拆分，并确认2021-03-29开始恢复交易及日常申购赎回。",
+          "short_quote": "2021年3月29日起恢复交易"
+        }
+      ]
+    },
+    {
+      "symbol": "512170",
+      "name": "华宝中证医疗ETF",
+      "missing_date": "2021-02-24",
+      "status": "official_full_day_suspension",
+      "full_day_suspension": true,
+      "reason": "基金份额按1:3拆分",
+      "resumption_date": "2021-02-25",
+      "inference_note": "公告规定2月23日正常交易、2月24日停牌、下一工作日2月25日起复牌；因此2月24日整个交易日未开放交易。不是由行情缺失推断。",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2021-02-22/512170_20210223_1.pdf",
+          "authority": "上海证券交易所官方基金披露",
+          "announcement_date": "2021-02-23",
+          "title": "关于华宝中证医疗交易型开放式指数证券投资基金实施基金份额拆分及相关业务安排的第二次提示性公告",
+          "page_one_based": 3,
+          "section": "二、基金交易、申购赎回及其他相关业务安排，第1项",
+          "paraphrase": "权益登记日2021-02-23照常交易；拆分日2021-02-24停牌；拆分后的首个工作日2021-02-25起复牌。",
+          "short_quote": "2021年2月24日）停牌"
+        },
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2021-02-25/512170_20210225_1.pdf",
+          "authority": "上海证券交易所官方基金披露",
+          "announcement_date": "2021-02-25",
+          "title": "关于华宝中证医疗交易型开放式指数证券投资基金基金份额拆分结果及恢复交易和申购、赎回的公告",
+          "page_one_based": 2,
+          "section": "二、恢复交易和申购、赎回公告",
+          "paraphrase": "基金已于2021-02-24实施拆分，2021-02-25恢复交易和日常申购赎回。",
+          "short_quote": "2021年2月25日起恢复交易"
+        }
+      ]
+    }
+  ],
+  "limitations": "Only512480/2021-03-26and512170/2021-02-24are verified here. No claims about other absent dates, OHLC values, volume, or adjustment factors.",
+  "suspensions": {
+    "512170": {
+      "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2021-02-22/512170_20210223_1.pdf",
+      "paraphrase": "权益登记日2021-02-23照常交易；拆分日2021-02-24停牌；拆分后的首个工作日2021-02-25起复牌。",
+      "path": "D:\\Projects\\quanto\\outputs\\rl-broad-industry-20261005\\suspension-512170.pdf",
+      "full_day_suspension": true,
+      "authority": "上海证券交易所官方基金披露",
+      "source_page_one_based": 3,
+      "resumption_date": "2021-02-25",
+      "date": "2021-02-24",
+      "sha256": "6ff76b12761cc17e2e5943cd575ae785147833ba8c129eb9fefa5c106078ff55",
+      "reason": "基金份额按1:3拆分"
+    },
+    "512480": {
+      "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2021-03-17/512480_20210317_1.pdf",
+      "paraphrase": "权益登记日2021-03-25照常交易；拆分日2021-03-26停牌；拆分后的首个工作日2021-03-29起复牌。",
+      "path": "D:\\Projects\\quanto\\outputs\\rl-broad-industry-20261005\\suspension-512480.pdf",
+      "full_day_suspension": true,
+      "authority": "上海证券交易所官方基金披露",
+      "source_page_one_based": 2,
+      "resumption_date": "2021-03-29",
+      "date": "2021-03-26",
+      "sha256": "25331b936641ce6aa14e8cc5b98f0bc6d1dfb1f8c56ac1bbf34f64084c7dbcdd",
+      "reason": "基金份额按1:2拆分"
+    }
+  }
+}

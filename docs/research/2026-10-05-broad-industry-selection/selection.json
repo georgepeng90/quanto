@@ -1,0 +1,471 @@
+{
+  "asof": "2026-10-05",
+  "study": "broad-industry-32-etf-20261005",
+  "symbols": [
+    {
+      "symbol": "512480",
+      "name": "国联安中证全指半导体产品与设备交易型开放式指数证券投资基金",
+      "category": "technology",
+      "exposure": "半导体产品与设备",
+      "tracking_index": "中证全指半导体产品与设备指数",
+      "listing_date": "2019-06-12",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-24/512480_20260324_KW7A.pdf",
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/512480_20260331_YMBE.pdf",
+        "https://etf.sse.com.cn/disclosure/ssenotice/c/c_20251028_10796183.shtml"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "515880",
+      "name": "国泰中证全指通信设备交易型开放式指数证券投资基金",
+      "category": "technology",
+      "exposure": "通信设备",
+      "tracking_index": "中证全指通信设备指数",
+      "listing_date": "2019-09-06",
+      "evidence_urls": [
+        "https://etf.sse.com.cn/disclosure/ssenotice/c/c_20260420_10815874.shtml",
+        "https://etf.sse.com.cn/fundlist/"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159852",
+      "name": "嘉实中证软件服务交易型开放式指数证券投资基金",
+      "category": "technology",
+      "exposure": "软件开发与IT服务",
+      "tracking_index": "中证软件服务指数",
+      "listing_date": "2021-02-09",
+      "evidence_urls": [
+        "https://www.szse.cn/disclosure/notice/t20210204_584665.html",
+        "https://www.jsfund.cn/main/a/20260119/484065.shtml",
+        "https://www.jsfund.cn/Services/cn/jsp/pcf/index.jsp?SiteID=1&fundcode=159852"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512660",
+      "name": "国泰中证军工交易型开放式指数证券投资基金",
+      "category": "industrials",
+      "exposure": "国防军工",
+      "tracking_index": "中证军工指数",
+      "listing_date": "2016-08-08",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-11-26/512660_20251126_6NDH.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512170",
+      "name": "华宝中证医疗交易型开放式指数证券投资基金",
+      "category": "healthcare",
+      "exposure": "医疗服务、器械及医疗产业",
+      "tracking_index": "中证医疗指数",
+      "listing_date": "2019-06-17",
+      "evidence_urls": [
+        "https://www.fsfund.com/fund/512170/fundDetail.shtml",
+        "https://etf.sse.com.cn/fundlist/"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512010",
+      "name": "易方达沪深300医药卫生交易型开放式指数证券投资基金",
+      "category": "healthcare",
+      "exposure": "医药卫生大盘龙头",
+      "tracking_index": "沪深300医药卫生指数",
+      "listing_date": "2013-10-28",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-08-16/512010_20240816_ISHG.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159928",
+      "name": "中证主要消费交易型开放式指数证券投资基金",
+      "category": "consumer",
+      "exposure": "必需消费",
+      "tracking_index": "中证主要消费指数",
+      "listing_date": "2013-09-16",
+      "evidence_urls": [
+        "https://www.99fund.com/upload/20250828/202508281756383691033.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159996",
+      "name": "国泰中证全指家用电器交易型开放式指数证券投资基金",
+      "category": "consumer",
+      "exposure": "家用电器",
+      "tracking_index": "中证全指家用电器指数",
+      "listing_date": "2020-03-16",
+      "evidence_urls": [
+        "https://www.szse.cn/disclosure/notice/fund/t20200311_574954.html"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159825",
+      "name": "富国中证农业主题交易型开放式指数证券投资基金",
+      "category": "agriculture",
+      "exposure": "农业种植、养殖及相关产业",
+      "tracking_index": "中证农业主题指数",
+      "listing_date": "2020-12-29",
+      "evidence_urls": [
+        "https://www.fullgoal.com.cn/wbs-file/fund_report/20260324/CN_50100000_159825_FA010080_20260003.pdf",
+        "https://www.fullgoal.com.cn/wbs-file/fund_report/20250830/CN_50100000_159825_FB020010_20250006.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512980",
+      "name": "广发中证传媒交易型开放式指数证券投资基金",
+      "category": "consumer",
+      "exposure": "传媒",
+      "tracking_index": "中证传媒指数",
+      "listing_date": "2018-01-19",
+      "evidence_urls": [
+        "https://www.gffunds.com.cn/jjgg/flwj/202503/P020250321377326808726.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "516110",
+      "name": "国泰中证800汽车与零部件交易型开放式指数证券投资基金",
+      "category": "automotive",
+      "exposure": "汽车整车与零部件",
+      "tracking_index": "中证800汽车与零部件指数",
+      "listing_date": "2021-05-07",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-11-27/516110_20251127_SGMT.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159766",
+      "name": "富国中证旅游主题交易型开放式指数证券投资基金",
+      "category": "consumer",
+      "exposure": "旅游与服务消费",
+      "tracking_index": "中证旅游主题指数",
+      "listing_date": "2021-07-23",
+      "evidence_urls": [
+        "https://www.szse.cn/disclosure/notice/fund/t20210720_587057.html",
+        "https://www.fullgoal.com.cn/wbs-file/fund_report/20260331/CN_50100000_159766_FB010010_20260002.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "562500",
+      "name": "华夏中证机器人交易型开放式指数证券投资基金",
+      "category": "industrials",
+      "exposure": "机器人与工业自动化",
+      "tracking_index": "中证机器人指数",
+      "listing_date": "2021-12-29",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-05-30/562500_20250530_PXMI.pdf",
+        "https://www.chinaamc.com/fund/562500/index.shtml?source=click",
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2022-08-30/562500_20220830_1_Hkq1SHsz.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159883",
+      "name": "永赢中证全指医疗器械交易型开放式指数证券投资基金",
+      "category": "healthcare",
+      "exposure": "医疗器械与诊断设备",
+      "tracking_index": "中证全指医疗器械指数",
+      "listing_date": "2021-04-30",
+      "evidence_urls": [
+        "https://static.cninfo.com.cn/finalpage/2026-01-23/1224946377.PDF",
+        "https://static.cninfo.com.cn/finalpage/2026-06-30/1225397511.PDF",
+        "https://disc.static.szse.cn/disc/disk03/finalpage/2026-08-06/4ff808d7-6953-4885-89e7-a88a1e9380e3.PDF"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159997",
+      "name": "天弘中证电子交易型开放式指数证券投资基金",
+      "category": "technology",
+      "exposure": "电子行业（含半导体及消费硬件）",
+      "tracking_index": "中证电子指数",
+      "listing_date": "2020-03-20",
+      "evidence_urls": [
+        "https://static.cninfo.com.cn/finalpage/2026-03-31/1225053393.PDF"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512800",
+      "name": "华宝中证银行交易型开放式指数证券投资基金",
+      "category": "financials",
+      "exposure": "银行",
+      "tracking_index": "中证银行指数",
+      "listing_date": "2017-08-03",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/512800_20260331_88RL.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512880",
+      "name": "国泰中证全指证券公司交易型开放式指数证券投资基金",
+      "category": "financials",
+      "exposure": "证券公司",
+      "tracking_index": "中证全指证券公司指数",
+      "listing_date": "2016-08-08",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/2016-08-03/512880_20160803_2.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512200",
+      "name": "南方中证全指房地产交易型开放式指数证券投资基金",
+      "category": "real_estate_infrastructure",
+      "exposure": "房地产",
+      "tracking_index": "中证全指房地产指数",
+      "listing_date": "2017-09-25",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/2020-03-30/512200_2019_n.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "516970",
+      "name": "广发中证基建工程交易型开放式指数证券投资基金",
+      "category": "real_estate_infrastructure",
+      "exposure": "基础设施建设工程",
+      "tracking_index": "中证基建工程指数",
+      "listing_date": "2021-07-05",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-01-06/516970_20260106_IGRX.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159745",
+      "name": "国泰中证全指建筑材料交易型开放式指数证券投资基金",
+      "category": "real_estate_infrastructure",
+      "exposure": "建筑材料",
+      "tracking_index": "中证全指建筑材料指数",
+      "listing_date": "2021-06-18",
+      "evidence_urls": [
+        "https://st.gtfund.com/pis/www/CN_50010000_159745_FA010080_20220001_159745_20221212_090000_01.pdf",
+        "https://etradetest.gtfund.com/etrade/Jijin/view/id/159745"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "515220",
+      "name": "国泰中证煤炭交易型开放式指数证券投资基金",
+      "category": "energy_utilities",
+      "exposure": "煤炭",
+      "tracking_index": "中证煤炭指数",
+      "listing_date": "2020-03-02",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-19/515220_20260319_DP5F.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "516570",
+      "name": "易方达中证石化产业交易型开放式指数证券投资基金",
+      "category": "energy_utilities",
+      "exposure": "石油石化",
+      "tracking_index": "中证石化产业指数",
+      "listing_date": "2021-06-18",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-12-31/516570_20251231_IVQ0.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "515210",
+      "name": "国泰中证钢铁交易型开放式指数证券投资基金",
+      "category": "materials",
+      "exposure": "钢铁",
+      "tracking_index": "中证钢铁指数",
+      "listing_date": "2020-03-02",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-09-30/515210_20250930_8NOX.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512400",
+      "name": "南方中证申万有色金属交易型开放式指数证券投资基金",
+      "category": "materials",
+      "exposure": "有色金属",
+      "tracking_index": "中证申万有色金属指数",
+      "listing_date": "2017-09-01",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-03-28/512400_20240328_XYAX.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159870",
+      "name": "鹏华中证细分化工产业主题交易型开放式指数证券投资基金",
+      "category": "materials",
+      "exposure": "化工",
+      "tracking_index": "中证细分化工产业主题指数",
+      "listing_date": "2021-03-03",
+      "evidence_urls": [
+        "https://static.cninfo.com.cn/finalpage/2025-08-28/1224599228.PDF"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "516150",
+      "name": "嘉实中证稀土产业交易型开放式指数证券投资基金",
+      "category": "materials",
+      "exposure": "稀土/稀土材料",
+      "tracking_index": "中证稀土产业指数",
+      "listing_date": "2021-03-17",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-06-11/516150_20260611_YKOD.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "159611",
+      "name": "广发中证全指电力公用事业交易型开放式指数证券投资基金",
+      "category": "energy_utilities",
+      "exposure": "电力公用事业",
+      "tracking_index": "中证全指电力公用事业指数",
+      "listing_date": "2022-01-07",
+      "evidence_urls": [
+        "https://www.gffunds.com.cn/jjgg/zdsj/202201/t20220107_371589.shtml",
+        "https://www.gffunds.com.cn/funds/?fromSearch=1&fundcode=159611"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "510300",
+      "name": "华泰柏瑞沪深300ETF",
+      "category": "broad_market",
+      "exposure": "沪深300大盘宽基",
+      "tracking_index": "沪深300指数",
+      "listing_date": "2012-05-28",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/510300_20260331_W6CZ.pdf"
+      ],
+      "role": "anchor",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "510500",
+      "name": "南方中证500ETF",
+      "category": "broad_market",
+      "exposure": "中证500中盘宽基",
+      "tracking_index": "中证500指数",
+      "listing_date": "2013-03-15",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/510500_20260331_Q394.pdf"
+      ],
+      "role": "anchor",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "512890",
+      "name": "华泰柏瑞中证红利低波动ETF",
+      "category": "factor",
+      "exposure": "红利低波风格",
+      "tracking_index": "中证红利低波动指数",
+      "listing_date": "2019-01-18",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-18/512890_20260318_FNWM.pdf"
+      ],
+      "role": "anchor",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "515790",
+      "name": "华泰柏瑞中证光伏产业ETF",
+      "category": "energy_utilities",
+      "exposure": "光伏产业链",
+      "tracking_index": "中证光伏产业指数",
+      "listing_date": "2020-12-18",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-18/515790_20260318_84MH.pdf"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    },
+    {
+      "symbol": "515030",
+      "name": "华夏中证新能源汽车ETF",
+      "category": "automotive",
+      "exposure": "新能源汽车产业链",
+      "tracking_index": "中证新能源汽车指数",
+      "listing_date": "2020-03-04",
+      "evidence_urls": [
+        "https://www.sse.com.cn/disclosure/announcement/general/jjzssgg/c/c_20260709_10825031.shtml"
+      ],
+      "role": "industry_or_theme",
+      "entry_rule": "After listing, current quote and at least120 genuine bars; no prelisting imputation"
+    }
+  ],
+  "selection_rules": [
+    "Choose broader mainland-equity industry/index coverage without restricting to existing cache.",
+    "One fund per exact tracking index; different indexes may share constituents.",
+    "At least10m CNY trailing60-observation average turnover required after cache.",
+    "Listed beforeJan2022 preferred; genuine later history can enter only after120bars.",
+    "Size, liquidity and exposure support research representativeness; no return-ranking or claim that every fund is objectively best."
+  ],
+  "known_overlap": [
+    "Broad electronics and semiconductors",
+    "Medical services and medical devices",
+    "Broad autos and new-energy vehicle chain",
+    "Broad nonferrous metals and rare earth",
+    "Broad/style anchors overlap sector funds"
+  ],
+  "limitations": [
+    "Selected retrospectively with2026 catalogue/liquidity; not a historical point-in-time universe.",
+    "Fees, realized tracking error and holdings-level overlap have not been fully audited.",
+    "2025/2026 periods already reviewed in prior research; not a pristine untouched holdout."
+  ],
+  "history_request": {
+    "start": "2021-01-01",
+    "end": "2026-09-30",
+    "listing_boundary": true
+  },
+  "proposed_training": {
+    "train_start": "2022-01-01",
+    "train_end": "2023-12-31",
+    "validation_start": "2024-01-01",
+    "validation_end": "2024-12-31",
+    "lookback": 120,
+    "action_version": "hold-target-quartiles-v1",
+    "fixed_holding_count": null,
+    "first_session_timesteps": 512,
+    "reason": "Initial bounded pipeline check; same action interface as original model, no claim512steps establish performance."
+  }
+}

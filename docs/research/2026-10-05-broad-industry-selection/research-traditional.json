@@ -1,0 +1,1040 @@
+{
+  "asof": "2026-10-05",
+  "scope": "Traditional industries; researched without restricting to cached305; no return-based ranking; proposals are not a final basket.",
+  "rules": {
+    "warmup_sessions": 120,
+    "preferred_listing_before": "2021-07-01",
+    "preferred_not_hard_cutoff": true,
+    "minimum_average_amount_60d_CNY": 10000000,
+    "qualification_note": "Current trailing liquidity qualification is not historical point-in-time eligibility. Missing qualification is unknown, not failed. Size prefilter is distinct from 60-day turnover."
+  },
+  "sources_local": [
+    "docs/research/2026-10-02-etf-universe/candidates.json",
+    "docs/research/2026-10-02-etf-universe/qualified-selection.json",
+    "outputs/etf-expansion-20261002/all_eligible.csv"
+  ],
+  "candidates": [
+    {
+      "symbol": "512800",
+      "name": "银行ETF华宝",
+      "official_name": "华宝中证银行交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "银行",
+      "index": "中证银行指数",
+      "inception_date": "2017-07-18",
+      "listing_date": "2017-08-03",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/512800_20260331_88RL.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "独立银行行业；同指数只保留一只。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "512800",
+        "name": "银行ETF华宝",
+        "category": "financials",
+        "listing_date": "2017-08-03",
+        "scale_cny": "9953730000.0",
+        "latest_turnover_cny": "724861050.0",
+        "rank": "41",
+        "source": "SSE",
+        "tracking_index": "中证银行指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "512800",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 1001814138.3333334,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "512880",
+      "name": "证券ETF国泰",
+      "official_name": "国泰中证全指证券公司交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "证券公司",
+      "index": "中证全指证券公司指数",
+      "inception_date": "2016-07-26",
+      "listing_date": "2016-08-08",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2016-08-03/512880_20160803_2.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "独立券商行业；512000/512570/512900等为同指数替代品，不应重复计行业。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "512880",
+        "name": "证券ETF国泰",
+        "category": "financials",
+        "listing_date": "2016-08-08",
+        "scale_cny": "58274630000.0",
+        "latest_turnover_cny": "988006776.0",
+        "rank": "14",
+        "source": "SSE",
+        "tracking_index": "中证全指证券公司指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "512880",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 1954654390.0,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "512200",
+      "name": "房地产ETF南方",
+      "official_name": "南方中证全指房地产交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "房地产",
+      "index": "中证全指房地产指数",
+      "inception_date": "2017-08-25",
+      "listing_date": "2017-09-25",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2020-03-30/512200_2019_n.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "房地产独立暴露；不以金融地产混合替代。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "512200",
+        "name": "房地产ETF南方",
+        "category": "real_estate",
+        "listing_date": "2017-09-25",
+        "scale_cny": "5355480000.0",
+        "latest_turnover_cny": "907000580.0",
+        "rank": "65",
+        "source": "SSE",
+        "tracking_index": "中证全指房地产指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "512200",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 171526893.33333334,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "159745",
+      "name": "建材ETF国泰",
+      "official_name": "国泰中证全指建筑材料交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "建筑材料",
+      "index": "中证全指建筑材料指数",
+      "inception_date": "2021-06-09",
+      "listing_date": "2021-06-18",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://st.gtfund.com/pis/www/CN_50010000_159745_FA010080_20220001_159745_20221212_090000_01.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        },
+        {
+          "verified_fields": [
+            "identity",
+            "index"
+          ],
+          "url": "https://etradetest.gtfund.com/etrade/Jijin/view/id/159745",
+          "kind": "manager_product_page"
+        }
+      ],
+      "reason": "建材制造与基建承包商不等同，可以同时保留，但存在房地产投资周期相关性。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "159745",
+        "name": "建材ETF国泰",
+        "category": "infrastructure",
+        "listing_date": "2021-06-18",
+        "scale_cny": "736818209.535",
+        "latest_turnover_cny": "178846147.0",
+        "rank": "246",
+        "source": "SZSE",
+        "tracking_index": "",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "159745",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 49824658.333333336,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "516970",
+      "name": "基建ETF广发",
+      "official_name": "广发中证基建工程交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "基础设施建设工程",
+      "index": "中证基建工程指数",
+      "inception_date": "2021-06-23",
+      "listing_date": "2021-07-05",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-01-06/516970_20260106_IGRX.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "比优先截止晚4天，但历史足够接近2022起点；需按实际交易日检查120日预热。较516950偏重基建工程，保留独立建设暴露。",
+      "fees": {
+        "management_annual_pct": 0.5,
+        "custody_annual_pct": 0.1,
+        "note": "Document current rates; not guaranteed unchanged on research date",
+        "document_date": "2026-01-06"
+      },
+      "fees_verification": "Official2026-01-06 product summary page3",
+      "tracking_target": {
+        "is_guarantee": false,
+        "daily_abs_deviation_pct": 0.2,
+        "annual_tracking_error_pct": 2
+      },
+      "catalog_snapshot": {
+        "symbol": "516970",
+        "name": "基建ETF广发",
+        "category": "infrastructure",
+        "listing_date": "2021-07-05",
+        "scale_cny": "1163670000.0",
+        "latest_turnover_cny": "47370141.0",
+        "rank": "297",
+        "source": "SSE",
+        "tracking_index": "中证基建工程指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "516970",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 36304653.333333336,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "515220",
+      "name": "煤炭ETF国泰",
+      "official_name": "国泰中证煤炭交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "煤炭",
+      "index": "中证煤炭指数",
+      "inception_date": "2020-01-20",
+      "listing_date": "2020-03-02",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-19/515220_20260319_DP5F.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "煤炭生产与煤化工/电力周期相关，但行业分工不同。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "515220",
+        "name": "煤炭ETF国泰",
+        "category": "cyclical",
+        "listing_date": "2020-03-02",
+        "scale_cny": "9842870000.0",
+        "latest_turnover_cny": "449849285.0",
+        "rank": "53",
+        "source": "SSE",
+        "tracking_index": "中证煤炭指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "515220",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 867142206.6666666,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "516570",
+      "name": "石化ETF易方达",
+      "official_name": "易方达中证石化产业交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "石油石化",
+      "index": "中证石化产业指数",
+      "inception_date": "2021-06-09",
+      "listing_date": "2021-06-18",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-12-31/516570_20251231_IVQ0.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "石油石化产业链，区别于煤炭；与化工指数可能有部分重叠，应记录而非视为完全正交。",
+      "fees": {
+        "management_annual_pct": 0.15,
+        "custody_annual_pct": 0.05,
+        "note": "Document current rates; not guaranteed unchanged on research date",
+        "document_date": "2025-12-31"
+      },
+      "fees_verification": "Official2025-12-31 product summary page3",
+      "tracking_target": {
+        "is_guarantee": false,
+        "daily_abs_deviation_pct": 0.2,
+        "annual_tracking_error_pct": 2
+      },
+      "catalog_snapshot": {
+        "symbol": "516570",
+        "name": "石化ETF易方达",
+        "category": "cyclical",
+        "listing_date": "2021-06-18",
+        "scale_cny": "1089990000.0",
+        "latest_turnover_cny": "16672151.0",
+        "rank": "401",
+        "source": "SSE",
+        "tracking_index": "中证石化产业指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "516570",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 31381810.0,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "515210",
+      "name": "钢铁ETF国泰",
+      "official_name": "国泰中证钢铁交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "钢铁",
+      "index": "中证钢铁指数",
+      "inception_date": "2020-01-22",
+      "listing_date": "2020-03-02",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-09-30/515210_20250930_8NOX.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "传统钢铁供需周期，区别于有色金属和化工。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "515210",
+        "name": "钢铁ETF国泰",
+        "category": "cyclical",
+        "listing_date": "2020-03-02",
+        "scale_cny": "1089500000.0",
+        "latest_turnover_cny": "99580194.0",
+        "rank": "247",
+        "source": "SSE",
+        "tracking_index": "中证钢铁指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "515210",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 82036985.0,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "512400",
+      "name": "有色金属ETF南方",
+      "official_name": "南方中证申万有色金属交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "有色金属",
+      "index": "中证申万有色金属指数",
+      "inception_date": "2017-08-03",
+      "listing_date": "2017-09-01",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-03-28/512400_20240328_XYAX.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "综合有色金属暴露；避免同时加入另一个综合有色同指数产品。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "512400",
+        "name": "有色金属ETF南方",
+        "category": "cyclical",
+        "listing_date": "2017-09-01",
+        "scale_cny": "22730540000.0",
+        "latest_turnover_cny": "336196291.0",
+        "rank": "40",
+        "source": "SSE",
+        "tracking_index": "中证申万有色金属指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "512400",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 1014272666.6666666,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "159870",
+      "name": "化工ETF鹏华",
+      "official_name": "鹏华中证细分化工产业主题交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "化工",
+      "index": "中证细分化工产业主题指数",
+      "inception_date": "2021-02-23",
+      "listing_date": "2021-03-03",
+      "recommendation": "primary",
+      "sources": [
+        {
+          "url": "https://static.cninfo.com.cn/finalpage/2025-08-28/1224599228.PDF",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "新增传统化工链条；516020/516120/516220均跟踪同一指数，应只选一只。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "159870",
+        "name": "化工ETF鹏华",
+        "category": "cyclical",
+        "listing_date": "2021-03-03",
+        "scale_cny": "11822782398.2631",
+        "latest_turnover_cny": "181052769.0",
+        "rank": "78",
+        "source": "SZSE",
+        "tracking_index": "",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "159870",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 389157491.6666667,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "516150",
+      "name": "稀土ETF嘉实",
+      "official_name": "嘉实中证稀土产业交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "稀土/稀土材料",
+      "index": "中证稀土产业指数",
+      "inception_date": "2021-03-09",
+      "listing_date": "2021-03-17",
+      "recommendation": "optional_subindustry",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-06-11/516150_20260611_YKOD.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "与综合有色存在成员重叠，只有将稀土材料细分视为所需新产业时保留；不用于虚增一级行业数。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": {
+        "is_guarantee": false,
+        "daily_abs_deviation_pct": 0.2,
+        "annual_tracking_error_pct": 2
+      },
+      "catalog_snapshot": {
+        "symbol": "516150",
+        "name": "稀土ETF嘉实",
+        "category": "cyclical",
+        "listing_date": "2021-03-17",
+        "scale_cny": "5910120000.0",
+        "latest_turnover_cny": "51773956.0",
+        "rank": "170",
+        "source": "SSE",
+        "tracking_index": "中证稀土产业指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "516150",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 148566960.0,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "159611",
+      "name": "电力ETF广发",
+      "official_name": "广发中证全指电力公用事业交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "电力公用事业",
+      "index": "中证全指电力公用事业指数",
+      "inception_date": "2021-12-29",
+      "listing_date": "2022-01-07",
+      "recommendation": "primary_late_entry",
+      "sources": [
+        {
+          "url": "https://www.gffunds.com.cn/jjgg/zdsj/202201/t20220107_371589.shtml",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        },
+        {
+          "verified_fields": [
+            "identity",
+            "inception_date",
+            "index"
+          ],
+          "url": "https://www.gffunds.com.cn/funds/?fromSearch=1&fundcode=159611",
+          "kind": "official_manager_product_page"
+        }
+      ],
+      "reason": "独立发电/供电公用事业暴露，与新能源设备生产不同；2022起点无历史，上市且120个交易日后才允许参加，不能填充上市前收益。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "159611",
+        "name": "电力ETF广发",
+        "category": "utilities",
+        "listing_date": "2022-01-07",
+        "scale_cny": "8972947535.4",
+        "latest_turnover_cny": "194799596.0",
+        "rank": "83",
+        "source": "SZSE",
+        "tracking_index": "",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "159611",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 493601070.0,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "512070",
+      "name": "证券保险ETF易方达",
+      "official_name": "易方达沪深300非银行金融交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "保险+非银行金融",
+      "index": "沪深300非银行金融指数",
+      "inception_date": "2014-06-26",
+      "listing_date": "2014-07-18",
+      "recommendation": "alternate_insurance_gap",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/512070_20260331_70FH.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "可以补保险相关暴露，但不是纯保险ETF；与证券ETF存在券商重叠。建议作为非银替代或明确混合行业项，不称独立纯保险。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": {
+        "is_guarantee": false,
+        "daily_abs_deviation_pct": 0.2,
+        "annual_tracking_error_pct": 2
+      },
+      "catalog_snapshot": {
+        "symbol": "512070",
+        "name": "证券保险ETF易方达",
+        "category": "financials",
+        "listing_date": "2014-07-18",
+        "scale_cny": "12740830000.0",
+        "latest_turnover_cny": "269901260.0",
+        "rank": "58",
+        "source": "SSE",
+        "tracking_index": "沪深300非银行金融指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "512070",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 507438565.0,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "159930",
+      "name": "能源ETF汇添富",
+      "official_name": "中证能源交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "综合传统能源",
+      "index": "中证能源指数",
+      "inception_date": "2013-08-23",
+      "listing_date": "2013-09-16",
+      "recommendation": "alternate_energy",
+      "sources": [
+        {
+          "url": "https://www.99fund.com/upload/20180328/201803281522202088634.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "历史长且已通过现流动性；但与煤炭/石化重叠明显，适合能源合并替代而非增加独立行业数。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": {
+        "is_guarantee": false,
+        "daily_abs_deviation_pct": 0.1,
+        "annual_tracking_error_pct": 2
+      },
+      "catalog_snapshot": {
+        "symbol": "159930",
+        "name": "能源ETF汇添富",
+        "category": "cyclical",
+        "listing_date": "2013-09-16",
+        "scale_cny": "863852041.0849999",
+        "latest_turnover_cny": "65818674.0",
+        "rank": "302",
+        "source": "SZSE",
+        "tracking_index": "",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "159930",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 106881720.0,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "516950",
+      "name": "基建ETF银华",
+      "official_name": "银华中证基建交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "基建工程+工程机械/运输设备",
+      "index": "中证基建指数",
+      "inception_date": "2021-04-29",
+      "listing_date": "2021-05-14",
+      "recommendation": "watchlist_liquidity_unverified",
+      "sources": [
+        {
+          "url": "https://etf.sse.com.cn/fundtrends/c/5461491.shtml",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "历史上市较早，但原候选规模预筛不合格，未有305资格证明；可由主代理补采60日验证，不能直接宣称流动性合格。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": {
+        "is_guarantee": false,
+        "daily_abs_deviation_pct": 0.2,
+        "annual_tracking_error_pct": 2
+      },
+      "catalog_snapshot": {
+        "symbol": "516950",
+        "name": "基建ETF银华",
+        "category": "infrastructure",
+        "listing_date": "2021-05-14",
+        "scale_cny": "107620000.0",
+        "latest_turnover_cny": "4296438.0",
+        "rank": "903",
+        "source": "SSE",
+        "tracking_index": "中证基建指数",
+        "eligible": "False",
+        "exclusion_reason": "scale below CNY 200m"
+      },
+      "current_60d_qualification": null
+    },
+    {
+      "symbol": "516910",
+      "name": "物流ETF富国",
+      "official_name": "富国中证现代物流交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "现代物流",
+      "index": "中证现代物流指数",
+      "inception_date": "2021-06-03",
+      "listing_date": "2021-06-11",
+      "recommendation": "watchlist_liquidity_unverified",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-08-30/516910_20250830_NS6E.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "物流为稀缺历史服务业覆盖；现规模较小但最新单日成交不能决定60日，需补验证后才能进入主篮。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "516910",
+        "name": "物流ETF富国",
+        "category": "services",
+        "listing_date": "2021-06-11",
+        "scale_cny": "71780000.0",
+        "latest_turnover_cny": "15943932.0",
+        "rank": "776",
+        "source": "SSE",
+        "tracking_index": "中证现代物流指数",
+        "eligible": "False",
+        "exclusion_reason": "scale below CNY 200m"
+      },
+      "current_60d_qualification": null
+    },
+    {
+      "symbol": "159666",
+      "name": "交通运输ETF华夏",
+      "official_name": "华夏中证全指运输交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "交通运输",
+      "index": "中证全指运输指数",
+      "inception_date": "2023-01-13",
+      "listing_date": "2023-02-13",
+      "recommendation": "watchlist_late_entry_liquidity_unverified",
+      "sources": [
+        {
+          "url": "https://www.chinaamc.com/upload/resources/file/2026/03/31/d38abaf41009412dae497c09e0cdf492.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "真正的运输行业暴露，晚于2022起点，须预热120日且补60日流动性；不以工业母机159667误代运输。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": {
+        "is_guarantee": false,
+        "daily_abs_deviation_pct": 0.2,
+        "annual_tracking_error_pct": 2
+      },
+      "catalog_snapshot": {
+        "symbol": "159666",
+        "name": "交通运输ETF华夏",
+        "category": "services",
+        "listing_date": "2023-02-13",
+        "scale_cny": "81897686.487",
+        "latest_turnover_cny": "25482483.0",
+        "rank": "705",
+        "source": "SZSE",
+        "tracking_index": "",
+        "eligible": "False",
+        "exclusion_reason": "scale below CNY 200m"
+      },
+      "current_60d_qualification": null
+    },
+    {
+      "symbol": "512580",
+      "name": "环保ETF广发",
+      "official_name": "广发中证环保产业交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "环保产业",
+      "index": "中证环保产业指数",
+      "inception_date": "2017-01-25",
+      "listing_date": "2017-02-28",
+      "recommendation": "excluded_current_liquidity",
+      "sources": [
+        {
+          "url": "https://www.gffunds.com.cn/jjgg/zdsj/201702/P020170224490638604865.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "历史环保暴露可用，但当前60日均额低于1000万元；不能为了数量放宽门槛。环保产业指数还含新能源相关产业，与光伏/电池可能重叠。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": {
+        "is_guarantee": false,
+        "daily_abs_deviation_pct": 0.2,
+        "annual_tracking_error_pct": 2
+      },
+      "catalog_snapshot": {
+        "symbol": "512580",
+        "name": "环保ETF广发",
+        "category": "utilities",
+        "listing_date": "2017-02-28",
+        "scale_cny": "595850000.0",
+        "latest_turnover_cny": "4580502.0",
+        "rank": "609",
+        "source": "SSE",
+        "tracking_index": "中证环保产业指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "512580",
+        "qualified": false,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 8207120.0,
+        "reason": "below liquidity threshold"
+      }
+    },
+    {
+      "symbol": "510300",
+      "name": "沪深300ETF华泰柏瑞",
+      "official_name": "华泰柏瑞沪深300交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "大盘宽基锚",
+      "index": "沪深300指数",
+      "inception_date": "2012-05-04",
+      "listing_date": "2012-05-28",
+      "recommendation": "anchor",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2020-08-28/510300_20200829_6.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "大盘市场比较基准；不是新增行业，宽基锚最多2-3只。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "510300",
+        "name": "沪深300ETF华泰柏瑞",
+        "category": "broad_market",
+        "listing_date": "2012-05-28",
+        "scale_cny": "106898010000.0",
+        "latest_turnover_cny": "2196229027.0",
+        "rank": "4",
+        "source": "SSE",
+        "tracking_index": "沪深300指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "510300",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 4690644693.333333,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "510500",
+      "name": "中证500ETF南方",
+      "official_name": "中证500交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "中盘宽基锚",
+      "index": "中证500指数",
+      "inception_date": "2013-02-06",
+      "listing_date": "2013-03-15",
+      "recommendation": "anchor",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2022-08-29/510500_20220829_1_5x5R2UAd.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "补充中盘市值结构；不是新增行业，最多与300/红利合计3锚。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "510500",
+        "name": "中证500ETF南方",
+        "category": "broad_market",
+        "listing_date": "2013-03-15",
+        "scale_cny": "41928150000.0",
+        "latest_turnover_cny": "1669869400.0",
+        "rank": "11",
+        "source": "SSE",
+        "tracking_index": "中证小盘500指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "510500",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 3705864343.3333335,
+        "reason": "passed"
+      }
+    },
+    {
+      "symbol": "510880",
+      "name": "红利ETF华泰柏瑞",
+      "official_name": "上证红利交易型开放式指数证券投资基金",
+      "asset_class": "mainland_stock_ETF",
+      "exposure": "红利风格锚",
+      "index": "上证红利指数",
+      "inception_date": "2006-11-17",
+      "listing_date": "2007-01-18",
+      "recommendation": "anchor_optional",
+      "sources": [
+        {
+          "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2020-08-28/510880_20200829_1.pdf",
+          "kind": "official_manager_or_exchange_filed_report",
+          "verified_fields": [
+            "identity",
+            "listing_date"
+          ],
+          "note": "Index verified from official product/report where stated; never use fund inception as listing date."
+        }
+      ],
+      "reason": "红利风格跨行业但通常与银行/煤炭等重叠，不计独立行业；与两个宽基合计不得超过3锚。",
+      "fees": null,
+      "fees_verification": "No cross-product low-fee ranking; latest management/custody fees not independently extracted unless separately stated.",
+      "tracking_target": null,
+      "catalog_snapshot": {
+        "symbol": "510880",
+        "name": "红利ETF华泰柏瑞",
+        "category": "factor",
+        "listing_date": "2007-01-18",
+        "scale_cny": "18863080000.0",
+        "latest_turnover_cny": "515613641.0",
+        "rank": "31",
+        "source": "SSE",
+        "tracking_index": "上证红利指数",
+        "eligible": "True",
+        "exclusion_reason": ""
+      },
+      "current_60d_qualification": {
+        "symbol": "510880",
+        "qualified": true,
+        "cache_state": "ready",
+        "average_amount_60d_CNY": 673416716.6666666,
+        "reason": "passed"
+      }
+    }
+  ],
+  "gaps": [
+    "Pure insurance not identified with requisite pre-2022 history; 512070 combines insurance with securities.",
+    "Electric utilities 159611 listed2022-01-07; first120 daily sessions must be masked.",
+    "Historical transport/services scarcity:516910 offers logistics but needs liquidity verification;159666 listed2023-02-13.",
+    "512580 environmental theme fails current60day CNY10m liquidity threshold.",
+    "516950 and516910 excluded by legacy CNY200m size prefilter; user allows discovery outside305, but60day screen cannot be asserted without fetching/checking data."
+  ],
+  "overlap_policy": [
+    "Bank and securities:one representative each tracking index.",
+    "Rare earth is an optional nonferrous subindustry, not an additional disjoint top-level industry.",
+    "512070 supplies mixed insurance/nonbank exposure and overlaps512880.",
+    "159930 comprehensive energy is alternate to coal+petrochem, not additional unique industry.",
+    "Only2-3 broad/dividend anchors; do not count anchors as industries."
+  ],
+  "unverified_pit_claims": "No historical 2021/2022 liquidity assurance from2026 trailing qualification; listing andactual120daily bars required."
+}

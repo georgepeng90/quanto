@@ -1,0 +1,51 @@
+{
+  "scope": "Two broad anchors and one style are not counted as new industries; solar and EV supply-chain exposure may overlap autos/materials.",
+  "symbols": [
+    {
+      "symbol": "510300",
+      "name": "华泰柏瑞沪深300ETF",
+      "category": "broad_market",
+      "exposure": "沪深300大盘宽基",
+      "tracking_index": "沪深300指数",
+      "listing_date": "2012-05-28",
+      "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/510300_20260331_W6CZ.pdf"
+    },
+    {
+      "symbol": "510500",
+      "name": "南方中证500ETF",
+      "category": "broad_market",
+      "exposure": "中证500中盘宽基",
+      "tracking_index": "中证500指数",
+      "listing_date": "2013-03-15",
+      "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/510500_20260331_Q394.pdf"
+    },
+    {
+      "symbol": "512890",
+      "name": "华泰柏瑞中证红利低波动ETF",
+      "category": "factor",
+      "exposure": "红利低波风格",
+      "tracking_index": "中证红利低波动指数",
+      "listing_date": "2019-01-18",
+      "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-18/512890_20260318_FNWM.pdf"
+    },
+    {
+      "symbol": "515790",
+      "name": "华泰柏瑞中证光伏产业ETF",
+      "category": "new_energy",
+      "exposure": "光伏产业链",
+      "tracking_index": "中证光伏产业指数",
+      "listing_date": "2020-12-18",
+      "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-18/515790_20260318_84MH.pdf"
+    },
+    {
+      "symbol": "515030",
+      "name": "华夏中证新能源汽车ETF",
+      "category": "new_energy",
+      "exposure": "新能源汽车产业链",
+      "tracking_index": "中证新能源汽车指数",
+      "listing_date": "2020-03-04",
+      "source_url": "https://www.sse.com.cn/disclosure/announcement/general/jjzssgg/c/c_20260709_10825031.shtml",
+      "listing_source": "outputs/etf-expansion-20261002/sse_funds.json: official catalogue retrieved2026-10-02"
+    }
+  ]
+}

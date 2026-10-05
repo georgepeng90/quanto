@@ -1,0 +1,41 @@
+{
+  "dataset_validation": "passed",
+  "training_split_validation": "passed",
+  "action_shape": [
+    33
+  ],
+  "observation_shape": [
+    388
+  ],
+  "finite_observation_reward_smoke": "passed",
+  "official_suspensions_applied": 4,
+  "all_data_hashes_verified": true,
+  "original_model_files_unchanged": true,
+  "price_rows": 43346,
+  "study_calendar_sessions": 1393,
+  "late_warmup": [
+    {
+      "symbol": "159766",
+      "warmup_bars_before_2022": 109,
+      "first_eligible_date": "2022-01-18"
+    },
+    {
+      "symbol": "562500",
+      "warmup_bars_before_2022": 3,
+      "first_eligible_date": "2022-06-30"
+    },
+    {
+      "symbol": "159611",
+      "warmup_bars_before_2022": 0,
+      "first_eligible_date": "2022-07-08"
+    }
+  ],
+  "sources": {
+    "outputs\\rl-broad-industry-20261005\\source_audit.json": "31fc807b8f9c772be01565dd1275027264b7c8ebe3253618af9d01e8c1409bc3",
+    "outputs\\rl-broad-industry-20261005\\cache_progress.json": "72d29ae956f67d6b49632d36ea768d8cb5980a7899317043219a88b260d2ce63",
+    "outputs\\rl-broad-industry-20261005\\unit_audit.json": "46515d5cf723d6753cac82593a5b675c0f89e57104637332eaf82c61cdb6e321",
+    "outputs\\rl-broad-industry-20261005\\cache_runner.py": "0f73976db03660c9549e647846dca35039337454bc6899cc41d265d06a340210",
+    "outputs\\rl-broad-industry-20261005\\finish_data.py": "828c6e4757f3626628caee1dbf722966a857850cdf8352767366e9b0932a5ba7",
+    "outputs\\rl-broad-industry-20261005\\start_model.py": "05d1c0bb6da77fc0e1a498c5083572a1c09d6404e075850c98988227b4ceb25b"
+  }
+}

@@ -92,6 +92,45 @@
       "date": "2021-03-26",
       "sha256": "25331b936641ce6aa14e8cc5b98f0bc6d1dfb1f8c56ac1bbf34f64084c7dbcdd",
       "reason": "基金份额按1:2拆分"
+    },
+    "512010": {
+      "symbol": "512010",
+      "date": "2021-06-25",
+      "url": "https://static.cninfo.com.cn/finalpage/2021-06-16/1210241250.PDF",
+      "path": "D:/Projects/quanto/outputs/rl-broad-industry-20261005/suspension-512010.pdf",
+      "sha256": "a87aff1625713df4ac1897cb6730736342fe6fc8b08a05a15fe0b92474ce32eb",
+      "bytes": 438658,
+      "pdf_magic_verified": true,
+      "confirmation": "official_full_day_suspension_confirmed",
+      "official_title": "易方达基金管理有限公司关于易方达沪深300医药卫生交易型开放式指数证券投资基金实施基金份额拆分业务及相关业务安排的公告",
+      "announcement_date": "2021-06-16",
+      "reason": "fund_unit_split",
+      "split_ratio": 4,
+      "suspension_scope": "On-exchange ETF shares were suspended on the fund split day2021-06-25; on-exchange creation/redemption were also suspended. The document does not specify any intraday trading/resumption on that date.",
+      "suspension_evidence_location": "PDF page1, sectionII, point1; browser extracted lines35-39",
+      "resumption_date": "2021-06-28",
+      "resumption_confirmation": "The same official announcement explicitly states on-exchange shares resume trading and creation/redemption from the firstworkingday after split2021-06-28. This records the manager's official scheduled resumption; no separate postevent resumption PDF downloaded.",
+      "summary_zh": "官方公告明确：2021年6月25日为份额拆分日，场内份额停牌并暂停申购赎回；2021年6月28日起场内份额复牌并恢复申购赎回。",
+      "retrieved_on": "2026-10-05",
+      "quality_note": "Use this official suspension evidence to classify the absent2021-06-25 OHLC bar; do not fabricate a traded bar. Four-for-one split separately requires correct price adjustment.",
+      "source_type": "Fund manager disclosure hosted by CNINFO (official disclosure portal)"
+    },
+    "512890": {
+      "announcement_date": "2021-10-18",
+      "full_day_suspension": true,
+      "authority": "上海证券交易所官方基金披露",
+      "confirmation_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2021-10-25/512890_20211025_1_lJ5GeyLb.pdf",
+      "title": "华泰柏瑞中证红利低波动ETF实施份额拆分业务及相关业务安排的第一次提示性公告",
+      "paraphrase": "权益登记日2021-10-21正常交易，份额拆分日2021-10-22停牌，下一工作日2021-10-25起复牌。",
+      "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2021-10-18/512890_20211018_1_5m8OUo9o.pdf",
+      "symbol": "512890",
+      "reason": "基金份额1:2拆分",
+      "scope": "Only512890on2021-10-22verified; no blanketclassificationofothermissingdates.",
+      "path": "D:\\Projects\\quanto\\outputs\\rl-broad-industry-20261005\\suspension-512890.pdf",
+      "confirmation_paraphrase": "拆分结果公告明确2021-10-22完成份额拆分，2021-10-25恢复二级市场交易及申购赎回。",
+      "date": "2021-10-22",
+      "resumption_date": "2021-10-25",
+      "sha256": "d5322c141a0784e0d461d47c7287688097450c7eae721277bed85cc080266693"
     }
   }
 }

@@ -341,6 +341,60 @@ test('historical draft deep link remains selected beyond the first listing page'
   expect(screen.getByLabelText('样本用途')).toHaveValue('exploration')
 })
 
+test('existing draft query link redirects to the canonical edit page beyond the first listing page', async () => {
+  const previous = globalThis.fetch
+  const historical = { ...experiment, id: 'historic-clone', payload: { ...experiment.payload, source_run_id: 'old-run' } }
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/experiments/historic-clone') return Response.json(historical)
+    return previous(input, init)
+  }))
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments?draft=historic-clone'] })
+  render(<RouterProvider router={router} />)
+  await screen.findByText(/当前修订 s1/)
+  expect(router.state.location.pathname).toBe('/experiments/historic-clone')
+  expect(screen.getByLabelText('实验草稿')).toHaveValue('historic-clone')
+  expect(screen.getByLabelText('样本用途')).toHaveValue('exploration')
+})
+
+test('returning to new during a delayed edit load discards the stale result', async () => {
+  let release!: (response: Response) => void
+  const previous = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/experiments/e1' && !init?.method) return new Promise<Response>(resolve => { release = resolve })
+    return previous(input, init)
+  }))
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/new'] })
+  render(<RouterProvider router={router} />)
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  expect(await screen.findByText('加载固定策略配置…')).toBeInTheDocument()
+  await act(async () => { await router.navigate(-1) })
+  expect(router.state.location.pathname).toBe('/experiments/new')
+  await act(async () => release(Response.json(experiment)))
+  expect(await screen.findByRole('heading', { name: '新建固定策略' })).toBeInTheDocument()
+  expect(screen.getByLabelText('实验草稿')).toHaveValue('')
+  expect(screen.queryByText('加载固定策略配置…')).not.toBeInTheDocument()
+})
+
+test('switching from one edit to new cancels a second pending edit load', async () => {
+  let release!: (response: Response) => void
+  const previous = globalThis.fetch
+  const second = { ...experiment, id: 'e2' }
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/experiments') return Response.json({ items: [experiment, second], next_cursor: null })
+    if (String(input) === '/api/experiments/e2' && !init?.method) return new Promise<Response>(resolve => { release = resolve })
+    return previous(input, init)
+  }))
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/e1'] })
+  render(<RouterProvider router={router} />)
+  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e2')
+  expect(await screen.findByText('加载固定策略配置…')).toBeInTheDocument()
+  await act(async () => { await router.navigate('/experiments/new') })
+  await act(async () => release(Response.json(second)))
+  expect(await screen.findByRole('heading', { name: '新建固定策略' })).toBeInTheDocument()
+  expect(screen.getByLabelText('实验草稿')).toHaveValue('')
+  expect(screen.queryByText('加载固定策略配置…')).not.toBeInTheDocument()
+})
+
 
 test('switching source files during the typing latch binds the buffer to its file', async () => {
   render(<StrategyEditor revision={strategy} onSaved={vi.fn()} onDirtyChange={vi.fn()} />)

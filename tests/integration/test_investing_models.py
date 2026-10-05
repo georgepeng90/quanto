@@ -39,6 +39,7 @@ def test_model_creation_persists_without_training_and_keeps_order(model_workspac
     model = response.json()
     assert model['state'] == 'untrained'
     assert model['spec']['backtest']['symbols'] == ['000002', '000001']
+    assert model['spec']['action_version'] == 'hold-target-cash-quartiles-v2'
     assert model['total_timesteps'] == model['session_count'] == model['version_count'] == 0
     assert model['latest_version_id'] is None
     assert app.state.service.store.list_jobs() == []
@@ -49,6 +50,20 @@ def test_model_creation_persists_without_training_and_keeps_order(model_workspac
     reopened = create_app(app.state.service.store.root)
     with reopened.state.service.store.transaction() as db:
         assert db.execute('SELECT count(*) FROM investing_models').fetchone()[0] == 1
+
+
+def test_existing_model_without_action_version_queues_legacy_continuation(model_workspace):
+    app, client, headers, request = model_workspace
+    model = client.post('/api/investing/models', headers=headers, json=request).json()
+    historical_spec = {key: value for key, value in model['spec'].items() if key != 'action_version'}
+    with app.state.service.store.transaction() as db:
+        db.execute('UPDATE investing_models SET spec_json=? WHERE id=?', (json.dumps(historical_spec), model['id']))
+    response = client.post(f'/api/investing/models/{model["id"]}/train', headers=headers,
+                           json={'additional_timesteps': 8})
+    assert response.status_code == 200, response.text
+    record = app.state.service.store.get_job(response.json()['id'])
+    payload = json.loads(Path(record.input_path).read_text(encoding='utf-8'))
+    assert payload['input']['request']['spec']['action_version'] == 'hold-target-quartiles-v1'
 
 
 def test_create_rejects_invalid_basket_and_bad_research_without_queueing(model_workspace):
@@ -116,6 +131,10 @@ def test_model_continues_and_backtests_explicit_immutable_version(model_workspac
                                     json={'additional_timesteps': 8, 'device': 'cpu'}))
         with app.state.service.store.transaction() as db:
             first_root = Path(db.execute('SELECT path FROM learning_artifacts WHERE id=?', (first,)).fetchone()[0])
+        from stable_baselines3 import PPO
+        from quanto.learning.artifacts import read_manifest
+        assert read_manifest(first_root, 'policy')['action_version'] == 'hold-target-cash-quartiles-v2'
+        assert PPO.load(first_root / 'last.zip', device='cpu').action_space.nvec[0] == 3
         before = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in first_root.iterdir() if path.is_file()}
         second = wait_job(client.post(f'/api/investing/models/{model["id"]}/train', headers=headers,
                                      json={'additional_timesteps': 8, 'device': 'cpu'}))

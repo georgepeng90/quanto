@@ -4,6 +4,7 @@ import { JsonDetails } from './LearningResults'
 import type { InvestingOverview, InvestingModel, PolicyTrainingSpec } from '../investingTypes'
 
 const defaults: PolicyTrainingSpec = {
+  action_version: 'hold-target-cash-quartiles-v2',
   name: 'ETF PPO 模型', selection_metric: 'validation_sharpe', frequency: 'weekly', lookback: 120, train_start: '', train_end: '', validation_start: '', validation_end: '', test_start: '', test_end: '',
   episode_sessions: 252, total_timesteps: 4096, n_steps: 128, batch_size: 64, n_epochs: 10, learning_rate: .0003, gamma: 1, gae_lambda: .95, ent_coef: .01, hidden_size: 64, seed: 42, device: 'cpu', eval_every_timesteps: 512,
   backtest: { start: '', end: '', symbols: [], initial_cash: 1000000, seed: 42, execution: { model: 'next_open', commission_rate: .0002, minimum_commission: 5, slippage_rate: .0005, max_stale_sessions: 5 }, risk: { max_total_weight: .8, max_symbol_weight: .35, group_caps: {}, stress_scenarios: [], max_stress_loss: null, drawdown_pause: .2, pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: 'v1' } },

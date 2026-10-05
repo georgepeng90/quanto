@@ -76,6 +76,20 @@ def test_policy_submission_frozen_and_cancel_cannot_publish(tmp_path):
         assert db.execute('SELECT count(*) FROM learning_artifacts').fetchone()[0] == 0
 
 
+def test_standalone_policy_training_queues_new_action_version(tmp_path):
+    from tests.fixtures.investing_training_cases import investing_case
+    spec, _ = investing_case(tmp_path / 'data')
+    app = create_app(tmp_path / 'workspace')
+    dataset = app.state.service.store.register_dataset(tmp_path / 'data')
+    client = TestClient(app, base_url='http://127.0.0.1')
+    headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
+    response = client.post('/api/investing/train', headers=headers, json={'dataset_id': dataset.id, 'spec': spec})
+    assert response.status_code == 200, response.text
+    record = app.state.service.store.get_job(response.json()['id'])
+    payload = json.loads(Path(record.input_path).read_text(encoding='utf-8'))
+    assert payload['input']['request']['spec']['action_version'] == 'hold-target-cash-quartiles-v2'
+
+
 def test_investing_cli_uses_same_api(monkeypatch, tmp_path, capsys):
     from quanto import cli
     calls = []

@@ -1,6 +1,7 @@
 {
   "name": "ETF 周度 PPO 研究",
   "frequency": "weekly",
+  "action_version": "hold-target-cash-quartiles-v2",
   "lookback": 120,
   "backtest": {
     "start": "2019-01-01",

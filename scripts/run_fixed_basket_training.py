@@ -414,7 +414,8 @@ class Runner:
         if device == "cuda" and model.device.type != "cuda":
             raise RuntimeError("CUDA inference was not honored; CPU fallback is forbidden")
         metrics, result, report = evaluate_policy(model, load_dataset(self.dataset_path), spec,
-                                                   config.frequency, config.lookback)
+                                                   config.frequency, config.lookback,
+                                                   action_version=config.action_version)
         summary = {"kind": "offline_last_evaluation", "registered_in_workbench": False,
                    "version_id": version_id, "policy_content_id": manifest["id"], "period": dates,
                    "snapshot": "last.zip", "runtime": {"device": str(model.device)}, "metrics": {**report.metrics, **metrics},

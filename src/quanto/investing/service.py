@@ -44,8 +44,9 @@ class InvestingService(LearningService):
             raise ValueError('training requires dataset_id and spec only')
         if not isinstance(body['dataset_id'], str) or not body['dataset_id'].strip():
             raise ValueError('dataset_id must be a nonempty string')
-        from quanto.investing.contracts import PolicyTrainingSpec
-        spec = PolicyTrainingSpec.model_validate(body['spec'])
+        from quanto.investing.contracts import CASH_ACTION_VERSION, PolicyTrainingSpec
+        requested = {'action_version': CASH_ACTION_VERSION, **body['spec']} if isinstance(body['spec'], dict) else body['spec']
+        spec = PolicyTrainingSpec.model_validate(requested)
         ref = self._dataset(body['dataset_id'], spec.backtest)
         return self._submit('train_policy', {'dataset_id': body['dataset_id'], 'spec': spec.model_dump(mode='json')}, {'dataset_ref': ref})
 

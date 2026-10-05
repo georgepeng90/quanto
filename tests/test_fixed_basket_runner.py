@@ -351,7 +351,7 @@ def test_offline_last_uses_explicit_cuda_for_inference(tmp_path, monkeypatch):
         return SimpleNamespace(device=torch.device("cuda:0"))
     monkeypatch.setattr(PPO, "load", load)
     monkeypatch.setattr(loaders, "load_dataset", lambda _: None)
-    monkeypatch.setattr(evaluation, "evaluate_policy", lambda *args: ({"sharpe": None},
+    monkeypatch.setattr(evaluation, "evaluate_policy", lambda *args, **kwargs: ({"sharpe": None},
         SimpleNamespace(equity=pd.DataFrame({"date": ["2025-01-03"], "equity": [1000000]})),
         SimpleNamespace(metrics={}, metric_definitions={}, warnings=[])))
     monkeypatch.setattr(current, "comparison", lambda: None)

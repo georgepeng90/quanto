@@ -47,7 +47,11 @@ npm.cmd --prefix web run build
 
 自然周/月边界按完整交易日历识别，节假日不会变成固定每 5/20 日调仓。只有区间内还有下一执行交易日，才开放动作：周期末收盘发出信号，下一交易日开盘撮合。区间截断不会伪装成周期末，结束持仓按收盘估值，不强制卖出。
 
-动作首维选择 Hold 或目标组合；其余维为每个 ETF 的 0%、25%、50%、75%、100% 目标权重。合计超过 100% 时按比例缩放，再经总仓位、单标的、行业与压力风险约束。Hold 保持实际份额，不重复再平衡；目标权重全为零表示现金目标。只做多、不加杠杆，未投资部分留作现金。
+新建模型默认使用 `action_version: "hold-target-cash-quartiles-v2"`：动作首维 `0` 为 Hold、`1` 为目标组合、`2` 为现金目标。Hold 保持实际份额，不重复再平衡；现金目标独立选择清仓，忽略后续权重维，不再要求所有 ETF 同时输出零权重。它通过原有下一开盘订单与账本执行，仍受停牌、可卖份额、结算和费用约束，不保证立即全部卖出。
+
+目标组合的其余维仍为每个 ETF 的 0%、25%、50%、75%、100% 目标权重；合计超过 100% 时按比例缩放，再经总仓位、单标的、行业与压力风险约束。目标权重全为零也表示现金目标。只做多、不加杠杆，未投资部分留作现金。增加明确现金动作只改善现金选择的可达性，不解决大篮子的部分仓位或稀疏持仓表达问题。
+
+动作版本在模型创建后固定，训练、验证、续训和回测都按该版本解释。已有配置缺少此字段时按 `hold-target-quartiles-v1` 读取，保留 `0` 为 Hold、`1` 为目标组合的原有两种动作；新建 API 请求省略字段时默认写入 v2。可显式指定 v1 创建对照模型。旧模型不能原地切换动作空间，要使用新现金动作须创建新模型；原有特征版本校验仍然适用。
 
 虽然自主决策是周/月频率，账户每天执行风险检查、结算、利息、公司行动和估值。风险处置可能在周期之外减仓；因此“周度策略”不保证一周只成交一次，“买入持有基准”也受同样的风险约束。
 
@@ -65,11 +69,33 @@ train_start < train_end < validation_start < validation_end < test_start < test_
 
 训练只从训练段抽取连续 episode，片段内按时间推进；换片段保留模型权重、重置账户。`episode_sessions` 默认 252 个交易日，不能超过训练段实际交易日数，片段必须含可执行决策。验证与测试连续回放完整区间，不随机切片。
 
+片段末尾继续返回 `terminated=True, truncated=False`，保留当前重置账户、有限片段净值增长的训练目标，不在任意截断日加入价值自举。是否改为连续任务，需要结合片段长度对照结果，统一设计决策边界、折扣和自举状态；目前不改变 `gamma` 或终止语义。
+
 `total_timesteps` 默认 4096，计数单位是环境交互步，通常跨一周或一月，并非交易日或优化轮数。SB3 以完整 rollout 采样，实际步数可能超过请求值。`n_steps: 128`、`batch_size: 64`、`n_epochs: 10` 表示每轮采样规模、优化批次及优化次数；批大小不得超过采样步数且必须整除它。`eval_every_timesteps: 512` 的验证在完成 PPO 更新之后执行。
 
 选模标准在创建时固定，可选 `validation_net_log_return`（验证净对数收益）或 `validation_sharpe`（验证期每日净值夏普率）。新模型页面默认夏普率，同时展示收益与回撤；零波动等情况下夏普率无定义，显示为空，不伪造为 0。产物记录 `selection_valid`，不能把无有效评分的快照说成已验证最优。
 
 新模型会话只进行训练和验证，不在每次续训结束自动查看测试段。测试段通过明确选择保存版本进行冻结回测；频繁依据测试结果反复调整研究仍会泄漏测试信息。原独立 `/investing/train` API 的历史流程保留其完成后评估一次测试段的语义。
+
+### 动作与片段长度对照
+
+`scripts/compare_policy_actions.py` 只生成请求和汇总结果，不启动训练。默认比较 v1/v2 两种动作、126/252/504 个交易日片段和 17/42/83 三个固定种子，共 18 组。每组创建独立模型，只训练一次；同一组种子的两种动作使用相同数据、日期、费用、风控、网络、选模规则和 PPO 步数预算。
+
+先保存一份本次实验专用的 protocol JSON，含 `dataset_path` 和完整 `spec`。`dataset_path` 必须指向工作区已登记的冻结数据目录；`dataset_id` 和 `dataset-content-hash` 使用该版本的登记信息。工具会校验目录文件哈希，原始 CSV 导入目录不能冒充登记后的 Parquet 版本。所有组使用同一份代码和依赖，保留生成的矩阵、协议和训练任务记录。矩阵记录准备时的 Git 提交，汇总检查产物中的环境版本和运行依赖；要确认实际训练源码一致，仍须核对任务冻结输入，单凭导出的指标 JSON 不能证明这一点。
+
+```powershell
+uv run --no-sync python scripts/compare_policy_actions.py prepare --protocol comparison-protocol.json --dataset-id <数据版本ID> --dataset-content-hash <登记的内容哈希> --output outputs/action-comparison --budget 4096
+```
+
+预算必须整除 `n_steps`，以免 PPO 完整采样轮次造成实际交互数不同。工具先检查全部片段长度，再写出每组的 `create-model.json`、`train-model.json` 和总表 `matrix.json`。原 2022–2023 两年协议只有 484 个交易日，会拒绝 504 日片段；若延长训练区间，必须为所有组统一重新固定日期，不能拿新的 504 日结果与旧区间训练结果直接比较。`window_start_positions` 记录各片段长度的候选起点数上限，尚未过滤自然决策边界；接近整段历史的长片段起点很少，解读结果时同时考虑样本重复程度。
+
+对每组依次使用 `quanto investing create-model --json <组目录>/create-model.json` 和 `quanto investing train-model <新模型ID> --json <组目录>/train-model.json`，查询任务直到成功，再通过 `quanto investing get policies <训练任务ID>` 导出 JSON，按组 ID 命名为 `<组ID>.json` 存入单独目录。不要使用独立 `investing train` 或在此阶段发起测试段回测。
+
+```powershell
+uv run --no-sync python scripts/compare_policy_actions.py aggregate --matrix outputs/action-comparison/matrix.json --manifests outputs/action-comparison-results --output outputs/action-comparison-summary.json
+```
+
+汇总核对每组恰好一份结果、固定配置和数据哈希一致、从零开始且实际完成相同预算、测试指标显式为空；输出逐组验证指标和同一种子下 v2 减 v1 的差值。平均现金比例按全部验证交易日的 `cash / equity` 取均值，应收款不算现金；换手和交易成本沿用日线账本口径。夏普率无定义时保持空值，不补零。检查多个种子的收益、回撤、现金、换手和费用后再决定是否采用新配置；这些对照结果仍属于验证集研究，不能代替最终独立测试。
 
 ## 网页操作
 

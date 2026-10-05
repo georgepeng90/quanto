@@ -81,6 +81,32 @@ def test_hold_keeps_shares_and_differs_from_a_rebalance_target():
     assert result.positions.iloc[-1].shares == 50
 
 
+def test_explicit_cash_action_liquidates_while_hold_retains_shares():
+    bundle = daily_case(days=16, symbols=("A",))
+    hold = env_for(bundle, action_version="hold-target-cash-quartiles-v2")
+    cash = env_for(bundle, action_version="hold-target-cash-quartiles-v2")
+    for env, second_action in ((hold, [0, 4]), (cash, [2, 4])):
+        env.reset()
+        env.step(np.array([1, 4]))
+        env.step(np.array(second_action))
+    assert hold.result().fills.side.tolist() == ["buy"]
+    assert cash.result().fills.side.tolist() == ["buy", "sell"]
+    assert hold.result().positions.iloc[-1].shares == 100
+    assert cash.result().positions.iloc[-1].shares == 0
+
+
+def test_explicit_cash_action_respects_next_open_sell_block():
+    bundle = daily_case(days=16, symbols=("A",))
+    bundle.status.loc[bundle.status.date == pd.Timestamp("2024-01-15"), "can_sell"] = False
+    env = env_for(bundle, action_version="hold-target-cash-quartiles-v2")
+    env.reset()
+    env.step(np.array([1, 4]))
+    env.step(np.array([2, 4]))
+    assert env.result().fills.side.tolist() == ["buy"]
+    assert env.result().positions.iloc[-1].shares == 100
+    assert env.result().orders.iloc[-1].reason == "cannot_sell"
+
+
 def test_future_prices_do_not_change_current_observation_or_order_size():
     bundle = daily_case(days=12, symbols=("A",))
     changed = replace(bundle, prices=bundle.prices.copy())

@@ -54,7 +54,7 @@ test('creation requires an explicit ordered basket and creates without training'
   fireEvent.change(screen.getByLabelText('固定 ETF 篮子（按顺序，逗号分隔）'), { target: { value: 'ETF2,ETF1' } })
   await userEvent.click(screen.getByRole('button', { name: '创建模型' }))
   await waitFor(() => expect(posts).toHaveLength(1))
-  expect(posts[0]).toMatchObject({ path: '/api/investing/models', body: { dataset_id: 'd1', spec: { selection_metric: 'validation_sharpe', backtest: { symbols: ['ETF2', 'ETF1'] } } } })
+  expect(posts[0]).toMatchObject({ path: '/api/investing/models', body: { dataset_id: 'd1', spec: { action_version: 'hold-target-cash-quartiles-v2', selection_metric: 'validation_sharpe', backtest: { symbols: ['ETF2', 'ETF1'] } } } })
   expect(posts.some(item => item.path.endsWith('/train'))).toBe(false)
 })
 

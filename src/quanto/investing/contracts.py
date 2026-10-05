@@ -8,11 +8,16 @@ from pydantic import Field, model_validator
 from quanto.config import BacktestSpec, StrictSpec
 
 
+LEGACY_ACTION_VERSION = "hold-target-quartiles-v1"
+CASH_ACTION_VERSION = "hold-target-cash-quartiles-v2"
+
+
 class PolicyTrainingSpec(StrictSpec):
     name: str = Field(min_length=1, max_length=120)
     backtest: BacktestSpec
     frequency: Literal["weekly", "monthly"] = "weekly"
     lookback: int = Field(default=120, ge=3, le=512)
+    action_version: Literal["hold-target-quartiles-v1", "hold-target-cash-quartiles-v2"] = LEGACY_ACTION_VERSION
     train_start: date
     train_end: date
     validation_start: date

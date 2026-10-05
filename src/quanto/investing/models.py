@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from uuid import uuid4
 
-from quanto.investing.contracts import PolicyBacktestSpec, PolicyTrainingSpec
+from quanto.investing.contracts import CASH_ACTION_VERSION, PolicyBacktestSpec, PolicyTrainingSpec
 from quanto.investing.service import InvestingService
 from quanto.learning.artifacts import read_manifest
 from quanto.objects import json_bytes
@@ -168,7 +168,8 @@ class InvestingModels(InvestingService):
         if not isinstance(body, dict) or set(body) != {'dataset_id', 'spec'}:
             raise ValueError('model creation requires dataset_id and spec only')
         dataset_id = _identity(body['dataset_id'], 'dataset_id')
-        spec = PolicyTrainingSpec.model_validate(body['spec'])
+        requested = {'action_version': CASH_ACTION_VERSION, **body['spec']} if isinstance(body['spec'], dict) else body['spec']
+        spec = PolicyTrainingSpec.model_validate(requested)
         if not spec.name.strip():
             raise ValueError('model name must not be blank')
         ref = self._dataset(dataset_id, spec.backtest)

@@ -1,5 +1,6 @@
 """Inference device dispatch on synthetic data; no policy training or GPU allocation."""
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from stable_baselines3 import PPO
@@ -65,6 +66,43 @@ def test_cuda_policy_rejects_silent_loader_fallback(tmp_path, monkeypatch):
         evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", request,
             tmp_path / "result", lambda _: None, lambda: False)
     assert not (tmp_path / "result").exists()
+
+
+def test_backtest_uses_saved_cash_action_version(tmp_path, monkeypatch):
+    request = {**case(tmp_path, monkeypatch, "cpu"), "baseline": "cash"}
+    manifest = evaluation.read_manifest(tmp_path / "policy", "policy")
+    manifest["config"]["action_version"] = "hold-target-cash-quartiles-v2"
+    manifest["action_version"] = "hold-target-cash-quartiles-v2"
+    monkeypatch.setattr(evaluation, "read_manifest", lambda *_: manifest)
+    summary = evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", request,
+        tmp_path / "result", lambda _: None, lambda: False)
+    assert summary["metadata"]["action_version"] == "hold-target-cash-quartiles-v2"
+
+
+def test_saved_cash_action_replays_as_next_open_liquidation(tmp_path, monkeypatch):
+    request = case(tmp_path, monkeypatch, "cpu")
+    manifest = evaluation.read_manifest(tmp_path / "policy", "policy")
+    manifest["config"]["action_version"] = "hold-target-cash-quartiles-v2"
+    manifest["action_version"] = "hold-target-cash-quartiles-v2"
+    monkeypatch.setattr(evaluation, "read_manifest", lambda *_: manifest)
+
+    class BuyThenCash:
+        device = torch.device("cpu")
+
+        def __init__(self):
+            self.decisions = 0
+
+        def predict(self, observation, deterministic):
+            self.decisions += 1
+            return np.array(([1, 4] if self.decisions == 1 else [2, 4] if self.decisions == 2 else [0, 0])), None
+
+    monkeypatch.setattr(PPO, "load", lambda *_args, **_kwargs: BuyThenCash())
+    evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", request,
+        tmp_path / "result", lambda _: None, lambda: False)
+    fills = pd.read_csv(tmp_path / "result" / "fills.csv")
+    positions = pd.read_csv(tmp_path / "result" / "positions.csv")
+    assert fills.side.tolist() == ["buy", "sell"]
+    assert positions.shares.iloc[-1] == 0
 
 
 @pytest.mark.parametrize("baseline", ["equal_weight", "buy_hold", "cash"])

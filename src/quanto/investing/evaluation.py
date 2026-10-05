@@ -9,7 +9,7 @@ import numpy as np
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.backtest.models import TABLE_COLUMNS
 from quanto.config import BacktestSpec
-from quanto.investing.contracts import PolicyBacktestSpec, PolicyTrainingSpec
+from quanto.investing.contracts import LEGACY_ACTION_VERSION, PolicyBacktestSpec, PolicyTrainingSpec
 from quanto.learning.artifacts import read_manifest
 from quanto.learning.contracts import check_cancelled
 from quanto.learning.models import resolve_device
@@ -18,12 +18,13 @@ from quanto.reports.backtest_report import build_report
 
 
 def evaluate_policy(model, bundle, spec, frequency="weekly", lookback=120,
-                    cancelled=lambda: False, baseline="policy", emit=lambda event: None):
+                    cancelled=lambda: False, baseline="policy", emit=lambda event: None,
+                    *, action_version=LEGACY_ACTION_VERSION):
     from quanto.investing.environment import DailyETFEnv
 
     check_cancelled(cancelled)
     env = DailyETFEnv(bundle, spec, frequency=frequency, lookback=lookback,
-                      training=False, cancelled=cancelled, collect=True)
+                      training=False, action_version=action_version, cancelled=cancelled, collect=True)
     try:
         observation, info = env.reset(seed=spec.seed)
         rewards, steps = 0., 0
@@ -53,7 +54,9 @@ def evaluate_policy(model, bundle, spec, frequency="weekly", lookback=120,
             raise ValueError("policy rewards disagree with the shared daily account ledger")
         metrics = dict(net_log_return=net_log_return, total_return=report.metrics["total_return"],
                        final_equity=report.metrics["final_equity"], max_drawdown=report.metrics["max_drawdown"],
-                       sharpe=report.metrics["sharpe"],
+                       sharpe=report.metrics["sharpe"], turnover=report.metrics["turnover"],
+                       execution_cost=report.metrics["execution_cost"],
+                       average_cash_ratio=float((result.equity.cash / result.equity.equity).mean()),
                        decision_steps=steps, observed_sessions=len(result.equity))
         return metrics, result, report
     finally:
@@ -62,7 +65,7 @@ def evaluate_policy(model, bundle, spec, frequency="weekly", lookback=120,
 
 def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
     from stable_baselines3 import PPO
-    from quanto.investing.environment import feature_version, ACTION_VERSION, ENVIRONMENT_VERSION, EXECUTION_VERSION
+    from quanto.investing.environment import feature_version, ENVIRONMENT_VERSION, EXECUTION_VERSION
 
     check_cancelled(cancelled)
     policy_dir, output_dir = Path(policy_dir), Path(output_dir)
@@ -71,7 +74,7 @@ def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
     request = PolicyBacktestSpec.model_validate(spec)
     if request.start <= config.validation_end:
         raise ValueError("policy backtest must start after the training/validation cutoff")
-    expected = dict(feature_version=feature_version(config.lookback), action_version=ACTION_VERSION,
+    expected = dict(feature_version=feature_version(config.lookback), action_version=config.action_version,
                     environment_version=ENVIRONMENT_VERSION, execution_version=EXECUTION_VERSION)
     if any(manifest.get(name) != value for name, value in expected.items()) or manifest["basket"] != config.backtest.symbols:
         raise ValueError("policy observation, action, execution version or basket mismatch")
@@ -93,7 +96,8 @@ def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
             raise ValueError(f"policy inference device must be {device}; loader selected {model.device}")
         policy_device = str(model.device)
     metrics, result, report = evaluate_policy(model, bundle, backtest, config.frequency,
-                                              config.lookback, cancelled, request.baseline, emit)
+                                              config.lookback, cancelled, request.baseline, emit,
+                                              action_version=config.action_version)
     check_cancelled(cancelled)
     output_dir.mkdir(parents=True, exist_ok=True)
     daily = result.equity.copy()
@@ -110,7 +114,9 @@ def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
                    training_dataset_content_hash=manifest["dataset_content_hash"], baseline=request.baseline,
                    policy_device=policy_device,
                    frequency=config.frequency, cost_multiplier=request.cost_multiplier,
-                   metrics={**report.metrics, **metrics}, metric_definitions=report.metric_definitions,
+                   metrics={**report.metrics, **metrics}, metric_definitions={**report.metric_definitions,
+                       "average_cash_ratio": {"description": "Mean actual daily cash divided by account equity; receivables remain separate",
+                                              "period": "all observed sessions", "formula": "mean(daily_cash / daily_equity)"}},
                    period=dict(start=request.start.isoformat(), end=request.end.isoformat()),
                    counts={name: len(frame) for name, frame in frames.items()},
                    assumptions=dict(price_mode=bundle.price_mode, limitations=report.warnings,

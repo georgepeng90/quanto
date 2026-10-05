@@ -13,11 +13,12 @@ from quanto.backtest.dataset_schemas import DatasetBundle
 from quanto.backtest.engine import SessionRunner
 from quanto.backtest.models import BacktestResult
 from quanto.config import BacktestSpec
+from quanto.investing.contracts import CASH_ACTION_VERSION, LEGACY_ACTION_VERSION
 from quanto.strategies.base import Hold, TargetPortfolio, validate_intent
 
 
 FEATURE_VERSION = "daily-etf-v2"
-ACTION_VERSION = "hold-target-quartiles-v1"
+ACTION_VERSION = LEGACY_ACTION_VERSION
 ENVIRONMENT_VERSION = "daily-session-v1"
 EXECUTION_VERSION = "next-open-ledger-v1"
 
@@ -56,15 +57,19 @@ class DailyETFEnv(gym.Env):
 
     def __init__(self, bundle: DatasetBundle, spec: BacktestSpec, frequency: str = "weekly",
                  lookback: int = 120, episode_sessions: int | None = None, training: bool = False,
-                 *, cancelled: Callable[[], bool] = lambda: False, collect: bool = True):
+                 *, action_version: str = ACTION_VERSION, cancelled: Callable[[], bool] = lambda: False,
+                 collect: bool = True):
         super().__init__()
         spec.validate_for_dataset(bundle)
         if isinstance(lookback, bool) or not isinstance(lookback, int) or lookback < 2:
             raise ValueError("lookback must be an integer of at least 2")
         if episode_sessions is not None and (isinstance(episode_sessions, bool) or not isinstance(episode_sessions, int) or episode_sessions < 2):
             raise ValueError("episode_sessions must be an integer of at least 2")
+        if action_version not in {ACTION_VERSION, CASH_ACTION_VERSION}:
+            raise ValueError("unknown action version")
         self.bundle, self.backtest_spec = bundle, spec
         self.frequency, self.lookback = frequency, lookback
+        self.action_version = action_version
         self.episode_sessions, self.training = episode_sessions, training
         self.cancelled, self.collect = cancelled, collect
         self.calendar = pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
@@ -87,7 +92,7 @@ class DailyETFEnv(gym.Env):
             self._episode_starts = np.asarray(starts, dtype=np.int64)
         self._history = {symbol: frame.sort_values("date").set_index("date")
                          for symbol, frame in bundle.prices.groupby("symbol") if symbol in spec.symbols}
-        self.action_space = spaces.MultiDiscrete(np.array([2] + [5] * len(spec.symbols)))
+        self.action_space = spaces.MultiDiscrete(np.array([3 if action_version == CASH_ACTION_VERSION else 2] + [5] * len(spec.symbols)))
         self.observation_space = spaces.Box(-10., 10., shape=(12 * len(spec.symbols) + 4,), dtype=np.float32)
         self.runner = None
         self.context = None
@@ -175,9 +180,11 @@ class DailyETFEnv(gym.Env):
 
     def step(self, action):
         if not self.action_space.contains(action):
-            raise ValueError("Action does not match hold/target weight bins")
+            raise ValueError("Action does not match configured action space")
         if int(action[0]) == 0:
             intent = Hold("policy hold")
+        elif self.action_version == CASH_ACTION_VERSION and int(action[0]) == 2:
+            intent = TargetPortfolio({}, {}, {})
         else:
             weights = {symbol: int(bin_value) / 4. for symbol, bin_value in zip(self.backtest_spec.symbols, action[1:])}
             total = sum(weights.values())

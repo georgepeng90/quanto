@@ -101,6 +101,9 @@ def test_frozen_baselines_use_experiment_execution_and_cost_multiplier(tmp_path)
     cash = backtest_policy(tmp_path / "policy", tmp_path / "data", {**interval, "baseline": "cash"},
                            tmp_path / "cash", lambda event: None, lambda: False)
     assert cash["metrics"]["total_return"] == 0.
+    assert cash["metrics"]["average_cash_ratio"] == 1.
+    assert cash["metrics"]["turnover"] == cash["metrics"]["execution_cost"] == 0.
+    assert cash["metric_definitions"]["average_cash_ratio"]["formula"] == "mean(daily_cash / daily_equity)"
     assert cash["counts"]["fills"] == 0
     ordinary = backtest_policy(tmp_path / "policy", tmp_path / "data", {**interval, "baseline": "buy_hold"},
                                tmp_path / "ordinary", lambda event: None, lambda: False)
@@ -164,6 +167,7 @@ def test_continuation_advances_window_seed_reproducibly_without_resetting_optimi
     monkeypatch.setattr(DailyETFEnv, "reset", trace_reset)
     first = train_policy(spec, tmp_path / "data", tmp_path / "first", lambda event: None,
                          lambda: False, "a" * 64, model_id="model", evaluate_test=False)
+    assert first["action_version"] == "hold-target-quartiles-v1"
     first_windows = list(windows)
     assert first["sampling_provenance"]["effective_env_seed"] == 42
     saved = PPO.load(tmp_path / "first" / "last.zip", device="cpu")
@@ -188,6 +192,7 @@ def test_continuation_advances_window_seed_reproducibly_without_resetting_optimi
     # An existing pre-fix checkpoint must be resumable without modifying its fixed config.
     legacy = read_manifest(tmp_path / "first", "policy")
     legacy.pop("sampling_provenance", None)
+    legacy["config"].pop("action_version")
     legacy.pop("id")
     write_manifest(tmp_path / "first", legacy)
     resumed = []

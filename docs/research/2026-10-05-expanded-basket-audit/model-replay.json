@@ -1,0 +1,317 @@
+{
+  "model_id": "65fdcd5c-cc6d-4e93-9426-157dbca29e86",
+  "latest_version": "79fdf2d1-7087-48b9-99af-de2971ba8161",
+  "successful_sessions": 305,
+  "active_sessions": [],
+  "completed_timesteps": 156160,
+  "best_timesteps": 124928,
+  "method": "Offline deterministic CPU replay on training and validation only; no learn, save or database writes.",
+  "validation_history_count": 305,
+  "valid_validation_count": 211,
+  "replays": [
+    {
+      "snapshot": "policy.zip",
+      "split": "train",
+      "metrics": {
+        "net_log_return": 0.02659117509080454,
+        "total_return": 0.02694787505911589,
+        "final_equity": 1026947.8750591158,
+        "max_drawdown": 0.2655180023913569,
+        "sharpe": 0.16652195814937368,
+        "decision_steps": 99,
+        "observed_sessions": 484
+      },
+      "hold_decisions": 76,
+      "target_decisions": 23,
+      "hold_probability_min": 3.764398206840269e-05,
+      "hold_probability_max": 0.9999895095825195,
+      "daily_holdings_min": 0,
+      "daily_holdings_max": 7,
+      "daily_holdings_mean": 5.413223140495868,
+      "holdings_count_frequency": {
+        "0": 4,
+        "3": 123,
+        "5": 77,
+        "6": 94,
+        "7": 186
+      },
+      "average_invested_ratio": 0.7901219427710392,
+      "fills": 340,
+      "orders": 340,
+      "traded_symbols": [
+        "159806",
+        "159898",
+        "512760",
+        "515010",
+        "515020",
+        "515880",
+        "516080",
+        "516090"
+      ],
+      "risk_events": {
+        "EXPOSURE_REDUCTION": 107,
+        "TARGET_LIMITED": 15
+      }
+    },
+    {
+      "snapshot": "policy.zip",
+      "split": "validation",
+      "metrics": {
+        "net_log_return": 0.3334488871989187,
+        "total_return": 0.3957737028146202,
+        "final_equity": 1395773.7028146202,
+        "max_drawdown": 0.0634970967179922,
+        "sharpe": 2.152724786950547,
+        "decision_steps": 51,
+        "observed_sessions": 242
+      },
+      "hold_decisions": 46,
+      "target_decisions": 5,
+      "hold_probability_min": 0.003267457243055105,
+      "hold_probability_max": 0.9999984502792358,
+      "daily_holdings_min": 0,
+      "daily_holdings_max": 7,
+      "daily_holdings_mean": 2.6404958677685952,
+      "holdings_count_frequency": {
+        "0": 24,
+        "2": 71,
+        "3": 133,
+        "7": 14
+      },
+      "average_invested_ratio": 0.5130345400048032,
+      "fills": 55,
+      "orders": 56,
+      "traded_symbols": [
+        "159806",
+        "159898",
+        "512760",
+        "515010",
+        "515020",
+        "515880",
+        "516080",
+        "516090"
+      ],
+      "risk_events": {
+        "EXPOSURE_REDUCTION": 29,
+        "TARGET_LIMITED": 5
+      },
+      "matches_saved_validation": true
+    },
+    {
+      "snapshot": "last.zip",
+      "split": "train",
+      "metrics": {
+        "net_log_return": 0.3721180680198051,
+        "total_return": 0.45080426476807545,
+        "final_equity": 1450804.2647680754,
+        "max_drawdown": 0.08959026317570995,
+        "sharpe": 1.4581384007209182,
+        "decision_steps": 99,
+        "observed_sessions": 484
+      },
+      "hold_decisions": 79,
+      "target_decisions": 20,
+      "hold_probability_min": 1.866023194452282e-05,
+      "hold_probability_max": 0.9999995231628418,
+      "daily_holdings_min": 0,
+      "daily_holdings_max": 7,
+      "daily_holdings_mean": 3.518595041322314,
+      "holdings_count_frequency": {
+        "0": 72,
+        "2": 109,
+        "3": 71,
+        "4": 98,
+        "5": 15,
+        "6": 28,
+        "7": 91
+      },
+      "average_invested_ratio": 0.5480281691498277,
+      "fills": 288,
+      "orders": 288,
+      "traded_symbols": [
+        "159806",
+        "159898",
+        "512760",
+        "515010",
+        "515020",
+        "515880",
+        "516080",
+        "516090"
+      ],
+      "risk_events": {
+        "EXPOSURE_REDUCTION": 108,
+        "TARGET_LIMITED": 12
+      }
+    },
+    {
+      "snapshot": "last.zip",
+      "split": "validation",
+      "metrics": {
+        "net_log_return": 0.37377151111967993,
+        "total_return": 0.4532050713204807,
+        "final_equity": 1453205.0713204807,
+        "max_drawdown": 0.09959797027547312,
+        "sharpe": 1.9174581880594899,
+        "decision_steps": 51,
+        "observed_sessions": 242
+      },
+      "hold_decisions": 44,
+      "target_decisions": 7,
+      "hold_probability_min": 0.001660248963162303,
+      "hold_probability_max": 0.9999998807907104,
+      "daily_holdings_min": 0,
+      "daily_holdings_max": 7,
+      "daily_holdings_mean": 3.4834710743801653,
+      "holdings_count_frequency": {
+        "0": 24,
+        "1": 5,
+        "2": 66,
+        "3": 65,
+        "6": 63,
+        "7": 19
+      },
+      "average_invested_ratio": 0.5791567192926261,
+      "fills": 145,
+      "orders": 146,
+      "traded_symbols": [
+        "159806",
+        "159898",
+        "512760",
+        "515010",
+        "515020",
+        "515880",
+        "516080",
+        "516090"
+      ],
+      "risk_events": {
+        "EXPOSURE_REDUCTION": 46,
+        "TARGET_LIMITED": 6
+      }
+    }
+  ],
+  "training_baselines": {
+    "cash": {
+      "metrics": {
+        "net_log_return": 0.0,
+        "total_return": 0.0,
+        "final_equity": 1000000.0,
+        "max_drawdown": 0.0,
+        "sharpe": null,
+        "decision_steps": 99,
+        "observed_sessions": 484
+      },
+      "fills": 0
+    },
+    "equal_weight": {
+      "metrics": {
+        "net_log_return": -0.27443345177494066,
+        "total_return": -0.23999742061123996,
+        "final_equity": 760002.57938876,
+        "max_drawdown": 0.27800704392274467,
+        "sharpe": -0.7625719769476818,
+        "decision_steps": 99,
+        "observed_sessions": 484
+      },
+      "fills": 1442
+    },
+    "buy_hold": {
+      "metrics": {
+        "net_log_return": -0.2723122040380263,
+        "total_return": -0.23838355576123993,
+        "final_equity": 761616.44423876,
+        "max_drawdown": 0.2746030694721767,
+        "sharpe": -0.7852535990120576,
+        "decision_steps": 99,
+        "observed_sessions": 484
+      },
+      "fills": 24
+    }
+  },
+  "post_fix_sampling": [
+    {
+      "round": 106,
+      "seed": 53802,
+      "windows": [
+        [
+          "2022-08-05",
+          "2023-02-14"
+        ],
+        [
+          "2023-04-03",
+          "2023-10-11"
+        ],
+        [
+          "2023-05-30",
+          "2023-12-01"
+        ],
+        [
+          "2022-10-13",
+          "2023-04-17"
+        ],
+        [
+          "2022-08-17",
+          "2023-02-24"
+        ]
+      ]
+    },
+    {
+      "round": 107,
+      "seed": 54314,
+      "windows": [
+        [
+          "2023-04-06",
+          "2023-10-13"
+        ],
+        [
+          "2023-02-23",
+          "2023-08-25"
+        ],
+        [
+          "2022-08-23",
+          "2023-03-02"
+        ],
+        [
+          "2023-03-23",
+          "2023-09-22"
+        ],
+        [
+          "2022-08-19",
+          "2023-02-28"
+        ]
+      ]
+    },
+    {
+      "round": 305,
+      "seed": 155690,
+      "windows": [
+        [
+          "2022-08-23",
+          "2023-03-02"
+        ],
+        [
+          "2023-06-21",
+          "2023-12-25"
+        ],
+        [
+          "2023-04-24",
+          "2023-10-31"
+        ],
+        [
+          "2023-03-29",
+          "2023-09-28"
+        ],
+        [
+          "2022-10-27",
+          "2023-05-04"
+        ]
+      ]
+    }
+  ],
+  "artifacts_unchanged": true,
+  "artifact_sha256": {
+    "last.zip": "84a8c097dbb1c104e5f7c83600b21c5ad390dd6c7d08540e9f4498579b5416a9",
+    "policy.zip": "2c6a5ae74f1813d5418af59c22577a50910e953a1c4abdb2af7e7674a5ee999d",
+    "manifest.json": "b76560b096cd4c80e38f19ce97e16b43e3bc59803677390c10c2e585582a5433",
+    "curves.json": "34b6a53c71ba8eb85ee4992d91b0d748f7b2123f532c2fabcdcebdf0ca8af7e4"
+  }
+}

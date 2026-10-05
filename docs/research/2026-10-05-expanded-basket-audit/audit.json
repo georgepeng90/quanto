@@ -1,0 +1,428 @@
+{
+  "date": "2026-10-05",
+  "scope": "Diagnostic only: broaden industry coverage to at least 30 ETF candidates; portfolio size remains a policy decision. No production changes, new model, research training, data download or new out-of-sample performance evaluation.",
+  "latest_model_correction": "Round-50 cash-start Hold probes are historical and cannot describe the current model. Read-only registry query confirms 305 successful sessions, 156160 steps, and no active sessions. Four offline train/validation replays prove both latest final state and selected snapshot trade and vary holding count.",
+  "model_replay_file": "model-replay.json",
+  "sampling_check": {
+    "status": "passed",
+    "method": "Existing synthetic continuation regression plus read-only resets using saved seeds for rounds106,107,305; sequences differ. Old repeated-window evidence remains historical.",
+    "regression_command": ".venv/Scripts/python.exe -m pytest tests/unit/test_investing_training.py::test_continuation_advances_window_seed_reproducibly_without_resetting_optimizer -q",
+    "regression_result": "1 passed in 6.14s"
+  },
+  "action_check": {
+    "no_count_limit": true,
+    "requires_new_model_for_changed_basket": true,
+    "uniform_independent_target_assumption": "Each ETF independently chooses one of five bins {0,.25,.5,.75,1} with equal probability, conditional on Target rather than Hold. These are analytical exploration counts before eligibility, risk, lot rounding and execution, not measured learned positions.",
+    "analytical_cases": [
+      {
+        "candidate_count": 8,
+        "expected_nonzero_targets": 6.4,
+        "probability_at_most_four_nonzero_targets": 0.056281600000000015,
+        "observation_dimensions": 100,
+        "action_heads": 9,
+        "output_logits": 42
+      },
+      {
+        "candidate_count": 30,
+        "expected_nonzero_targets": 24.0,
+        "probability_at_most_four_nonzero_targets": 7.819633281204237e-15,
+        "observation_dimensions": 364,
+        "action_heads": 31,
+        "output_logits": 152
+      },
+      {
+        "candidate_count": 32,
+        "expected_nonzero_targets": 25.6,
+        "probability_at_most_four_nonzero_targets": 4.0936471464509513e-16,
+        "observation_dimensions": 388,
+        "action_heads": 33,
+        "output_logits": 162
+      }
+    ],
+    "findings": [
+      "Most target samples allocate to many assets under uniform heads; current encoding permits sparse portfolios but explores them infrequently as N increases.",
+      "For Hold the environment ignores all weight heads, while installed SB3 includes every head in joint log probability and summed entropy. This introduces irrelevant sampled dimensions; its performance impact has not been isolated.",
+      "Target weights are normalized before entry-eligibility filtering; excluded weights are retained as cash, not redistributed. Broader pools with short history can therefore have unintended low exposure.",
+      "Total/single/group risk caps constrain achievable concentration but no count cap exists. Existing four-group limits must be mapped to the new group taxonomy.",
+      "Hold with an existing position retains shares subject to daily risk repairs; many Hold decisions do not imply cash lockup."
+    ],
+    "causal_limit": "Neither dense exploration nor the old sampling repetition is proven to be the sole cause of historical performance. No new training ablation was run.",
+    "synthetic_execution_smoke": {
+      "method": "12 flat-price business days;1m cash;100-share lots;90% total and25% single cap;original fees;one equal-bin target;existing test fixtures;no model training",
+      "results": [
+        {
+          "candidate_count": 8,
+          "observation_shape": [
+            100
+          ],
+          "actual_holding_count": 8,
+          "fill_count": 8,
+          "risk_event_count": 1,
+          "final_cash": 103283.06560000026
+        },
+        {
+          "candidate_count": 30,
+          "observation_shape": [
+            364
+          ],
+          "actual_holding_count": 30,
+          "fill_count": 60,
+          "risk_event_count": 2,
+          "final_cash": 129114.86499999967
+        },
+        {
+          "candidate_count": 32,
+          "observation_shape": [
+            388
+          ],
+          "actual_holding_count": 32,
+          "fill_count": 32,
+          "risk_event_count": 1,
+          "final_cash": 103283.06560000032
+        }
+      ]
+    },
+    "reviewed_existing_tests": {
+      "command": ".venv/Scripts/python.exe -m pytest -q -p no:cacheprovider tests/unit/test_investing_environment.py tests/unit/test_risk_policy.py tests/unit/test_order_ledger.py",
+      "result": "43 passed in2.98s",
+      "runner": "action_risk_audit subagent"
+    },
+    "cost_cap_boundary": "30-symbol smoke buys exactly900000 nominal exposure; cost lowers equity to999279.865, so next daily risk repair sells one100-share lot per symbol. Actual count stays30. Verified existing behavior, not established as a contract bug."
+  },
+  "data_check": {
+    "dataset": "D:\\Projects\\quanto\\outputs\\etf-expansion-20261002\\shared-cache\\dataset",
+    "etf_count": 305,
+    "price_rows": 238070,
+    "group_count": 20,
+    "price_start": "2022-10-10",
+    "price_end": "2026-09-30",
+    "calendar_rows": 973,
+    "calendar_rows_in_priced_interval": 968,
+    "duplicate_symbol_dates": 0,
+    "present_at_first_price": 182,
+    "present_at_first_price_group_count": 20,
+    "group_counts": {
+      "advanced_manufacturing": 18,
+      "agriculture": 8,
+      "automotive": 3,
+      "broad_market": 29,
+      "communications": 7,
+      "consumer": 12,
+      "cyclical": 29,
+      "defense": 10,
+      "electronics": 5,
+      "factor": 27,
+      "financials": 17,
+      "healthcare": 29,
+      "infrastructure": 2,
+      "media": 5,
+      "new_energy": 29,
+      "real_estate": 4,
+      "semiconductor": 28,
+      "services": 2,
+      "technology": 30,
+      "utilities": 11
+    },
+    "first_date_group_counts": {
+      "advanced_manufacturing": 4,
+      "agriculture": 5,
+      "automotive": 3,
+      "broad_market": 20,
+      "communications": 4,
+      "consumer": 11,
+      "cyclical": 18,
+      "defense": 6,
+      "electronics": 5,
+      "factor": 13,
+      "financials": 15,
+      "healthcare": 20,
+      "infrastructure": 2,
+      "media": 5,
+      "new_energy": 18,
+      "real_estate": 4,
+      "semiconductor": 6,
+      "services": 2,
+      "technology": 16,
+      "utilities": 5
+    },
+    "events_rows": 0,
+    "coverage_limit": "This exported package alone cannot reproduce Jan2022 training start or its 120-bar warmup. Underlying cache availability is checked separately.",
+    "selection_limit": "Existing pool was screened with 2026 catalog, size and liquidity. Listing-before-training alone does not remove retrospective selection or survivorship bias.",
+    "identity_limit": "Existing review reports missing index identity for141 SZSE products and40 duplicated index groups among164 SSE products. 20 research groups are not equivalent to complete31-industry coverage.",
+    "data_limit": "Adjusted research prices; trading status, adjustment anchors and corporate-action coverage are not fully verified. Zero event rows is not evidence of no events.",
+    "active_cache_history_check": {
+      "catalog": "data/market/catalog.sqlite",
+      "active_etf_objects": 323,
+      "criterion": "At least120 rows before2022 AND last price2026-09-30; date column only; NOT a full quality/calendar/selection audit.",
+      "distinct_passing_symbols": 31,
+      "passing_objects": [
+        {
+          "symbol": "159928",
+          "object_hash": "5f451fd5756cda0e0fa57f4d66ec7925500d4786a29c38db150edad29a39953e",
+          "provider": "tencent",
+          "first": "2013-09-16",
+          "last": "2026-09-30",
+          "pre_2022_rows": 2020
+        },
+        {
+          "symbol": "159995",
+          "object_hash": "d8ec98efbc141fda971da69ff92638e9e5f9ebdf80fa4428ba0d53b152abf0c4",
+          "provider": "tencent",
+          "first": "2020-02-10",
+          "last": "2026-09-30",
+          "pre_2022_rows": 465
+        },
+        {
+          "symbol": "515050",
+          "object_hash": "d49778c1ae3b4a651a35991336c8e0786f7957a70ab40056aa2c85401fa22bfb",
+          "provider": "tencent",
+          "first": "2019-10-16",
+          "last": "2026-09-30",
+          "pre_2022_rows": 541
+        },
+        {
+          "symbol": "512880",
+          "object_hash": "30f819f61df63cfc5df83ead4726d17519bc4400fb84d968e1927c56653ac4fa",
+          "provider": "tencent",
+          "first": "2016-08-08",
+          "last": "2026-09-30",
+          "pre_2022_rows": 1315
+        },
+        {
+          "symbol": "512000",
+          "object_hash": "c8b3d19e3d5a8952f388d93c794b43ccc586a647364413c54d014d2a755bae52",
+          "provider": "tencent",
+          "first": "2016-09-14",
+          "last": "2026-09-30",
+          "pre_2022_rows": 1288
+        },
+        {
+          "symbol": "512800",
+          "object_hash": "9c79e9194388f91ae61425a0201dcfaad4d3073d77f119dc6978240a9f50e4a6",
+          "provider": "tencent",
+          "first": "2017-08-03",
+          "last": "2026-09-30",
+          "pre_2022_rows": 1075
+        },
+        {
+          "symbol": "515170",
+          "object_hash": "8812cf082bb57059d68dfca066956db921d773a63c461cde2df46879b51cdc30",
+          "provider": "tencent",
+          "first": "2021-01-13",
+          "last": "2026-09-30",
+          "pre_2022_rows": 236
+        },
+        {
+          "symbol": "512400",
+          "object_hash": "8ca95248e43adcb90a64410d3738325c2bc736161ee1df8f6674ad4435d8e217",
+          "provider": "tencent",
+          "first": "2017-09-01",
+          "last": "2026-09-30",
+          "pre_2022_rows": 1054
+        },
+        {
+          "symbol": "159819",
+          "object_hash": "f65b4c49435691dd58887c206621056ad2ddb012177852f4705d2881ce58a528",
+          "provider": "tencent",
+          "first": "2020-09-23",
+          "last": "2026-09-30",
+          "pre_2022_rows": 309
+        },
+        {
+          "symbol": "159755",
+          "object_hash": "deb69ed5f6e89f992844398279857c972df9a229e201c26c19a062c78ed9f0b3",
+          "provider": "tencent",
+          "first": "2021-06-24",
+          "last": "2026-09-30",
+          "pre_2022_rows": 130
+        },
+        {
+          "symbol": "159869",
+          "object_hash": "ff6f7dbe59988e3628fbccb6549dadb975d9582a75aabf55cc464c41dfb58d6a",
+          "provider": "tencent",
+          "first": "2021-03-05",
+          "last": "2026-09-30",
+          "pre_2022_rows": 204
+        },
+        {
+          "symbol": "516010",
+          "object_hash": "fe9a33702a5cde388fa454d4f9b6b84a45f01cef5bc972a80cc24c03ca4da377",
+          "provider": "tencent",
+          "first": "2021-03-05",
+          "last": "2026-09-30",
+          "pre_2022_rows": 204
+        },
+        {
+          "symbol": "512660",
+          "object_hash": "977d3f79c3e9bc50e2faf79cb1ab2bb95418050ce973df2c028de7d4e7e28c86",
+          "provider": "tencent",
+          "first": "2016-08-08",
+          "last": "2026-09-30",
+          "pre_2022_rows": 1315
+        },
+        {
+          "symbol": "159745",
+          "object_hash": "15eb60203ded9db3619d84e94ba11410cb5656a5f59052153e47e6b4894cd195",
+          "provider": "tencent",
+          "first": "2021-06-18",
+          "last": "2026-09-30",
+          "pre_2022_rows": 134
+        },
+        {
+          "symbol": "516510",
+          "object_hash": "6ae74017ea2c78992cb8abafb067985c3879dfc391f2aed293bb5cae2b4e0246",
+          "provider": "tencent",
+          "first": "2021-04-07",
+          "last": "2026-09-30",
+          "pre_2022_rows": 182
+        },
+        {
+          "symbol": "515030",
+          "object_hash": "4eb8223b63ed14884369d5224ea44e7437443ad90706ebbea431ddfe94d0ce27",
+          "provider": "tencent",
+          "first": "2020-03-04",
+          "last": "2026-09-30",
+          "pre_2022_rows": 448
+        },
+        {
+          "symbol": "516120",
+          "object_hash": "5c9cdac7ce77b7ce7e4056e45c266b270cd483b3e8a4cde549a9691ea9475ed1",
+          "provider": "tencent",
+          "first": "2021-03-09",
+          "last": "2026-09-30",
+          "pre_2022_rows": 202
+        },
+        {
+          "symbol": "515210",
+          "object_hash": "dca971208a9207e429f8155b6e1582e60369546c9f0dc12cca32626d8e51178a",
+          "provider": "tencent",
+          "first": "2020-03-02",
+          "last": "2026-09-30",
+          "pre_2022_rows": 450
+        },
+        {
+          "symbol": "159998",
+          "object_hash": "4e64ba52f1c8c0c71cfee1a33774014a462c2e9e3a1258850be6aa59f062f653",
+          "provider": "tencent",
+          "first": "2020-04-13",
+          "last": "2026-09-30",
+          "pre_2022_rows": 421
+        },
+        {
+          "symbol": "159996",
+          "object_hash": "b86a5c045df14a6f78e81af749c08f1b60434ed636ed4ad658e8743b75f6525b",
+          "provider": "tencent",
+          "first": "2020-03-16",
+          "last": "2026-09-30",
+          "pre_2022_rows": 440
+        },
+        {
+          "symbol": "512580",
+          "object_hash": "4fad613408b03b98f4525b07ec89059b087b224324c41908f9dec357ba67ba19",
+          "provider": "tencent",
+          "first": "2017-02-28",
+          "last": "2026-09-30",
+          "pre_2022_rows": 1182
+        },
+        {
+          "symbol": "512720",
+          "object_hash": "9a2ba885abf211daca88466ec3db4148a7b4828e90e92c4de0f7cd23b2101f67",
+          "provider": "tencent",
+          "first": "2019-08-16",
+          "last": "2026-09-30",
+          "pre_2022_rows": 578
+        },
+        {
+          "symbol": "516950",
+          "object_hash": "7f05fc1ee6a4928d1a7d25a703e8dda714f7bf44d69f3f45b614fadb19812548",
+          "provider": "tencent",
+          "first": "2021-05-14",
+          "last": "2026-09-30",
+          "pre_2022_rows": 158
+        },
+        {
+          "symbol": "516080",
+          "object_hash": "3992d3bb8158137807966c02539f51a849434578a22fe3d8a3e2a1649eb8c547",
+          "provider": "tencent",
+          "first": "2021-02-23",
+          "last": "2026-09-30",
+          "pre_2022_rows": 212
+        },
+        {
+          "symbol": "159898",
+          "object_hash": "bfa80d18cb7cfa7abf4caab6295a92891cc3afa38cea1019d4d6c92c7ff8b0e4",
+          "provider": "tencent",
+          "first": "2021-06-04",
+          "last": "2026-09-30",
+          "pre_2022_rows": 143
+        },
+        {
+          "symbol": "515880",
+          "object_hash": "b968f015823d8f58ae99a8b2bc99c973ab3170176643acf75a259ef30385e552",
+          "provider": "tencent",
+          "first": "2019-09-06",
+          "last": "2026-09-30",
+          "pre_2022_rows": 563
+        },
+        {
+          "symbol": "159806",
+          "object_hash": "52ceac1999e37b33d139600b3f179241b2fc7de67eba9b6d921d351eda2c0e8d",
+          "provider": "tencent",
+          "first": "2021-01-04",
+          "last": "2026-09-30",
+          "pre_2022_rows": 243
+        },
+        {
+          "symbol": "515020",
+          "object_hash": "0c61f3902895e3b240b7b1d4253868ecf2b65ad20656a4f75666555f7d38d86e",
+          "provider": "tencent",
+          "first": "2021-01-04",
+          "last": "2026-09-30",
+          "pre_2022_rows": 243
+        },
+        {
+          "symbol": "515010",
+          "object_hash": "4fb42530c1067998f8fc5c0ea0fc3fdd1fdef39ebc9fd4f1139c429ecb794a54",
+          "provider": "tencent",
+          "first": "2021-01-04",
+          "last": "2026-09-30",
+          "pre_2022_rows": 243
+        },
+        {
+          "symbol": "512760",
+          "object_hash": "e848df6ff219d286183fecfcda41af021baff5e7d23a663668fc5dcd4596403f",
+          "provider": "tencent",
+          "first": "2019-06-12",
+          "last": "2026-09-30",
+          "pre_2022_rows": 624
+        },
+        {
+          "symbol": "516090",
+          "object_hash": "ae68512966cfcba77369598713c03be4a2e1935231e30249b5530a71d2720878",
+          "provider": "tencent",
+          "first": "2021-03-19",
+          "last": "2026-09-30",
+          "pre_2022_rows": 193
+        }
+      ],
+      "remaining_work": "Only25 passing symbols belong to the existing305 pool;6 others bring total to31. Broader choices, including external candidates, require historical coverage and quality checks. No data fetched."
+    }
+  },
+  "next_prerequisites": [
+    "Freeze a new 30+ basket using broader industry/index coverage rather than counting duplicate products; define group caps for its actual taxonomy.",
+    "Verify and export sufficient pretraining history for every candidate and the120-bar warmup, or explicitly redesign date partitions.",
+    "Evaluate a selection/weight action design that can efficiently explore both small and large portfolios without fixing holding count; use controlled comparisons rather than assuming larger pool improves learning.",
+    "Preserve the original8-ETF model. Do not treat already-reviewed2025/2026 periods as a pristine holdout in subsequent tuning."
+  ],
+  "source_sha256": {
+    "src/quanto/investing/environment.py": "c47cdd06aa2b4d40c9ad67af8f7d9c007a8de1eae3001d1631f4f243b9b7951d",
+    "src/quanto/investing/training.py": "ff407ce7e779b485a8b69cc320f1ab21772a0d007f40fc6f6194e08d3aa9c24a",
+    "src/quanto/risk/policy.py": "41b5b91fdb4f02770039d7d4adb5bd4ef7db7e72e4bba8d8c6b5b13a770d4df3",
+    "outputs/rl-basket-audit-20261005/inspect_model.py": "8cb392b4a37a3957481e95eb598fe0c2f197b280752bed98869733b4e069d50f",
+    "outputs/etf-expansion-20261002/shared-cache/dataset/manifest.json": "5a7554cc039d057ddbb9a7b2fc5bba7b5de8518b95ef1121b93b0d6a5953b633",
+    "outputs/etf-expansion-20261002/shared-cache/dataset/instruments.parquet": "8b660fd97289b2afba5794dfe19a312a98d5b68a805061b53d79fccab0b09c84",
+    "outputs/etf-expansion-20261002/shared-cache/dataset/prices.parquet": "7c3d13eda441150a0bf8a86ea3ed3985b6b7b34d0806504ba7985609666cae82",
+    "docs/research/2026-10-05-fixed-basket-training/training-regime.json": "845b1952273fd6271b555b109fea6c2b9330a6687ccd4c3dcc8285230038c7ca"
+  },
+  "candidate_scope_update": "User explicitly allows suitable ETFs outside the existing pool. Do not restrict selection to cached names or use recent performance alone to define quality. Evaluate industry/index coverage, overlap, history, liquidity and tracking characteristics; no final basket selected during this audit."
+}

@@ -43,3 +43,19 @@ test('historical daily deep links expose report detail only', async () => {
   expect(screen.queryByLabelText('训练开始')).toBeNull()
   expect(api.investingOverview).not.toHaveBeenCalled()
 })
+
+test('daily report identifies metrics and displays rate units without changing stored values', async () => {
+  const metrics = { annual_return: .3489, average_holding_sessions: 35.6108, average_invested_ratio: .4792, benchmark_return: .2119, calmar: 3.7845, commission_paid: 3318.2964, decision_steps: 52, dividend_income: 0, execution_cost: 7501.3392, fill_count: 235, final_equity: 1334590.4608, interest_income: 0, max_drawdown: .0922, net_log_return: .2886, observed_sessions: 243, open_lot_count: 5, realized_pnl: 341624.9835, relative_return_difference: .1227, round_trip_count: 16, sharpe: 2.4048, slippage_cost: 4183.0427, total_return: .3346, turnover: 7.6064, unrealized_pnl: -7034.5226, volatility: .128 }
+  vi.mocked(api.investingArtifact).mockResolvedValue({ ...backtest, manifest: { ...backtest.manifest, metrics } } as never)
+  app('/investing?backtest=b1')
+  const annualReturn = await screen.findByText('年化收益率', { selector: 'dt' })
+  expect(annualReturn.parentElement).toHaveTextContent('34.89%')
+  expect(screen.getByText('平均持仓比例', { selector: 'dt' }).parentElement).toHaveTextContent('47.92%')
+  expect(screen.getByText('年化波动率', { selector: 'dt' }).parentElement).toHaveTextContent('12.80%')
+  expect(screen.getByText('相对基准收益差', { selector: 'dt' }).parentElement).toHaveTextContent('12.27 个百分点')
+  expect(screen.getByText('累计净对数收益率', { selector: 'dt' }).parentElement).toHaveTextContent('28.86%')
+  expect(screen.getByText('决策次数', { selector: 'dt' }).parentElement).toHaveTextContent('52')
+  for (const term of screen.getAllByRole('term')) expect(term.textContent).toMatch(/[\u4e00-\u9fff]/)
+  await userEvent.click(screen.getByText('执行假设、数据来源与完整配置'))
+  expect(screen.getByText(/"average_invested_ratio": 0.4792/)).toBeVisible()
+})

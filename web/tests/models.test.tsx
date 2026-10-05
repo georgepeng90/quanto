@@ -57,7 +57,7 @@ test('detail keeps configuration read only and adds only session budget and devi
   await userEvent.click(screen.getByRole('button', { name: '继续训练' }))
   expect(posts[0]).toEqual({ path: '/api/investing/models/m1/train', body: { additional_timesteps: 8192, device: 'cpu' } })
   expect(screen.getByRole('link', { name: '使用此版本回测' })).toHaveAttribute('href', '/runs?model=m1&version=v1')
-  expect(screen.getByText('Sharpe（日末）').nextElementSibling).toHaveTextContent('—')
+  expect(screen.getByText('夏普比率（日末）').nextElementSibling).toHaveTextContent('—')
 })
 
 test('backtest requires explicit version instead of choosing the latest', async () => {
@@ -119,7 +119,7 @@ test('version separates latest parameters from retained best and reports its act
   const current = within(version).getByRole('heading', { name: '本轮最终参数验证' }).nextElementSibling!
   const best = within(version).getByRole('heading', { name: '选定快照验证' }).nextElementSibling!
   expect(current).toHaveTextContent('0.00%')
-  expect(within(current as HTMLElement).getByText('Sharpe（日末）').nextElementSibling).toHaveTextContent('—')
+  expect(within(current as HTMLElement).getByText('夏普比率（日末）').nextElementSibling).toHaveTextContent('—')
   expect(best).toHaveTextContent('10.00%')
   expect(within(version).getByText(/本版本实际训练设备 CUDA/)).toBeVisible()
   expect(within(version).getByText(/选定快照步数 512/)).toBeVisible()

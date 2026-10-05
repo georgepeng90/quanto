@@ -14,7 +14,7 @@ const strategy = { id: 's1', content_hash: 'hash', manifest, files: { 'strategy.
 const dataset = { id: 'd1', content_hash: 'hash', manifest: { source: 'sample', is_demo: true, price_mode: 'adjusted_research', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'unknown', limitations: ['示例'] } }
 const spec = { start: '2024-02-01', end: '2024-03-01', symbols: ['000001'], initial_cash: 1000, seed: 7, execution: { commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0, model: 'next_open' }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: 'v1' } }
 const experiment = { id: 'e1', revision: 1, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: spec, sample_purpose: 'exploration' } }
-const renderApp = () => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments'] })} />)
+const renderApp = () => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/new'] })} />)
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -125,18 +125,18 @@ test('asks before leaving a dirty experiment form', async () => {
 
 test('blocks browser back and forward until dirty edits are explicitly discarded', async () => {
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
-  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/datasets', '/experiments', '/runs'], initialIndex: 1 })
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/datasets', '/experiments/e1', '/runs'], initialIndex: 1 })
   render(<RouterProvider router={router} />)
-  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
+  await screen.findByLabelText('初始资金')
   await userEvent.clear(screen.getByLabelText('初始资金'))
   await userEvent.type(screen.getByLabelText('初始资金'), '2000')
   await act(async () => { await router.navigate(-1) })
   await waitFor(() => expect(confirm).toHaveBeenCalled())
-  expect(router.state.location.pathname).toBe('/experiments')
+  expect(router.state.location.pathname).toBe('/experiments/e1')
   expect(screen.getByLabelText('初始资金')).toHaveValue(2000)
   await act(async () => { await router.navigate(1) })
   await waitFor(() => expect(confirm).toHaveBeenCalledTimes(2))
-  expect(router.state.location.pathname).toBe('/experiments')
+  expect(router.state.location.pathname).toBe('/experiments/e1')
   confirm.mockReturnValue(true)
   await act(async () => { await router.navigate(-1) })
   await waitFor(() => expect(router.state.location.pathname).toBe('/datasets'))
@@ -335,7 +335,7 @@ test('historical draft deep link remains selected beyond the first listing page'
     if (String(input) === '/api/experiments/historic-clone') return Response.json(historical)
     return previous(input, init)
   }))
-  render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments?draft=historic-clone'] })} />)
+  render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/historic-clone'] })} />)
   await screen.findByText(/当前修订 s1/)
   expect(screen.getByLabelText('实验草稿')).toHaveValue('historic-clone')
   expect(screen.getByLabelText('样本用途')).toHaveValue('exploration')
@@ -388,5 +388,50 @@ test('current draft cloning preserves dirty source until saved and still clones 
   await userEvent.click(clone)
   expect(screen.getByLabelText('实验草稿')).toHaveValue('')
   expect(screen.getByLabelText('样本用途')).toHaveValue('unsaved configuration to clone')
-  expect(source().state.doc.toString()).toBe(edited)
+  await waitFor(() => expect(source().state.doc.toString()).toBe(edited))
+})
+
+test('late new-configuration save keeps newer typing while assigning the saved edit URL', async () => {
+  let release!: (value: Response) => void
+  let requestBody: { payload: typeof experiment.payload } | undefined
+  const previous = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/experiments' && init?.method === 'POST') { requestBody = JSON.parse(String(init.body)); return new Promise<Response>(resolve => { release = resolve }) }
+    return previous(input, init)
+  }))
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/e1'] })
+  render(<RouterProvider router={router} />)
+  await screen.findByRole('heading', { name: '编辑固定策略' })
+  await userEvent.click(await screen.findByRole('button', { name: '克隆为新实验' }))
+  expect(router.state.location.pathname).toBe('/experiments/new')
+  await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
+  await waitFor(() => expect(requestBody).toBeDefined())
+  fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: 'typed while creating' } })
+  await act(async () => release(Response.json({ id: 'e2', revision: 1, payload: requestBody!.payload })))
+  await waitFor(() => expect(router.state.location.pathname).toBe('/experiments/e2'))
+  expect(screen.getByLabelText('样本用途')).toHaveValue('typed while creating')
+  expect(screen.getByText('实验配置未保存')).toBeInTheDocument()
+})
+
+test('browser history still blocks dirty edits after cloning to a new URL', async () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/e1'] })
+  render(<RouterProvider router={router} />)
+  await userEvent.click(await screen.findByRole('button', { name: '克隆为新实验' }))
+  expect(router.state.location.pathname).toBe('/experiments/new')
+  const callsAfterClone = confirm.mock.calls.length
+  await act(async () => { await router.navigate(-1) })
+  expect(confirm).toHaveBeenCalledTimes(callsAfterClone + 1)
+  expect(router.state.location.pathname).toBe('/experiments/new')
+  confirm.mockReturnValue(true)
+  await act(async () => { await router.navigate(-1) })
+  await waitFor(() => expect(router.state.location.pathname).toBe('/experiments/e1'))
+  await screen.findByLabelText('样本用途')
+  fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: 'unsaved after back' } })
+  confirm.mockReturnValue(false)
+  await act(async () => { await router.navigate(1) })
+  expect(confirm).toHaveBeenCalledTimes(callsAfterClone + 3)
+  expect(router.state.location.pathname).toBe('/experiments/e1')
+  expect(screen.getByLabelText('样本用途')).toHaveValue('unsaved after back')
+  confirm.mockRestore()
 })

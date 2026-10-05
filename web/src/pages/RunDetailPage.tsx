@@ -110,7 +110,7 @@ export function RunDetailPage() {
     if (cloneBusy) return
     setCloneBusy(true)
     const signal = mountController.current?.signal
-    try { const draft = await api.cloneRun(id); if (!signal?.aborted) navigate(`/experiments?draft=${encodeURIComponent(draft.id)}`) }
+    try { const draft = await api.cloneRun(id); if (!signal?.aborted) navigate(`/experiments/${encodeURIComponent(draft.id)}`) }
     catch (value) { if (!signal?.aborted) setError(describeError(value)) }
     finally { if (!signal?.aborted) setCloneBusy(false) }
   }

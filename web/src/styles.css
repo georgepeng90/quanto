@@ -57,6 +57,21 @@ label input,label select,label textarea{margin-top:4px;font-weight:400}
 .record small{color:#6a808a;overflow-wrap:anywhere}
 .record.compact{margin-top:12px;background:#f7faf9}
 .record pre{overflow:auto;white-space:pre-wrap;font-size:11px}
+.fixed-strategies-page{min-width:0;overflow-wrap:anywhere}
+.fixed-strategies-page .page-heading{align-items:center}
+.fixed-strategies-page .button-link{display:inline-block;flex:none;border:1px solid #277184;background:#e7f3f3;color:#165b6b;border-radius:6px;padding:8px 13px;text-decoration:none;font-weight:600}
+.fixed-strategies-page .button-link:hover{background:#d6eaea}
+.fixed-strategies-page .record-head{justify-content:space-between;flex-wrap:wrap}
+.fixed-strategies-page .record-head strong{font-size:16px}
+.fixed-strategies-page .record-head a{flex:none;color:#1e5968}
+.fixed-strategies-page .fixed-params{display:flex;gap:5px 14px;flex-wrap:wrap}
+.fixed-strategies-page .fixed-params span{max-width:100%;overflow-wrap:anywhere}
+.fixed-strategies-page details summary{cursor:pointer;color:#1e5968}
+.fixed-strategies-page dl{margin:8px 0;display:grid;gap:6px}
+.fixed-strategies-page dl div{display:grid;grid-template-columns:minmax(110px,180px) minmax(0,1fr);gap:10px}
+.fixed-strategies-page dt{color:#647984}
+.fixed-strategies-page dd{margin:0;overflow-wrap:anywhere}
+@media(max-width:650px){.fixed-strategies-page .page-heading{flex-wrap:wrap}.fixed-strategies-page .button-link{width:100%;text-align:center}.fixed-strategies-page dl div{grid-template-columns:1fr;gap:0}}
 .editor-layout{display:grid;grid-template-columns:190px minmax(0,1fr);border:1px solid #d9e2e6;border-radius:6px;overflow:hidden}
 .file-list{background:#f1f5f6;border-right:1px solid #d9e2e6;padding:10px;display:flex;flex-direction:column;align-items:stretch;gap:5px}
 .file-list button{border:0;background:transparent;text-align:left;padding:5px 8px;overflow-wrap:anywhere}

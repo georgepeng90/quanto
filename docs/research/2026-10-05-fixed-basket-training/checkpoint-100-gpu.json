@@ -1,0 +1,436 @@
+{
+  "checkpoint": 100,
+  "model_id": "65fdcd5c-cc6d-4e93-9426-157dbca29e86",
+  "dataset_id": "fb354d66-b09f-4cad-bf1b-17ff8fe78890",
+  "source_state_sha256": "103b06bcb55540db8e0c9a197d8084928e0a226a4623aadc368c3a4ebe9871e8",
+  "observed_state_sha256": "316b9089f30b081eca6f9062f79b3074c12877f70bff51886f45278170ce9a83",
+  "chain_check": true,
+  "verified_policy_prefix": {
+    "rounds": 100,
+    "runtime_device_counts": {
+      "cpu": 50,
+      "cuda": 50
+    },
+    "dataset_content_hash": "c15f0dc1caeb2e7bb77332984dc2ed773dd239954400fbbe70018a62a71c29d3",
+    "last_num_timesteps": 51200,
+    "last_ppo_n_updates": 4000
+  },
+  "latest_ten_cuda_sessions": [
+    {
+      "round": 91,
+      "version_id": "62045379-1059-4860-8fa7-7e1edcefbd40",
+      "content_id": "8d4c8303a0ac7f09c9f51d6f4af9a2ec4bda71d350c7f79ca79654a24edcbb32",
+      "parent_content_id": "f3a4f241d0da6274242a7bd762675c9abb5e25c91ebff0fe883d17e61bfa9d8b",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 46080,
+      "timesteps_completed": 46592,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\62045379-1059-4860-8fa7-7e1edcefbd40\\final\\artifact\\last.zip",
+        "zip_sha256": "f559b69147dccba1cefa6eb73c404dd8482921ed3c27cd70401cb593b157ae53",
+        "weights_sha256": "a796609aa499b5d199572a239b9bc0c606d93cc20424e75a316d8e75aa38e991",
+        "optimizer_sha256": "5a13243902dc24c1cb74933572cf5fbd5b9703755216f4cbb9d72c6b55f8af05",
+        "num_timesteps": 46592,
+        "ppo_n_updates": 3640
+      },
+      "artifact_content_hash": "2e6e1ccce03ec07db6ee0f3f87999a13e85eed3b874d285d631f5150f4349d13"
+    },
+    {
+      "round": 92,
+      "version_id": "faf30218-1a10-4242-bad7-bf8a32b9298a",
+      "content_id": "f49b2ca511bd77f35dbc71ce4bcc4c415052fda8611a1aef6f8287681fe50bc8",
+      "parent_content_id": "8d4c8303a0ac7f09c9f51d6f4af9a2ec4bda71d350c7f79ca79654a24edcbb32",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 46592,
+      "timesteps_completed": 47104,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\faf30218-1a10-4242-bad7-bf8a32b9298a\\final\\artifact\\last.zip",
+        "zip_sha256": "12cf9457a129a18efa611976e6579364cafbc6f190bc907f2111275a7449a4ca",
+        "weights_sha256": "518e9f99890614a0f11a56c04ebda5d50f6e5c23597fec307f9c6c2d8fca56d0",
+        "optimizer_sha256": "6aa2c9ce872e9d7bca1c9ec799c1d79ecbeaabf1a4fcbe869c8eab63db95cb14",
+        "num_timesteps": 47104,
+        "ppo_n_updates": 3680
+      },
+      "artifact_content_hash": "29e998f7db99603c92fd73dfa539ce14c5680d789675eaab86b99d75fc38524a"
+    },
+    {
+      "round": 93,
+      "version_id": "d3e9dbf0-411d-41a2-bf14-ae233e88e4ec",
+      "content_id": "cd8f5abf65adfe377e3e49a8c68cdafe1c9a9df15262a95e8c644c011062b542",
+      "parent_content_id": "f49b2ca511bd77f35dbc71ce4bcc4c415052fda8611a1aef6f8287681fe50bc8",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 47104,
+      "timesteps_completed": 47616,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\d3e9dbf0-411d-41a2-bf14-ae233e88e4ec\\final\\artifact\\last.zip",
+        "zip_sha256": "2a0a9141024e69d674cfef6bbe1fe40758dd1b87f376df8c8a79cd4d1363c60f",
+        "weights_sha256": "7ffebfbeb4e9de1841389e6b09ee6da0be4d03348573774e0231bd74a9406df5",
+        "optimizer_sha256": "c4436b03c8907acd46e488af1edd9a80163afb3336e0a7701d393a7ebdb20a01",
+        "num_timesteps": 47616,
+        "ppo_n_updates": 3720
+      },
+      "artifact_content_hash": "e54ea9bddf4f447816decb55f799a9ca0fc0ed244f5316d6429bf5ab774feee9"
+    },
+    {
+      "round": 94,
+      "version_id": "3d071cdb-50ba-4d0b-9d5f-0c9363b9141b",
+      "content_id": "90ed4d3030d87132aeadee56d6f115b5c0de91b04e77c35d6c95273cdc3048d7",
+      "parent_content_id": "cd8f5abf65adfe377e3e49a8c68cdafe1c9a9df15262a95e8c644c011062b542",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 47616,
+      "timesteps_completed": 48128,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\3d071cdb-50ba-4d0b-9d5f-0c9363b9141b\\final\\artifact\\last.zip",
+        "zip_sha256": "8e3a45dad1faf30ac6bfba6b55adc00c584c9e00fd3a903ef9c1fa08a23f1690",
+        "weights_sha256": "90f5ac6d027792709ec1b242556b355627aad59e9a2f63702e22293885f5504b",
+        "optimizer_sha256": "7db6571c4344e377b96a8d1f7bd27024d2aaa219a4cfebc310efe2cbc1979bbe",
+        "num_timesteps": 48128,
+        "ppo_n_updates": 3760
+      },
+      "artifact_content_hash": "354cdcabe67dbcf20a4d36fd828c297085d2c16edbbf9dc5ba2096e6d412d57a"
+    },
+    {
+      "round": 95,
+      "version_id": "c6872472-dfdf-428f-a6c4-496d0ac83011",
+      "content_id": "fd257b89182700b027cc9b297819821ce3d844754605b02828306dbffa525378",
+      "parent_content_id": "90ed4d3030d87132aeadee56d6f115b5c0de91b04e77c35d6c95273cdc3048d7",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 48128,
+      "timesteps_completed": 48640,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\c6872472-dfdf-428f-a6c4-496d0ac83011\\final\\artifact\\last.zip",
+        "zip_sha256": "93a874f84ef48b01ef278eaff5c465b5d313208e3893e25a2beb8984eeecca52",
+        "weights_sha256": "c039e7db57596c90d40111338288cb765986981e6ebe8bd39f30369b5acc2022",
+        "optimizer_sha256": "0385202b0c6451c4ec1a92bfad136a6ec32a1c74ba2904e253e61ac8cdef52df",
+        "num_timesteps": 48640,
+        "ppo_n_updates": 3800
+      },
+      "artifact_content_hash": "1988f57f095a1f864a9348e131cd9e0a6764cd0771f207d3a9e98ce3bb9c962d"
+    },
+    {
+      "round": 96,
+      "version_id": "be063667-bdae-41f3-8d87-d0ce49447681",
+      "content_id": "8764fdfecc8a7e389d760dd748e4cb6d94ef4f3864cf403c5a8ec9a8764c6b5f",
+      "parent_content_id": "fd257b89182700b027cc9b297819821ce3d844754605b02828306dbffa525378",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 48640,
+      "timesteps_completed": 49152,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\be063667-bdae-41f3-8d87-d0ce49447681\\final\\artifact\\last.zip",
+        "zip_sha256": "4cd958f2be0abe1ee42c7b093ce33dede40b9e47577e5a4b7514aaa03519efcd",
+        "weights_sha256": "12369a1a148163e76c22aafcc45f2aa2572c64efabe8764f536e557d2835926a",
+        "optimizer_sha256": "2390c713a02a2f453d7af4c255f378e788d77ac641bffadcc784c471956dd863",
+        "num_timesteps": 49152,
+        "ppo_n_updates": 3840
+      },
+      "artifact_content_hash": "e1eb58f12300b7f8c2997ba7ae2ec368399ffca75711d24e3ecadd0fc4e74631"
+    },
+    {
+      "round": 97,
+      "version_id": "5b230bf8-5d09-4f08-9ed7-3646696007f0",
+      "content_id": "6ac10fe0f1a0e61d7712bddadd39419f277d7170769c026de5f5b05fd6dd00f5",
+      "parent_content_id": "8764fdfecc8a7e389d760dd748e4cb6d94ef4f3864cf403c5a8ec9a8764c6b5f",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 49152,
+      "timesteps_completed": 49664,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\5b230bf8-5d09-4f08-9ed7-3646696007f0\\final\\artifact\\last.zip",
+        "zip_sha256": "53491c6e476d1ed2de959f3f2383321884b2ce52b2f87cc2d049899b8ffce6cc",
+        "weights_sha256": "c345b6080f66dc795b6bb7daf72c5002d8e2cf5f38930caa597f989b1c15f488",
+        "optimizer_sha256": "16677ddfaf0ef488fa9c9eb6b46d930c18634af398788e5f8fcaeda49afd925f",
+        "num_timesteps": 49664,
+        "ppo_n_updates": 3880
+      },
+      "artifact_content_hash": "cedb91d7d3442adb92e8d937ec13b7d1caccc9cd57ad7f556930054dbe0a7134"
+    },
+    {
+      "round": 98,
+      "version_id": "ee0e5eea-6389-4917-aa9e-d47cc2325af6",
+      "content_id": "c6ad0a841e67f2d441ce7e1eda3a9748354419808daa7762dc8e25ce8f9ff94e",
+      "parent_content_id": "6ac10fe0f1a0e61d7712bddadd39419f277d7170769c026de5f5b05fd6dd00f5",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 49664,
+      "timesteps_completed": 50176,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\ee0e5eea-6389-4917-aa9e-d47cc2325af6\\final\\artifact\\last.zip",
+        "zip_sha256": "3538cc091eaf5e6bee3d79c3ca99295b972227a6ded0660289f37b12d010bb8b",
+        "weights_sha256": "6aa1706ce1615e3512659a3feeed8b9903839e6978bce0faa62f8f30e270535b",
+        "optimizer_sha256": "dd6244dd5abd6ae4392a67fbe0a174fc299a9f6b5190f52b52cefd9efdffe426",
+        "num_timesteps": 50176,
+        "ppo_n_updates": 3920
+      },
+      "artifact_content_hash": "54561e2ffac12ca67bf87d26379f72ee1f873c081ed46cb09dc03100d21581c0"
+    },
+    {
+      "round": 99,
+      "version_id": "f585d8aa-9ff2-492c-b443-b084659d1481",
+      "content_id": "f3eea474b572243e6a71074ae64853ad894ac1190d1f8fbe9e9ca0080a96b577",
+      "parent_content_id": "c6ad0a841e67f2d441ce7e1eda3a9748354419808daa7762dc8e25ce8f9ff94e",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 50176,
+      "timesteps_completed": 50688,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\f585d8aa-9ff2-492c-b443-b084659d1481\\final\\artifact\\last.zip",
+        "zip_sha256": "328b608339be656bfedcde9968bc5d5fad26fb48c7e48f966389d573bea899f6",
+        "weights_sha256": "37d5f04c660e5209dc4930b91570b895f0cf8fbdccd68c4249aa181d2c948a27",
+        "optimizer_sha256": "195eb3ca7f95d43649853781dea4fea381d25bd4dd40d3fee12b0f3e5a7352b1",
+        "num_timesteps": 50688,
+        "ppo_n_updates": 3960
+      },
+      "artifact_content_hash": "261ab55e3bd613781374e5349e63672dfcc6576cf535f776899d4f8200afab9a"
+    },
+    {
+      "round": 100,
+      "version_id": "369b5817-d031-419c-8b26-bc8f384a3d24",
+      "content_id": "76d6bd29d383d0d6bbaefef30e00aec614115f7d6f06f4fbf838c7e400cce26e",
+      "parent_content_id": "f3eea474b572243e6a71074ae64853ad894ac1190d1f8fbe9e9ca0080a96b577",
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "cuda_version": "12.8",
+        "deterministic_algorithms": true,
+        "device": "cuda",
+        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "python": "3.13.12",
+        "seed": 42,
+        "stable_baselines3": "2.9.0",
+        "torch": "2.11.0+cu128"
+      },
+      "timesteps_started": 50688,
+      "timesteps_completed": 51200,
+      "last_checkpoint": {
+        "path": "D:\\Projects\\quanto\\data\\research-20261001\\artifacts\\369b5817-d031-419c-8b26-bc8f384a3d24\\final\\artifact\\last.zip",
+        "zip_sha256": "6db81a394f33d7a5866ae96b628bdc4456640187489d703f88de9f475f615e56",
+        "weights_sha256": "d052a078307f6c98c9cfcac37ef3719c0df47f6d1ee528b2873d66493b47758a",
+        "optimizer_sha256": "18c8c88a3d9f137c8eefece13518ac7ae454ee407005be332927c69d1cb5b885",
+        "num_timesteps": 51200,
+        "ppo_n_updates": 4000
+      },
+      "artifact_content_hash": "879a5039629b131d727c3e43e756600fc34670b3616351375736e34bfa0d24ff"
+    }
+  ],
+  "validation": {
+    "50": {
+      "best": {
+        "decision_steps": 51,
+        "final_equity": 1011909.5272127953,
+        "max_drawdown": 0.08638603731022343,
+        "net_log_return": 0.011839166881500388,
+        "observed_sessions": 242,
+        "sharpe": 0.1809652324323443,
+        "total_return": 0.011909527212795368
+      },
+      "latest": {
+        "max_drawdown": 0.07954533858742296,
+        "net_log_return": 0.0007530087748071123,
+        "sharpe": 0.05116759878334534,
+        "total_return": 0.0007532923570900962
+      }
+    },
+    "100": {
+      "best": {
+        "decision_steps": 51,
+        "final_equity": 1019180.30162074,
+        "max_drawdown": 0.07703697767067164,
+        "net_log_return": 0.01899867835379488,
+        "observed_sessions": 242,
+        "sharpe": 0.2800271742264085,
+        "total_return": 0.019180301620739915
+      },
+      "latest": {
+        "max_drawdown": 0.0,
+        "net_log_return": 0.0,
+        "sharpe": null,
+        "total_return": 0.0
+      }
+    }
+  },
+  "monitor_2025_comparison": {
+    "best": {
+      "50": {
+        "version_id": "3fb434e3-b39c-427c-b63a-800b5e86673e",
+        "job_id": "d055d392-536b-45d2-b8c9-6a8ad9e3f636",
+        "snapshot": "validation_best",
+        "metrics": {
+          "total_return": 0.13575369976066565,
+          "sharpe": 1.141500671082927,
+          "max_drawdown": 0.0918706617973899,
+          "fill_count": 255,
+          "average_invested_ratio": 0.4697602428892631
+        },
+        "summary_sha256": "34fa9c1b5dc442197709f9e156243bb1cdc9cfff243df98595f25a618131acb8",
+        "equity_sha256": "af1274ab4a503e340f650503ec81d10ec0b00f5720d2d2f250e16a21effeeb5d"
+      },
+      "100": {
+        "version_id": "369b5817-d031-419c-8b26-bc8f384a3d24",
+        "job_id": "c8467afd-0ea6-4415-9895-46d3edb1b22c",
+        "snapshot": "validation_best",
+        "metrics": {
+          "total_return": 0.33459046080464594,
+          "sharpe": 2.4048424411878995,
+          "max_drawdown": 0.092200956767305,
+          "fill_count": 235,
+          "average_invested_ratio": 0.47915619217561356
+        },
+        "summary_sha256": "dfda20111747a17267667190916dee6596b6e8bda976600add216b8a2b4c53e2",
+        "equity_sha256": "03265770a16a7001a9e0ca38b625aaaa53819b6bc173b05aec91270a2c307f51"
+      },
+      "delta_50_to_100": {
+        "total_return": 0.1988367610439803,
+        "sharpe": 1.2633417701049725,
+        "max_drawdown": 0.00033029496991510143,
+        "fill_count": -20,
+        "average_invested_ratio": 0.009395949286350458
+      }
+    },
+    "last": {
+      "50": {
+        "version_id": "3fb434e3-b39c-427c-b63a-800b5e86673e",
+        "job_id": null,
+        "snapshot": "last.zip_offline",
+        "metrics": {
+          "total_return": 0.13865847852107072,
+          "sharpe": 1.251802650866736,
+          "max_drawdown": 0.07978363296929003,
+          "fill_count": 256,
+          "average_invested_ratio": 0.45075341000660374
+        },
+        "summary_sha256": "3e9f7f45d05a17ec02a24d8f331e684cc853eb7ffd8ac8af86ce0f43cb8b7f3e",
+        "equity_sha256": "3f153dddc73ab223a7702b333c44fc5be5f1b07cac18be73b8cc2bcfe07088ef"
+      },
+      "100": {
+        "version_id": "369b5817-d031-419c-8b26-bc8f384a3d24",
+        "job_id": null,
+        "snapshot": "last.zip_offline",
+        "metrics": {
+          "total_return": 0.005261516243005193,
+          "sharpe": 0.1185772078633998,
+          "max_drawdown": 0.05275745834910117,
+          "fill_count": 50,
+          "average_invested_ratio": 0.16174885865718475
+        },
+        "summary_sha256": "cc04012161c42ff0add7854ac8f40dedd2e3ac798d35ec180fb75ffdc95e51c9",
+        "equity_sha256": "7d6c433c1ec3e1aac11b33eded167d562cd47733b7da044bb54775f1855fd07f"
+      },
+      "delta_50_to_100": {
+        "total_return": -0.13339696227806552,
+        "sharpe": -1.1332254430033362,
+        "max_drawdown": -0.02702617462018886,
+        "fill_count": -206,
+        "average_invested_ratio": -0.289004551349419
+      }
+    }
+  },
+  "interpretation": [
+    "Repeated historical 2025 monitoring; differences are descriptive, not proof of generalization.",
+    "No 2026 metrics inspected or calculated. Offline equity metrics recomputed; offline publication hashes are not independently pinned."
+  ]
+}

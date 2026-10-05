@@ -1,0 +1,143 @@
+{
+  "method": "read-only PPO.load with fresh training environment followed by resets; no learn or policy updates",
+  "sequences_identical": true,
+  "results": {
+    "50": {
+      "checkpoint_seed": 42,
+      "sampling_windows": [
+        {
+          "episode_start": "2022-02-24",
+          "episode_end": "2022-08-26"
+        },
+        {
+          "episode_start": "2023-02-28",
+          "episode_end": "2023-08-30"
+        },
+        {
+          "episode_start": "2022-12-21",
+          "episode_end": "2023-06-30"
+        },
+        {
+          "episode_start": "2022-08-26",
+          "episode_end": "2023-03-07"
+        },
+        {
+          "episode_start": "2022-08-24",
+          "episode_end": "2023-03-03"
+        },
+        {
+          "episode_start": "2023-04-13",
+          "episode_end": "2023-10-20"
+        },
+        {
+          "episode_start": "2022-02-22",
+          "episode_end": "2022-08-24"
+        },
+        {
+          "episode_start": "2023-01-13",
+          "episode_end": "2023-07-24"
+        },
+        {
+          "episode_start": "2022-04-25",
+          "episode_end": "2022-10-31"
+        },
+        {
+          "episode_start": "2022-02-25",
+          "episode_end": "2022-08-29"
+        }
+      ]
+    },
+    "60": {
+      "checkpoint_seed": 42,
+      "sampling_windows": [
+        {
+          "episode_start": "2022-02-24",
+          "episode_end": "2022-08-26"
+        },
+        {
+          "episode_start": "2023-02-28",
+          "episode_end": "2023-08-30"
+        },
+        {
+          "episode_start": "2022-12-21",
+          "episode_end": "2023-06-30"
+        },
+        {
+          "episode_start": "2022-08-26",
+          "episode_end": "2023-03-07"
+        },
+        {
+          "episode_start": "2022-08-24",
+          "episode_end": "2023-03-03"
+        },
+        {
+          "episode_start": "2023-04-13",
+          "episode_end": "2023-10-20"
+        },
+        {
+          "episode_start": "2022-02-22",
+          "episode_end": "2022-08-24"
+        },
+        {
+          "episode_start": "2023-01-13",
+          "episode_end": "2023-07-24"
+        },
+        {
+          "episode_start": "2022-04-25",
+          "episode_end": "2022-10-31"
+        },
+        {
+          "episode_start": "2022-02-25",
+          "episode_end": "2022-08-29"
+        }
+      ]
+    },
+    "80": {
+      "checkpoint_seed": 42,
+      "sampling_windows": [
+        {
+          "episode_start": "2022-02-24",
+          "episode_end": "2022-08-26"
+        },
+        {
+          "episode_start": "2023-02-28",
+          "episode_end": "2023-08-30"
+        },
+        {
+          "episode_start": "2022-12-21",
+          "episode_end": "2023-06-30"
+        },
+        {
+          "episode_start": "2022-08-26",
+          "episode_end": "2023-03-07"
+        },
+        {
+          "episode_start": "2022-08-24",
+          "episode_end": "2023-03-03"
+        },
+        {
+          "episode_start": "2023-04-13",
+          "episode_end": "2023-10-20"
+        },
+        {
+          "episode_start": "2022-02-22",
+          "episode_end": "2022-08-24"
+        },
+        {
+          "episode_start": "2023-01-13",
+          "episode_end": "2023-07-24"
+        },
+        {
+          "episode_start": "2022-04-25",
+          "episode_end": "2022-10-31"
+        },
+        {
+          "episode_start": "2022-02-25",
+          "episode_end": "2022-08-29"
+        }
+      ]
+    }
+  },
+  "finding": "Every continuation recreates the environment and SB3 reapplies saved seed 42. Calendar windows repeat across sessions; policy weights, portfolio states and rewards may still change.",
+  "impact": "Training has not gained new random window sequences across sessions. This limits sampling diversity; performance stagnation cannot be attributed to this factor alone."
+}

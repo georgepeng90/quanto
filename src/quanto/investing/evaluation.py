@@ -62,7 +62,7 @@ def evaluate_policy(model, bundle, spec, frequency="weekly", lookback=120,
 
 def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
     from stable_baselines3 import PPO
-    from quanto.investing.environment import FEATURE_VERSION, ACTION_VERSION, ENVIRONMENT_VERSION, EXECUTION_VERSION
+    from quanto.investing.environment import feature_version, ACTION_VERSION, ENVIRONMENT_VERSION, EXECUTION_VERSION
 
     check_cancelled(cancelled)
     policy_dir, output_dir = Path(policy_dir), Path(output_dir)
@@ -71,7 +71,7 @@ def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
     request = PolicyBacktestSpec.model_validate(spec)
     if request.start <= config.validation_end:
         raise ValueError("policy backtest must start after the training/validation cutoff")
-    expected = dict(feature_version=FEATURE_VERSION, action_version=ACTION_VERSION,
+    expected = dict(feature_version=feature_version(config.lookback), action_version=ACTION_VERSION,
                     environment_version=ENVIRONMENT_VERSION, execution_version=EXECUTION_VERSION)
     if any(manifest.get(name) != value for name, value in expected.items()) or manifest["basket"] != config.backtest.symbols:
         raise ValueError("policy observation, action, execution version or basket mismatch")

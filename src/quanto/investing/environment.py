@@ -22,6 +22,11 @@ ENVIRONMENT_VERSION = "daily-session-v1"
 EXECUTION_VERSION = "next-open-ledger-v1"
 
 
+def feature_version(lookback: int) -> str:
+    # Only shorter windows change observations when fixed horizons retain 61 bars.
+    return "daily-etf-v3" if lookback < 61 else FEATURE_VERSION
+
+
 def decision_dates(calendar, start, end, frequency: str) -> pd.DatetimeIndex:
     """Natural period ends with a following execution session inside the run."""
     if frequency not in {"weekly", "monthly"}:
@@ -93,7 +98,7 @@ class DailyETFEnv(gym.Env):
         if frame is None:
             return None
         stop = frame.index.searchsorted(self.context.asof, side="right")
-        return frame.iloc[max(0, stop - self.lookback):stop]
+        return frame.iloc[max(0, stop - max(self.lookback, 61)):stop]
 
     def _entry_symbols(self) -> set[str]:
         eligible = set(self.context.eligible_symbols)
@@ -124,7 +129,7 @@ class DailyETFEnv(gym.Env):
             returns = [math.log(close[-1] / close[max(0, len(close) - 1 - count)]) for count in (5, 20, 60, self.lookback - 1)]
             daily_returns = np.diff(np.log(close[-21:]))
             volatility = float(daily_returns.std()) if daily_returns.size else 0.
-            drawdown = close[-1] / close.max() - 1.
+            drawdown = close[-1] / close[-self.lookback:].max() - 1.
             amount = window.amount.to_numpy(dtype=float)
             mean_amount = float(amount[-20:].mean())
             amount_ratio = math.log(amount[-1] / mean_amount) if amount[-1] > 0 and mean_amount > 0 else 0.

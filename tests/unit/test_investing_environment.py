@@ -92,6 +92,42 @@ def test_future_prices_do_not_change_current_observation_or_order_size():
     assert left.result().orders.iloc[0].quantity == right.result().orders.iloc[0].quantity == 100
 
 
+@pytest.mark.parametrize("lookback", [3, 20, 60, 61, 120])
+def test_fixed_horizon_features_use_available_history_independent_of_lookback(lookback):
+    bundle = daily_case(days=140, symbols=("A",))
+    index = np.arange(140)
+    closes = 10 * np.exp(.01 * index)
+    for column in ("open", "high", "low", "close"):
+        bundle.prices[column] = closes
+    bundle.prices["amount"] = 1000 * (index + 1)
+    spec = spec_case(bundle, start=bundle.calendar.date.iloc[120].date())
+    observation, info = env_for(bundle, spec=spec, lookback=lookback).reset()
+    assert info["asof"] == bundle.calendar.date.iloc[124].date().isoformat()
+    assert observation[:4] == pytest.approx([.05, .20, .60, .01 * (lookback - 1)])
+    assert observation[6] == pytest.approx(math.log(125 / 115.5))
+    assert observation[9] == 1.
+
+
+def test_short_lookback_keeps_configured_drawdown_but_uses_twenty_daily_returns():
+    bundle = daily_case(days=100, symbols=("A",))
+    bundle.prices.loc[60, ["open", "high", "low", "close"]] = 20.
+    bundle.prices.loc[80:, ["open", "high", "low", "close"]] = 9.
+    spec = spec_case(bundle, start=bundle.calendar.date.iloc[80].date())
+    observation, _ = env_for(bundle, spec=spec, lookback=20).reset()
+    # The 20 daily returns contain one 10 -> 9 fall; the older peak is outside lookback.
+    assert observation[4] == pytest.approx(abs(math.log(.9)) * math.sqrt(19) / 20)
+    assert observation[5] == pytest.approx(-.1)
+
+
+def test_short_actual_history_uses_only_known_bars_for_fixed_features():
+    bundle = daily_case(days=12, symbols=("A",))
+    for column in ("open", "high", "low", "close"):
+        bundle.prices[column] = 10 * np.exp(.01 * np.arange(12))
+    observation, _ = env_for(bundle, lookback=3).reset()
+    assert observation[:4] == pytest.approx([.04, .04, .04, .02])
+    assert observation[9] == 1.
+
+
 def test_extending_evaluation_end_does_not_change_current_policy_observations():
     bundle = daily_case(days=20)
     left = env_for(bundle, spec=spec_case(bundle, end="2024-01-16"))

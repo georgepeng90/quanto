@@ -50,7 +50,7 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     import torch
     from stable_baselines3 import PPO
     from stable_baselines3.common.callbacks import BaseCallback
-    from quanto.investing.environment import DailyETFEnv, FEATURE_VERSION, ACTION_VERSION, ENVIRONMENT_VERSION, EXECUTION_VERSION
+    from quanto.investing.environment import DailyETFEnv, feature_version, ACTION_VERSION, ENVIRONMENT_VERSION, EXECUTION_VERSION
 
     config = PolicyTrainingSpec.model_validate(spec)
     check_cancelled(cancelled)
@@ -67,7 +67,7 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     history, best_score, best_timesteps, best_metrics = [], -math.inf, 0, None
     parent, best_source_content_id = None, None
     metric_name = "sharpe" if config.selection_metric == "validation_sharpe" else "net_log_return"
-    expected = dict(feature_version=FEATURE_VERSION, action_version=ACTION_VERSION,
+    expected = dict(feature_version=feature_version(config.lookback), action_version=ACTION_VERSION,
                     environment_version=ENVIRONMENT_VERSION, execution_version=EXECUTION_VERSION)
     if resume_dir is not None:
         resume_dir = Path(resume_dir)
@@ -175,7 +175,7 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     manifest = dict(kind="policy", version=1, name=config.name, config=config.model_dump(mode="json"),
                     basket=config.backtest.symbols, dataset_content_hash=dataset_content_hash, price_mode=bundle.price_mode,
                     model_id=model_id, parent_content_id=parent["id"] if parent else None,
-                    cutoff=config.validation_end.isoformat(), feature_version=FEATURE_VERSION,
+                    cutoff=config.validation_end.isoformat(), feature_version=expected["feature_version"],
                     action_version=ACTION_VERSION, environment_version=ENVIRONMENT_VERSION,
                     execution_version=EXECUTION_VERSION, selection_metric=config.selection_metric,
                     selection_valid=math.isfinite(best_score), best_source_content_id=best_source_content_id,

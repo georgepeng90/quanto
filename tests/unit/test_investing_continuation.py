@@ -134,6 +134,44 @@ def test_resume_requires_unchanged_identity_and_verified_last_state(tmp_path):
                               evaluate_test=False)
 
 
+@pytest.mark.parametrize("lookback, expected_version", [(60, "daily-etf-v3"), (61, "daily-etf-v2")])
+def test_saved_feature_identity_only_rejects_affected_short_window_models(tmp_path, lookback, expected_version):
+    from quanto.investing.training import train_policy
+    from quanto.investing.evaluation import backtest_policy
+    from quanto.learning.artifacts import write_manifest
+
+    spec, dates = investing_case(tmp_path / "data")
+    spec.update(lookback=lookback, episode_sessions=10, total_timesteps=8,
+                train_start=str(dates[60].date()), train_end=str(dates[74].date()),
+                validation_start=str(dates[75].date()), validation_end=str(dates[84].date()),
+                test_start=str(dates[85].date()), test_end=str(dates[99].date()))
+    spec["backtest"].update(start=spec["train_start"], end=spec["test_end"])
+    first = train_policy(spec, tmp_path / "data", tmp_path / "first", lambda event: None,
+                         lambda: False, "a" * 64, model_id="model", evaluate_test=False)
+    assert first["feature_version"] == expected_version
+    write_manifest(tmp_path / "first", {**{key: value for key, value in first.items() if key not in {"id", "files"}},
+                                         "feature_version": "daily-etf-v2"})
+    backtest = dict(start=spec["test_start"], end=spec["test_end"], baseline="cash")
+
+    def resume():
+        return train_policy(spec, tmp_path / "data", tmp_path / "second", lambda event: None,
+                            lambda: False, "a" * 64, resume_dir=tmp_path / "first", model_id="model",
+                            evaluate_test=False)
+
+    def replay():
+        return backtest_policy(tmp_path / "first", tmp_path / "data", backtest,
+                               tmp_path / "backtest", lambda event: None, lambda: False)
+
+    if lookback < 61:
+        with pytest.raises(ValueError, match="identity mismatch"):
+            resume()
+        with pytest.raises(ValueError, match="version.*mismatch"):
+            replay()
+    else:
+        assert resume()["timesteps_started"] == first["timesteps_completed"]
+        assert replay()["metrics"]["total_return"] == 0.
+
+
 def test_validation_sharpe_comes_from_daily_report_and_price_mode_is_frozen(tmp_path):
     from quanto.investing.training import train_policy
     from quanto.investing.evaluation import backtest_policy, evaluate_policy

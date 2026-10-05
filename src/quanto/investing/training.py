@@ -141,6 +141,12 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
                                                          vf=[config.hidden_size, config.hidden_size])),
                         seed=config.seed, device=device, verbose=0)
         started = model.num_timesteps
+        # PPO.load queues the original seed again. Override only the window sampler
+        # after loading so continued sessions do not replay the same episode starts.
+        effective_env_seed = config.seed + started
+        model.get_env().seed(effective_env_seed)
+        sampling_provenance = dict(algorithm="base-seed-plus-parent-timesteps-v1", base_seed=config.seed,
+                                   parent_timesteps=started, effective_env_seed=effective_env_seed)
         last_evaluated_updates, next_evaluation = model._n_updates, started + config.eval_every_timesteps
         emit(dict(kind="progress", message="PPO training started", progress=0., device=device))
         check_cancelled(cancelled)
@@ -175,11 +181,11 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
                     selection_valid=math.isfinite(best_score), best_source_content_id=best_source_content_id,
                     metrics=dict(validation=best_metrics, test=test_metrics), best_timesteps=best_timesteps,
                     timesteps_started=started, timesteps_completed=completed, session_timesteps=completed - started,
-                    history=history, runtime=runtime,
+                    history=history, runtime=runtime, sampling_provenance=sampling_provenance,
                     limitations=bundle.manifest.limitations,
                     research_limits=(["test evaluated once after checkpoint selection within this run"] if evaluate_test else []) + [
                                      "no protection against repeated research on the test period",
-                                     "continuation resets sampling environment and account; not exact uninterrupted replay"])
+                                     "continuation resets account and reseeds only the window sampler from base seed plus parent timesteps; not exact uninterrupted replay"])
     check_cancelled(cancelled)
     emit(dict(kind="progress", message="policy training evaluated", progress=1., metrics=manifest["metrics"]))
     check_cancelled(cancelled)

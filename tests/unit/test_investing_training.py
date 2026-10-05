@@ -141,3 +141,87 @@ def test_changed_test_prices_cannot_change_training_or_checkpoint_selection(tmp_
     first_state = PPO.load(tmp_path / "original-policy" / "policy.zip", device="cpu").policy.state_dict()
     second_state = PPO.load(tmp_path / "changed-policy" / "policy.zip", device="cpu").policy.state_dict()
     assert all(torch.equal(first_state[name], second_state[name]) for name in first_state)
+
+
+def test_continuation_advances_window_seed_reproducibly_without_resetting_optimizer(tmp_path, monkeypatch):
+    import torch
+    from stable_baselines3 import PPO
+    from quanto.investing.environment import DailyETFEnv
+    from quanto.investing.training import train_policy
+    from quanto.learning.artifacts import read_manifest, write_manifest
+
+    spec, _ = investing_case(tmp_path / "data")
+    spec = {**spec, "episode_sessions": 10}
+    windows = []
+    original_reset = DailyETFEnv.reset
+
+    def trace_reset(env, *args, **kwargs):
+        result = original_reset(env, *args, **kwargs)
+        if env.training:
+            windows.append(str(result[1]["episode_start"]))
+        return result
+
+    monkeypatch.setattr(DailyETFEnv, "reset", trace_reset)
+    first = train_policy(spec, tmp_path / "data", tmp_path / "first", lambda event: None,
+                         lambda: False, "a" * 64, model_id="model", evaluate_test=False)
+    first_windows = list(windows)
+    assert first["sampling_provenance"]["effective_env_seed"] == 42
+    saved = PPO.load(tmp_path / "first" / "last.zip", device="cpu")
+    saved_parameters = {name: value.clone() for name, value in saved.policy.state_dict().items()}
+    saved_optimizer = saved.policy.optimizer.state_dict()
+    saved_steps = [state["step"].item() for state in saved_optimizer["state"].values()]
+    assert saved_steps and min(saved_steps) > 0
+    original_learn = PPO.learn
+    entry_steps = []
+
+    def verify_resume(model, *args, **kwargs):
+        assert model.num_timesteps == first["timesteps_completed"]
+        assert all(torch.equal(saved_parameters[name], value) for name, value in model.policy.state_dict().items())
+        actual = model.policy.optimizer.state_dict()
+        assert actual["param_groups"] == saved_optimizer["param_groups"]
+        for index, state in saved_optimizer["state"].items():
+            assert all(torch.equal(value, actual["state"][index][name]) for name, value in state.items())
+        entry_steps.append([state["step"].item() for state in actual["state"].values()])
+        return original_learn(model, *args, **kwargs)
+
+    monkeypatch.setattr(PPO, "learn", verify_resume)
+    # An existing pre-fix checkpoint must be resumable without modifying its fixed config.
+    legacy = read_manifest(tmp_path / "first", "policy")
+    legacy.pop("sampling_provenance", None)
+    legacy.pop("id")
+    write_manifest(tmp_path / "first", legacy)
+    resumed = []
+    for name in ("second", "retry"):
+        windows.clear()
+        manifest = train_policy(spec, tmp_path / "data", tmp_path / name, lambda event: None,
+                                lambda: False, "a" * 64, resume_dir=tmp_path / "first",
+                                model_id="model", evaluate_test=False)
+        resumed.append((list(windows), manifest))
+    assert resumed[0][0] != first_windows
+    assert resumed[0][0] == resumed[1][0]
+    assert resumed[0][1]["history"] == resumed[1][1]["history"]
+    assert entry_steps == [saved_steps, saved_steps]
+    assert resumed[0][1]["timesteps_started"] == 16
+    assert resumed[0][1]["timesteps_completed"] == 32
+    assert resumed[0][1]["sampling_provenance"] == dict(
+        algorithm="base-seed-plus-parent-timesteps-v1", base_seed=42,
+        parent_timesteps=16, effective_env_seed=58)
+    assert resumed[0][1]["config"] == first["config"]
+    read_manifest(tmp_path / "second", "policy")
+    second = PPO.load(tmp_path / "second" / "last.zip", device="cpu")
+    retry = PPO.load(tmp_path / "retry" / "last.zip", device="cpu")
+    assert all(torch.equal(value, retry.policy.state_dict()[name]) for name, value in second.policy.state_dict().items())
+    assert any(not torch.equal(value, saved_parameters[name]) for name, value in second.policy.state_dict().items())
+    assert all(state["step"].item() > saved_steps[0] for state in second.policy.optimizer.state_dict()["state"].values())
+
+    # A new-format parent follows the same rule on the next continuation.
+    first = resumed[0][1]
+    saved_parameters = {name: value.clone() for name, value in second.policy.state_dict().items()}
+    saved_optimizer = second.policy.optimizer.state_dict()
+    windows.clear()
+    third = train_policy(spec, tmp_path / "data", tmp_path / "third", lambda event: None,
+                         lambda: False, "a" * 64, resume_dir=tmp_path / "second",
+                         model_id="model", evaluate_test=False)
+    assert windows != resumed[0][0]
+    assert third["sampling_provenance"]["effective_env_seed"] == 74
+    assert third["timesteps_completed"] == 48

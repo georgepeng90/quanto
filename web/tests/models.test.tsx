@@ -95,11 +95,13 @@ test('new reward choices enforce gamma one and zero risk-free rate', async () =>
   await userEvent.click(screen.getByText('高级训练、成交与风险参数'))
   expect(screen.getByLabelText('奖励折扣')).toHaveValue(1)
   expect(screen.getByLabelText('奖励折扣')).toBeDisabled()
+  expect(screen.getByLabelText('随机种子')).toHaveValue(42)
+  fireEvent.change(screen.getByLabelText('随机种子'), { target: { value: '17' } })
   await userEvent.selectOptions(screen.getByLabelText('日线数据版本'), 'd1')
   ;[['训练开始', '2021-01-01'], ['训练结束', '2022-12-31'], ['验证开始', '2023-01-01'], ['验证结束', '2023-12-31'], ['固定 ETF 篮子（按顺序，逗号分隔）', 'ETF1']].forEach(([label, value]) => fireEvent.change(screen.getByLabelText(label), { target: { value } }))
   await userEvent.click(screen.getByRole('button', { name: '创建模型' }))
   await waitFor(() => expect(posts).toHaveLength(1))
-  expect(posts[0].body.spec).toMatchObject({ reward_version: 'differential-sharpe-v1', gamma: 1, seed: 42, backtest: { metrics: { risk_free_rate: 0 } } })
+  expect(posts[0].body.spec).toMatchObject({ reward_version: 'differential-sharpe-v1', gamma: 1, seed: 17, backtest: { seed: 17, metrics: { risk_free_rate: 0 } } })
 })
 
 test('detail keeps configuration read only and adds only session budget and device', async () => {

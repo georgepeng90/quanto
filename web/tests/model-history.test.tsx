@@ -48,6 +48,42 @@ test('independently pages versions and sessions through a 305 item history', asy
   expect(calls.some(path => path.includes('/history?kind=sessions&page=2'))).toBe(false)
 })
 
+test('version summaries show current-round performance and snapshot changes before technical details', async () => {
+  const prior = globalThis.fetch
+  const rows = [
+    { ...item(305), best_round_number: 244, validation_latest: { total_return: .1234, max_drawdown: .0876, sharpe: 1.2345 }, validation_best: { total_return: .9, max_drawdown: .01, sharpe: 9 } },
+    { ...item(244), validation_latest: { total_return: 0, max_drawdown: 0, sharpe: null } },
+    { ...item(3), selection_valid: false, validation_latest: {} },
+    { ...item(2), best_round_number: null },
+    item(1),
+  ]
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(String(input), 'http://local')
+    if (url.pathname.endsWith('/history') && url.searchParams.get('kind') === 'versions') return Response.json({ items: rows, total: 4, page: 1, page_size: 10, total_pages: 1, anchor: 900 })
+    if (url.pathname === '/api/investing/policies/job-305') return Response.json({ id: 'job-305', manifest: {} })
+    return prior(input, init)
+  }))
+  renderPage()
+  const latest = (await screen.findByText('第305轮')).closest('article')!
+  const metrics = within(latest).getByRole('definition', { name: '总收益率' })
+  expect(metrics).toHaveTextContent('12.34%')
+  expect(within(latest).getByRole('definition', { name: '最大回撤（日末）' })).toHaveTextContent('8.76%')
+  expect(within(latest).getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('1.2345')
+  expect(within(latest).queryByText('90.00%')).toBeNull()
+  expect(within(latest).getByText('未切换 · 沿用第244轮')).toBeVisible()
+  expect(within(latest).queryByText(/累计步数|实际设备/)).toBeNull()
+  const updated = screen.getByText('第244轮').closest('article')!
+  expect(within(updated).getByText('本轮更新最优快照')).toBeVisible()
+  expect(within(updated).getByRole('definition', { name: '总收益率' })).toHaveTextContent('0.00%')
+  expect(within(updated).getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('—')
+  expect(within(screen.getByText('第3轮').closest('article')!).getByText('暂无有效最优快照')).toBeVisible()
+  expect(within(screen.getByText('第2轮').closest('article')!).getByText('最优快照来源未记录')).toBeVisible()
+  expect(within(screen.getByText('第1轮').closest('article')!).getByText('首次建立最优快照')).toBeVisible()
+  await userEvent.click(within(latest).getByRole('button', { name: '展开详情' }))
+  expect(within(latest).getByText(/累计步数 156160 · 实际设备 CPU/)).toBeVisible()
+  expect(within(latest).getByText('90.00%')).toBeVisible()
+})
+
 test('locates round 53 and lazily loads its artifact only after expansion', async () => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const raw = String(input); calls.push(raw)

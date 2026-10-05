@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, describeError } from '../api'
-import { JsonDetails, Metrics } from '../components/LearningResults'
+import { JsonDetails, Metrics, metricText } from '../components/LearningResults'
 import { taskTime } from '../components/timePresentation'
 import type { InvestingArtifact, InvestingModelSummary, TrainingHistoryItem, TrainingHistoryPage, TrainingHistoryQuery } from '../investingTypes'
 import type { RunEvent } from '../types'
@@ -10,6 +10,15 @@ const stateLabels: Record<string, string> = { queued: '排队中', running: '运
 type Kind = TrainingHistoryQuery['kind']
 type PanelState = { page: number; size: number; anchor?: number; data: TrainingHistoryPage | null; loading: boolean; error: string; lookup?: number; request: number }
 const initialPanel = (): PanelState => ({ page: 1, size: 10, data: null, loading: true, error: '', request: 0 })
+const primaryMetrics = [['total_return', '总收益率'], ['max_drawdown', '最大回撤（日末）'], ['sharpe', '夏普比率（日末）']] as const
+
+function snapshotStatus(item: TrainingHistoryItem) {
+  if (item.selection_valid === false) return '暂无有效最优快照'
+  if (item.selection_valid !== true) return '最优快照状态未记录'
+  if (item.best_round_number == null) return '最优快照来源未记录'
+  if (item.best_round_number === item.round_number) return item.round_number === 1 ? '首次建立最优快照' : '本轮更新最优快照'
+  return `未切换 · 沿用第${item.best_round_number}轮`
+}
 
 function Pagination({ label, value, onPage, onSize, onJump, compact = false }: { label: string; value: PanelState; onPage: (page: number) => void; onSize?: (size: number) => void; onJump?: (page: number) => void; compact?: boolean }) {
   const [pageInput, setPageInput] = useState('')
@@ -198,7 +207,7 @@ function ModelDetailContent({ id }: { id: string }) {
         </div><p className="muted">设备选择仅用于下次提交；每次追加有步数上限，成功后可继续追加。续训从上次成功版本的最终参数和优化器状态恢复。</p><button>{model.version_count ? '继续训练' : '开始训练'}</button></fieldset></form>
         {activeId && <div className="callout"><p>当前会话 {activeId} · {model.active_session ? stateLabels[model.active_session.state] || model.active_session.state : '已提交，状态待刷新'}</p><p>取消会丢弃本次未发布进度，已有版本继续可用。</p><button disabled={busy || model.active_session?.state === 'cancel_requested'} onClick={() => void cancelTraining()}>取消当前训练</button></div>}
       </section>
-      <section className="panel" aria-label="保存版本"><div className="section-heading"><div><h2>保存版本 · {versions.data?.total ?? model.version_count} 轮</h2><p className="muted">成功保存一次计为一轮。回测使用选定快照，可能沿用较早轮次；续训使用本轮最终参数。</p></div></div>
+      <section className="panel" aria-label="保存版本"><div className="section-heading"><div><h2>保存版本 · {versions.data?.total ?? model.version_count} 轮</h2><p className="muted">列表展示本轮最终参数的验证成绩 · {model.spec.validation_start}–{model.spec.validation_end}。最优快照按{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}选定，回测使用该快照；续训使用本轮最终参数。</p></div></div>
         {newCounts.versions > 0 && <p role="status" className="new-history-notice">有{newCounts.versions}条新记录，<button onClick={() => showLatest('versions')}>查看最新</button></p>}
         <form className="history-search" onSubmit={event => { event.preventDefault(); lookup('versions', roundInput) }}><label>查找训练轮次<input inputMode="numeric" placeholder="例如 53" value={roundInput} onChange={event => setRoundInput(event.target.value)} /></label><button disabled={versions.loading}>查找轮次</button></form>
         {renderPagination('versions', versions)}
@@ -207,11 +216,11 @@ function ModelDetailContent({ id }: { id: string }) {
         <div className="record-list">{versions.data?.items.map(item => {
           const artifact = artifacts[item.id], manifest = artifact?.manifest || {}
           return <article className="record history-record" id={`history-versions-${item.id}`} tabIndex={-1} key={item.id}>
-            <div className="record-head"><strong>第{item.round_number}轮</strong><span>{taskTime(item.saved_at || item.created_at)}</span><Link to={`/runs?model=${encodeURIComponent(id)}&version=${encodeURIComponent(item.id)}`}>使用此版本回测</Link><button aria-expanded={expanded === item.id} onClick={() => setExpanded(expanded === item.id ? '' : item.id)}>{expanded === item.id ? '收起详情' : '展开详情'}</button></div>
-            <p>累计步数 {String(item.timesteps_completed ?? '—')} · 实际设备 {item.runtime_device === 'cuda' ? 'CUDA（GPU）' : item.runtime_device === 'cpu' ? 'CPU' : '—'}</p>
-            <p>选定快照验证夏普率 {typeof item.validation_best?.sharpe === 'number' ? item.validation_best.sharpe.toFixed(3) : '—'}</p>
+            <div className="record-head"><strong>第{item.round_number}轮</strong><span className={`badge snapshot-status${item.selection_valid === true && item.best_round_number === item.round_number ? ' updated' : ''}`}>{snapshotStatus(item)}</span><Link to={`/runs?model=${encodeURIComponent(id)}&version=${encodeURIComponent(item.id)}`}>使用此版本回测</Link><button aria-expanded={expanded === item.id} onClick={() => setExpanded(expanded === item.id ? '' : item.id)}>{expanded === item.id ? '收起详情' : '展开详情'}</button></div>
+            <dl className="history-key-metrics" aria-label="本轮验证成绩">{primaryMetrics.map(([key, label]) => <div key={key}><dt id={`metric-${item.id}-${key}`}>{label}</dt><dd aria-labelledby={`metric-${item.id}-${key}`}>{metricText(key, item.validation_latest?.[key])}</dd></div>)}</dl>
             {item.selection_valid === false && <p className="callout warn">无有效验证评分：本版本保留了可用策略快照。</p>}
             {expanded === item.id && <div className="history-detail">
+              <p className="muted">保存时间 {taskTime(item.saved_at || item.created_at)} · 累计步数 {String(item.timesteps_completed ?? '—')} · 实际设备 {item.runtime_device === 'cuda' ? 'CUDA（GPU）' : item.runtime_device === 'cpu' ? 'CPU' : '—'}</p>
               <p className="muted">以下指标的验证区间：{model.spec.validation_start}–{model.spec.validation_end}</p>
               <h3>本轮最终参数验证</h3><Metrics values={item.validation_latest || {}} /><h3>选定快照验证</h3><Metrics values={item.validation_best || {}} />
               <p>选定快照来源：{item.best_round_number ? `第${item.best_round_number}轮` : item.best_source_version_id || '—'} · 选定快照步数 {item.best_timesteps ?? '—'}</p>

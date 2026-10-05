@@ -66,7 +66,7 @@ test('detail keeps configuration read only and adds only session budget and devi
   await userEvent.click(screen.getByRole('button', { name: '继续训练' }))
   expect(posts[0]).toEqual({ path: '/api/investing/models/m1/train', body: { additional_timesteps: 8192, device: 'cpu' } })
   expect(screen.getByRole('link', { name: '使用此版本回测' })).toHaveAttribute('href', '/runs?model=m1&version=v1')
-  expect(screen.getByText('选定快照验证夏普率 —')).toBeVisible()
+  expect(screen.getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('—')
 })
 
 test('backtest requires explicit version instead of choosing the latest', async () => {

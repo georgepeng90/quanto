@@ -18,12 +18,13 @@ class PolicyTrainingSpec(StrictSpec):
     frequency: Literal["weekly", "monthly"] = "weekly"
     lookback: int = Field(default=120, ge=3, le=512)
     action_version: Literal["hold-target-quartiles-v1", "hold-target-cash-quartiles-v2"] = LEGACY_ACTION_VERSION
+    reward_version: Literal["net-log-return-v1", "net-log-return-with-state-v1", "differential-sharpe-v1"] = "net-log-return-v1"
     train_start: date
     train_end: date
     validation_start: date
     validation_end: date
-    test_start: date
-    test_end: date
+    test_start: date | None = None
+    test_end: date | None = None
     episode_sessions: int = Field(default=252, ge=2, le=5000)
     total_timesteps: int = Field(default=4096, ge=2, le=10000000)
     n_steps: int = Field(default=128, ge=2, le=8192)
@@ -41,12 +42,20 @@ class PolicyTrainingSpec(StrictSpec):
 
     @model_validator(mode="after")
     def validate_experiment(self):
-        dates = (self.train_start, self.train_end, self.validation_start,
-                 self.validation_end, self.test_start, self.test_end)
+        if (self.test_start is None) != (self.test_end is None):
+            raise ValueError("test_start and test_end must be supplied together")
+        dates = (self.train_start, self.train_end, self.validation_start, self.validation_end)
+        if self.test_start is not None:
+            dates += (self.test_start, self.test_end)
         if not all(first < second for first, second in zip(dates, dates[1:])):
             raise ValueError("inclusive train, validation and test dates must be strictly ordered and disjoint")
-        if self.train_start < self.backtest.start or self.test_end > self.backtest.end:
+        if self.train_start < self.backtest.start or dates[-1] > self.backtest.end:
             raise ValueError("training partitions must be inside backtest coverage")
+        if self.reward_version != "net-log-return-v1":
+            if self.gamma != 1:
+                raise ValueError("state reward schemes require gamma=1")
+            if self.backtest.metrics.risk_free_rate != 0:
+                raise ValueError("state reward schemes require risk_free_rate=0")
         if self.batch_size > self.n_steps or self.n_steps % self.batch_size:
             raise ValueError("batch_size must divide n_steps and cannot exceed it")
         return self

@@ -52,6 +52,19 @@ def test_model_creation_persists_without_training_and_keeps_order(model_workspac
         assert db.execute('SELECT count(*) FROM investing_models').fetchone()[0] == 1
 
 
+def test_model_creation_accepts_dsr_without_test_dates(model_workspace):
+    app, client, headers, request = model_workspace
+    request['spec'].update(reward_version='differential-sharpe-v1', test_start=None, test_end=None)
+    request['spec']['backtest']['end'] = request['spec']['validation_end']
+    response = client.post('/api/investing/models', headers=headers, json=request)
+    assert response.status_code == 200, response.text
+    model = response.json()
+    assert model['spec']['reward_version'] == 'differential-sharpe-v1'
+    assert model['spec']['test_start'] is None and model['spec']['test_end'] is None
+    assert model['state'] == 'untrained'
+    assert app.state.service.store.list_jobs() == []
+
+
 def test_existing_model_without_action_version_queues_legacy_continuation(model_workspace):
     app, client, headers, request = model_workspace
     model = client.post('/api/investing/models', headers=headers, json=request).json()

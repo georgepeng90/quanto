@@ -12,7 +12,7 @@ import pandas as pd
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.config import BacktestSpec
 from quanto.investing.contracts import PolicyTrainingSpec
-from quanto.investing.evaluation import evaluate_policy
+from quanto.investing.evaluation import check_policy_identity, evaluate_policy, policy_identity
 from quanto.learning.artifacts import read_manifest, write_manifest
 from quanto.learning.contracts import check_cancelled
 from quanto.learning.models import resolve_device
@@ -30,7 +30,7 @@ def validate_training_data(config, bundle):
     from quanto.investing.environment import DailyETFEnv, decision_dates
 
     config.backtest.validate_for_dataset(bundle)
-    for split in ("train", "validation", "test"):
+    for split in ("train", "validation") + (("test",) if config.test_start is not None else ()):
         spec = split_spec(config, split)
         decisions = decision_dates(bundle.calendar, spec.start, spec.end, config.frequency)
         if not len(decisions):
@@ -41,7 +41,7 @@ def validate_training_data(config, bundle):
             raise ValueError(f"{split} partition has insufficient lookback history for all basket symbols")
         env = DailyETFEnv(bundle, spec, frequency=config.frequency, lookback=config.lookback,
                           episode_sessions=config.episode_sessions, training=split == "train",
-                          action_version=config.action_version, collect=False)
+                          action_version=config.action_version, reward_version=config.reward_version, collect=False)
         env.close()
 
 
@@ -51,7 +51,7 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     import torch
     from stable_baselines3 import PPO
     from stable_baselines3.common.callbacks import BaseCallback
-    from quanto.investing.environment import DailyETFEnv, feature_version, ENVIRONMENT_VERSION, EXECUTION_VERSION
+    from quanto.investing.environment import DailyETFEnv
 
     config = PolicyTrainingSpec.model_validate(spec)
     check_cancelled(cancelled)
@@ -68,8 +68,7 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     history, best_score, best_timesteps, best_metrics = [], -math.inf, 0, None
     parent, best_source_content_id = None, None
     metric_name = "sharpe" if config.selection_metric == "validation_sharpe" else "net_log_return"
-    expected = dict(feature_version=feature_version(config.lookback), action_version=config.action_version,
-                    environment_version=ENVIRONMENT_VERSION, execution_version=EXECUTION_VERSION)
+    expected = policy_identity(config)
     if resume_dir is not None:
         resume_dir = Path(resume_dir)
         parent = read_manifest(resume_dir, "policy")
@@ -79,9 +78,9 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
         fixed = config.model_dump(mode="json", exclude={"total_timesteps", "device"})
         if fixed != previous.model_dump(mode="json", exclude={"total_timesteps", "device"}):
             raise ValueError("resume configuration must match the fixed model identity")
+        check_policy_identity(parent, config)
         if (parent["dataset_content_hash"] != dataset_content_hash or parent.get("model_id") != model_id
-                or parent["basket"] != config.backtest.symbols or parent.get("price_mode") != bundle.price_mode
-                or any(parent.get(name) != value for name, value in expected.items())):
+                or parent["basket"] != config.backtest.symbols or parent.get("price_mode") != bundle.price_mode):
             raise ValueError("resume dataset, model, basket or environment identity mismatch")
         history = list(parent["history"])
         best_timesteps, best_metrics = parent["best_timesteps"], parent["metrics"]["validation"]
@@ -96,7 +95,7 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
         nonlocal best_score, best_timesteps, best_metrics, best_source_content_id, last_evaluated_updates, next_evaluation
         check_cancelled(cancelled)
         metrics, _, _ = evaluate_policy(model, bundle, validation, config.frequency, config.lookback,
-                                        cancelled, action_version=config.action_version)
+                                        cancelled, action_version=config.action_version, reward_version=config.reward_version)
         if not math.isfinite(metrics["net_log_return"]):
             raise ValueError("nonfinite validation net log return")
         if metrics["sharpe"] is not None and not math.isfinite(metrics["sharpe"]):
@@ -129,7 +128,8 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
 
     env = DailyETFEnv(bundle, split_spec(config, "train"), frequency=config.frequency,
                       lookback=config.lookback, episode_sessions=config.episode_sessions,
-                      training=True, action_version=config.action_version, cancelled=cancelled, collect=False)
+                      training=True, action_version=config.action_version, reward_version=config.reward_version,
+                      cancelled=cancelled, collect=False)
     try:
         if parent is not None:
             model = PPO.load(resume_dir / "last.zip", env=env, device=device)
@@ -158,16 +158,20 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
             select(model)
         completed = model.num_timesteps
         model.save(output_dir / "last.zip")
+        training_diagnostics = {key: value for key, value in env.reward_diagnostics.items() if key != "reward_sum"}
+        training_diagnostics.update(training_reward_sum=env.reward_diagnostics["reward_sum"],
+                                    scope="current_session_including_reset_prefixes")
     except torch.cuda.OutOfMemoryError as exc:
         raise ValueError("CUDA memory exhausted; reduce PPO batch_size or hidden_size, or choose CPU") from exc
     finally:
         env.close()
     test_metrics = None
-    if evaluate_test:
+    test_evaluated = evaluate_test and config.test_start is not None
+    if test_evaluated:
         selected = PPO.load(output_dir / "policy.zip", device=device)
         test_metrics, _, _ = evaluate_policy(selected, bundle, split_spec(config, "test"),
                                              config.frequency, config.lookback, cancelled,
-                                             action_version=config.action_version)
+                                             action_version=config.action_version, reward_version=config.reward_version)
     check_cancelled(cancelled)
     (output_dir / "curves.json").write_bytes(json_bytes(history))
     runtime = dict(python=platform.python_version(), torch=torch.__version__,
@@ -178,15 +182,14 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     manifest = dict(kind="policy", version=1, name=config.name, config=config.model_dump(mode="json"),
                     basket=config.backtest.symbols, dataset_content_hash=dataset_content_hash, price_mode=bundle.price_mode,
                     model_id=model_id, parent_content_id=parent["id"] if parent else None,
-                    cutoff=config.validation_end.isoformat(), feature_version=expected["feature_version"],
-                    action_version=config.action_version, environment_version=ENVIRONMENT_VERSION,
-                    execution_version=EXECUTION_VERSION, selection_metric=config.selection_metric,
+                    cutoff=config.validation_end.isoformat(), **expected, selection_metric=config.selection_metric,
                     selection_valid=math.isfinite(best_score), best_source_content_id=best_source_content_id,
                     metrics=dict(validation=best_metrics, test=test_metrics), best_timesteps=best_timesteps,
                     timesteps_started=started, timesteps_completed=completed, session_timesteps=completed - started,
                     history=history, runtime=runtime, sampling_provenance=sampling_provenance,
+                    training_diagnostics=training_diagnostics,
                     limitations=bundle.manifest.limitations,
-                    research_limits=(["test evaluated once after checkpoint selection within this run"] if evaluate_test else []) + [
+                    research_limits=(["test evaluated once after checkpoint selection within this run"] if test_evaluated else []) + [
                                      "no protection against repeated research on the test period",
                                      "continuation resets account and reseeds only the window sampler from base seed plus parent timesteps; not exact uninterrupted replay"])
     check_cancelled(cancelled)

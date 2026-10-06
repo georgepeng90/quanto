@@ -130,6 +130,7 @@ test('backtest dates start blank when the selected model has no holdout test per
     const path = String(input)
     if (path === '/api/investing/models') return Response.json({ items: [model, noTestModel], next_cursor: null })
     if (path === '/api/investing/models/m2?include_history=false' || path === '/api/investing/models/m2') return Response.json(noTestModel)
+    if (path.startsWith('/api/investing/models/m2/history?')) return Response.json({ items: [savedVersion], total_pages: 1, anchor: 10 })
     return prior(input, init)
   }))
   app('/runs?model=m1')
@@ -141,21 +142,39 @@ test('backtest dates start blank when the selected model has no holdout test per
   expect(screen.getByLabelText('回测结束')).toHaveValue('')
 })
 
-test('backtest labels saved rounds and retained snapshots while preserving historical selection', async () => {
+test('backtest uses real history rounds and short labels while preserving historical selection', async () => {
   const prior = globalThis.fetch
-  const versions = [
-    { ...model.versions[0], id: 'v2', round_number: 2, best_round_number: 1 },
-    { ...model.versions[0], round_number: 1, best_round_number: 1 },
-  ]
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1'
-    ? Response.json({ ...model, latest_version_id: 'v2', versions }) : prior(input, init)))
+  versionItems = [{ ...savedVersion, id: 'v2', round_number: 254, best_round_number: 116 }, { ...savedVersion, round_number: 253 }]
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1?include_history=false'
+    ? Response.json({ ...model, latest_version_id: 'v2' }) : prior(input, init)))
   app('/runs?model=m1&version=v1')
-  expect(await screen.findByRole('option', { name: '第2轮保存 · 选定快照：第1轮 · 累计 4096 步 · 当前快照（默认）' })).toBeVisible()
+  expect(await screen.findByRole('option', { name: '第254轮（当前）' })).toBeVisible()
+  expect(screen.getByRole('option', { name: '第253轮' })).toBeVisible()
   expect(screen.getByLabelText('保存版本')).toHaveValue('v1')
   await userEvent.selectOptions(screen.getByLabelText('保存版本'), 'v2')
   await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(posts[0].body.version_id).toBe('v2')
+})
+
+test('backtest loads all history pages with a fixed anchor before selecting the current version', async () => {
+  const prior = globalThis.fetch
+  const historyCalls: URL[] = []
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname === '/api/investing/models/m1/history') {
+      historyCalls.push(url)
+      const page = Number(url.searchParams.get('page'))
+      return Response.json({ items: [{ ...savedVersion, id: page === 1 ? 'v2' : 'v1', round_number: page === 1 ? 51 : 1 }], total_pages: 2, anchor: 102 })
+    }
+    return prior(input, init)
+  }))
+  app('/runs?model=m1')
+  expect(await screen.findByRole('option', { name: '第51轮（当前）' })).toBeVisible()
+  expect(screen.getByRole('option', { name: '第1轮' })).toBeVisible()
+  expect(screen.getByLabelText('保存版本')).toHaveValue('v2')
+  expect(historyCalls.map(url => url.searchParams.get('page'))).toEqual(['1', '2'])
+  expect(historyCalls[1].searchParams.get('anchor')).toBe('102')
 })
 
 test('switching models defaults to its own snapshot and untrained models require a saved version', async () => {
@@ -165,8 +184,10 @@ test('switching models defaults to its own snapshot and untrained models require
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/investing/models') return Response.json({ items: [model, otherModel, untrainedModel], next_cursor: null })
-    if (path === '/api/investing/models/m2') return Response.json(otherModel)
-    if (path === '/api/investing/models/m3') return Response.json(untrainedModel)
+    if (path === '/api/investing/models/m2?include_history=false') return Response.json(otherModel)
+    if (path === '/api/investing/models/m3?include_history=false') return Response.json(untrainedModel)
+    if (path.startsWith('/api/investing/models/m2/history?')) return Response.json({ items: [{ ...savedVersion, id: 'v2' }], total_pages: 1, anchor: 10 })
+    if (path.startsWith('/api/investing/models/m3/history?')) return Response.json({ items: [], total_pages: 1, anchor: 0 })
     return prior(input, init)
   }))
   app('/runs?model=m1&version=v1')

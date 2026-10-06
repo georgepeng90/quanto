@@ -213,6 +213,7 @@ function ModelDetailContent({ id }: { id: string }) {
           return <article className="record history-record" id={`history-${item.id}`} tabIndex={-1} key={item.id}>
             {item.round_number !== null ? <>
               <div className="record-head"><strong>第{item.round_number}轮</strong><span className={`badge snapshot-status${item.selection_valid === true && item.best_round_number === item.round_number ? ' updated' : ''}`}>{snapshotStatus(item)}</span><Link to={`/runs?model=${encodeURIComponent(id)}&version=${encodeURIComponent(item.id)}`}>使用此版本回测</Link><button aria-expanded={expanded === item.id} onClick={() => setExpanded(expanded === item.id ? '' : item.id)}>{expanded === item.id ? '收起详情' : '展开详情'}</button><button onClick={() => { focusTarget.current = 'training-log'; setSelectedLog(item) }}>查看日志</button></div>
+              <p className="muted">训练行情区间：{model.spec.train_start}–{model.spec.train_end}</p>
               <dl className="history-key-metrics" aria-label="本轮验证成绩">{primaryMetrics.map(([key, label]) => <div key={key}><dt id={`metric-${item.id}-${key}`}>{label}</dt><dd aria-labelledby={`metric-${item.id}-${key}`}>{metricText(key, item.validation_latest?.[key])}</dd></div>)}</dl>
               {item.selection_valid === false && <p className="callout warn">无有效验证评分：本版本保留了可用策略快照。</p>}
               {expanded === item.id && <div className="history-detail">
@@ -228,6 +229,7 @@ function ModelDetailContent({ id }: { id: string }) {
               </div>}
             </> : <>
               <div className="record-head"><strong>第{item.session_number}次训练尝试</strong><span className="badge">{stateLabels[item.state] || item.state}</span><span>{taskTime(item.created_at)}</span><button onClick={() => { focusTarget.current = 'training-log'; setSelectedLog(item) }}>查看日志</button></div>
+              <p className="muted">训练行情区间：{model.spec.train_start}–{model.spec.train_end}</p>
               <p className="muted">基础版本 {item.base_round_number ? `第${item.base_round_number}轮` : item.base_version_id || '首次初始化'} · 未保存新版本</p>
               <details><summary>{item.error ? `失败或中断原因：${item.error.slice(0, 120)}` : '会话详情'}</summary><p>进度 {item.completed_through || '—'} · 心跳 {taskTime(item.heartbeat)}</p><p className="muted">任务 ID {item.id}</p>{item.error && <p className="error">{item.error}</p>}</details>
             </>}

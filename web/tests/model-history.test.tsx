@@ -89,6 +89,9 @@ test('successful attempts show current-round performance and snapshot changes be
   expect(within(latest).getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('1.2345')
   expect(within(latest).queryByText('90.00%')).toBeNull()
   expect(within(latest).getByText('未切换 · 沿用第244轮')).toBeVisible()
+  for (const record of within(screen.getByRole('region', { name: '训练历史' })).getAllByRole('article')) {
+    expect(within(record).getByText('训练行情区间：2022-01-01–2023-12-31')).toBeVisible()
+  }
   expect(within(latest).queryByText(/累计步数|实际设备/)).toBeNull()
   const updated = screen.getByText('第244轮').closest('article')!
   expect(within(updated).getByText('本轮更新最优快照')).toBeVisible()
@@ -197,6 +200,7 @@ test('failed attempts appear in training history without a saved round or valida
   renderPage()
   const history = await screen.findByRole('region', { name: '训练历史' })
   const failed = (await within(history).findByText('第3次训练尝试')).closest('article')!
+  expect(within(failed).getByText('训练行情区间：2022-01-01–2023-12-31')).toBeVisible()
   expect(within(failed).getByText(/失败或中断原因：CUDA unavailable/)).toBeVisible()
   expect(within(failed).queryByText(/第\d+轮|总收益率|使用此版本回测/)).toBeNull()
 })
@@ -221,6 +225,7 @@ test('log selection survives history navigation and model changes clear expanded
   }))
   const view = renderPage()
   await screen.findByText('第305轮')
+  expect(within(screen.getByText('第306次训练尝试').closest('article')!).getByText('训练行情区间：2022-01-01–2023-12-31')).toBeVisible()
   await userEvent.click(within(screen.getByText('第306次训练尝试').closest('article')!).getByRole('button', { name: '查看日志' }))
   expect(await screen.findByRole('heading', { name: '第306次尝试 · 训练日志' })).toBeVisible()
   const history = screen.getByRole('region', { name: '训练历史' })

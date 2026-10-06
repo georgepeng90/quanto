@@ -109,6 +109,7 @@ class DailyETFEnv(gym.Env):
         self.action_space = spaces.MultiDiscrete(np.array([3 if action_version == CASH_ACTION_VERSION else 2] + [5] * len(spec.symbols)))
         self.observation_space = spaces.Box(-10., 10., shape=(12 * len(spec.symbols) + (6 if self._has_reward_state else 4),), dtype=np.float32)
         self.runner = None
+        self._session_data = None
         self.context = None
         self._done = True
 
@@ -180,7 +181,7 @@ class DailyETFEnv(gym.Env):
         start = int(self.np_random.choice(self._episode_starts)) if self.training else 0
         length = self.episode_sessions if self.training and self.episode_sessions is not None else len(self.sessions)
         episode = self.backtest_spec.model_copy(update=dict(start=self.sessions[start].date(), end=self.sessions[start + length - 1].date()))
-        self.runner = SessionRunner(self.bundle, episode, self.cancelled, collect=self.collect)
+        self.runner = SessionRunner(self.bundle, episode, self.cancelled, collect=self.collect, prepared=self._session_data)
         self.decision_dates = decision_dates(self.calendar, episode.start, episode.end, self.frequency)
         self._decision_set = set(self.decision_dates)
         self._done = False
@@ -189,6 +190,7 @@ class DailyETFEnv(gym.Env):
         self._daily_equity = np.float64(self.backtest_spec.initial_cash)
         self._reward_state = DifferentialSharpeState() if self._has_reward_state else None
         interval = self._advance_to_boundary()
+        self._session_data = self.runner._prepared
         if self._has_reward_state:
             self._reward_session_index = self.runner.dates.get_loc(self.context.asof)
         return self._observation(), self._info(interval=interval, prefix=True)

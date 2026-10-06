@@ -24,8 +24,11 @@ def test_strategy_contract_rejects_invalid_input():
     assert TargetPortfolio({}, {}, {}).weights == {}
 
 
-def test_context_excludes_future_and_is_read_only():
-    source = pd.DataFrame({"date": pd.to_datetime(["2024-01-02", "2024-01-03"]), "symbol": ["A", "A"], "close": [1, 999]})
+@pytest.mark.parametrize("datetime_dates", [True, False])
+def test_context_excludes_future_and_is_read_only(datetime_dates):
+    dates = ["2024-01-02", "2024-01-03"]
+    source = pd.DataFrame({"date": pd.to_datetime(dates) if datetime_dates else dates,
+                           "symbol": ["A", "A"], "close": [1, 999]})
     ctx = StrategyContext(pd.Timestamp("2024-01-02"), source, ("A",), _portfolio(), ({"symbol": "A", "quantity": 1},), {}, False)
     assert ctx.history["close"].tolist() == [1]
     source.loc[0, "close"] = 50

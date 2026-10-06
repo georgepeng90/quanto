@@ -1,0 +1,208 @@
+{
+  "dataset_content_hash": "c4e45bad96649491e40a138ab054c5c94de6e7be38bf156681873cbc8ebd22bd",
+  "baseline_commit": "35953af",
+  "scope": "Environment simulation only; no PPO updates; timings include reset, steps, trace hashing and collected-table hashing, exclude dataset loading and environment construction.",
+  "benchmark_sha256": "2d715ab6053bc4c13d78bf07def5e85dc42ff5b8fbc438cf64ee8d9998ce98e5",
+  "before": {
+    "price_rows": 43346,
+    "cases": [
+      {
+        "reward": "net-log-return-with-state-v1",
+        "collect": false,
+        "episodes": 8,
+        "decision_steps": 206,
+        "elapsed_seconds": 18.076320699998178,
+        "reset_seconds": [
+          0.9088618999812752,
+          0.8804564999882132,
+          0.8149022000143304,
+          0.8398414000403136,
+          0.913997899973765,
+          1.0305189000209793,
+          1.1998614999465644,
+          1.2920901000034064
+        ],
+        "episode_starts": [
+          "2022-08-30",
+          "2023-11-07",
+          "2023-08-21",
+          "2023-04-10",
+          "2023-04-06",
+          "2023-12-26",
+          "2022-08-26",
+          "2023-09-14"
+        ],
+        "trace_sha256": "6fb6f0fe2d53693dc6aa34ffec38daf0c3747f7e52a9845a1543b54cfa33191c",
+        "tables_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "role": "control"
+      },
+      {
+        "reward": "net-log-return-with-state-v1",
+        "collect": true,
+        "episodes": 2,
+        "decision_steps": 51,
+        "elapsed_seconds": 5.954759500105865,
+        "reset_seconds": [
+          1.2051782000344247,
+          1.1055025999667123
+        ],
+        "episode_starts": [
+          "2022-08-30",
+          "2023-11-07"
+        ],
+        "trace_sha256": "7e9f47fa94d3d54264899285c8ebaf34bc71d1b947205db9c4710d518cd8d2fd",
+        "tables_sha256": "543c6ceb5c5633743ebaac58ff252a945f23261b089ae4dfe86f711bb761affc",
+        "role": "control"
+      },
+      {
+        "reward": "differential-sharpe-v1",
+        "collect": false,
+        "episodes": 8,
+        "decision_steps": 206,
+        "elapsed_seconds": 17.53540250007063,
+        "reset_seconds": [
+          0.9332359000109136,
+          1.0620314999250695,
+          1.071466499939561,
+          0.9807704000268131,
+          1.0546771999215707,
+          1.004476899979636,
+          0.9743087999522686,
+          1.0175046999938786
+        ],
+        "episode_starts": [
+          "2022-08-30",
+          "2023-11-07",
+          "2023-08-21",
+          "2023-04-10",
+          "2023-04-06",
+          "2023-12-26",
+          "2022-08-26",
+          "2023-09-14"
+        ],
+        "trace_sha256": "7f3585434f191776c32c1f90f733a50d10a14bbaefb7f3f824e4008118547411",
+        "tables_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "role": "dsr"
+      },
+      {
+        "reward": "differential-sharpe-v1",
+        "collect": true,
+        "episodes": 2,
+        "decision_steps": 51,
+        "elapsed_seconds": 5.712851000018418,
+        "reset_seconds": [
+          1.0677391000790522,
+          1.124837499926798
+        ],
+        "episode_starts": [
+          "2022-08-30",
+          "2023-11-07"
+        ],
+        "trace_sha256": "56107643307c721050af12d85522c9c397baadb010fbec6a79f163df0e3148c0",
+        "tables_sha256": "543c6ceb5c5633743ebaac58ff252a945f23261b089ae4dfe86f711bb761affc",
+        "role": "dsr"
+      }
+    ]
+  },
+  "after": {
+    "price_rows": 43346,
+    "cases": [
+      {
+        "reward": "net-log-return-with-state-v1",
+        "collect": false,
+        "episodes": 8,
+        "decision_steps": 206,
+        "elapsed_seconds": 5.630413300008513,
+        "reset_seconds": [
+          0.8812814999837428,
+          0.01859999995213002,
+          0.02052889997139573,
+          0.0174624000210315,
+          0.010729700094088912,
+          0.015560199972242117,
+          0.008291500038467348,
+          0.010184900020249188
+        ],
+        "episode_starts": [
+          "2022-08-30",
+          "2023-11-07",
+          "2023-08-21",
+          "2023-04-10",
+          "2023-04-06",
+          "2023-12-26",
+          "2022-08-26",
+          "2023-09-14"
+        ],
+        "trace_sha256": "6fb6f0fe2d53693dc6aa34ffec38daf0c3747f7e52a9845a1543b54cfa33191c",
+        "tables_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "role": "control"
+      },
+      {
+        "reward": "net-log-return-with-state-v1",
+        "collect": true,
+        "episodes": 2,
+        "decision_steps": 51,
+        "elapsed_seconds": 2.937278200057335,
+        "reset_seconds": [
+          0.8481285000452772,
+          0.018539899960160255
+        ],
+        "episode_starts": [
+          "2022-08-30",
+          "2023-11-07"
+        ],
+        "trace_sha256": "7e9f47fa94d3d54264899285c8ebaf34bc71d1b947205db9c4710d518cd8d2fd",
+        "tables_sha256": "543c6ceb5c5633743ebaac58ff252a945f23261b089ae4dfe86f711bb761affc",
+        "role": "control"
+      },
+      {
+        "reward": "differential-sharpe-v1",
+        "collect": false,
+        "episodes": 8,
+        "decision_steps": 206,
+        "elapsed_seconds": 5.356097900075838,
+        "reset_seconds": [
+          0.8885738000972196,
+          0.01730059995315969,
+          0.01832879998255521,
+          0.018270200002007186,
+          0.011618999997153878,
+          0.014249300002120435,
+          0.008331699995324016,
+          0.011757200001738966
+        ],
+        "episode_starts": [
+          "2022-08-30",
+          "2023-11-07",
+          "2023-08-21",
+          "2023-04-10",
+          "2023-04-06",
+          "2023-12-26",
+          "2022-08-26",
+          "2023-09-14"
+        ],
+        "trace_sha256": "7f3585434f191776c32c1f90f733a50d10a14bbaefb7f3f824e4008118547411",
+        "tables_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "role": "dsr"
+      },
+      {
+        "reward": "differential-sharpe-v1",
+        "collect": true,
+        "episodes": 2,
+        "decision_steps": 51,
+        "elapsed_seconds": 2.873666499974206,
+        "reset_seconds": [
+          0.8303452999098226,
+          0.01528709998819977
+        ],
+        "episode_starts": [
+          "2022-08-30",
+          "2023-11-07"
+        ],
+        "trace_sha256": "56107643307c721050af12d85522c9c397baadb010fbec6a79f163df0e3148c0",
+        "tables_sha256": "543c6ceb5c5633743ebaac58ff252a945f23261b089ae4dfe86f711bb761affc",
+        "role": "dsr"
+      }
+    ]
+  }
+}

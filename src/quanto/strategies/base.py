@@ -49,7 +49,10 @@ class StrategyContext:
         asof = pd.Timestamp(self.asof)
         if "date" not in self.history:
             raise ValueError("Strategy history requires a date column")
-        history = self.history.loc[pd.to_datetime(self.history["date"]) <= asof].copy(deep=True)
+        dates = self.history["date"]
+        if not pd.api.types.is_datetime64_any_dtype(dates.dtype):
+            dates = pd.to_datetime(dates)
+        history = self.history.loc[dates <= asof].copy(deep=True)
         object.__setattr__(self, "asof", asof)
         object.__setattr__(self, "history", history)
         object.__setattr__(self, "eligible_symbols", tuple(self.eligible_symbols))

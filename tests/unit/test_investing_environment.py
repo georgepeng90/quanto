@@ -495,3 +495,102 @@ def test_state_rewards_include_dividend_receivables_without_double_counting(rewa
 def test_state_rewards_satisfy_gymnasium_contract(reward_version):
     from gymnasium.utils.env_checker import check_env
     check_env(env_for(daily_case(days=20), reward_version=reward_version), skip_render_check=True)
+
+
+def cached_session_case():
+    bundle = daily_case(days=45)
+    dates = bundle.calendar.date
+    bundle.prices.loc[(bundle.prices.symbol == "A") & (bundle.prices.date >= dates.iloc[13]),
+                      ["open", "high", "low", "close"]] = 5.
+    bundle.prices.loc[(bundle.prices.symbol == "B") & (bundle.prices.date >= dates.iloc[20]),
+                      ["open", "high", "low", "close"]] = 4.
+    events = pd.DataFrame([
+        dict(symbol="A", event_type="split", record_date=pd.NaT, ex_date=dates.iloc[13],
+             pay_date=pd.NaT, cash_per_share=0., split_ratio=2.),
+        dict(symbol="B", event_type="dividend", record_date=dates.iloc[12], ex_date=dates.iloc[14],
+             pay_date=dates.iloc[16], cash_per_share=.2, split_ratio=1.),
+    ])
+    bundle = replace(bundle, events=events)
+    spec = spec_case(bundle, execution={"minimum_commission": 1., "slippage_rate": .001},
+                     metrics={"cash_rate": .0252},
+                     risk={"drawdown_pause": .15, "pause_action": "liquidate"})
+    return bundle, spec
+
+
+@pytest.mark.parametrize("reward_version", ["net-log-return-v1", *STATE_REWARDS])
+@pytest.mark.parametrize("collect", [True, False])
+def test_cached_sessions_match_fresh_runners_and_seeded_account_resets(monkeypatch, reward_version, collect):
+    import quanto.investing.environment as environment
+
+    bundle, spec = cached_session_case()
+    cached = env_for(bundle, spec=spec, training=True, episode_sessions=35, reward_version=reward_version, collect=collect)
+    fresh = env_for(bundle, spec=spec, training=True, episode_sessions=35, reward_version=reward_version, collect=collect)
+    runner_type = engine.SessionRunner
+
+    def fresh_runner(*args, **kwargs):
+        kwargs.pop("prepared", None)
+        return runner_type(*args, **kwargs)
+
+    starts = []
+    previous_ledger = previous_risk = None
+    event_types = set()
+    for episode in range(4):
+        monkeypatch.setattr(environment, "SessionRunner", runner_type)
+        observation, info = cached.reset(seed=17 if episode == 0 else None)
+        monkeypatch.setattr(environment, "SessionRunner", fresh_runner)
+        other_observation, other_info = fresh.reset(seed=17 if episode == 0 else None)
+        np.testing.assert_array_equal(observation, other_observation)
+        assert info == other_info
+        starts.append(info["episode_start"])
+        assert cached.runner.ledger is not previous_ledger
+        assert cached.runner.risk is not previous_risk
+        assert dict(cached.context.portfolio.shares) == {}
+        assert cached.runner.risk.state["paused"] is False
+        previous_ledger, previous_risk = cached.runner.ledger, cached.runner.risk
+        done = False
+        while not done:
+            actual = cached.step(np.array([1, 2, 2]))
+            expected = fresh.step(np.array([1, 2, 2]))
+            np.testing.assert_array_equal(actual[0], expected[0])
+            assert actual[1:] == expected[1:]
+            done = actual[2]
+        for name in engine.TABLE_COLUMNS:
+            assert_frame_equal(getattr(cached.result(), name), getattr(fresh.result(), name), check_exact=True)
+        assert cached.reward_diagnostics == fresh.reward_diagnostics
+        if collect:
+            event_types.update(cached.result().account_events.event_type)
+            assert not cached.result().risk_events.empty
+            assert cached.result().fills.commission.sum() > 0
+    assert len(set(starts)) > 1
+    if collect:
+        assert {"split", "dividend_record", "dividend_receivable", "dividend_payment", "interest"} <= event_types
+
+
+def test_repeated_resets_reuse_source_session_indexes(monkeypatch):
+    bundle = daily_case(days=20)
+    original_groupby = pd.DataFrame.groupby
+    preparations = []
+
+    def tracked_groupby(frame, *args, **kwargs):
+        if frame is bundle.status or frame is bundle.eligibility:
+            preparations.append(id(frame))
+        return original_groupby(frame, *args, **kwargs)
+
+    monkeypatch.setattr(pd.DataFrame, "groupby", tracked_groupby)
+    env = env_for(bundle)
+    env.reset(seed=11)
+    prepared_once = preparations.copy()
+    env.step(np.array([1, 2, 2]))
+    env.reset(seed=11)
+    assert preparations == prepared_once, "Episode reset must reuse immutable source session indexes"
+
+
+def test_session_indexes_are_isolated_between_environments():
+    bundle = daily_case(days=20, symbols=("A",))
+    changed = replace(bundle, status=bundle.status.assign(can_buy=False))
+    allowed, blocked = env_for(bundle), env_for(changed)
+    for env in (allowed, blocked):
+        for _ in range(2):
+            env.reset(seed=11)
+            env.step(np.array([1, 4]))
+            assert env.result().fills.empty is (env is blocked)

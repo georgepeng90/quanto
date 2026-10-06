@@ -27,15 +27,36 @@ def _json_value(value):
     raise TypeError(f"不可序列化的结果值: {type(value).__name__}")
 
 
+class _SessionData:
+    """Read-only market indexes shared by episodes of one environment/basket."""
+
+    def __init__(self, bundle: DatasetBundle, symbols: list[str]):
+        self.calendar = pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
+        self.prices = bundle.prices[bundle.prices.symbol.isin(symbols)].sort_values(["date", "symbol"])
+        self.instruments = bundle.instruments[bundle.instruments.symbol.isin(symbols)]
+        self.groups = self.instruments.set_index("symbol")["group"].to_dict()
+        self.price_groups = {d: frame for d, frame in self.prices.groupby("date")}
+        self.status_groups = {d: frame.set_index("symbol").to_dict("index") for d, frame in bundle.status.groupby("date")}
+        self.eligibility_groups = {d: set(frame.loc[frame.eligible, "symbol"]) for d, frame in bundle.eligibility.groupby("date")}
+        self._quotes = {}
+
+    def quotes(self, asof):
+        if asof not in self._quotes:
+            daily = self.price_groups.get(asof, self.prices.iloc[:0]).set_index("symbol")
+            self._quotes[asof] = daily.open.to_dict(), daily.close.to_dict()
+        return self._quotes[asof]
+
+
 class SessionRunner:
     """Pause the shared daily account at close to receive one causal intent."""
 
     def __init__(self, bundle: DatasetBundle, spec: BacktestSpec,
-                 cancelled: Callable[[], bool], collect: bool = True):
+                 cancelled: Callable[[], bool], collect: bool = True, *, prepared: _SessionData | None = None):
         spec.validate_for_dataset(bundle)
         self.bundle, self.spec = bundle, spec
         self.cancelled, self.collect = cancelled, collect
-        calendar = pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
+        self._prepared = prepared
+        calendar = prepared.calendar if prepared is not None else pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
         self.dates = calendar[(calendar >= pd.Timestamp(spec.start)) & (calendar <= pd.Timestamp(spec.end))]
         self.completed_through = None
         self.context = None
@@ -73,14 +94,16 @@ class SessionRunner:
     def _run_sessions(self):
         bundle, spec, cancelled = self.bundle, self.spec, self.cancelled
         spec.validate_for_dataset(bundle)
-        calendar = pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
+        if self._prepared is None:
+            self._prepared = _SessionData(bundle, spec.symbols)
+        prepared = self._prepared
+        calendar = prepared.calendar
         dates = calendar[(calendar >= pd.Timestamp(spec.start)) & (calendar <= pd.Timestamp(spec.end))]
-        prices = bundle.prices[bundle.prices.symbol.isin(spec.symbols)].sort_values(["date", "symbol"])
+        prices = prepared.prices
         ledger, risk = PortfolioLedger(spec.initial_cash), RiskPolicy(spec.risk, initial_equity=spec.initial_cash)
         ledger.calendar = calendar
         self.ledger, self.risk = ledger, risk
-        instruments = bundle.instruments[bundle.instruments.symbol.isin(spec.symbols)]
-        groups = instruments.set_index("symbol")["group"].to_dict()
+        instruments, groups = prepared.instruments, prepared.groups
         approvals = bundle.auxiliary.get("risk_approvals", pd.DataFrame())
         if not approvals.empty:
             required = {"approval_id", "pause_asof", "available_at"}
@@ -98,9 +121,7 @@ class SessionRunner:
         entitlements = {}
         orders, tables, previous_orders = [], {name: [] for name in TABLE_COLUMNS}, {}
         self._tables, self._orders = tables, orders
-        price_groups = {d: frame for d, frame in prices.groupby("date")}
-        status_groups = {d: frame.set_index("symbol").to_dict("index") for d, frame in bundle.status.groupby("date")}
-        eligibility_groups = {d: set(frame.loc[frame.eligible, "symbol"]) for d, frame in bundle.eligibility.groupby("date")}
+        status_groups, eligibility_groups = prepared.status_groups, prepared.eligibility_groups
 
         for day_number, asof in enumerate(dates, 1):
             if cancelled():
@@ -134,8 +155,7 @@ class SessionRunner:
             interest_base = ledger.cash
             interest = money(interest_base * spec.metrics.cash_rate / spec.metrics.annual_sessions)
             ledger.reserve_cash(max(0, -interest))
-            daily = price_groups.get(asof, prices.iloc[:0])
-            opens, closes = daily.set_index("symbol").open.to_dict(), daily.set_index("symbol").close.to_dict()
+            opens, closes = prepared.quotes(asof)
             status = status_groups.get(asof, {})
             scheduled = [order for order in orders if order.status == "pending" and order.execution_date == asof]
             fills = execute_open(scheduled, opens, status, ledger, spec.execution)

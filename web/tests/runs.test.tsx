@@ -7,6 +7,7 @@ import { RunProgress } from '../src/components/RunProgress'
 import type { RunRecord } from '../src/types'
 
 const experiment = { id: 'e1', revision: 3, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: { start: '2024-01-01', end: '2024-01-31' }, sample_purpose: 'exploration' } }
+const fixedSpec = { ...experiment.payload.backtest_spec, symbols: ['ETF1'], initial_cash: 100000, seed: 0, execution: { model: 'next_open', commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0 }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
 const queued = { run_id: 'r1', job_id: 'j1', experiment_id: 'e1', experiment_revision: 3, manifest_hash: 'hash', source: 'web', parent_run_id: null, group_id: null, state: 'queued', completed_through: null, error: null, created_at: '2024-01-01T00:00:00+00:00', started_at: null, finished_at: null, detail_url: '/runs/r1' }
 const running = { ...queued, state: 'running', completed_through: '2024-01-03', started_at: '2024-01-01T00:01:00+00:00' }
 const event = { seq: 1, phase: '回测执行', asof: '2024-01-03', completed_days: 3, total_days: 10, level: 'info', code: 'DAY_DONE', message: '已完成交易日', payload: {} }
@@ -20,7 +21,10 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
-    if (path === '/api/experiments') return Response.json({ items: [experiment], next_cursor: null })
+    if (path === '/api/experiments' && init?.method === 'POST') return Response.json({ ...experiment, payload: JSON.parse(String(init.body)).payload })
+    if (path === '/api/experiments') return Response.json({ items: [{ ...experiment, payload: { ...experiment.payload, backtest_spec: fixedSpec } }], next_cursor: null })
+    if (path === '/api/strategies') return Response.json({ items: [{ id: 's1', manifest: { name: '趋势轮动', parameter_schema: { type: 'object', properties: { window: { type: 'integer', minimum: 1 } } } } }], next_cursor: null })
+    if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', manifest: { source: 'ETF日线', data_start: '2020-01-01', data_end: '2025-12-31' } }], next_cursor: null })
     if (path === '/api/backtests/catalog?limit=50') return Response.json({ items: submitted ? [catalogRow(queued as RunRecord)] : [], next_cursor: null })
     if (path === '/api/runs' && init?.method === 'POST') { submitted = true; return Response.json(queued) }
     if (path === '/api/runs') return Response.json({ items: [], next_cursor: null })
@@ -47,8 +51,9 @@ test('retries submission with the same key after a transport failure', async () 
   }))
   app('/runs')
   await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
-  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
-  await userEvent.click(screen.getByRole('button', { name: '运行' }))
+  await screen.findByRole('option', { name: /趋势轮动/ })
+  await userEvent.selectOptions(screen.getByLabelText('策略'), 's1')
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
   await userEvent.click(await screen.findByRole('button', { name: '重试提交' }))
   await waitFor(() => expect(requests).toHaveLength(2))
   expect(requests[0].idempotency_key).toBe(requests[1].idempotency_key)
@@ -88,64 +93,6 @@ test('restores run state and the recent log tail after a page reload', async () 
   expect(await screen.findByText('已完成交易日')).toBeVisible()
   expect(screen.getAllByText('已完成交易日')).toHaveLength(1)
   expect(paths.filter(path => path === '/api/runs/r1/logs?tail=true')).toHaveLength(2)
-})
-
-test('rejects an oversized parameter list before creating variants', async () => {
-  const requests: string[] = []
-  const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => { requests.push(`${init?.method || 'GET'} ${String(input)}`); return prior(input, init) }))
-  app('/runs')
-  await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
-  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
-  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: JSON.stringify(Array.from({ length: 101 }, (_, i) => ({ window: i + 1 }))) } })
-  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
-  expect(await screen.findByRole('alert')).toHaveTextContent('最多 100 组')
-  expect(requests.filter(path => path === 'POST /api/experiments')).toHaveLength(0)
-})
-
-test('validates every parameter set before creating any variant draft', async () => {
-  const requests: string[] = []
-  const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input)
-    requests.push(`${init?.method || 'GET'} ${path}`)
-    if (path === '/api/strategies/s1') return Response.json({ id: 's1', manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer', minimum: 1 } }, required: ['window'] } } })
-    return prior(input, init)
-  }))
-  app('/runs')
-  await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
-  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
-  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":4},{"window":0}]' } })
-  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
-  expect(await screen.findByRole('alert')).toHaveTextContent('第 2 组')
-  expect(requests).not.toContain('POST /api/experiments')
-})
-
-test('batch transport retry keeps ordered draft revisions and idempotency key', async () => {
-  let draftNumber = 0
-  const submissions: { items: { experiment_id: string; expected_revision: number }[]; idempotency_key: string }[] = []
-  const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input)
-    if (path === '/api/strategies/s1') return Response.json({ id: 's1', manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer', minimum: 1 } }, required: ['window'] } } })
-    if (path === '/api/experiments' && init?.method === 'POST') return Response.json({ id: `variant-${++draftNumber}`, revision: 1, payload: JSON.parse(String(init.body)).payload })
-    if (path === '/api/runs/batch') {
-      submissions.push(JSON.parse(String(init?.body)))
-      if (submissions.length === 1) throw new Error('network timeout')
-      return Response.json({ items: [{ ...queued, run_id: 'r2', group_id: 'g1' }] })
-    }
-    return prior(input, init)
-  }))
-  app('/runs')
-  await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
-  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
-  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":4},{"window":8}]' } })
-  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
-  await userEvent.click(await screen.findByRole('button', { name: '重试提交' }))
-  await waitFor(() => expect(submissions).toHaveLength(2))
-  expect(submissions[1]).toEqual(submissions[0])
-  expect(submissions[0].items).toEqual([{ experiment_id: 'variant-1', expected_revision: 1 }, { experiment_id: 'variant-2', expected_revision: 1 }])
-  expect(draftNumber).toBe(2)
 })
 
 test('does not duplicate final equity rows when refreshing a finished run', async () => {
@@ -251,66 +198,6 @@ test('keeps each run log tail independent when moving between detail URLs', asyn
   await act(async () => { await router.navigate('/runs/r2') })
   expect(await screen.findByText('第二次运行事件')).toBeVisible()
   expect(logPaths[0]).toBe('/api/runs/r2/logs?tail=true')
-})
-
-test('editing the selected experiment while strategy validation waits cannot submit the old draft', async () => {
-  let releaseStrategy: ((response: Response) => void) | undefined
-  let strategyReads = 0
-  const submitted: string[] = []
-  const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input)
-    if (path === '/api/strategies/s1') {
-      if (++strategyReads === 1) return new Promise<Response>(resolve => { releaseStrategy = resolve })
-      return Response.json({ manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer' } } } } })
-    }
-    if (path === '/api/experiments' && init?.method === 'POST') return Response.json({ id: 'variant', revision: 1 })
-    if (path === '/api/runs/batch') { submitted.push(String(init?.body)); return Response.json({ items: [{ ...queued, run_id: 'new' }] }) }
-    return prior(input, init)
-  }))
-  app('/runs')
-  await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
-  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
-  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":4}]' } })
-  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
-  await waitFor(() => expect(releaseStrategy).toBeDefined())
-  await userEvent.selectOptions(screen.getByLabelText('实验草稿'), '')
-  releaseStrategy!(Response.json({ manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer' } } } } }))
-  await waitFor(() => expect(screen.getByRole('button', { name: '运行参数列表' })).toBeEnabled())
-  expect(submitted).toHaveLength(0)
-  await userEvent.selectOptions(screen.getByLabelText('实验草稿'), 'e1')
-  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
-  await waitFor(() => expect(submitted).toHaveLength(1))
-})
-
-test('editing parameters during variant creation releases the lock without submitting stale items', async () => {
-  let releaseVariant: ((response: Response) => void) | undefined
-  let variants = 0
-  const submitted: string[] = []
-  const prior = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input)
-    if (path === '/api/strategies/s1') return Response.json({ manifest: { parameter_schema: { type: 'object', properties: { window: { type: 'integer' } } } } })
-    if (path === '/api/experiments' && init?.method === 'POST') {
-      if (++variants === 1) return new Promise<Response>(resolve => { releaseVariant = resolve })
-      return Response.json({ id: `variant-${variants}`, revision: 1 })
-    }
-    if (path === '/api/runs/batch') { submitted.push(String(init?.body)); return Response.json({ items: [{ ...queued, run_id: 'new' }] }) }
-    return prior(input, init)
-  }))
-  app('/runs')
-  await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
-  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
-  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":4}]' } })
-  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
-  await waitFor(() => expect(releaseVariant).toBeDefined())
-  fireEvent.change(screen.getByLabelText('参数列表 JSON'), { target: { value: '[{"window":8}]' } })
-  releaseVariant!(Response.json({ id: 'stale-variant', revision: 1 }))
-  await waitFor(() => expect(screen.getByRole('button', { name: '运行参数列表' })).toBeEnabled())
-  expect(submitted).toHaveLength(0)
-  await userEvent.click(screen.getByRole('button', { name: '运行参数列表' }))
-  await waitFor(() => expect(submitted).toHaveLength(1))
-  expect(JSON.parse(submitted[0]).items).toEqual([{ experiment_id: 'variant-2', expected_revision: 1 }])
 })
 
 test('shows only the latest 100 terminal log events without draining earlier pages', async () => {

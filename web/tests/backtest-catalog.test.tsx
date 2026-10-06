@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { StrictMode } from 'react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
@@ -135,7 +135,9 @@ test('submission refresh overtakes an unfinished initial catalog read', async ()
   const prior = globalThis.fetch
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
-    if (path === '/api/experiments') return Response.json({ items: [{ id: 'e1', revision: 1, payload: { strategy_revision_id: 's1' } }], next_cursor: null })
+    if (path === '/api/strategies') return Response.json({ items: [{ id: 's1', manifest: { name: '趋势轮动', parameter_schema: { type: 'object', properties: {} } } }], next_cursor: null })
+    if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', manifest: { source: 'ETF日线', data_start: '2024-01-01', data_end: '2024-12-31' } }], next_cursor: null })
+    if (path === '/api/experiments' && init?.method === 'POST') return Response.json({ id: 'e1', revision: 1, payload: JSON.parse(String(init.body)).payload })
     if (path === '/api/backtests/catalog?limit=50') {
       reads++
       return reads === 1 ? new Promise<Response>(() => {}) : Response.json({ items: [row('submitted', 'fixed', null, { state: 'queued' })], next_cursor: null })
@@ -145,8 +147,11 @@ test('submission refresh overtakes an unfinished initial catalog read', async ()
   }))
   app()
   await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
-  await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
-  await userEvent.click(screen.getByRole('button', { name: '运行' }))
+  await screen.findByRole('option', { name: /趋势轮动/ })
+  await userEvent.selectOptions(screen.getByLabelText('策略'), 's1')
+  fireEvent.change(screen.getByLabelText('证券代码'), { target: { value: 'ETF1' } })
+  fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '100000' } })
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
   expect(await screen.findByRole('link', { name: /研究 submitted/ })).toBeVisible()
   expect(reads).toBe(2)
 })

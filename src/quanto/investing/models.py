@@ -80,6 +80,7 @@ class InvestingModels(InvestingService):
                 json_extract(a.manifest_json, '$.best_timesteps') AS best_timesteps,
                 json_extract(a.manifest_json, '$.runtime.device') AS runtime_device,
                 json_extract(a.manifest_json, '$.selection_valid') AS selection_valid,
+                json_extract(a.manifest_json, '$.training_sampling') AS training_sampling,
                 json_extract(a.manifest_json, '$.metrics.validation') AS validation_best,
                 json_extract(a.manifest_json, '$.history[#-1]') AS validation_latest
                 FROM investing_sessions s JOIN jobs j ON j.id=s.job_id
@@ -88,6 +89,8 @@ class InvestingModels(InvestingService):
         items, by_id, by_content, number = [], {}, {}, 0
         for attempt, row in enumerate(rows, 1):
             item = dict(row)
+            sampling = json.loads(item['training_sampling']) if item['training_sampling'] else None
+            item['training_sampling'] = sampling if isinstance(sampling, dict) else None
             published = item.pop('artifact_kind') == 'policy' and item['state'] == 'succeeded'
             if published:
                 number += 1
@@ -110,6 +113,16 @@ class InvestingModels(InvestingService):
             item['best_source_version_id'] = source['id'] if source else None
         return items[::-1]
 
+    def _session_sampling(self, item):
+        if item is None or item['round_number'] is not None:
+            return
+        path = self.workbench._job_root(item['id']) / 'control' / 'training-sampling.json'
+        try:
+            sampling = json.loads(path.read_text(encoding='utf-8'))
+        except FileNotFoundError:
+            return
+        item['training_sampling'] = sampling if isinstance(sampling, dict) else None
+
     def get_model(self, identity, include_history=True):
         row = self._model(identity)
         if not include_history:
@@ -118,6 +131,7 @@ class InvestingModels(InvestingService):
             items = self._history_index(identity)
             versions = [item for item in items if item['round_number'] is not None]
             active = next((item for item in items if item['state'] in ACTIVE_STATES), None)
+            self._session_sampling(active)
             latest = versions[0] if versions else None
             spec = json.loads(row['spec_json'])
             return dict(id=identity, name=spec['name'], dataset_id=row['dataset_id'], spec=spec,
@@ -161,7 +175,10 @@ class InvestingModels(InvestingService):
         total = len(items)
         total_pages = max(1, (total + page_size - 1) // page_size)
         page = min(page, total_pages)
-        return dict(items=items[(page - 1) * page_size:page * page_size], total=total,
+        visible = items[(page - 1) * page_size:page * page_size]
+        for item in visible:
+            self._session_sampling(item)
+        return dict(items=visible, total=total,
                     page=page, page_size=page_size, total_pages=total_pages, anchor=anchor)
 
     def create_model(self, body):

@@ -231,6 +231,31 @@ def test_training_episodes_are_seeded_bounded_and_reset_account():
     assert left.runner.ledger.snapshot(left.context.asof).shares == {}
 
 
+def test_training_sampling_records_used_fragments_and_stops_at_reached_dates():
+    env = env_for(daily_case(days=45, symbols=("A",)), training=True, episode_sessions=20)
+    env._episode_starts = np.array([0])
+    _, info = env.reset()
+    assert info["episode_end"] == "2024-01-26"
+    assert env.training_sampling is None
+    assert env.training_sampling_intervals == []
+    env.step(np.array([0, 0]))
+    assert env.training_sampling == dict(start="2024-01-01", end="2024-01-12", episode_count=1)
+    assert env.training_sampling_intervals == [dict(start="2024-01-01", end="2024-01-12")]
+    while not env._done:
+        env.step(np.array([0, 0]))
+    env._episode_starts = np.array([20])
+    _, info = env.reset()
+    assert info["episode_start"] == "2024-01-29"
+    assert env.training_sampling == dict(start="2024-01-01", end="2024-01-26", episode_count=1)
+    env.step(np.array([0, 0]))
+    assert env.training_sampling == dict(start="2024-01-01", end="2024-02-09", episode_count=2)
+    assert env.training_sampling_intervals == [
+        dict(start="2024-01-01", end="2024-01-26"),
+        dict(start="2024-01-29", end="2024-02-09"),
+    ]
+    env.close()
+
+
 def test_environment_cancellation_and_collect_false_keep_accounting():
     bundle = daily_case(days=12, symbols=("A",))
     cancelled = [False]

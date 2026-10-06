@@ -6,7 +6,7 @@ import { ModelDetailPage } from '../src/pages/ModelDetailPage'
 
 const spec = { name: 'ETF model', frequency: 'weekly', backtest: { symbols: ['ETF1'] }, validation_start: '2024-01-01', validation_end: '2024-12-31', train_start: '2022-01-01', train_end: '2023-12-31', test_start: '2025-01-01', test_end: '2025-12-31', total_timesteps: 4096, device: 'cpu', selection_metric: 'validation_sharpe' }
 const summary = { id: 'm1', name: 'ETF model', dataset_id: 'd1', spec, state: 'ready', active_job_id: null, active_session: null, total_timesteps: 4096, session_count: 305, version_count: 305, latest_version_id: 'job-305', created_at: '2024-01-01T00:00:00Z' }
-const item = (round: number) => ({ id: `job-${round}`, session_number: round, round_number: round, base_version_id: null, base_round_number: null, state: 'succeeded', created_at: '2025-01-01T00:00:00Z', started_at: null, finished_at: null, heartbeat: null, completed_through: null, error: null, timesteps_completed: round * 512, session_timesteps: 512, best_timesteps: 512, best_round_number: round, best_source_version_id: `job-${round}`, runtime_device: 'cpu', selection_valid: true, validation_latest: { sharpe: 1 }, validation_best: { sharpe: round / 100 } })
+const item = (round: number, sampling: { start: string; end: string; episode_count: number } | null = null) => ({ id: `job-${round}`, session_number: round, round_number: round, base_version_id: null, base_round_number: null, state: 'succeeded', created_at: '2025-01-01T00:00:00Z', started_at: null, finished_at: null, heartbeat: null, completed_through: null, error: null, timesteps_completed: round * 512, session_timesteps: 512, best_timesteps: 512, best_round_number: round, best_source_version_id: `job-${round}`, runtime_device: 'cpu', selection_valid: true, validation_latest: { sharpe: 1 }, validation_best: { sharpe: round / 100 }, training_sampling: sampling })
 const calls: string[] = []
 function renderPage() {
   const router = createMemoryRouter([{ path: '/models/:id', element: <ModelDetailPage /> }], { initialEntries: ['/models/m1'] })
@@ -69,29 +69,29 @@ test('detail treats a missing reward version as the legacy net log return', asyn
 test('successful attempts show current-round performance and snapshot changes before technical details', async () => {
   const prior = globalThis.fetch
   const rows = [
-    { ...item(305), best_round_number: 244, validation_latest: { total_return: .1234, max_drawdown: .0876, sharpe: 1.2345 }, validation_best: { total_return: .9, max_drawdown: .01, sharpe: 9 } },
-    { ...item(244), validation_latest: { total_return: 0, max_drawdown: 0, sharpe: null } },
+    { ...item(305, { start: '2023-03-06', end: '2023-05-19', episode_count: 2 }), best_round_number: 244, validation_latest: { total_return: .1234, max_drawdown: .0876, sharpe: 1.2345 }, validation_best: { total_return: .9, max_drawdown: .01, sharpe: 9 } },
+    { ...item(244, { start: '2023-01-09', end: '2023-06-30', episode_count: 11 }), validation_latest: { total_return: 0, max_drawdown: 0, sharpe: null } },
     { ...item(3), selection_valid: false, validation_latest: {} },
-    { ...item(2), best_round_number: null },
+    { ...item(2, null), best_round_number: null },
     item(1),
   ]
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input), 'http://local')
     if (url.pathname.endsWith('/history') && url.searchParams.get('kind') === 'sessions') return Response.json({ items: rows, total: 5, page: 1, page_size: 10, total_pages: 1, anchor: 900 })
-    if (url.pathname === '/api/investing/policies/job-305') return Response.json({ id: 'job-305', manifest: {} })
+    if (url.pathname === '/api/investing/policies/job-305') return Response.json({ id: 'job-305', manifest: { training_sampling_intervals: [{ start: '2023-03-06', end: '2023-03-24' }, { start: '2023-05-01', end: '2023-05-19' }] } })
     return prior(input, init)
   }))
   renderPage()
   const latest = (await screen.findByText('第305轮')).closest('article')!
+  expect(screen.getByText(/采样日期显示本轮实际使用片段的最早与最晚日期，片段可能重叠或不连续/)).toBeVisible()
   const metrics = within(latest).getByRole('definition', { name: '总收益率' })
   expect(metrics).toHaveTextContent('12.34%')
   expect(within(latest).getByRole('definition', { name: '最大回撤（日末）' })).toHaveTextContent('8.76%')
   expect(within(latest).getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('1.2345')
   expect(within(latest).queryByText('90.00%')).toBeNull()
   expect(within(latest).getByText('未切换 · 沿用第244轮')).toBeVisible()
-  for (const record of within(screen.getByRole('region', { name: '训练历史' })).getAllByRole('article')) {
-    expect(within(record).getByText('训练行情区间：2022-01-01–2023-12-31')).toBeVisible()
-  }
+  expect(within(latest).getByText('实际采样覆盖：2023-03-06–2023-05-19 · 2 个片段')).toBeVisible()
+  expect(within(screen.getByText('第244轮').closest('article')!).getByText('实际采样覆盖：2023-01-09–2023-06-30 · 11 个片段')).toBeVisible()
   expect(within(latest).queryByText(/累计步数|实际设备/)).toBeNull()
   const updated = screen.getByText('第244轮').closest('article')!
   expect(within(updated).getByText('本轮更新最优快照')).toBeVisible()
@@ -103,6 +103,11 @@ test('successful attempts show current-round performance and snapshot changes be
   await userEvent.click(within(latest).getByRole('button', { name: '展开详情' }))
   expect(within(latest).getByText(/累计步数 156160 · 实际设备 CPU/)).toBeVisible()
   expect(within(latest).getByText('90.00%')).toBeVisible()
+  expect(within(latest).getByText('实际采样片段')).toBeVisible()
+  await userEvent.click(within(latest).getByText('实际采样片段'))
+  expect(within(latest).getByText('2023-03-06–2023-03-24')).toBeVisible()
+  expect(within(latest).getByText('2023-05-01–2023-05-19')).toBeVisible()
+  expect(within(screen.getByText('第2轮').closest('article')!).getByText('实际采样区间：未记录')).toBeVisible()
 })
 
 test('locates round 53 and lazily loads its artifact only after expansion', async () => {
@@ -187,7 +192,7 @@ test('failed page navigation keeps the visible page and page size for retry', as
 })
 
 test('failed attempts appear in training history without a saved round or validation metrics', async () => {
-  const failure = { ...item(3), id: 'failed-job', state: 'failed', round_number: null, error: 'CUDA unavailable' }
+  const failure = { ...item(3, { start: '2023-01-09', end: '2023-02-03', episode_count: 2 }), id: 'failed-job', state: 'failed', round_number: null, error: 'CUDA unavailable' }
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const raw = String(input)
     if (raw.endsWith('/api/session')) return Response.json({ token: 'token', api_base: '/api' })
@@ -200,13 +205,13 @@ test('failed attempts appear in training history without a saved round or valida
   renderPage()
   const history = await screen.findByRole('region', { name: '训练历史' })
   const failed = (await within(history).findByText('第3次训练尝试')).closest('article')!
-  expect(within(failed).getByText('训练行情区间：2022-01-01–2023-12-31')).toBeVisible()
+  expect(within(failed).getByText('实际采样覆盖：2023-01-09–2023-02-03 · 2 个片段')).toBeVisible()
   expect(within(failed).getByText(/失败或中断原因：CUDA unavailable/)).toBeVisible()
   expect(within(failed).queryByText(/第\d+轮|总收益率|使用此版本回测/)).toBeNull()
 })
 
 test('log selection survives history navigation and model changes clear expanded state', async () => {
-  const attempt = { ...item(306), id: 'attempt-306', round_number: null, state: 'running' }
+  const attempt = { ...item(306, { start: '2023-03-01', end: '2023-04-28', episode_count: 4 }), id: 'attempt-306', round_number: null, state: 'running' }
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const raw = String(input); calls.push(raw)
     if (raw.endsWith('/api/session')) return Response.json({ token: 'token', api_base: '/api' })
@@ -225,7 +230,7 @@ test('log selection survives history navigation and model changes clear expanded
   }))
   const view = renderPage()
   await screen.findByText('第305轮')
-  expect(within(screen.getByText('第306次训练尝试').closest('article')!).getByText('训练行情区间：2022-01-01–2023-12-31')).toBeVisible()
+  expect(within(screen.getByText('第306次训练尝试').closest('article')!).getByText('实际采样覆盖：2023-03-01–2023-04-28 · 4 个片段')).toBeVisible()
   await userEvent.click(within(screen.getByText('第306次训练尝试').closest('article')!).getByRole('button', { name: '查看日志' }))
   expect(await screen.findByRole('heading', { name: '第306次尝试 · 训练日志' })).toBeVisible()
   const history = screen.getByRole('region', { name: '训练历史' })

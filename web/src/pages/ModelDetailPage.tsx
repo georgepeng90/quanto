@@ -20,6 +20,22 @@ function snapshotStatus(item: TrainingHistoryItem) {
   return `未切换 · 沿用第${item.best_round_number}轮`
 }
 
+function trainingSamplingIntervals(manifest: Record<string, unknown>) {
+  const value = manifest.training_sampling_intervals
+  if (!Array.isArray(value)) return []
+  return value.filter((interval): interval is { start: string; end: string } =>
+    typeof interval === 'object' && interval !== null &&
+    typeof (interval as Record<string, unknown>).start === 'string' &&
+    typeof (interval as Record<string, unknown>).end === 'string')
+}
+
+function TrainingSamplingLabel({ item }: { item: TrainingHistoryItem }) {
+  const sampling = item.training_sampling
+  return sampling
+    ? <p className="muted">实际采样覆盖：{sampling.start}–{sampling.end} · {sampling.episode_count} 个片段</p>
+    : <p className="muted">实际采样区间：未记录</p>
+}
+
 function Pagination({ label, value, onPage, onSize, onJump, compact = false }: { label: string; value: PanelState; onPage: (page: number) => void; onSize?: (size: number) => void; onJump?: (page: number) => void; compact?: boolean }) {
   const [pageInput, setPageInput] = useState('')
   const [pageError, setPageError] = useState('')
@@ -201,7 +217,7 @@ function ModelDetailContent({ id }: { id: string }) {
         </div><p className="muted">设备选择仅用于下次提交；每次追加有步数上限，成功后可继续追加。续训从上次成功版本的最终参数和优化器状态恢复。</p><button>{model.version_count ? '继续训练' : '开始训练'}</button></fieldset></form>
         {activeId && <div className="callout"><p>当前会话 {activeId} · {model.active_session ? stateLabels[model.active_session.state] || model.active_session.state : '已提交，状态待刷新'}</p><p>取消会丢弃本次未发布进度，已有版本继续可用。</p><button disabled={busy || model.active_session?.state === 'cancel_requested'} onClick={() => void cancelTraining()}>取消当前训练</button></div>}
       </section>
-      <section className="panel" aria-label="训练历史"><div className="section-heading"><div><h2>训练历史 · {history.data?.total ?? model.session_count} 次尝试</h2><p className="muted">成功训练显示本轮最终参数的验证成绩 · {model.spec.validation_start}–{model.spec.validation_end}。最优快照按{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}选定，回测使用该快照；续训使用本轮最终参数。</p></div></div>
+      <section className="panel" aria-label="训练历史"><div className="section-heading"><div><h2>训练历史 · {history.data?.total ?? model.session_count} 次尝试</h2><p className="muted">成功训练显示本轮最终参数的验证成绩 · {model.spec.validation_start}–{model.spec.validation_end}。最优快照按{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}选定，回测使用该快照；续训使用本轮最终参数。采样日期显示本轮实际使用片段的最早与最晚日期，片段可能重叠或不连续。</p></div></div>
         {newCount > 0 && <p role="status" className="new-history-notice">有{newCount}条新记录，<button onClick={showLatest}>查看最新</button></p>}
         <form className="history-search" onSubmit={event => { event.preventDefault(); lookupRound(roundInput) }}><label>查找训练轮次<input inputMode="numeric" placeholder="例如 53" value={roundInput} onChange={event => setRoundInput(event.target.value)} /></label><button disabled={history.loading}>查找轮次</button></form>
         {renderPagination()}
@@ -210,10 +226,11 @@ function ModelDetailContent({ id }: { id: string }) {
         <div className="record-list">{history.data?.items.map(savedItem => {
           const item = model.active_session?.id === savedItem.id ? model.active_session : savedItem
           const artifact = artifacts[item.id], manifest = artifact?.manifest || {}
+          const samplingIntervals = trainingSamplingIntervals(manifest)
           return <article className="record history-record" id={`history-${item.id}`} tabIndex={-1} key={item.id}>
             {item.round_number !== null ? <>
               <div className="record-head"><strong>第{item.round_number}轮</strong><span className={`badge snapshot-status${item.selection_valid === true && item.best_round_number === item.round_number ? ' updated' : ''}`}>{snapshotStatus(item)}</span><Link to={`/runs?model=${encodeURIComponent(id)}&version=${encodeURIComponent(item.id)}`}>使用此版本回测</Link><button aria-expanded={expanded === item.id} onClick={() => setExpanded(expanded === item.id ? '' : item.id)}>{expanded === item.id ? '收起详情' : '展开详情'}</button><button onClick={() => { focusTarget.current = 'training-log'; setSelectedLog(item) }}>查看日志</button></div>
-              <p className="muted">训练行情区间：{model.spec.train_start}–{model.spec.train_end}</p>
+              <TrainingSamplingLabel item={item} />
               <dl className="history-key-metrics" aria-label="本轮验证成绩">{primaryMetrics.map(([key, label]) => <div key={key}><dt id={`metric-${item.id}-${key}`}>{label}</dt><dd aria-labelledby={`metric-${item.id}-${key}`}>{metricText(key, item.validation_latest?.[key])}</dd></div>)}</dl>
               {item.selection_valid === false && <p className="callout warn">无有效验证评分：本版本保留了可用策略快照。</p>}
               {expanded === item.id && <div className="history-detail">
@@ -225,11 +242,14 @@ function ModelDetailContent({ id }: { id: string }) {
               <p className="muted">完整版本ID {item.id}</p>
               {artifactLoading === item.id && <p role="status">加载版本完整信息…</p>}
               {artifactErrors[item.id] && <p role="alert" className="error">{artifactErrors[item.id]} <button onClick={() => setArtifactRetry(value => value + 1)}>重试详情</button></p>}
-              {artifact && <JsonDetails title="验证评估记录与版本完整信息" value={manifest} />}
+              {artifact && <>
+                {samplingIntervals.length > 0 && <details><summary>实际采样片段</summary><ol>{samplingIntervals.map((interval, index) => <li key={`${interval.start}-${interval.end}-${index}`}>{interval.start}–{interval.end}</li>)}</ol></details>}
+                <JsonDetails title="验证评估记录与版本完整信息" value={manifest} />
+              </>}
               </div>}
             </> : <>
               <div className="record-head"><strong>第{item.session_number}次训练尝试</strong><span className="badge">{stateLabels[item.state] || item.state}</span><span>{taskTime(item.created_at)}</span><button onClick={() => { focusTarget.current = 'training-log'; setSelectedLog(item) }}>查看日志</button></div>
-              <p className="muted">训练行情区间：{model.spec.train_start}–{model.spec.train_end}</p>
+              <TrainingSamplingLabel item={item} />
               <p className="muted">基础版本 {item.base_round_number ? `第${item.base_round_number}轮` : item.base_version_id || '首次初始化'} · 未保存新版本</p>
               <details><summary>{item.error ? `失败或中断原因：${item.error.slice(0, 120)}` : '会话详情'}</summary><p>进度 {item.completed_through || '—'} · 心跳 {taskTime(item.heartbeat)}</p><p className="muted">任务 ID {item.id}</p>{item.error && <p className="error">{item.error}</p>}</details>
             </>}

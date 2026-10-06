@@ -38,6 +38,8 @@ def execute_learning_job(descriptor: dict, control_dir: Path, emit, cancelled) -
         if isinstance(event, RunEvent):
             emit(event)
             return
+        if isinstance(event.get('training_sampling'), dict):
+            atomic_json(control_dir / 'training-sampling.json', event['training_sampling'])
         emit(RunEvent(sequence, descriptor['kind'], str(event.get('asof', '')),
                       int(event.get('epoch', event.get('completed', 0))), int(event.get('total', 0)),
                       str(event.get('level', 'info')), str(event.get('kind', 'LEARNING_PROGRESS')),

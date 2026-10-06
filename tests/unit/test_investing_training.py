@@ -78,9 +78,11 @@ def test_cancelled_policy_training_never_publishes_manifest(tmp_path):
     from quanto.learning.contracts import LearningCancelled
     spec, _ = investing_case(tmp_path / "data")
     cancelled = False
+    events = []
 
     def emit(event):
         nonlocal cancelled
+        events.append(event)
         if event.get("validation_net_log_return") is not None:
             cancelled = True
 
@@ -88,6 +90,59 @@ def test_cancelled_policy_training_never_publishes_manifest(tmp_path):
         train_policy(spec, tmp_path / "data", tmp_path / "policy", emit, lambda: cancelled, "a" * 64)
     assert not (tmp_path / "policy" / "manifest.json").exists()
     assert (tmp_path / "policy" / "policy.zip").exists()
+    assert events[-1]["training_sampling"]["episode_count"] > 0
+    assert spec["train_start"] <= events[-1]["training_sampling"]["start"] <= events[-1]["training_sampling"]["end"] <= spec["train_end"]
+
+
+@pytest.mark.parametrize("episode_sessions, n_steps", [(2, 8), (20, 2)])
+def test_training_saves_actual_sampling_for_each_session_without_unused_resets(tmp_path, monkeypatch, episode_sessions, n_steps):
+    from quanto.investing.environment import DailyETFEnv
+    from quanto.investing.training import train_policy
+    from quanto.learning.artifacts import read_manifest
+
+    spec, _ = investing_case(tmp_path / "data")
+    spec.update(episode_sessions=episode_sessions, total_timesteps=2, n_steps=n_steps, batch_size=n_steps)
+    resets = []
+    original_reset, original_step = DailyETFEnv.reset, DailyETFEnv.step
+
+    def trace_reset(env, *args, **kwargs):
+        result = original_reset(env, *args, **kwargs)
+        if env.training:
+            resets.append(dict(start=result[1]["episode_start"], sampled_end=result[1]["episode_end"], end=None))
+        return result
+
+    def trace_step(env, action):
+        result = original_step(env, action)
+        if env.training:
+            resets[-1]["end"] = result[4]["asof"]
+        return result
+
+    monkeypatch.setattr(DailyETFEnv, "reset", trace_reset)
+    monkeypatch.setattr(DailyETFEnv, "step", trace_step)
+    events = []
+    first = train_policy(spec, tmp_path / "data", tmp_path / "first", events.append,
+                         lambda: False, "a" * 64, model_id="model", evaluate_test=False)
+
+    def check_sampling(manifest):
+        used = [dict(start=row["start"], end=row["end"]) for row in resets if row["end"] is not None]
+        assert manifest["training_sampling_intervals"] == used
+        assert manifest["training_sampling"] == dict(start=min(row["start"] for row in used),
+            end=max(row["end"] for row in used), episode_count=len(used))
+        assert events[-1]["training_sampling"] == manifest["training_sampling"]
+        if episode_sessions == 2:
+            assert len(used) == 8 and len(resets) == 9
+        else:
+            assert len(used) == 1 and used[-1]["end"] < resets[-1]["sampled_end"]
+
+    check_sampling(first)
+    first_intervals = first["training_sampling_intervals"]
+    resets.clear()
+    events.clear()
+    second = train_policy(spec, tmp_path / "data", tmp_path / "second", events.append,
+                          lambda: False, "a" * 64, resume_dir=tmp_path / "first", model_id="model", evaluate_test=False)
+    check_sampling(second)
+    assert second["training_sampling_intervals"] != first_intervals
+    assert read_manifest(tmp_path / "second", "policy")["training_sampling"] == second["training_sampling"]
 
 
 def test_frozen_baselines_use_experiment_execution_and_cost_multiplier(tmp_path):

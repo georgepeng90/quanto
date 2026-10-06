@@ -121,6 +121,10 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
             check_cancelled(cancelled)
             return True
 
+        def _on_rollout_end(self):
+            emit(dict(kind="sampling", message="已记录本轮实际训练行情采样",
+                      training_sampling=dict(env.training_sampling)))
+
         def _on_rollout_start(self):
             # SB3 rollout_end precedes gradient updates. The next rollout_start follows them.
             if self.model._n_updates > last_evaluated_updates and self.model.num_timesteps >= next_evaluation:
@@ -165,6 +169,9 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
         raise ValueError("CUDA memory exhausted; reduce PPO batch_size or hidden_size, or choose CPU") from exc
     finally:
         env.close()
+        if env.training_sampling is not None:
+            emit(dict(kind="sampling", message="已记录本轮实际训练行情采样",
+                      training_sampling=dict(env.training_sampling)))
     test_metrics = None
     test_evaluated = evaluate_test and config.test_start is not None
     if test_evaluated:
@@ -187,12 +194,14 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
                     metrics=dict(validation=best_metrics, test=test_metrics), best_timesteps=best_timesteps,
                     timesteps_started=started, timesteps_completed=completed, session_timesteps=completed - started,
                     history=history, runtime=runtime, sampling_provenance=sampling_provenance,
+                    training_sampling=env.training_sampling, training_sampling_intervals=env.training_sampling_intervals,
                     training_diagnostics=training_diagnostics,
                     limitations=bundle.manifest.limitations,
                     research_limits=(["test evaluated once after checkpoint selection within this run"] if test_evaluated else []) + [
                                      "no protection against repeated research on the test period",
                                      "continuation resets account and reseeds only the window sampler from base seed plus parent timesteps; not exact uninterrupted replay"])
     check_cancelled(cancelled)
-    emit(dict(kind="progress", message="policy training evaluated", progress=1., metrics=manifest["metrics"]))
+    emit(dict(kind="progress", message="policy training evaluated", progress=1., metrics=manifest["metrics"],
+              training_sampling=env.training_sampling))
     check_cancelled(cancelled)
     return write_manifest(output_dir, manifest)

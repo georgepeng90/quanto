@@ -84,6 +84,8 @@ class DailyETFEnv(gym.Env):
         self._has_reward_state = reward_version in STATE_REWARD_VERSIONS
         self.reward_diagnostics = dict(reward_daily_count=0, reward_variance_floor_count=0,
                                        reward_dsr_max_abs=0., reward_sum=0.)
+        self.training_sampling = None
+        self.training_sampling_intervals = []
         self.episode_sessions, self.training = episode_sessions, training
         self.cancelled, self.collect = cancelled, collect
         self.calendar = pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
@@ -185,6 +187,7 @@ class DailyETFEnv(gym.Env):
         self.decision_dates = decision_dates(self.calendar, episode.start, episode.end, self.frequency)
         self._decision_set = set(self.decision_dates)
         self._done = False
+        self._sampling_interval = None
         self._reward_equity = self.backtest_spec.initial_cash
         self._reward_session_index = -1
         self._daily_equity = np.float64(self.backtest_spec.initial_cash)
@@ -276,7 +279,19 @@ class DailyETFEnv(gym.Env):
         self.reward_diagnostics["reward_sum"] += reward
         if not math.isfinite(self.reward_diagnostics["reward_sum"]):
             raise ValueError("Cumulative reward must remain finite")
-        return self._observation(), reward, self._done, False, self._info(elapsed, interval=interval)
+        observation, info = self._observation(), self._info(elapsed, interval=interval)
+        if self.training:
+            # A final VecEnv reset may never be stepped; partial episodes stop at the reached date.
+            if self.training_sampling is None:
+                self.training_sampling = dict(start=info["episode_start"], end=info["asof"], episode_count=0)
+            if self._sampling_interval is None:
+                self._sampling_interval = dict(start=info["episode_start"], end=info["asof"])
+                self.training_sampling_intervals.append(self._sampling_interval)
+                self.training_sampling["episode_count"] += 1
+                self.training_sampling["start"] = min(self.training_sampling["start"], info["episode_start"])
+            self._sampling_interval["end"] = info["asof"]
+            self.training_sampling["end"] = max(self.training_sampling["end"], info["asof"])
+        return observation, reward, self._done, False, info
 
     def result(self) -> BacktestResult:
         if self.runner is None:

@@ -158,6 +158,14 @@ def test_model_continues_and_backtests_explicit_immutable_version(model_workspac
         assert detail['sessions'][0]['base_version_id'] == first
         assert detail['versions'][0]['manifest']['timesteps_started'] == 8
         assert detail['versions'][0]['manifest']['metrics']['test'] is None
+        history = client.get(f'/api/investing/models/{model["id"]}/history', headers=headers).json()['items']
+        for version in detail['versions']:
+            sampling = version['manifest']['training_sampling']
+            intervals = version['manifest']['training_sampling_intervals']
+            assert sampling['episode_count'] == len(intervals) > 0
+            record = next(item for item in history if item['id'] == version['id'])
+            assert record['training_sampling'] == sampling
+            assert 'training_sampling_intervals' not in record
         assert before == {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in first_root.iterdir() if path.is_file()}
         interrupted = client.post(f'/api/investing/models/{model["id"]}/train', headers=headers,
                                   json={'additional_timesteps': 100000, 'device': 'cpu'})

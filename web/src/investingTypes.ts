@@ -10,7 +10,7 @@ export type InvestingChart = LearningChart
 export type InvestingTablePage = LearningTablePage
 
 export type InvestingModel = { id: string; name: string; dataset_id: string; spec: PolicyTrainingSpec; created_at: string; state: string; active_job_id: string | null; session_count: number; version_count: number; total_timesteps: number; latest_version_id: string | null }
-export type InvestingModelDetail = InvestingModel & { sessions: (JobRecord & { base_version_id: string | null })[]; versions: InvestingArtifact[] }
+export type InvestingModelDetail = InvestingModel & { sessions: (JobRecord & { base_version_id: string | null })[]; versions: (InvestingArtifact & { round_number: number; best_round_number: number | null })[] }
 export type TrainingHistoryItem = {
   id: string; session_number: number; round_number: number | null; base_version_id: string | null; base_round_number: number | null
   state: string; created_at: string | null; started_at: string | null; finished_at: string | null; heartbeat: string | null

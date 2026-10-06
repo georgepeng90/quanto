@@ -96,6 +96,19 @@ def test_lightweight_summary_includes_active_state_without_manifests(history_wor
     assert 'versions' not in summary and 'sessions' not in summary
 
 
+def test_model_backtest_versions_include_saved_and_snapshot_rounds(history_workspace):
+    store, client, headers = history_workspace
+    add_sessions(store, ['succeeded'] * 245)
+    add_sessions(store, ['failed', 'succeeded'], start=246, base='job-245')
+    response = client.get('/api/investing/models/m1', headers=headers)
+    assert response.status_code == 200, response.text
+    detail = response.json()
+    assert detail['latest_version_id'] == 'job-247'
+    assert detail['versions'][0]['round_number'] == 246
+    assert detail['versions'][0]['best_round_number'] == 244
+    assert detail['versions'][-1]['round_number'] == 1
+
+
 @pytest.mark.parametrize('params', [
     {'kind': 'unknown'}, {'page': 0}, {'page_size': 0}, {'page_size': 51},
     {'anchor': -1}, {'round_number': 0}, {'round_number': 5},

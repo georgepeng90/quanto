@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { App } from '../src/App'
 
 const spec = { name: '研究模型', frequency: 'weekly', backtest: { symbols: ['ETF2', 'ETF1'] }, validation_end: '2023-12-31', test_start: '2024-01-01', test_end: '2024-12-31', total_timesteps: 4096, device: 'cpu', selection_metric: 'validation_sharpe' }
-const model = { id: 'm1', name: '研究模型', dataset_id: 'd1', spec, state: 'ready', active_job_id: null, total_timesteps: 4096, session_count: 1, version_count: 1, latest_version_id: 'v1', created_at: '2024-01-01T00:00:00Z', sessions: [], versions: [{ id: 'v1', created_at: '2024-01-01T00:00:00Z', manifest: { metrics: { validation: { total_return: .1, sharpe: null, max_drawdown: -.1 } }, timesteps_completed: 4096 } }] }
+const model = { id: 'm1', name: '研究模型', dataset_id: 'd1', spec, state: 'ready', active_job_id: null, total_timesteps: 4096, session_count: 1, version_count: 1, latest_version_id: 'v1', created_at: '2024-01-01T00:00:00Z', sessions: [], versions: [{ id: 'v1', round_number: 1, best_round_number: 1, created_at: '2024-01-01T00:00:00Z', manifest: { metrics: { validation: { total_return: .1, sharpe: null, max_drawdown: -.1 } }, timesteps_completed: 4096 } }] }
 const datasets = [{ id: 'd1', manifest: { data_start: '2020-01-01', data_end: '2025-12-31', price_mode: 'adjusted_research', limitations: [] } }]
 const posts: { path: string; body: any }[] = []
 const savedVersion = { id: 'v1', round_number: 1, session_number: 1, state: 'succeeded', created_at: '2024-01-01T00:00:00Z', timesteps_completed: 4096, runtime_device: 'cpu', selection_valid: true, validation_best: { total_return: .1, sharpe: null, max_drawdown: -.1 }, validation_latest: {} }
@@ -115,14 +115,9 @@ test('detail keeps configuration read only and adds only session budget and devi
   expect(within(screen.getByRole('region', { name: '训练历史' })).getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('—')
 })
 
-test('backtest requires explicit version instead of choosing the latest', async () => {
+test('backtest defaults to the current snapshot and submits its saved version', async () => {
   app('/runs?model=m1')
-  await screen.findByRole('option', { name: /研究模型/ })
-  expect(screen.getByLabelText('保存版本')).toHaveValue('')
-  await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
-  expect(await screen.findByRole('alert')).toHaveTextContent('版本')
-  expect(posts).toHaveLength(0)
-  await userEvent.selectOptions(screen.getByLabelText('保存版本'), 'v1')
+  await waitFor(() => expect(screen.getByLabelText('保存版本')).toHaveValue('v1'))
   await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(posts[0]).toEqual({ path: '/api/investing/models/m1/backtests', body: { dataset_id: 'd1', version_id: 'v1', spec: { start: '2024-01-01', end: '2024-12-31', baseline: 'policy', cost_multiplier: 1 } } })
@@ -144,6 +139,46 @@ test('backtest dates start blank when the selected model has no holdout test per
   await screen.findByRole('option', { name: /无留出期模型/ })
   await waitFor(() => expect(screen.getByLabelText('回测开始')).toHaveValue(''))
   expect(screen.getByLabelText('回测结束')).toHaveValue('')
+})
+
+test('backtest labels saved rounds and retained snapshots while preserving historical selection', async () => {
+  const prior = globalThis.fetch
+  const versions = [
+    { ...model.versions[0], id: 'v2', round_number: 2, best_round_number: 1 },
+    { ...model.versions[0], round_number: 1, best_round_number: 1 },
+  ]
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1'
+    ? Response.json({ ...model, latest_version_id: 'v2', versions }) : prior(input, init)))
+  app('/runs?model=m1&version=v1')
+  expect(await screen.findByRole('option', { name: '第2轮保存 · 选定快照：第1轮 · 累计 4096 步 · 当前快照（默认）' })).toBeVisible()
+  expect(screen.getByLabelText('保存版本')).toHaveValue('v1')
+  await userEvent.selectOptions(screen.getByLabelText('保存版本'), 'v2')
+  await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
+  await waitFor(() => expect(posts).toHaveLength(1))
+  expect(posts[0].body.version_id).toBe('v2')
+})
+
+test('switching models defaults to its own snapshot and untrained models require a saved version', async () => {
+  const prior = globalThis.fetch
+  const otherModel = { ...model, id: 'm2', name: '第二模型', latest_version_id: 'v2', versions: [{ ...model.versions[0], id: 'v2' }] }
+  const untrainedModel = { ...model, id: 'm3', name: '未训练模型', latest_version_id: null, versions: [] }
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/investing/models') return Response.json({ items: [model, otherModel, untrainedModel], next_cursor: null })
+    if (path === '/api/investing/models/m2') return Response.json(otherModel)
+    if (path === '/api/investing/models/m3') return Response.json(untrainedModel)
+    return prior(input, init)
+  }))
+  app('/runs?model=m1&version=v1')
+  await screen.findByRole('option', { name: /第二模型/ })
+  await userEvent.selectOptions(screen.getByLabelText('强化学习模型'), 'm2')
+  await waitFor(() => expect(screen.getByLabelText('保存版本')).toHaveValue('v2'))
+  await userEvent.selectOptions(screen.getByLabelText('强化学习模型'), 'm3')
+  await screen.findByText('此模型尚无成功保存版本，请先完成训练。')
+  expect(screen.getByLabelText('保存版本')).toHaveValue('')
+  await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('请选择属于此模型的保存版本')
+  expect(posts).toHaveLength(0)
 })
 
 test('new session starts with model defaults and unscored versions disclose unavailable validation score', async () => {
@@ -172,7 +207,7 @@ test('active sessions block overlapping training and explain cancellation progre
 
 test('a deep link pins its specified version and changing models clears it', async () => {
   app('/runs?model=m1&version=v1')
-  await screen.findByRole('option', { name: /v1/ })
+  await screen.findByText(/固定篮子/)
   expect(screen.getByLabelText('保存版本')).toHaveValue('v1')
   await userEvent.selectOptions(screen.getByLabelText('强化学习模型'), '')
   expect(screen.getByLabelText('保存版本')).toHaveValue('')

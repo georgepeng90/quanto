@@ -132,6 +132,10 @@ class InvestingModels(InvestingService):
                                'base_version_id': item['base_version_id']} for item in sessions]
         result['versions'] = [self.detail('policies', item['job_id']) for item in sessions
                               if item['state'] == 'succeeded' and item['manifest_json']]
+        history = {item['id']: item for item in self._history_index(identity)}
+        for version in result['versions']:
+            item = history[version['id']]
+            version.update(round_number=item['round_number'], best_round_number=item['best_round_number'])
         return result
 
     def history(self, identity, kind='versions', page=1, page_size=10, anchor=None,

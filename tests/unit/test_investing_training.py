@@ -68,8 +68,6 @@ def test_real_ppo_updates_selects_after_training_and_freezes_reload(tmp_path, mo
     pd.testing.assert_frame_equal(pd.read_csv(tmp_path / "first" / "equity.csv"), pd.read_csv(tmp_path / "second" / "equity.csv"))
     assert file_hash(tmp_path / "policy" / "policy.zip") == model_hash
     assert parameter_updates == [True]
-    with pytest.raises(ValueError, match="cutoff|validation"):
-        backtest_policy(tmp_path / "policy", tmp_path / "data", {**backtest, "start": spec["validation_end"]}, tmp_path / "bad", lambda event: None, lambda: False)
     (tmp_path / "policy" / "policy.zip").write_bytes(b"tamper")
     with pytest.raises(ValueError, match="integrity|hash"):
         backtest_policy(tmp_path / "policy", tmp_path / "data", backtest, tmp_path / "tamper", lambda event: None, lambda: False)

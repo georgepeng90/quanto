@@ -113,8 +113,6 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
             raise ValueError("validation dataset content hash must match training dataset identity")
         spec = dict(start=config.validation_start, end=config.validation_end)
     request = PolicyBacktestSpec.model_validate(spec)
-    if not validation and request.start <= config.validation_end:
-        raise ValueError("policy backtest must start after the training/validation cutoff")
     expected = check_policy_identity(manifest, config)
     bundle = load_dataset(Path(dataset_dir))
     if "price_mode" in manifest and manifest["price_mode"] != bundle.price_mode:

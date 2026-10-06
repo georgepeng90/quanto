@@ -147,8 +147,11 @@ def test_supervised_policy_training_backtest_export_and_tamper(tmp_path):
         assert manifest['best_timesteps'] > 0
         assert {'validation', 'test'} <= manifest['metrics'].keys()
         request = {'start': spec['test_start'], 'end': spec['test_end'], 'baseline': 'policy'}
-        assert client.post('/api/investing/backtests', headers=headers, json={
-            'dataset_id': dataset.id, 'policy_id': policy, 'spec': {**request, 'start': spec['validation_end']}}).status_code == 422
+        historical_request = {**request, 'start': spec['validation_start'], 'end': spec['validation_end']}
+        historical = submit('backtests', {'dataset_id': dataset.id, 'policy_id': policy, 'spec': historical_request})
+        historical_details = client.get(f'/api/investing/backtests/{historical}', headers=headers).json()['manifest']
+        assert historical_details['period'] == {'start': spec['validation_start'], 'end': spec['validation_end']}
+        assert historical_details['counts']['equity'] == 20
         backtest = submit('backtests', {'dataset_id': dataset.id, 'policy_id': policy, 'spec': request})
         details = client.get(f'/api/investing/backtests/{backtest}', headers=headers).json()['manifest']
         assert details['counts']['equity'] == 30

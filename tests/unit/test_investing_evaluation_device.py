@@ -113,3 +113,17 @@ def test_baseline_from_cuda_manifest_needs_no_policy_device(tmp_path, monkeypatc
     summary = evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", request,
         tmp_path / "result", lambda _: None, lambda: False)
     assert summary["policy_device"] is None
+
+
+@pytest.mark.parametrize("start_field", ["train_start", "validation_start", "validation_end"])
+def test_saved_policy_replays_requested_historical_interval(tmp_path, monkeypatch, start_field):
+    request = case(tmp_path, monkeypatch, "cpu")
+    config = evaluation.read_manifest(tmp_path / "policy", "policy")["config"]
+    request.update(start=config[start_field], end=config["test_end"])
+    monkeypatch.setattr(PPO, "load", lambda *_args, **_kwargs: HoldModel("cpu"))
+    summary = evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", request,
+        tmp_path / "result", lambda _: None, lambda: False)
+    assert summary["period"] == {"start": request["start"], "end": request["end"]}
+    equity = pd.read_csv(tmp_path / "result" / "equity.csv")
+    assert pd.to_datetime(equity.date).min().date().isoformat() == request["start"]
+    assert pd.to_datetime(equity.date).max().date().isoformat() == request["end"]

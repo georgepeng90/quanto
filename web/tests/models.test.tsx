@@ -316,3 +316,13 @@ test('polling waits for a slow response instead of overlapping model requests', 
   expect(calls).toBe(3)
   view!.unmount()
 })
+
+test('backtest submits a historical slice before the validation cutoff', async () => {
+  app('/runs?model=m1')
+  await waitFor(() => expect(screen.getByLabelText('保存版本')).toHaveValue('v1'))
+  fireEvent.change(screen.getByLabelText('回测开始'), { target: { value: '2023-06-01' } })
+  fireEvent.change(screen.getByLabelText('回测结束'), { target: { value: '2023-09-30' } })
+  await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
+  await waitFor(() => expect(posts).toHaveLength(1))
+  expect(posts[0]).toEqual({ path: '/api/investing/models/m1/backtests', body: { dataset_id: 'd1', version_id: 'v1', spec: { start: '2023-06-01', end: '2023-09-30', baseline: 'policy', cost_multiplier: 1 } } })
+})

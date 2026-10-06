@@ -55,7 +55,6 @@ export function ModelBacktestForm({ initialModel, initialVersion, onSubmitted }:
       if (!detail || !versionId || !versions.some(version => version.id === versionId)) throw new Error('请选择属于此模型的保存版本。')
       if (!datasetId) throw new Error('请选择日线数据版本。')
       if (!/^\d{4}-\d{2}-\d{2}$/.test(spec.start) || !/^\d{4}-\d{2}-\d{2}$/.test(spec.end) || spec.start >= spec.end) throw new Error('请填写有效的回测起止日期，开始必须早于结束。')
-      if (spec.start <= detail.spec.validation_end) throw new Error('回测开始必须晚于模型验证截止日期。')
       if (!Number.isFinite(spec.cost_multiplier) || spec.cost_multiplier < 0 || spec.cost_multiplier > 100) throw new Error('成本倍数必须在 0–100 之间。')
       const job = await api.backtestInvestingModel(modelId, { version_id: versionId, dataset_id: datasetId, spec })
       setNotice(`回测任务 ${job.id} 已提交，使用保存版本 ${versionId}。`); onSubmitted()

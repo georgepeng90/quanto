@@ -61,8 +61,6 @@ class InvestingService(LearningService):
         policy = self.reference(body['policy_id'], 'policy')
         manifest = read_manifest(Path(policy['path']), 'policy')
         training = PolicyTrainingSpec.model_validate(manifest['config'])
-        if spec.start <= training.validation_end:
-            raise ValueError('backtest must start after validation_end; training and selection periods are excluded')
         daily = training.backtest.model_copy(update={'start': spec.start, 'end': spec.end})
         dataset = self._dataset(body['dataset_id'], daily)
         return self._submit('policy_backtest', {**body, 'spec': spec.model_dump(mode='json')},

@@ -178,14 +178,15 @@ def test_model_continues_and_backtests_explicit_immutable_version(model_workspac
         assert continued['latest_version_id'] == third and continued['total_timesteps'] == 24
         assert continued['sessions'][0]['base_version_id'] == second
         backtest = {'dataset_id': request['dataset_id'], 'version_id': first,
-                    'spec': {'start': request['spec']['test_start'], 'end': request['spec']['test_end'], 'baseline': 'policy'}}
+                    'spec': {'start': request['spec']['validation_start'], 'end': request['spec']['validation_end'], 'baseline': 'policy'}}
         assert client.post(f'/api/investing/models/{other["id"]}/backtests', headers=headers, json=backtest).status_code == 422
         assert client.post(f'/api/investing/models/{model["id"]}/backtests', headers=headers,
                            json={key: value for key, value in backtest.items() if key != 'version_id'}).status_code == 422
         run = wait_job(client.post(f'/api/investing/models/{model["id"]}/backtests', headers=headers, json=backtest))
         summary = client.get(f'/api/investing/backtests/{run}', headers=headers).json()['manifest']
         assert summary['policy_id'] == first and summary['model_id'] == model['id']
-        assert summary['counts']['equity'] == 30 and 'sharpe' in summary['metrics']
+        assert summary['period'] == {'start': request['spec']['validation_start'], 'end': request['spec']['validation_end']}
+        assert summary['counts']['equity'] == 20 and 'sharpe' in summary['metrics']
         catalog = client.get('/api/backtests/catalog', headers=headers).json()['items']
         assert len(catalog) == 1 and catalog[0]['job_id'] == run
         assert client.get(f'/api/investing/backtests/{run}/export', headers=headers).content[:2] == b'PK'

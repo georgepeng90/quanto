@@ -228,8 +228,6 @@ class InvestingModels(InvestingService):
         manifest = read_manifest(Path(policy['path']), 'policy')
         training = PolicyTrainingSpec.model_validate(manifest['config'])
         spec = PolicyBacktestSpec.model_validate(body['spec'])
-        if spec.start <= training.validation_end:
-            raise ValueError('backtest must start after validation_end')
         daily = training.backtest.model_copy(update={'start': spec.start, 'end': spec.end})
         dataset = self._dataset(dataset_id, daily)
         from quanto.backtest.dataset_loaders import load_dataset

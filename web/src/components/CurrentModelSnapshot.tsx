@@ -27,7 +27,7 @@ function Snapshot({ model }: { model: InvestingModelSummary }) {
   }, [model.id, model.latest_version_id, model.version_count, retry])
 
   return <section className="panel" aria-label="当前选定快照">
-    <div className="section-heading"><h2>当前选定快照</h2>{latest && <Link to={`/runs?model=${encodeURIComponent(model.id)}&version=${encodeURIComponent(latest.id)}`}>使用当前快照回测</Link>}</div>
+    <div className="section-heading"><h2>当前选定快照</h2>{latest?.selection_valid === true && latest.best_source_version_id && <Link to={`/runs?model=${encodeURIComponent(model.id)}&version=${encodeURIComponent(latest.best_source_version_id)}`}>使用当前快照回测</Link>}</div>
     {!model.latest_version_id && <p className="empty">尚未训练，暂无可用快照。</p>}
     {model.latest_version_id && !latest && !error && <p role="status">加载当前快照…</p>}
     {error && <p role="alert" className="error">{error} <button onClick={() => setRetry(value => value + 1)}>重试快照</button></p>}

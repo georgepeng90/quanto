@@ -13,7 +13,7 @@ let versionItems: Record<string, unknown>[] = []
 const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
 beforeEach(() => {
   posts.length = 0
-  versionItems = [savedVersion]
+  versionItems = [{ ...savedVersion, best_source_version_id: 'v1' }]
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api' })
@@ -123,6 +123,14 @@ test('backtest defaults to the current snapshot and submits its saved version', 
   expect(posts[0]).toEqual({ path: '/api/investing/models/m1/backtests', body: { dataset_id: 'd1', version_id: 'v1', spec: { start: '2024-01-01', end: '2024-12-31', baseline: 'policy', cost_multiplier: 1 } } })
 })
 
+test('backtest has no current default without a valid selected snapshot', async () => {
+  versionItems = [{ ...savedVersion, selection_valid: false, best_source_version_id: 'v1' }]
+  app('/runs?model=m1')
+  expect(await screen.findByRole('option', { name: '第1轮' })).toBeVisible()
+  expect(screen.getByLabelText('保存版本')).toHaveValue('')
+  expect(screen.queryByRole('option', { name: /当前/ })).toBeNull()
+})
+
 test('backtest dates start blank when the selected model has no holdout test period', async () => {
   const prior = globalThis.fetch
   const noTestModel = { ...model, id: 'm2', name: '无留出期模型', spec: { ...spec, validation_end: '2023-12-31', test_start: null, test_end: null } }
@@ -144,11 +152,12 @@ test('backtest dates start blank when the selected model has no holdout test per
 
 test('backtest uses real history rounds and short labels while preserving historical selection', async () => {
   const prior = globalThis.fetch
-  versionItems = [{ ...savedVersion, id: 'v2', round_number: 254, best_round_number: 116 }, { ...savedVersion, round_number: 253 }]
+  versionItems = [{ ...savedVersion, id: 'v2', round_number: 254, best_round_number: 116, best_source_version_id: 'v116' }, { ...savedVersion, round_number: 253 }, { ...savedVersion, id: 'v116', round_number: 116 }]
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/investing/models/m1?include_history=false'
     ? Response.json({ ...model, latest_version_id: 'v2' }) : prior(input, init)))
   app('/runs?model=m1&version=v1')
-  expect(await screen.findByRole('option', { name: '第254轮（当前）' })).toBeVisible()
+  expect(await screen.findByRole('option', { name: '第116轮（当前）' })).toBeVisible()
+  expect(screen.getByRole('option', { name: '第254轮' })).toBeVisible()
   expect(screen.getByRole('option', { name: '第253轮' })).toBeVisible()
   expect(screen.getByLabelText('保存版本')).toHaveValue('v1')
   await userEvent.selectOptions(screen.getByLabelText('保存版本'), 'v2')
@@ -165,14 +174,17 @@ test('backtest loads all history pages with a fixed anchor before selecting the 
     if (url.pathname === '/api/investing/models/m1/history') {
       historyCalls.push(url)
       const page = Number(url.searchParams.get('page'))
-      return Response.json({ items: [{ ...savedVersion, id: page === 1 ? 'v2' : 'v1', round_number: page === 1 ? 51 : 1 }], total_pages: 2, anchor: 102 })
+      return Response.json({ items: [{ ...savedVersion, id: page === 1 ? 'v2' : 'v1', round_number: page === 1 ? 51 : 1, best_source_version_id: 'v1' }], total_pages: 2, anchor: 102 })
     }
     return prior(input, init)
   }))
   app('/runs?model=m1')
-  expect(await screen.findByRole('option', { name: '第51轮（当前）' })).toBeVisible()
-  expect(screen.getByRole('option', { name: '第1轮' })).toBeVisible()
-  expect(screen.getByLabelText('保存版本')).toHaveValue('v2')
+  expect(await screen.findByRole('option', { name: '第51轮' })).toBeVisible()
+  expect(screen.getByRole('option', { name: '第1轮（当前）' })).toBeVisible()
+  expect(screen.getByLabelText('保存版本')).toHaveValue('v1')
+  await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
+  await waitFor(() => expect(posts).toHaveLength(1))
+  expect(posts[0].body.version_id).toBe('v1')
   expect(historyCalls.map(url => url.searchParams.get('page'))).toEqual(['1', '2'])
   expect(historyCalls[1].searchParams.get('anchor')).toBe('102')
 })
@@ -186,7 +198,7 @@ test('switching models defaults to its own snapshot and untrained models require
     if (path === '/api/investing/models') return Response.json({ items: [model, otherModel, untrainedModel], next_cursor: null })
     if (path === '/api/investing/models/m2?include_history=false') return Response.json(otherModel)
     if (path === '/api/investing/models/m3?include_history=false') return Response.json(untrainedModel)
-    if (path.startsWith('/api/investing/models/m2/history?')) return Response.json({ items: [{ ...savedVersion, id: 'v2' }], total_pages: 1, anchor: 10 })
+    if (path.startsWith('/api/investing/models/m2/history?')) return Response.json({ items: [{ ...savedVersion, id: 'v2', best_source_version_id: 'v2' }], total_pages: 1, anchor: 10 })
     if (path.startsWith('/api/investing/models/m3/history?')) return Response.json({ items: [], total_pages: 1, anchor: 0 })
     return prior(input, init)
   }))

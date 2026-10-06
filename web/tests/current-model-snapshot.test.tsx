@@ -6,7 +6,7 @@ import { CurrentModelSnapshot } from '../src/components/CurrentModelSnapshot'
 import type { InvestingModelSummary } from '../src/investingTypes'
 
 const model = { id: 'm1', version_count: 305, latest_version_id: 'v305', spec: { validation_start: '2025-01-01', validation_end: '2025-12-31', selection_metric: 'validation_sharpe' } } as InvestingModelSummary
-const latest = { id: 'v305', round_number: 305, best_round_number: 244, selection_valid: true, validation_best: { total_return: .3958, max_drawdown: .0635, sharpe: 2.1527 }, validation_latest: { total_return: .4532, max_drawdown: .0996, sharpe: 1.9175 } }
+const latest = { id: 'v305', round_number: 305, best_round_number: 244, best_source_version_id: 'v244', selection_valid: true, validation_best: { total_return: .3958, max_drawdown: .0635, sharpe: 2.1527 }, validation_latest: { total_return: .4532, max_drawdown: .0996, sharpe: 1.9175 } }
 const view = (value = model) => <MemoryRouter><CurrentModelSnapshot model={value} /></MemoryRouter>
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
@@ -26,7 +26,7 @@ test('current snapshot shows retained best performance and a pinned backtest, se
   expect(within(card).getByRole('definition', { name: '夏普比率（日末）' })).toHaveTextContent('2.1527')
   expect(within(card).queryByText('45.32%')).toBeNull()
   expect(within(card).getByText(/最新保存：第305轮/)).toBeVisible()
-  expect(within(card).getByRole('link', { name: '使用当前快照回测' })).toHaveAttribute('href', '/runs?model=m1&version=v305')
+  expect(within(card).getByRole('link', { name: '使用当前快照回测' })).toHaveAttribute('href', '/runs?model=m1&version=v244')
 })
 
 test('current snapshot clears a previous version on update and supports retry after a failed read', async () => {
@@ -37,7 +37,7 @@ test('current snapshot clears a previous version on update and supports retry af
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     if (String(input).includes('round_number=306')) {
       if (!failures++) return Response.json({ message: 'Snapshot temporarily unavailable' }, { status: 503 })
-      return Response.json({ items: [{ ...latest, id: 'v306', round_number: 306, best_round_number: 306, validation_best: { total_return: .5 } }] })
+      return Response.json({ items: [{ ...latest, id: 'v306', round_number: 306, best_round_number: 306, best_source_version_id: 'v306', validation_best: { total_return: .5 } }] })
     }
     return prior(input, init)
   }))
@@ -58,6 +58,7 @@ test('unscored snapshots disclose that their fallback is not a validated optimum
   expect(await screen.findByText(/尚无有效验证评分/)).toBeVisible()
   expect(screen.queryByText('第305轮快照')).toBeNull()
   expect(screen.getByRole('definition', { name: '总收益率' })).toHaveTextContent('—')
+  expect(screen.queryByRole('link', { name: '使用当前快照回测' })).toBeNull()
 })
 
 test('untrained models have no current snapshot or snapshot request', async () => {

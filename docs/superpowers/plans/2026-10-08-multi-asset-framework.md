@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T03 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T04 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -169,7 +169,7 @@ T03 补充验证：身份模块归属调整到 DatasetBundle 的消费层，保�
 
 **Interfaces:** 产出 `TableSemantics`（业务键、版本、修订关系、字段/单位/时间规则）、`PointInTimeView`；仅引擎持有的构造器绑定 cutoff，其 `bars(symbols: tuple[str, ...], start: date) -> pd.DataFrame`、`table(name: str, symbols: tuple[str, ...]) -> pd.DataFrame` 不接受扩大 cutoff 的参数。产出 `FeatureCell`、`FeatureFrame`、`FeatureSetDefinition`、`FrozenTransform`；`compute_features(definition: FeatureSetDefinition, view: PointInTimeView, params: Mapping[str, object], transform: FrozenTransform | None) -> FeatureFrame`、`fit_transform(definition: FeatureSetDefinition, train_frames: Sequence[FeatureFrame], params: Mapping[str, object]) -> FrozenTransform`。只读快照和返回副本不暴露内部全量数据。
 
-- [ ] 添加内部财报/规则修订与同日 bars 夹具；编写 cutoff 前后、下一交易日、左闭右开生效区间、修订歧义、可选缺失和缓存测试。命名案例 `test_future_revision_does_not_change_past_frame`、`test_daily_bar_visibility_is_not_disclosure_date_rule`、`test_feature_cache_separates_binding_transform_and_cutoff`：
+- [x] 添加内部财报/规则修订与同日 bars 夹具；编写 cutoff 前后、下一交易日、左闭右开生效区间、修订歧义、可选缺失和缓存测试。命名案例 `test_future_revision_does_not_change_past_frame`、`test_daily_bar_visibility_is_not_disclosure_date_rule`、`test_feature_cache_separates_binding_transform_and_cutoff`：
   ```python
   assert frame_before_future_change == frame_after_future_change
   assert visible_bar_dates.max() == decision_date
@@ -178,10 +178,12 @@ T03 补充验证：身份模块归属调整到 DatasetBundle 的消费层，保�
   assert masked.per_symbol[missing_symbol][field].value is None
   assert cache_key_a != cache_key_new_binding != cache_key_new_transform
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/unit/test_point_in_time.py tests/unit/test_feature_frames.py tests/integration/test_backtest_no_lookahead.py -q`，确认新增视图行为失败。
-- [ ] 按数据绑定冻结的 table_semantics 选择对应版本的读取规则，未知版本拒绝，不用当前最新版解释旧数据；实现及声明摘要由 T09 一起冻结。实现先过滤 available_at、后解修订/生效区间；无可靠先后关系拒绝。披露仅日期按定义许可映射下一交易日 15:00；OHLCV 单独按 session_end。FeatureFrame 每标的/字段固定成格，global 独立；值有限或 null、mask/来源/年龄有单位；组合来源取实际输入最晚时刻。缓存包含数据、绑定、定义/参数、变换和 cutoff，不缓存账户。只定义拟合接口，生命周期由 T06 接线。
-- [ ] 重跑同一命令通过；修改未来值只能影响未来视图，不能改变过去输出；不新增财务指标或 ETF 公式。
-- [ ] 审核并提交：`feat: add point-in-time data and feature contracts`。
+- [x] 运行 `uv run --no-sync pytest tests/unit/test_point_in_time.py tests/unit/test_feature_frames.py tests/integration/test_backtest_no_lookahead.py -q`，确认新增视图行为失败。
+- [x] 按数据绑定冻结的 table_semantics 选择对应版本的读取规则，未知版本拒绝，不用当前最新版解释旧数据；实现及声明摘要由 T09 一起冻结。实现先过滤 available_at、后解修订/生效区间；无可靠先后关系拒绝。披露仅日期按定义许可映射下一交易日 15:00；OHLCV 单独按 session_end。FeatureFrame 每标的/字段固定成格，global 独立；值有限或 null、mask/来源/年龄有单位；组合来源取实际输入最晚时刻。缓存包含数据、绑定、定义/参数、变换和 cutoff，不缓存账户。只定义拟合接口，生命周期由 T06 接线。
+- [x] 重跑同一命令通过；修改未来值只能影响未来视图，不能改变过去输出；不新增财务指标或 ETF 公式。
+- [x] 审核并提交：`feat: add point-in-time data and feature contracts`。
+
+T04 验证：时点视图、特征、端到端无未来数据、原 ETF 冻结基准、数据加载、模块边界及资产绑定共 132 项通过。独立资深量化开发审核发现的调用方篮子列表可变、特征日期与 cutoff 不一致两项 P2 均由失败测试复现并修复；保留来源的缺失格也正确计算年龄。真实 PIT→FeatureFrame 集成证明修改未来行情和修订不改变过去的特征值，数据版本变化仍改变审计摘要。沿用旧值须显式声明字段权限并标记值格；需求接口统一接收参数、篮子和区间。DatasetManifest 无需增添重复的表声明，时间规则以 AssetBinding 为唯一冻结来源；拟合生命周期与发布原子性按计划留到 T06。
 
 ## T05 统一交易定义与固定策略接线
 

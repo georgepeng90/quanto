@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import date, datetime
 import json
+import re
 
 import pandas as pd
 import numpy as np
@@ -129,6 +131,24 @@ def _run_table(root: Path, name: str, *, symbols: list[str] | None = None,
     return table.reset_index(drop=True)
 
 
+def _normalize_auxiliary_time(table: pd.DataFrame, name: str) -> None:
+    _require_columns(table, ["available_at"], f"auxiliary {name}")
+    values, date_only = [], []
+    for value in table["available_at"]:
+        is_date = (isinstance(value, date) and not isinstance(value, datetime)) or (isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) is not None)
+        date_only.append(is_date)
+        if is_date:
+            values.append(date.fromisoformat(str(value)).isoformat())
+        else:
+            stamp = pd.Timestamp(value)
+            if pd.isna(stamp) or stamp.tzinfo is None:
+                raise ValueError(f"TEMPORAL_EVIDENCE_MISSING: auxiliary {name} has invalid available_at timezone")
+            values.append(stamp.tz_convert("UTC"))
+    if any(date_only) and not all(date_only):
+        raise ValueError(f"TEMPORAL_EVIDENCE_MISSING: auxiliary {name} mixes disclosure dates and timestamps")
+    table["available_at"] = values if all(date_only) and values else pd.to_datetime(values, utc=True)
+
+
 def load_dataset_for_run(path: Path, spec: BacktestSpec) -> DatasetBundle:
     """Read a previously validated and hash-verified version for one run."""
     root = Path(path)
@@ -149,8 +169,8 @@ def load_dataset_for_run(path: Path, spec: BacktestSpec) -> DatasetBundle:
     for column in ("record_date", "ex_date", "pay_date"):
         events[column] = pd.to_datetime(events[column])
     auxiliary = {name: _read_table(root / filename) for name, filename in manifest.auxiliary_tables.items()}
-    for table in auxiliary.values():
-        table["available_at"] = pd.to_datetime(table["available_at"], utc=True)
+    for name, table in auxiliary.items():
+        _normalize_auxiliary_time(table, name)
     eligibility = build_eligibility(prices, instruments, manifest.universe_rule)
     return DatasetBundle(manifest, prices, benchmark, calendar, instruments, status, events.reset_index(drop=True),
         eligibility, auxiliary)
@@ -233,9 +253,6 @@ def validate_dataset(bundle: DatasetBundle) -> DatasetBundle:
                 raise ValueError(f"invalid {kind} {column}")
     auxiliary = {name: table.copy(deep=True) for name, table in bundle.auxiliary.items()}
     for name, table in auxiliary.items():
-        _require_columns(table, ["available_at"], f"auxiliary {name}")
-        table["available_at"] = pd.to_datetime(table["available_at"], utc=True, errors="coerce")
-        if table["available_at"].isna().any():
-            raise ValueError(f"auxiliary {name} has invalid available_at")
+        _normalize_auxiliary_time(table, name)
     eligibility = build_eligibility(prices, instruments, manifest.universe_rule)
     return DatasetBundle(manifest, prices, benchmark, calendar, instruments, status, events, eligibility, auxiliary)

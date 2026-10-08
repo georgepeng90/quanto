@@ -7,6 +7,51 @@ from quanto.strategies.base import Hold
 from tests.fixtures.engine_cases import bundle_case, spec_case, ScriptedStrategy, target
 
 
+def test_bound_features_use_only_current_bars_and_known_fact_revisions():
+    from datetime import date
+    from quanto.factors.features import FeatureField, FeatureSetDefinition, compute_features, make_cell
+    from quanto.framework import AssetBinding, DefinitionRef
+    from tests.fixtures.framework_cases import facts_bundle, view_at
+
+    def compute(view, params):
+        bars = view.bars(view.ordered_symbols, date(2024, 1, 1))
+        facts = view.table("facts", view.ordered_symbols)
+        result = {}
+        for symbol in view.ordered_symbols:
+            local = facts.loc[facts.symbol == symbol]
+            if local.empty:
+                continue
+            bar = bars.loc[bars.symbol == symbol].iloc[-1]
+            fact = local.iloc[-1]
+            result[symbol] = {"synthetic_sum": make_cell(bar.close + fact.value,
+                ((bar.source_available_at, bar.source_ref), (fact.source_available_at, fact.source_ref)))}
+        return result, {}
+
+    definition = FeatureSetDefinition(ref=DefinitionRef(kind="feature", id="synthetic-pit", version="1"),
+        implementation_hash="f" * 64, supported_instrument_types=("etf",),
+        parameter_schema={"type": "object", "properties": {}}, resolve_requirements=lambda params, basket, interval: (),
+        fields=(FeatureField("synthetic_sum", "test-only combination", "test_unit", "per_symbol", "hours", "mask"),),
+        compute=compute)
+    original, binding, semantics = facts_bundle()
+    before = compute_features(definition, view_at(original, binding, semantics), {}, None)
+    original.auxiliary["facts"].loc[1, "value"] = 999999.
+    original.prices.loc[original.prices.date.dt.day >= 4, ["open", "close"]] = 777.
+    changed_binding = AssetBinding(**{**binding.model_dump(exclude={"binding_hash"}), "dataset_content_hash": "b" * 64})
+    after = compute_features(definition, view_at(original, changed_binding, semantics), {}, None)
+    assert before.per_symbol == after.per_symbol
+    assert before.global_values == after.global_values
+    assert before.ordered_symbols == after.ordered_symbols == ("B", "A")
+    assert after.per_symbol["B"]["synthetic_sum"].value is None
+    cell = after.per_symbol["A"]["synthetic_sum"]
+    assert cell.value == 20.
+    assert cell.source_available_at == after.signal_cutoff
+    assert cell.age == 0 and len(cell.source_refs) == 2
+    assert before.dataset_content_hash != after.dataset_content_hash
+    assert before.frame_hash != after.frame_hash
+    future = compute_features(definition, view_at(original, changed_binding, semantics, "2024-01-05"), {}, None)
+    assert future.per_symbol["A"]["synthetic_sum"].value == 1000776.
+
+
 def run(bundle, intents, **changes):
     return run_backtest(bundle, ScriptedStrategy(intents), spec_case(bundle, **changes), lambda event: None, lambda: False)
 

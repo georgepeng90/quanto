@@ -1,5 +1,16 @@
 """Explicit identities for framework tests; never registered as production definitions."""
 from datetime import datetime, timezone
+from dataclasses import replace
+from datetime import date
+
+import pandas as pd
+
+from quanto.data.contracts import InstrumentId
+from quanto.backtest.dataset_identity import standard_table_semantics
+from quanto.data.point_in_time import TableSemantics, _bind_point_in_time, session_cutoff
+from quanto.framework import AssetBinding, AssetMapping, BenchmarkBinding, TableSemanticBinding
+from tests.fixtures.engine_cases import bundle_case
+
 
 
 def instrument_values(code="000001", instrument_type="etf", exchange="SZSE"):
@@ -47,3 +58,32 @@ def model_request_values():
                 spec=dict(name="ETF fixture", backtest=backtest_input_values(), lookback=5,
                           train_start="2024-01-01", train_end="2024-03-29",
                           validation_start="2024-04-01", validation_end="2024-06-28"))
+
+
+# Explicit, synthetic temporal facts shared by PIT and feature integration tests.
+def facts_bundle(rows=None, rule_changes=None):
+    bundle = bundle_case(symbols=("A", "B"))
+    rows = rows if rows is not None else [
+        dict(symbol="A", period_end="2023-12-31", revision_id="r1", revision_sequence=1, available_at="2024-01-02T06:59:00Z", value=10.),
+        dict(symbol="A", period_end="2023-12-31", revision_id="r2", revision_sequence=2, available_at="2024-01-04T07:01:00Z", value=20.),
+    ]
+    rules = dict(availability_rule="timestamp", available_column="available_at", symbol_column="symbol", business_keys=["symbol", "period_end"],
+                 revision_policy="sequence", revision_id_column="revision_id", revision_order_column="revision_sequence")
+    rules.update(rule_changes or {})
+    declaration = TableSemanticBinding(table="facts", semantic_id="fixture-facts", version="1",
+        schema_definition={"value": {"dtype": "float", "unit": "score"}}, temporal_rules=rules, evidence_ref="fixture:pit")
+    bundle = replace(bundle, auxiliary={"facts": pd.DataFrame(rows)})
+    binding = AssetBinding(dataset_version_id="fixture", dataset_content_hash="a" * 64,
+        assets=tuple(AssetMapping(instrument_id=InstrumentId(exchange="SSE", instrument_type="etf", code=symbol), local_symbol=symbol, evidence_ref="fixture:pit") for symbol in ("A", "B")),
+        benchmark=BenchmarkBinding(custom_series_id="fixture-benchmark", return_basis="price_index", evidence_ref="fixture:pit"),
+        table_semantics=(*standard_table_semantics(bundle, "fixture:pit"), declaration))
+    semantics = tuple(TableSemantics.from_binding(item, supported_versions={("fixture-facts", "1")}) for item in binding.table_semantics)
+    return bundle, binding, semantics
+
+
+def tables(bundle):
+    return {**{name: getattr(bundle, name) for name in ("prices", "benchmark", "calendar", "instruments", "status", "events")}, **bundle.auxiliary}
+
+
+def view_at(bundle, binding, semantics, day="2024-01-03", cutoff=None):
+    return _bind_point_in_time(tables(bundle), binding, ("B", "A"), cutoff or session_cutoff(date.fromisoformat(day)), semantics=semantics)

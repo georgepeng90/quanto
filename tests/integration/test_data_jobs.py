@@ -216,8 +216,8 @@ def test_import_nested_auxiliary_table_preserves_registered_file_hashes(tmp_path
 
 def test_strategy_validation_imports_user_code_only_in_worker(tmp_path):
     service = WorkbenchService(tmp_path / "data")
-    declaration = {"entrypoint": "strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}},
-                   "auxiliary_sources": [], "research_data": []}
+    from tests.fixtures.strategy_declarations import etf_declaration
+    declaration = etf_declaration()
     source = "class Strategy:\n    warmup_bars = 0\n    def should_evaluate(self, ctx): return True\n    def on_close(self, ctx): return None\ndef create_strategy(params): return Strategy()\n"
     version = service.store.register_strategy({"strategy.json": json.dumps(declaration).encode(),
                                                 "strategy.py": source.encode()}, declaration)

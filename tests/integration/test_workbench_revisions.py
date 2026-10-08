@@ -7,6 +7,7 @@ from quanto.backtest.dataset_loaders import load_dataset
 from quanto.workbench.store import WorkbenchStore
 from tests.fixtures.backtest_cases import dataset_case
 from tests.fixtures.framework_imports import fixture_identity_evidence
+from tests.fixtures.strategy_declarations import etf_declaration
 
 
 def test_draft_revision_conflict_keeps_first_save(tmp_path):
@@ -46,7 +47,7 @@ def test_dataset_registration_excludes_unrelated_secret_file(tmp_path):
 @pytest.mark.parametrize("bad", ["../escape.py", "/absolute.py", "C:/absolute.py"])
 def test_strategy_registration_rejects_unsafe_paths(tmp_path, bad):
     store = WorkbenchStore(tmp_path / "workbench")
-    declaration = {"entrypoint": "strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}, "auxiliary_sources": [bad], "research_data": []}
+    declaration = etf_declaration(auxiliary_sources=[bad])
     files = {"strategy.json": json.dumps(declaration).encode(), "strategy.py": b"def create_strategy(params): pass\n", bad: b""}
     with pytest.raises(ValueError, match="unsafe"):
         store.register_strategy(files, declaration)
@@ -54,14 +55,14 @@ def test_strategy_registration_rejects_unsafe_paths(tmp_path, bad):
 
 def test_strategy_registration_rejects_missing_declared_file(tmp_path):
     store = WorkbenchStore(tmp_path / "workbench")
-    declaration = {"entrypoint": "strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}, "auxiliary_sources": ["helper.py"], "research_data": []}
+    declaration = etf_declaration(auxiliary_sources=["helper.py"])
     with pytest.raises(ValueError, match="missing"):
         store.register_strategy({"strategy.json": json.dumps(declaration).encode(), "strategy.py": b"def create_strategy(params): pass\n"}, declaration)
 
 
 def test_strategy_registration_does_not_execute_source(tmp_path):
     store = WorkbenchStore(tmp_path / "workbench")
-    declaration = {"entrypoint": "strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}, "auxiliary_sources": [], "research_data": []}
+    declaration = etf_declaration()
     version = store.register_strategy({"strategy.json": json.dumps(declaration).encode(), "strategy.py": b"raise RuntimeError('must not execute')\n"}, declaration)
     assert (version.path / "strategy.py").read_bytes().startswith(b"raise RuntimeError")
 
@@ -69,7 +70,7 @@ def test_strategy_registration_does_not_execute_source(tmp_path):
 @pytest.mark.parametrize("source", ["import lib.helper\n", "from lib import helper\n", "from . import helper\n"])
 def test_nested_undeclared_local_import_is_rejected(tmp_path, source):
     store = WorkbenchStore(tmp_path / "workbench")
-    declaration = {"entrypoint": "lib/strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}, "auxiliary_sources": [], "research_data": []}
+    declaration = etf_declaration(entrypoint="lib/strategy.py:create_strategy")
     files = {"strategy.json": json.dumps(declaration).encode(), "lib/strategy.py": source.encode(), "lib/helper.py": b"value = 1\n"}
     with pytest.raises(ValueError, match="undeclared local"):
         store.register_strategy(files, declaration)
@@ -77,7 +78,39 @@ def test_nested_undeclared_local_import_is_rejected(tmp_path, source):
 
 def test_declared_nested_local_import_is_registered(tmp_path):
     store = WorkbenchStore(tmp_path / "workbench")
-    declaration = {"entrypoint": "lib/strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}, "auxiliary_sources": ["lib/helper.py"], "research_data": []}
+    declaration = etf_declaration(entrypoint="lib/strategy.py:create_strategy", auxiliary_sources=["lib/helper.py"])
     files = {"strategy.json": json.dumps(declaration).encode(), "lib/strategy.py": b"from . import helper\ndef create_strategy(params): return helper.value\n", "lib/helper.py": b"value = 1\n"}
     version = store.register_strategy(files, declaration)
     assert (version.path / "lib" / "helper.py").read_bytes() == b"value = 1\n"
+
+
+@pytest.mark.parametrize("missing", ["supported_instrument_types", "data_requirements", "feature_set_ref", "allowed_trading_refs"])
+def test_strategy_registration_rejects_incomplete_declaration_before_publication(tmp_path, missing):
+    store = WorkbenchStore(tmp_path / "workbench")
+    declaration = etf_declaration()
+    declaration.pop(missing)
+    files = {"strategy.json": json.dumps(declaration).encode(), "strategy.py": b"raise RuntimeError('must not execute')\n"}
+    with pytest.raises(ValueError):
+        store.register_strategy(files, declaration)
+    assert not (store.root / "strategies").exists()
+    with store.transaction() as db:
+        assert db.execute("SELECT count(*) FROM strategies").fetchone()[0] == 0
+
+
+def test_strategy_registration_rejects_malformed_requirement_before_publication(tmp_path):
+    store = WorkbenchStore(tmp_path / "workbench")
+    declaration = etf_declaration()
+    declaration["data_requirements"][0]["fields"][2]["unit"] = ""
+    files = {"strategy.json": json.dumps(declaration).encode(), "strategy.py": b"raise RuntimeError('must not execute')\n"}
+    with pytest.raises(ValueError):
+        store.register_strategy(files, declaration)
+    assert not (store.root / "strategies").exists()
+
+
+def test_existing_strategy_revision_remains_readable_without_new_declaration(tmp_path):
+    store = WorkbenchStore(tmp_path / "workbench")
+    old_manifest = {"entrypoint": "strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {}}}
+    with store.transaction() as db:
+        db.execute("INSERT INTO strategies VALUES (?, ?, ?, ?)",
+                   ("archived", str(tmp_path / "archived"), "a" * 64, json.dumps(old_manifest)))
+    assert store.get_strategy("archived").manifest == old_manifest

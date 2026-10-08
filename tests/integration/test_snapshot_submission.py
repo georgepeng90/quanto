@@ -12,13 +12,16 @@ import quanto.workbench.snapshots as snapshots
 from quanto.workbench.store import WorkbenchStore
 from tests.fixtures.backtest_cases import dataset_case
 from tests.fixtures.framework_imports import fixture_identity_evidence
+from tests.fixtures.strategy_declarations import etf_declaration
 
 
 def _ready(tmp_path):
     store = WorkbenchStore(tmp_path / "workbench")
     source = dataset_case(tmp_path / "source")
     dataset = store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
-    declaration = {"name": "test", "entrypoint": "strategy.py:create_strategy", "parameter_schema": {"type": "object", "properties": {"window": {"type": "integer", "default": 2}}}, "required_data_columns": ["date", "symbol", "close"], "auxiliary_sources": ["helper.py"], "research_data": []}
+    declaration = etf_declaration(name="test", auxiliary_sources=["helper.py"],
+        parameter_schema={"type": "object", "additionalProperties": False,
+                          "properties": {"window": {"type": "integer", "default": 2}}})
     files = {"strategy.py": b"from helper import value\ndef create_strategy(params): return value\n", "helper.py": b"value = 1\n", "strategy.json": json.dumps(declaration).encode()}
     strategy = store.register_strategy(files, declaration)
     spec = {"start": "2024-01-01", "end": "2024-01-03", "symbols": ["SZSE:etf:000001"], "initial_cash": 1000, "seed": 7, "execution": {"commission_rate": 0, "minimum_commission": 0, "slippage_rate": 0, "max_stale_sessions": 0, "model": "next_open"}, "risk": {"max_total_weight": 1, "max_symbol_weight": 1, "group_caps": {}, "stress_scenarios": [], "pause_action": "block_new", "recovery_mode": "never"}, "metrics": {"annual_sessions": 252, "risk_free_rate": 0, "cash_rate": 0, "definition_version": "v1"}}

@@ -7,7 +7,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from quanto.strategies.base import Hold, PortfolioView, StrategyContext, TargetPortfolio
+from quanto.strategies.base import FixedStrategyDefinition, Hold, PortfolioView, StrategyContext, TargetPortfolio
+from quanto.data.contracts import InstrumentId
+from quanto.framework import FrozenBasketRevision, ResearchInterval
+from datetime import date, datetime, timezone
 from quanto.strategies.buy_hold import BuyHold
 from quanto.strategies.trend_rotation import TrendRotation
 
@@ -72,3 +75,27 @@ def test_templates_use_revision_entrypoint_and_schema():
         assert hasattr(strategy, "on_close") and hasattr(strategy, "should_evaluate")
         with pytest.raises(ValueError):
             module.create_strategy({"unknown": True})
+
+
+def test_templates_declare_etf_price_requirements_without_shared_features():
+    root = Path(__file__).resolve().parents[2] / "strategies"
+    basket = FrozenBasketRevision(basket_id="etf", revision=1,
+        members=(InstrumentId(exchange="SSE", instrument_type="etf", code="510300"),),
+        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc), selection_note="fixture")
+    interval = ResearchInterval(start=date(2024, 1, 2), end=date(2024, 2, 2), warmup_start=date(2023, 12, 1))
+    for name, params, warmup in (("buy_hold", {}, 0), ("trend_rotation", {"trend_window": 30}, 30)):
+        manifest = json.loads((root / name / "strategy.json").read_text(encoding="utf-8"))
+        definition = FixedStrategyDefinition(manifest, manifest["entrypoint"], "a" * 64)
+        assert definition.supported_instrument_types == ("etf",)
+        assert definition.feature_set_ref is None
+        assert definition.feature_param_map == {}
+        assert [(ref.kind, ref.id, ref.version) for ref in definition.allowed_trading_refs] == [("trading", "etf-daily", "1")]
+        required = definition.resolve_requirements(params, basket, interval)
+        assert len(required) == 1
+        assert required[0].table == "prices"
+        assert {field.name: (field.dtype, field.unit, field.currency) for field in required[0].fields} == {
+            "date": ("date", "trading_day", None),
+            "symbol": ("string", "instrument_id", None),
+            "close": ("float", "price", "CNY"),
+        }
+        assert required[0].warmup_sessions == warmup

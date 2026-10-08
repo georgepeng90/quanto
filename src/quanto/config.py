@@ -187,7 +187,7 @@ class BacktestSpec(StrictSpec):
         return self
 
 
-def validate_parameters(schema: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+def validate_parameter_schema(schema: dict[str, Any]) -> dict[str, Any]:
     checked_schema = copy.deepcopy(schema)
     if checked_schema.get("type") != "object":
         raise ValueError("Strategy parameter schema must have an object root")
@@ -225,6 +225,15 @@ def validate_parameters(schema: dict[str, Any], params: dict[str, Any]) -> dict[
         if node.get("type") == "array" and isinstance(node.get("items"), dict):
             close_objects(node["items"])
 
+    require_supported(checked_schema)
+    close_objects(checked_schema)
+    Draft202012Validator.check_schema(checked_schema)
+    return checked_schema
+
+
+def validate_parameters(schema: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+    checked_schema = validate_parameter_schema(schema)
+
     def apply_defaults(node: dict[str, Any], value: Any) -> None:
         if node.get("type") == "object" and isinstance(value, dict):
             for name, child in node.get("properties", {}).items():
@@ -251,9 +260,6 @@ def validate_parameters(schema: dict[str, Any], params: dict[str, Any]) -> dict[
             return
         raise ValueError("Strategy parameters must contain finite JSON values")
 
-    require_supported(checked_schema)
-    close_objects(checked_schema)
-    Draft202012Validator.check_schema(checked_schema)
     effective = copy.deepcopy(params)
     apply_defaults(checked_schema, effective)
     require_json_value(effective)

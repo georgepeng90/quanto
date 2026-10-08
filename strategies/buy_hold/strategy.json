@@ -1,7 +1,21 @@
 {
   "name": "buy_hold",
   "entrypoint": "strategy.py:create_strategy",
+  "supported_instrument_types": ["etf"],
   "parameter_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+  "data_requirements": [{
+    "requirement_id": "daily-etf-prices", "table": "prices", "semantic_version": "1",
+    "fields": [
+      {"name": "date", "dtype": "date", "unit": "trading_day"},
+      {"name": "symbol", "dtype": "string", "unit": "instrument_id"},
+      {"name": "close", "dtype": "float", "unit": "price", "currency": "CNY"}
+    ],
+    "scope": "basket", "availability_rule": "session_close",
+    "price_modes": ["raw_cash", "adjusted_research"], "required": true, "missing_policy": "reject"
+  }],
+  "feature_set_ref": null,
+  "feature_param_map": {},
+  "allowed_trading_refs": [{"kind": "trading", "id": "etf-daily", "version": "1"}],
   "required_data_columns": ["date", "symbol", "close"],
   "auxiliary_sources": [],
   "research_data": []

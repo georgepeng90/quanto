@@ -4,6 +4,7 @@ import pandas as pd
 
 from quanto.strategies.base import Hold
 from .models import Fill, Order, money
+from .trading import ETF_TRADING_DEFINITION
 
 
 def create_orders(intent, portfolio, reference_prices, signal_date, execution_date, instruments) -> list[Order]:
@@ -38,16 +39,17 @@ def create_orders(intent, portfolio, reference_prices, signal_date, execution_da
     return result
 
 
-def execute_open(orders, open_quotes, status, ledger, execution_spec) -> list[Fill]:
+def execute_open(orders, open_quotes, status, ledger, execution_spec, *, trading_definition=ETF_TRADING_DEFINITION) -> list[Fill]:
     fills = []
 
     def commission(quantity, price):
-        return money(max(execution_spec.minimum_commission, quantity * price * execution_spec.commission_rate)) if quantity else 0
+        return trading_definition.fees(dict(quantity=int(quantity), price=float(price),
+            commission_rate=execution_spec.commission_rate, minimum_commission=execution_spec.minimum_commission))["commission"] if quantity else 0
 
     def cost(order, quantity, price):
         return money(quantity * price + commission(quantity, price))
 
-    def complete(order, quantity, price):
+    def complete(order, quantity, price, *, rejection_reason=None):
         if quantity:
             fill = Fill(order.id, order.execution_date, order.symbol, order.side, quantity, price,
                 commission(quantity, price), money(quantity * abs(price - open_quotes[order.symbol])),
@@ -57,7 +59,9 @@ def execute_open(orders, open_quotes, status, ledger, execution_spec) -> list[Fi
         order.filled_quantity = quantity
         order.expired_quantity = order.quantity - quantity
         order.status = "filled" if quantity == order.quantity else "expired"
-        if order.expired_quantity and order.reason not in {"suspended", "cannot_buy", "cannot_sell", "insufficient_fee_cash"}:
+        if rejection_reason is not None:
+            order.reason = rejection_reason
+        elif order.expired_quantity and order.reason not in {"suspended", "cannot_buy", "cannot_sell", "insufficient_fee_cash"}:
             order.reason = "insufficient_cash" if order.side == "buy" else "insufficient_sellable"
 
     buys = []
@@ -65,10 +69,10 @@ def execute_open(orders, open_quotes, status, ledger, execution_spec) -> list[Fi
         if order.status != "pending":
             continue
         state = status.get(order.symbol, {})
+        allowed = trading_definition.eligibility({**state, "order_side": order.side})
         raw = open_quotes.get(order.symbol)
-        if state.get("status") == "suspended" or not state.get(f"can_{order.side}", True):
-            order.reason = "suspended" if state.get("status") == "suspended" else f"cannot_{order.side}"
-            complete(order, 0, 0)
+        if not allowed[f"can_{order.side}"]:
+            complete(order, 0, 0, rejection_reason=allowed["reason"] or f"cannot_{order.side}")
             continue
         if raw is None or not math.isfinite(raw) or raw <= 0:
             raise ValueError(f"MISSING_OPEN_PRICE: {order.symbol}")

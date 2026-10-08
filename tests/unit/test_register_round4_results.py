@@ -9,10 +9,11 @@ import pytest
 
 from quanto.config import validate_parameters
 from quanto.workbench.store import WorkbenchStore
+from quanto.workbench.revisions import digest, json_bytes
 from scripts import register_round4_results as publish
 
 
-def test_bundle_registers_nested_sources_and_imports_from_isolated_directory(tmp_path):
+def test_archived_bundle_keeps_hash_and_imports_from_isolated_directory(tmp_path):
     round3 = "class Helper:\n    pass\n"
     round4 = "from scripts.research_round3_candidates import Helper\nclass BreadthRiskStrategy(Helper):\n    def __init__(self, entry_breadth):\n        self.entry_breadth = entry_breadth\n"
     manifest, files, expected_hash = publish.strategy_bundle(
@@ -21,13 +22,19 @@ def test_bundle_registers_nested_sources_and_imports_from_isolated_directory(tmp
                           "scripts/research_round4_candidates.py", "scripts/research_round3_candidates.py"}
     assert set(manifest["auxiliary_sources"]) == set(files) - {"strategy.json", "strategy.py"}
     store = WorkbenchStore(tmp_path / "workbench")
-    revision = store.register_strategy({name: content.encode() for name, content in files.items()}, manifest)
-    assert revision.content_hash == expected_hash
+    with pytest.raises(ValueError, match="supported instrument types"):
+        store.register_strategy({name: content.encode() for name, content in files.items()}, manifest)
+    assert expected_hash == digest(json_bytes({name: digest(content.encode()) for name, content in files.items()}))
+    isolated = tmp_path / "isolated"
+    for name, content in files.items():
+        path = isolated / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
     result = subprocess.run([sys.executable, "-I", "-c",
                              "import sys; sys.path.insert(0, sys.argv[1]); "
                              "from strategy import create_strategy; "
                              "assert create_strategy({'entry_breadth': .55}).entry_breadth == .55",
-                             str(revision.path)], cwd=tmp_path, capture_output=True, text=True)
+                             str(isolated)], cwd=tmp_path, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
 
 
@@ -38,14 +45,20 @@ def test_real_candidate_bundle_imports_without_checkout_scripts(tmp_path):
     manifest, files, _ = publish.strategy_bundle(
         "h55_45", {"kind": "breadth_risk", "params": {"entry_breadth": .55,
                                                         "exit_breadth": .45}}, round4, round3)
-    revision = WorkbenchStore(tmp_path / "workbench").register_strategy(
-        {name: content.encode() for name, content in files.items()}, manifest)
+    with pytest.raises(ValueError, match="supported instrument types"):
+        WorkbenchStore(tmp_path / "workbench").register_strategy(
+            {name: content.encode() for name, content in files.items()}, manifest)
+    isolated = tmp_path / "isolated"
+    for name, content in files.items():
+        path = isolated / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
     code = ("import sys; sys.path.insert(0, sys.argv[1]); sys.path.insert(1, sys.argv[2]); "
             "from strategy import create_strategy; "
             "strategy = create_strategy({'entry_breadth': .55, 'exit_breadth': .45}); "
             "assert strategy.entry_breadth == .55 and strategy.exit_breadth == .45; "
             "assert 'scripts.research_round4_candidates' in sys.modules")
-    result = subprocess.run([sys.executable, "-I", "-c", code, str(revision.path),
+    result = subprocess.run([sys.executable, "-I", "-c", code, str(isolated),
                              str(project / "src")], cwd=tmp_path, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
 

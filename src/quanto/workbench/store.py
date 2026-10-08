@@ -14,6 +14,7 @@ from quanto.config import validate_parameters
 from quanto.data.settings import get_market_root
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.backtest.dataset_storage import write_parquet_dataset
+from quanto.strategies.base import FixedStrategyDefinition
 from quanto.workbench.models import DatasetVersion, ExperimentDraft, JobRecord, RunRecord, StrategyRevision
 from quanto.workbench.revisions import digest, json_bytes, publish_files, safe_name, source_files
 
@@ -150,8 +151,13 @@ class WorkbenchStore:
             imported = _local_imports(tree, name)
             if (imported & local_modules) - declared_modules:
                 raise ValueError("undeclared local strategy source")
+        declared_files = {name: files[name] for name in declared}
+        expected_hashes = {name: digest(content) for name, content in sorted(declared_files.items())}
+        FixedStrategyDefinition(manifest, entrypoint, digest(json_bytes(expected_hashes)))
         identity = str(uuid4())
-        target, hashes = publish_files(self.root / "strategies", identity, {name: files[name] for name in declared})
+        target, hashes = publish_files(self.root / "strategies", identity, declared_files)
+        if hashes != expected_hashes:
+            raise ValueError("Strategy source changed during publication")
         content_hash = digest(json_bytes(hashes))
         with self.transaction() as db:
             db.execute("INSERT INTO strategies VALUES (?, ?, ?, ?)", (identity, str(target), content_hash, json_bytes(manifest).decode()))

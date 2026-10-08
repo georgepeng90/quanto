@@ -8,6 +8,7 @@ import sys
 import pytest
 
 from quanto.workbench.store import WorkbenchStore
+from quanto.workbench.revisions import digest, json_bytes
 from scripts import register_round5_results as publish
 
 
@@ -21,15 +22,21 @@ def test_real_bundle_imports_in_isolated_directory(tmp_path):
     manifest, files, expected_hash = publish.strategy_bundle("w60_v11", CONFIG, *sources)
     assert set(files) == {"strategy.json", "strategy.py", "scripts/__init__.py", *publish.SOURCE_NAMES}
     assert set(manifest["auxiliary_sources"]) == set(publish.SOURCE_NAMES) | {"scripts/__init__.py"}
-    revision = WorkbenchStore(tmp_path / "workbench").register_strategy(
-        {name: content.encode() for name, content in files.items()}, manifest)
-    assert revision.content_hash == expected_hash
+    with pytest.raises(ValueError, match="supported instrument types"):
+        WorkbenchStore(tmp_path / "workbench").register_strategy(
+            {name: content.encode() for name, content in files.items()}, manifest)
+    assert expected_hash == digest(json_bytes({name: digest(content.encode()) for name, content in files.items()}))
+    isolated = tmp_path / "isolated"
+    for name, content in files.items():
+        path = isolated / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
     code = ("import sys; sys.path.insert(0, sys.argv[1]); sys.path.insert(1, sys.argv[2]); "
             "from strategy import create_strategy; "
             "strategy = create_strategy({'entry_breadth': .55, 'exit_breadth': .45, "
             "'target_vol': .11, 'vol_window': 60, 'gross_target': .8}); "
             "assert strategy.target_vol == .11 and strategy.vol_window == 60")
-    result = subprocess.run([sys.executable, "-I", "-c", code, str(revision.path),
+    result = subprocess.run([sys.executable, "-I", "-c", code, str(isolated),
                              str(publish.PROJECT / "src")], cwd=tmp_path, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
 

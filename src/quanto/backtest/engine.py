@@ -6,17 +6,22 @@ import copy
 import json
 import random
 from typing import Callable
+from collections.abc import Mapping
 
 import numpy as np
 import pandas as pd
 
 from quanto.config import BacktestSpec
 from quanto.backtest.dataset_schemas import DatasetBundle
+from quanto.data.point_in_time import CORE_TABLES, TableSemantics, _bind_point_in_time
+from quanto.factors.features import FeatureCache, FeatureSetDefinition, FrozenTransform
+from quanto.framework import AssetBinding
 from quanto.risk.policy import RiskPolicy
 from quanto.strategies.base import Hold, Strategy, StrategyContext, TargetPortfolio, is_week_end, validate_intent, validate_warmup_window
 from .ledger import PortfolioLedger
 from .models import BacktestCancelled, BacktestResult, RunEvent, TABLE_COLUMNS, money, whole_shares
 from .orders import create_orders, execute_open
+from .trading import ETF_TRADING_DEFINITION, TradingDefinition
 
 
 def _json_value(value):
@@ -39,6 +44,7 @@ class _SessionData:
         self.status_groups = {d: frame.set_index("symbol").to_dict("index") for d, frame in bundle.status.groupby("date")}
         self.eligibility_groups = {d: set(frame.loc[frame.eligible, "symbol"]) for d, frame in bundle.eligibility.groupby("date")}
         self._quotes = {}
+        self.market_views = {}
 
     def quotes(self, asof):
         if asof not in self._quotes:
@@ -51,9 +57,32 @@ class SessionRunner:
     """Pause the shared daily account at close to receive one causal intent."""
 
     def __init__(self, bundle: DatasetBundle, spec: BacktestSpec,
-                 cancelled: Callable[[], bool], collect: bool = True, *, prepared: _SessionData | None = None):
+                 cancelled: Callable[[], bool], collect: bool = True, *, prepared: _SessionData | None = None,
+                 trading_definition: TradingDefinition = ETF_TRADING_DEFINITION,
+                 asset_binding: AssetBinding | None = None, feature_definition: FeatureSetDefinition | None = None,
+                 feature_params: Mapping[str, object] | None = None, feature_transform: FrozenTransform | None = None,
+                 table_semantics: tuple[TableSemantics, ...] | None = None, feature_cache: FeatureCache | None = None):
         spec.validate_for_dataset(bundle)
+        if bundle.price_mode not in trading_definition.supported_price_modes:
+            raise ValueError("EXECUTION_CAPABILITY_MISSING: unsupported price mode")
+        if asset_binding is not None:
+            mapped = {asset.local_symbol: asset for asset in asset_binding.assets}
+            if not set(spec.symbols).issubset(mapped):
+                raise ValueError("BINDING_MISMATCH: run symbols absent from binding")
+            types = {mapped[symbol].instrument_id.instrument_type for symbol in spec.symbols}
+            if len(types) > 1:
+                raise ValueError("MIXED_BASKET_UNSUPPORTED: one instrument type per run")
+            if not types.issubset(trading_definition.supported_instrument_types):
+                raise ValueError("EXECUTION_CAPABILITY_MISSING: trading definition does not support basket")
+            if feature_definition is not None and not types.issubset(feature_definition.supported_instrument_types):
+                raise ValueError("DEFINITION_UNAVAILABLE: feature definition does not support basket")
+        elif feature_definition is not None:
+            raise ValueError("IDENTITY_UNRESOLVED: shared features require an asset binding")
         self.bundle, self.spec = bundle, spec
+        self.trading_definition, self.asset_binding = trading_definition, asset_binding
+        self.feature_definition, self.feature_params = feature_definition, dict(feature_params or {})
+        self.feature_transform, self.table_semantics = feature_transform, table_semantics
+        self.feature_cache = feature_cache if feature_cache is not None else FeatureCache()
         self.cancelled, self.collect = cancelled, collect
         self._prepared = prepared
         calendar = prepared.calendar if prepared is not None else pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
@@ -104,6 +133,12 @@ class SessionRunner:
         ledger.calendar = calendar
         self.ledger, self.risk = ledger, risk
         instruments, groups = prepared.instruments, prepared.groups
+        instrument_rows = instruments.set_index("symbol").to_dict("index")
+        instrument_rows = {symbol: instrument_rows[symbol] for symbol in spec.symbols}
+        if self.asset_binding is not None:
+            identities = {asset.local_symbol: asset.instrument_id for asset in self.asset_binding.assets}
+            for symbol, row in instrument_rows.items():
+                row["instrument_id"] = identities[symbol].model_dump(mode="json")
         approvals = bundle.auxiliary.get("risk_approvals", pd.DataFrame())
         if not approvals.empty:
             required = {"approval_id", "pause_asof", "available_at"}
@@ -115,9 +150,11 @@ class SessionRunner:
             if available.tzinfo is None:
                 raise ValueError("INVALID_APPROVAL_TIME: 批准时间必须包含时区")
         corporate = bundle.events[bundle.events.symbol.isin(spec.symbols)].reset_index(drop=True)
-        # Adjusted research prices already incorporate corporate actions.
-        if bundle.price_mode == "adjusted_research":
-            corporate = corporate.iloc[:0]
+        if not corporate.empty:
+            event_dates = corporate[["record_date", "ex_date", "pay_date"]].apply(pd.to_datetime)
+            in_interval = event_dates.apply(lambda column: column.between(pd.Timestamp(spec.start), pd.Timestamp(spec.end))).any(axis=1)
+            corporate = corporate.loc[in_interval | event_dates.isna().all(axis=1)]
+        corporate = pd.DataFrame(self.trading_definition.events(corporate, price_mode=bundle.price_mode), columns=corporate.columns)
         entitlements = {}
         orders, tables, previous_orders = [], {name: [] for name in TABLE_COLUMNS}, {}
         self._tables, self._orders = tables, orders
@@ -132,6 +169,10 @@ class SessionRunner:
                 orders[:] = [order for order in orders if order.status == "pending"]
                 previous_orders.clear()
             offsets = {name: len(rows) for name, rows in tables.items()}
+            status = status_groups.get(asof, {})
+            for symbol, row in instrument_rows.items():
+                if pd.Timestamp(row["listing_date"]) <= asof:
+                    self.trading_definition.eligibility(status.get(symbol, {}))
 
             def account(kind, symbol="", amount=0.0, **details):
                 tables["account_events"].append(dict(date=asof, event_type=kind, symbol=symbol, amount=money(amount), details=details))
@@ -156,9 +197,8 @@ class SessionRunner:
             interest = money(interest_base * spec.metrics.cash_rate / spec.metrics.annual_sessions)
             ledger.reserve_cash(max(0, -interest))
             opens, closes = prepared.quotes(asof)
-            status = status_groups.get(asof, {})
             scheduled = [order for order in orders if order.status == "pending" and order.execution_date == asof]
-            fills = execute_open(scheduled, opens, status, ledger, spec.execution)
+            fills = execute_open(scheduled, opens, status, ledger, spec.execution, trading_definition=self.trading_definition)
             tables["fills"].extend(asdict(fill) for fill in fills)
             ledger.apply_event(dict(event_type="interest", amount=interest))
             account("interest", amount=interest, opening_cash=interest_base, annual_rate=spec.metrics.cash_rate, annual_sessions=spec.metrics.annual_sessions)
@@ -172,9 +212,20 @@ class SessionRunner:
             eligible = tuple(sorted(eligibility_groups.get(asof, set()) & set(spec.symbols)))
             cutoff = (asof.normalize() + pd.Timedelta(hours=15)).tz_localize("Asia/Shanghai").tz_convert("UTC")
             known_approvals = [row for row in approval_rows if pd.Timestamp(row["available_at"]) <= cutoff]
+            data_view, features = None, None
+            if self.asset_binding is not None:
+                key = (self.asset_binding.binding_hash, tuple(spec.symbols), cutoff)
+                if key not in prepared.market_views:
+                    market_tables = {**{name: getattr(bundle, name) for name in CORE_TABLES}, **bundle.auxiliary}
+                    prepared.market_views[key] = _bind_point_in_time(market_tables, self.asset_binding, tuple(spec.symbols),
+                        cutoff, semantics=self.table_semantics)
+                data_view = prepared.market_views[key]
+                if self.feature_definition is not None:
+                    features = self.feature_cache.get_or_compute(self.feature_definition, data_view, self.feature_params, self.feature_transform)
             ctx = StrategyContext(asof, prices, eligible, portfolio,
                 tuple(asdict(order) for order in orders if order.status == "pending"),
-                {**risk.state, "symbol_groups": groups, "risk_approvals": known_approvals}, is_week_end(calendar, asof))
+                {**risk.state, "symbol_groups": groups, "risk_approvals": known_approvals}, is_week_end(calendar, asof),
+                data_view=data_view, features=features, instruments=instrument_rows)
             self.context = ctx
             proposed = yield ctx
             decision = risk.evaluate(ctx, proposed)
@@ -233,6 +284,9 @@ def run_backtest(
     spec: BacktestSpec,
     emit: Callable[[RunEvent], None],
     cancelled: Callable[[], bool],
+    *, trading_definition: TradingDefinition = ETF_TRADING_DEFINITION, asset_binding: AssetBinding | None = None,
+    feature_definition: FeatureSetDefinition | None = None, feature_params: Mapping[str, object] | None = None,
+    feature_transform: FrozenTransform | None = None, table_semantics: tuple[TableSemantics, ...] | None = None,
 ) -> BacktestResult:
     """Complete each session atomically at emit; no filesystem output."""
     spec.validate_for_dataset(bundle)
@@ -240,7 +294,9 @@ def run_backtest(
     validate_warmup_window(strategy, observed, spec.start, spec.end)
     random.seed(spec.seed)
     np.random.seed(spec.seed % 2**32)
-    runner = SessionRunner(bundle, spec, cancelled)
+    runner = SessionRunner(bundle, spec, cancelled, trading_definition=trading_definition, asset_binding=asset_binding,
+        feature_definition=feature_definition, feature_params=feature_params, feature_transform=feature_transform,
+        table_semantics=table_semantics)
     evaluated = False
     for _ in runner.dates:
         context = runner.advance_to_close()

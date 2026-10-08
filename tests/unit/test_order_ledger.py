@@ -6,6 +6,11 @@ from quanto.backtest.orders import create_orders, execute_open
 from tests.fixtures.engine_cases import bundle_case, spec_case, target
 
 
+def trading_status(*, can_buy=True, can_sell=True):
+    """Observed fixture status for the A/B allocation tests."""
+    return {symbol: dict(status="trading", can_buy=can_buy, can_sell=can_sell) for symbol in ("A", "B")}
+
+
 def fill(side, quantity, price=10, day=1, commission=0):
     return Fill("fixture", pd.Timestamp(f"2024-01-{day:02}"), "A", side, quantity, price, commission, 0)
 
@@ -24,7 +29,7 @@ def test_sell_before_buy_is_order_invariant():
         orders = orders_for(ledger, target(B=1), b)
         if reverse:
             orders.reverse()
-        execute_open(orders, {"A": 10, "B": 10}, {}, ledger, spec_case(b).execution)
+        execute_open(orders, {"A": 10, "B": 10}, trading_status(), ledger, spec_case(b).execution)
         final = ledger.snapshot(pd.Timestamp("2024-01-02"))
         assert final.shares == {"A": 0, "B": 100}
         assert final.cash == pytest.approx(0, abs=1e-8)
@@ -59,11 +64,11 @@ def test_sell_failure_does_not_prefund_buy_and_fees_reduce_quantity():
     ledger.mark(pd.Timestamp("2024-01-01"), {"A": 10}, {}, 0)
     b = bundle_case(symbols=("A", "B"))
     orders = orders_for(ledger, target(B=1), b)
-    assert execute_open(orders, {"A": 10, "B": 10}, {"A": {"can_sell": False}}, ledger, spec_case(b).execution) == []
+    assert execute_open(orders, {"A": 10, "B": 10}, trading_status(can_sell=False), ledger, spec_case(b).execution) == []
     assert all(o.status == "expired" for o in orders)
     ledger = PortfolioLedger(1000)
     orders = orders_for(ledger, target(A=1), b)
-    fills = execute_open(orders, {"A": 10}, {}, ledger, spec_case(b, execution={"minimum_commission": 5}).execution)
+    fills = execute_open(orders, {"A": 10}, trading_status(), ledger, spec_case(b, execution={"minimum_commission": 5}).execution)
     assert fills[0].quantity == 99 and ledger.cash == 5
     assert orders[0].quantity == 100 and orders[0].filled_quantity == 99 and orders[0].expired_quantity == 1
 
@@ -77,7 +82,7 @@ def test_full_exit_sells_integer_odd_lot_after_split():
     ledger.mark(pd.Timestamp("2024-01-01"), {"A": 10 / 1.5}, {}, 0)
     orders = orders_for(ledger, target(), b, {"A": 10 / 1.5})
     assert orders[0].quantity == 150
-    execute_open(orders, {"A": 10 / 1.5}, {}, ledger, spec_case(b).execution)
+    execute_open(orders, {"A": 10 / 1.5}, trading_status(), ledger, spec_case(b).execution)
     assert ledger.snapshot(pd.Timestamp("2024-01-02")).shares["A"] == 0
 
 
@@ -89,7 +94,7 @@ def test_partial_settlement_expires_remainder_without_overselling():
     ledger.mark(pd.Timestamp("2024-01-02"), {"A": 10}, {}, 0)
     orders = orders_for(ledger, target(), b)
     orders[0].source, orders[0].reason = "risk", "risk_pause"
-    fills = execute_open(orders, {"A": 10}, {}, ledger, spec_case(b).execution)
+    fills = execute_open(orders, {"A": 10}, trading_status(), ledger, spec_case(b).execution)
     assert fills[0].quantity == 40
     assert orders[0].expired_quantity == 60
     assert orders[0].reason == "insufficient_sellable"
@@ -103,7 +108,7 @@ def test_buy_allocation_is_proportional_and_deterministic_after_gap():
         orders = orders_for(ledger, target(A=.5, B=.5), b)
         if reverse:
             orders.reverse()
-        fills = execute_open(orders, {"A": 12, "B": 12}, {}, ledger, spec_case(b).execution)
+        fills = execute_open(orders, {"A": 12, "B": 12}, trading_status(), ledger, spec_case(b).execution)
         assert {f.symbol: f.quantity for f in fills} == {"A": 42, "B": 41}
         assert ledger.cash == 4
 
@@ -123,16 +128,16 @@ def test_expired_orders_never_retry_and_side_bans_apply():
     b = bundle_case()
     ledger = PortfolioLedger(1000)
     orders = orders_for(ledger, target(A=1), b)
-    assert execute_open(orders, {"A": 10}, {"A": {"can_buy": False}}, ledger, spec_case(b).execution) == []
+    assert execute_open(orders, {"A": 10}, trading_status(can_buy=False), ledger, spec_case(b).execution) == []
     assert orders[0].reason == "cannot_buy"
-    assert execute_open(orders, {"A": 10}, {}, ledger, spec_case(b).execution) == []
+    assert execute_open(orders, {"A": 10}, trading_status(), ledger, spec_case(b).execution) == []
 
 
 def test_favorable_gap_cannot_enlarge_request_and_slippage_is_auditable():
     b = bundle_case()
     ledger = PortfolioLedger(1000)
     orders = orders_for(ledger, target(A=1), b)
-    fills = execute_open(orders, {"A": 8}, {}, ledger, spec_case(b, execution={"slippage_rate": .01}).execution)
+    fills = execute_open(orders, {"A": 8}, trading_status(), ledger, spec_case(b, execution={"slippage_rate": .01}).execution)
     assert fills[0].quantity == 100
     assert fills[0].price == pytest.approx(8.08, abs=1e-8)
     assert fills[0].slippage_cost == pytest.approx(8, abs=1e-8)
@@ -154,7 +159,7 @@ def test_actual_cap_reduction_after_odd_lot_split_sells_one_legal_lot():
     orders = orders_for(ledger, decision.intent, b, {"A": 10 / 1.5})
     assert len(orders) == 1 and orders[0].quantity == 100
     assert not orders[0].full_exit
-    execute_open(orders, {"A": 10 / 1.5}, {}, ledger, spec_case(b).execution)
+    execute_open(orders, {"A": 10 / 1.5}, trading_status(), ledger, spec_case(b).execution)
     portfolio = ledger.snapshot(pd.Timestamp("2024-01-02"))
     assert portfolio.shares["A"] == 50
     assert portfolio.market_values["A"] / portfolio.equity <= .8
@@ -165,7 +170,7 @@ def test_reserved_interest_cash_cannot_be_spent_before_close():
     ledger = PortfolioLedger(990)
     orders = orders_for(ledger, target(A=1), b)
     ledger.reserve_cash(9.9)
-    fills = execute_open(orders, {"A": 10}, {}, ledger, spec_case(b).execution)
+    fills = execute_open(orders, {"A": 10}, trading_status(), ledger, spec_case(b).execution)
     assert fills[0].quantity == 98
     assert ledger.cash == 10 and ledger.available_cash == pytest.approx(.1, abs=1e-8)
     ledger.apply_event(dict(event_type="interest", amount=-9.9))

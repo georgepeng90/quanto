@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T04 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T05 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -38,7 +38,7 @@
 
 | 阶段 | 任务 | 可独立检查的成果 | 阶段通过条件 |
 |---|---|---|---|
-| I 基线、对象与数据基础 | T00–T04 | 原 ETF 行为证据、身份、版本存储、声明式数据入口、时点/特征接口 | 无代码猜身份；无未来信息进入视图；原文件不变 |
+| I 基线、对象与数据基础 | T00–T05 | 原 ETF 行为证据、身份、版本存储、声明式数据入口、时点/特征接口 | 无代码猜身份；无未来信息进入视图；原文件不变 |
 | II 决策与运行接线 | T05–T09 | 统一执行、ETF 学习定义、能力解析、模型关联、冻结提交 | 两路账本一致；ETF 行为等价；缺能力明确阻塞 |
 | III 工作台闭环 | T10–T13 | 结果、四域页面、CLI、历史重用及发布验收 | A01–A18 有真实测试证据，前后端整套切换 |
 
@@ -191,7 +191,7 @@ T04 验证：时点视图、特征、端到端无未来数据、原 ETF 冻结�
 
 **Interfaces:** 产出 `TradingDefinition`，声明参数 schema、需求、可缩放成本及受控 `fees(fill_input: Mapping[str, object]) -> Mapping[str, float]`、`eligibility(state: Mapping[str, object]) -> Mapping[str, object]`、`events(rows: pd.DataFrame) -> tuple[Mapping[str, object], ...]`；返回 schema 严格，只有引擎写账本。`FixedStrategyDefinition` 在 base.py 包含 manifest/实现引用、`resolve_requirements(params: Mapping[str, object], basket: FrozenBasketRevision, interval: ResearchInterval) -> DataRequirements`、共享 feature 引用/唯一参数映射、允许 trading refs。特征、学习、交易定义使用同一需求签名。SessionRunner 构造增加 keyword-only `trading_definition`、`asset_binding`、`feature_definition`（可 None）；StrategyContext 新增只读 data_view/features/instruments，保留 should_evaluate/on_close。
 
-- [ ] 审查交易/风险旧测试有效性。添加周决策间每日风控、Hold 不再平衡、空目标现金、未列持仓归零、未知状态/终止事件、费用/事件仅计一次、ETF 执行等价测试：
+- [x] 审查交易/风险旧测试有效性。添加周决策间每日风控、Hold 不再平衡、空目标现金、未列持仓归零、未知状态/终止事件、费用/事件仅计一次、ETF 执行等价测试：
   ```python
   assert hold_without_risk.shares == original_shares
   assert hold_with_risk.approved_weights != hold_with_risk.requested_weights
@@ -200,10 +200,12 @@ T04 验证：时点视图、特征、端到端无未来数据、原 ETF 冻结�
   assert adjusted_result.dividend_cash_entries == 0
   assert raw_result.dividend_event_count == 1
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/unit/test_trading_definitions.py tests/unit/test_strategy_contract.py tests/unit/test_strategy_templates.py tests/unit/test_order_ledger.py tests/unit/test_risk_policy.py -q`，确认定义接线缺失导致失败。
-- [ ] 注册现有 ETF 执行语义，明确研究假设与真实状态要求；原参数字段仍为费用唯一来源。把费用/资格/事件通过受控调用点传给现有订单/账本，保留日历、next-open、估值和风控顺序。固定模板显式声明 ETF 类型/需求及空共享特征。合成股票定义仅通过测试依赖注入；不支持退出事件在预检阻塞或运行失败，保留诊断不发布完整收益。
-- [ ] 重跑同一命令通过；差异审核确认没有第二套现金/持仓模拟，不能通过 features 重建“可买”事实。
-- [ ] 审核并提交：`feat: route fixed decisions through explicit trading definitions`。
+- [x] 运行 `uv run --no-sync pytest tests/unit/test_trading_definitions.py tests/unit/test_strategy_contract.py tests/unit/test_strategy_templates.py tests/unit/test_order_ledger.py tests/unit/test_risk_policy.py -q`，确认定义接线缺失导致失败。
+- [x] 注册现有 ETF 执行语义，明确研究假设与真实状态要求；原参数字段仍为费用唯一来源。把费用/资格/事件通过受控调用点传给现有订单/账本，保留日历、next-open、估值和风控顺序。固定模板显式声明 ETF 类型/需求及空共享特征。合成股票定义仅通过测试依赖注入；不支持退出事件在预检阻塞或运行失败，保留诊断不发布完整收益。
+- [x] 重跑同一命令通过；差异审核确认没有第二套现金/持仓模拟，不能通过 features 重建“可买”事实。
+- [x] 审核并提交：`feat: route fixed decisions through explicit trading definitions`。
+
+T05 验证：定义、固定策略、订单、每日风险、冻结 ETF 基准、无未来数据、学习环境、数据契约、注册及作业快照共 255 项通过。新增 `tests/unit/test_trading_runtime.py` 验证完整接线；内部合成股票夹具证明费用与公司行动仍只记入现有账本，未注册为真实方案。独立执行审核提出的拒单原因丢失由失败测试复现并修复；执行事件按请求区间筛选，未知且无日期的事件仍拒绝。费用继续以现有 execution 参数为唯一来源，三项原可缩放费用完整保留。新策略修订先验证完整声明再发布；历史修订保持读取，归档研究源文件与哈希不改写。原订单测试补充显式交易状态，分配与记账断言保持有效；共享 schema 校验从参数值校验中抽出，允许定义必填且无默认值的参数。现有 ledger 与 risk policy 无需改动。公共入口的严格切换仍属于 T09。
 
 ## T06 ETF 学习定义、特征变换及等价证据
 

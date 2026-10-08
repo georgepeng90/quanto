@@ -67,29 +67,9 @@ class WorkbenchStore:
         if not config_path.exists():
             config_path.write_text(json.dumps({"artifact_root": str(self.artifact_root)}, ensure_ascii=False), encoding="utf-8")
         self.db_path = self.root / "workbench.sqlite3"
+        from quanto.workbench.migrations import migrate_schema
         with self.transaction() as db:
-            db.executescript("""
-                CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);
-                CREATE TABLE IF NOT EXISTS datasets (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS dataset_market_sources (dataset_version_id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, manifest_digest TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS strategies (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS experiments (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload_json TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, job_id TEXT NOT NULL UNIQUE, experiment_id TEXT NOT NULL, experiment_revision INTEGER NOT NULL, manifest_path TEXT NOT NULL, manifest_hash TEXT NOT NULL, source TEXT NOT NULL, parent_run_id TEXT, group_id TEXT);
-                CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK (kind IN ('backtest','demo','fetch','import','validate_strategy')), state TEXT NOT NULL, run_id TEXT UNIQUE, enqueue_seq INTEGER NOT NULL UNIQUE, artifact_root TEXT NOT NULL, pid INTEGER, process_start TEXT, heartbeat TEXT, completed_through TEXT, error TEXT, input_path TEXT, created_at TEXT, started_at TEXT, finished_at TEXT);
-                CREATE TABLE IF NOT EXISTS idempotency (key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, run_ids_json TEXT NOT NULL);
-            """)
-            if db.execute("SELECT count(*) FROM schema_version").fetchone()[0] == 0:
-                db.execute("INSERT INTO schema_version VALUES (1)")
-            elif db.execute("SELECT version FROM schema_version").fetchone()[0] != 1:
-                raise ValueError("unsupported workbench schema version")
-            if "input_path" not in {row[1] for row in db.execute("PRAGMA table_info(jobs)")}:
-                db.execute("ALTER TABLE jobs ADD COLUMN input_path TEXT")
-            columns = {row[1] for row in db.execute("PRAGMA table_info(jobs)")}
-            for column in ("created_at", "started_at", "finished_at"):
-                if column not in columns:
-                    db.execute(f"ALTER TABLE jobs ADD COLUMN {column} TEXT")
-            from quanto.learning.registry import migrate_learning_schema
-            migrate_learning_schema(db)
+            migrate_schema(db)
 
     @property
     def market_root(self) -> Path:
@@ -100,6 +80,9 @@ class WorkbenchStore:
         db = sqlite3.connect(self.db_path, timeout=30, isolation_level=None)
         db.row_factory = sqlite3.Row
         try:
+            db.execute("PRAGMA foreign_keys=ON")
+            if db.execute("PRAGMA foreign_keys").fetchone()[0] != 1:
+                raise RuntimeError("SQLite foreign keys could not be enabled")
             db.execute("BEGIN IMMEDIATE")
             yield db
             db.commit()

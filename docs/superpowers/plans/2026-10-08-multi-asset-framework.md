@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00、T01 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T02 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -125,7 +125,7 @@ T01 验证：新增契约、既有市场契约及 ETF 冻结基准共 56 项通�
 
 **Interfaces:** 消费 T01。产出 `migrate_schema(db: sqlite3.Connection) -> None`；`BasketStore.create(name: str, members: tuple[InstrumentId, ...], selection_note: str, key: str) -> FrozenBasketRevision`、`revise(basket_id: str, expected_revision: int, members: tuple[InstrumentId, ...], selection_note: str) -> FrozenBasketRevision`、`get(ref: BasketRevisionRef) -> FrozenBasketRevision`；`BindingStore.get_asset_binding(dataset_id: str) -> AssetBinding`。均通过现有 WorkbenchStore 连接和事务使用。
 
-- [ ] 审查当前 schema_version=1 初始化逻辑及 registry 建表顺序；在测试工作区副本构造 v1 数据库和原文件指纹。测试两次迁移、失败回滚、引用不存在、两个编辑者 CAS、并发重复创建：
+- [x] 审查当前 schema_version=1 初始化逻辑及 registry 建表顺序；在测试工作区副本构造 v1 数据库和原文件指纹。测试两次迁移、失败回滚、引用不存在、两个编辑者 CAS、并发重复创建：
   ```python
   assert repeated_create.basket_id == first_create.basket_id
   assert stale_revision_response.status_code == 409
@@ -133,10 +133,12 @@ T01 验证：新增契约、既有市场契约及 ETF 冻结基准共 56 项通�
   assert hashes_after_migration == hashes_before_migration
   assert schema_version_after_injected_failure == 1
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/integration/test_framework_storage.py tests/integration/test_workbench_revisions.py -q`，确认新行为失败。
-- [ ] 实现显式 v1→v2 事务迁移；新增设计 8.1 的四张表和窄用途 `framework_idempotency(scope, key, fingerprint, response_json)`（联合主键 scope/key）。不把篮子 ID 写进旧 run_ids_json。将 store 初始化的 executescript 改为事务内逐条 execute，避免隐式提交；创建连接后、BEGIN 前设置并核验 foreign_keys=ON。新库与 v1 升级均先建基础表、执行现有 migrate_learning_schema 建模型表，再建框架 FK 表，最后更新版本号；在 DDL 与版本更新间注入失败。篮子首修订与头指针原子发布，修订只增不改；同幂等键异 payload 冲突。
-- [ ] 重跑上述命令，全部通过；故障注入须证明元数据/版本号一起回滚，未改动原数据和产物。绑定只能首次登记，同内容返回原记录，不提供修改/删除入口。
-- [ ] 审核并提交：`feat: persist versioned baskets and immutable bindings`。
+- [x] 运行 `uv run --no-sync pytest tests/integration/test_framework_storage.py tests/integration/test_workbench_revisions.py -q`，确认新行为失败。
+- [x] 实现显式 v1→v2 事务迁移；新增设计 8.1 的四张表和窄用途 `framework_idempotency(scope, key, fingerprint, response_json)`（联合主键 scope/key）。不把篮子 ID 写进旧 run_ids_json。将 store 初始化的 executescript 改为事务内逐条 execute，避免隐式提交；创建连接后、BEGIN 前设置并核验 foreign_keys=ON。新库与 v1 升级均先建基础表、执行现有 migrate_learning_schema 建模型表，再建框架 FK 表，最后更新版本号；在 DDL 与版本更新间注入失败。篮子首修订与头指针原子发布，修订只增不改；同幂等键异 payload 冲突。
+- [x] 重跑上述命令，全部通过；故障注入须证明元数据/版本号一起回滚，未改动原数据和产物。绑定只能首次登记，同内容返回原记录，不提供修改/删除入口。
+- [x] 审核并提交：`feat: persist versioned baskets and immutable bindings`。
+
+验证记录：存储/修订聚焦测试 26 项通过；学习作业、模型作业、生命周期和旧工作区导入 55 项通过。独立工程审核无阻断。T02 保留已有 learning schema 迁移实现，调整其事务调用顺序；HTTP 冲突映射在 T09 新路由接入时验证。可信证据与全部 symbol 覆盖校验按计划由 T03 正式绑定入口承担。
 
 ## T03 数据入口保留规范身份与来源证据
 

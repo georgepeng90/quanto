@@ -9,7 +9,7 @@ from quanto.workbench.service import WorkbenchService
 from tests.fixtures.market_dataset_cases import research_market
 
 
-PAYLOAD = {"symbols": ["000001"], "start_date": "2024-01-01", "end_date": "2024-01-05"}
+PAYLOAD = {"instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "000001"}], "start_date": "2024-01-01", "end_date": "2024-01-05"}
 
 
 def prepared_job(tmp_path, monkeypatch, mode="complete"):

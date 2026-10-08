@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 
 from quanto.api.app import create_app
 from tests.fixtures.investing_training_cases import investing_case
+from tests.fixtures.framework_imports import fixture_identity_evidence
 
 
 @pytest.fixture
@@ -25,7 +26,9 @@ def model_workspace(tmp_path, monkeypatch):
         frame = pd.read_csv(path, dtype={'symbol': str})
         pd.concat([frame, frame.assign(symbol='000002')], ignore_index=True).to_csv(path, index=False)
     app = create_app(tmp_path / 'workspace')
-    dataset = app.state.service.store.register_dataset(tmp_path / 'data')
+    source = tmp_path / 'data'
+    dataset = app.state.service.store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
+    spec['backtest']['symbols'] = ['SZSE:etf:000001']
     client = TestClient(app, base_url='http://127.0.0.1')
     headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
     return app, client, headers, {'dataset_id': dataset.id, 'spec': spec}
@@ -33,12 +36,12 @@ def model_workspace(tmp_path, monkeypatch):
 
 def test_model_creation_persists_without_training_and_keeps_order(model_workspace):
     app, client, headers, request = model_workspace
-    request['spec']['backtest']['symbols'] = ['000002', '000001']
+    request['spec']['backtest']['symbols'] = ['SZSE:etf:000002', 'SZSE:etf:000001']
     response = client.post('/api/investing/models', headers=headers, json=request)
     assert response.status_code == 200, response.text
     model = response.json()
     assert model['state'] == 'untrained'
-    assert model['spec']['backtest']['symbols'] == ['000002', '000001']
+    assert model['spec']['backtest']['symbols'] == ['SZSE:etf:000002', 'SZSE:etf:000001']
     assert model['spec']['action_version'] == 'hold-target-cash-quartiles-v2'
     assert model['total_timesteps'] == model['session_count'] == model['version_count'] == 0
     assert model['latest_version_id'] is None
@@ -81,7 +84,7 @@ def test_existing_model_without_action_version_queues_legacy_continuation(model_
 
 def test_create_rejects_invalid_basket_and_bad_research_without_queueing(model_workspace):
     app, client, headers, request = model_workspace
-    for symbols in ([], ['000001', '000001'], ['MISSING']):
+    for symbols in ([], ['SZSE:etf:000001', 'SZSE:etf:000001'], ['MISSING']):
         invalid = {**request, 'spec': {**request['spec'], 'backtest': {**request['spec']['backtest'], 'symbols': symbols}}}
         assert client.post('/api/investing/models', headers=headers, json=invalid).status_code == 422
     invalid = {**request, 'spec': {**request['spec'], 'episode_sessions': 5000}}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from contextlib import contextmanager
 import json
@@ -92,39 +93,30 @@ class WorkbenchStore:
         finally:
             db.close()
 
-    def register_dataset(self, bundle_dir: Path) -> DatasetVersion:
+    def register_dataset(self, bundle_dir: Path, *, identity_evidence: Mapping[str, object]) -> DatasetVersion:
+        from quanto.data.dataset_identity import (ImportIdentityEvidence, canonicalize_import, declared_dataset_files,
+                                                  file_digests, import_binding, publish_import_evidence)
+        from quanto.workbench.bindings import BindingStore
         source = Path(bundle_dir)
-        if source.is_symlink():
-            raise ValueError("symbolic links are not snapshot inputs")
-        manifest_path = source / "manifest.json"
-        if manifest_path.is_symlink():
-            raise ValueError("symbolic links are not snapshot inputs")
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        names = {"manifest.json"}
-        for table in ("prices", "benchmark", "calendar", "instruments", "status", "events"):
-            name = next((f"{table}.{suffix}" for suffix in ("parquet", "csv") if (source / f"{table}.{suffix}").exists()), None)
-            if name is None:
-                raise FileNotFoundError(source / f"{table}.csv")
-            names.add(name)
-        names.update(manifest.get("auxiliary_tables", {}).values())
-        for name in names:
-            safe_name(name)
-            path = source / name
-            if path.is_symlink() or not path.is_file() or any(parent.is_symlink() for parent in path.parents if parent != source and source in parent.parents):
-                raise ValueError("symbolic links are not snapshot inputs")
-        before = {name: (source / name).read_bytes() for name in sorted(names)}
-        bundle = load_dataset(source)
+        before = declared_dataset_files(source)
+        evidence = ImportIdentityEvidence.model_validate(identity_evidence)
+        if dict(evidence.input_files) != file_digests(before):
+            raise ValueError("IDENTITY_UNRESOLVED: import evidence input file hash mismatch")
+        bundle = canonicalize_import(load_dataset(source), evidence)
         identity = str(uuid4())
         with tempfile.TemporaryDirectory(prefix="quanto-parquet-") as directory:
             normalized = Path(directory)
             write_parquet_dataset(bundle, normalized)
+            publish_import_evidence(normalized, evidence)
             target, hashes = publish_files(self.root / "datasets", identity, source_files(normalized))
-        if {name: (source / name).read_bytes() for name in sorted(names)} != before:
+        if declared_dataset_files(source) != before:
             raise ValueError("dataset changed during registration")
         manifest = json.loads((target / "manifest.json").read_text(encoding="utf-8"))
         content_hash = digest(json_bytes(hashes))
+        binding = import_binding(identity, content_hash, target, bundle)
         with self.transaction() as db:
             db.execute("INSERT INTO datasets VALUES (?, ?, ?, ?)", (identity, str(target), content_hash, json_bytes(manifest).decode()))
+            BindingStore(self)._insert_asset_binding(db, binding)
         return DatasetVersion(identity, target, content_hash, manifest)
 
     def register_strategy(self, files: dict[str, bytes], manifest: dict) -> StrategyRevision:
@@ -274,7 +266,7 @@ class WorkbenchStore:
         job = self.get_job(identity)
         if job.state != "running":
             return False
-        manifest, hashes, market_ref = None, None, None
+        manifest, hashes, market_ref, binding = None, None, None, None
         if result.get("state") == "complete":
             bundle = load_dataset(bundle_path)
             manifest = bundle.manifest.model_dump(mode="json")
@@ -283,6 +275,13 @@ class WorkbenchStore:
                 from quanto.workbench.data_jobs import validate_market_result
                 frozen = json.loads(Path(job.input_path).read_text(encoding="utf-8"))
                 market_ref = validate_market_result(frozen["input"], result, bundle)
+                from quanto.data import MarketData
+                from quanto.backtest.market_dataset import market_asset_binding
+                with MarketData(Path(frozen["input"]["market_root"]), providers=()) as market:
+                    binding = market_asset_binding(identity, digest(json_bytes(hashes)), bundle, market, market_ref)
+            else:
+                from quanto.data.dataset_identity import import_binding
+                binding = import_binding(identity, digest(json_bytes(hashes)), bundle_path, bundle)
         elif result.get("state") != "incomplete":
             raise ValueError("invalid data result state")
         with self.transaction() as db:
@@ -291,6 +290,8 @@ class WorkbenchStore:
                 return False
             if manifest is not None:
                 db.execute("INSERT INTO datasets VALUES (?,?,?,?)", (identity, str(bundle_path), digest(json_bytes(hashes)), json_bytes(manifest).decode()))
+                from quanto.workbench.bindings import BindingStore
+                BindingStore(self)._insert_asset_binding(db, binding)
                 if market_ref is not None:
                     db.execute("INSERT INTO dataset_market_sources VALUES (?,?,?)", (identity, market_ref.id, market_ref.manifest_digest))
             db.execute("UPDATE jobs SET state='succeeded', finished_at=? WHERE id=? AND state='running'", (utc_now(), identity))

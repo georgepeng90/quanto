@@ -6,7 +6,7 @@ from quanto.data.contracts import MarketDataError
 from tests.fixtures.market_dataset_cases import research_market
 
 
-PAYLOAD = {"symbols": ["000001"], "start_date": "2024-01-01", "end_date": "2024-01-05"}
+PAYLOAD = {"instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "000001"}], "start_date": "2024-01-01", "end_date": "2024-01-05"}
 
 
 def test_market_assembly_preserves_full_history_and_next_session(tmp_path):
@@ -76,7 +76,7 @@ def test_offline_factual_assembly_matches_daily_tables_orders_and_reports(tmp_pa
                 session_start=(days + pd.Timedelta(hours=9, minutes=30)).dt.tz_convert("UTC"),
                 session_end=(days + pd.Timedelta(hours=15)).dt.tz_convert("UTC")))
         elif request.kind.startswith("auxiliary:"):
-            frames[request.series_key] = pd.DataFrame(dict(available_at=[pd.Timestamp("2024-01-02T10:00:00Z")], symbol=["000001"], score=[1]))
+            frames[request.series_key] = pd.DataFrame(dict(available_at=[pd.Timestamp("2024-01-02T10:00:00Z")], symbol=["SZSE:etf:000001"], score=[1]))
         else:
             frame = {"instruments": old.instruments, "trading_status": old.status, "corporate_actions": old.events}[request.kind]
             frames[request.series_key] = frame.rename(columns={"symbol": "instrument_id", "date": "trading_date"}).assign(instrument_id="SZSE:etf:000001")
@@ -90,6 +90,15 @@ def test_offline_factual_assembly_matches_daily_tables_orders_and_reports(tmp_pa
                 import_table(market.store, market.catalog, request, frames[request.series_key], source, b"declared synthetic facts")
         ref = market.wait_ready(market.prefetch(requirement).id, 10)
         new = assemble_dataset(market, ref, requirement, {"universe_rule": old.manifest.universe_rule})
+    # Identity changes explicitly; the daily numerical/account semantics stay the same.
+    from dataclasses import replace
+    from quanto.backtest.dataset_loaders import validate_dataset
+    changes = {}
+    for name in ("prices", "instruments", "status", "events"):
+        frame = getattr(old, name).copy()
+        frame["symbol"] = frame.symbol.map({"000001": "SZSE:etf:000001"})
+        changes[name] = frame
+    old = validate_dataset(replace(old, **changes))
     for name in ("prices", "benchmark", "calendar", "instruments", "status", "events", "eligibility"):
         assert_frame_equal(getattr(new, name), getattr(old, name), check_dtype=False)
     assert new.auxiliary["signals"].available_at.iloc[0] == pd.Timestamp("2024-01-02T10:00:00Z")

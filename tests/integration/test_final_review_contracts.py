@@ -14,6 +14,7 @@ from quanto.strategies.base import TargetPortfolio
 from quanto.workbench.service import WorkbenchService, _typed_row
 from quanto.workbench.results import compare_runs
 from tests.fixtures.engine_cases import bundle_case, spec_case, ScriptedStrategy
+from tests.fixtures.framework_imports import fixture_identity_evidence
 from tests.integration.test_snapshot_submission import _ready
 
 
@@ -138,9 +139,9 @@ def test_real_worker_api_and_exports_retain_signal_targets_and_demo_identity(tmp
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest.update(is_demo=True, limitations=[])
     manifest_path.write_text(json.dumps(manifest))
-    demo = store.register_dataset(source)
+    demo = store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
     declaration = original_strategy.manifest
-    strategy = store.register_strategy({"strategy.json": json.dumps(declaration).encode(), "helper.py": b"value=1", "strategy.py": b"from quanto.strategies.base import TargetPortfolio\nclass Strategy:\n    warmup_bars=0\n    def should_evaluate(self, ctx): return True\n    def on_close(self, ctx): return TargetPortfolio({'000001':1.0}, {'000001':'original'}, {'score':42})\ndef create_strategy(params): return Strategy()\n"}, declaration)
+    strategy = store.register_strategy({"strategy.json": json.dumps(declaration).encode(), "helper.py": b"value=1", "strategy.py": b"from quanto.strategies.base import TargetPortfolio\nclass Strategy:\n    warmup_bars=0\n    def should_evaluate(self, ctx): return True\n    def on_close(self, ctx): return TargetPortfolio({'SZSE:etf:000001':1.0}, {'SZSE:etf:000001':'original'}, {'score':42})\ndef create_strategy(params): return Strategy()\n"}, declaration)
     payload = copy.deepcopy(draft.payload)
     payload.update(dataset_version_id=demo.id, strategy_revision_id=strategy.id)
     payload["backtest_spec"]["risk"]["max_symbol_weight"] = .5
@@ -154,8 +155,8 @@ def test_real_worker_api_and_exports_retain_signal_targets_and_demo_identity(tmp
     assert result["metadata"]["is_demo"] is True
     assert result["metadata"]["source"] == manifest["source"]
     signals = client.get(f"/api/runs/{run.run_id}/tables/signals", headers=headers).json()["items"]
-    assert signals[0]["weights"] == {"000001": 1.0}
-    assert signals[0]["approved_weights"] == {"000001": .5}
+    assert signals[0]["weights"] == {"SZSE:etf:000001": 1.0}
+    assert signals[0]["approved_weights"] == {"SZSE:etf:000001": .5}
     assert signals[0]["diagnostics"] == {"score": 42}
     logs = client.get(f"/api/runs/{run.run_id}/logs", headers=headers).json()["items"]
     day = next(item for item in logs if item["code"] == "DAY_COMPLETED")
@@ -166,7 +167,7 @@ def test_real_worker_api_and_exports_retain_signal_targets_and_demo_identity(tmp
             assert json.loads(archive.read("metadata.json"))["is_demo"] is True
             if kind == "csv":
                 rows = list(csv.DictReader(io.StringIO(archive.read("signals.csv").decode())))
-                assert json.loads(rows[0]["approved_weights"]) == {"000001": .5}
+                assert json.loads(rows[0]["approved_weights"]) == {"SZSE:etf:000001": .5}
                 assert json.loads(rows[0]["diagnostics"]) == {"score": 42}
     html = client.get(f"/api/runs/{run.run_id}/exports/html", headers=headers).text
     assert '演示数据：合成绩效，不代表真实市场表现' in html

@@ -7,12 +7,18 @@ import numpy as np
 import pandas as pd
 
 
+SAMPLE_INSTRUMENTS = (
+    ("SSE", "512480"), ("SZSE", "159995"), ("SSE", "512760"),
+    ("SSE", "515790"), ("SSE", "512690"), ("SSE", "512170"),
+)
+
+
 def generate_sample_data(output_dir: str | Path, years: int = 6, seed: int = 7) -> tuple[Path, Path]:
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(seed)
     dates = pd.bdate_range("2018-01-02", periods=252 * years)
-    symbols = ["512480", "159995", "512760", "515790", "512690", "512170"]
+    symbols = [code for _, code in SAMPLE_INSTRUMENTS]
     rows: list[dict] = []
     for idx, symbol in enumerate(symbols):
         drift = 0.00015 + idx * 0.00002

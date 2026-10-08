@@ -435,7 +435,8 @@ class WorkbenchService:
         if not isinstance(payload, dict) or any(key in payload for key in ("path", "host_path", "source_root", "handler", "workspace", "_output_dir")):
             raise ValueError("host paths and handlers are not accepted")
         if kind == "fetch":
-            allowed = {"symbols", "start_date", "end_date", "historical_start", "price_mode", "auxiliary", "research_assumptions", "refresh"}
+            from quanto.workbench.framework_requests import FetchRequest
+            allowed = {*FetchRequest.model_fields, "refresh"}
             if set(payload) - allowed or type(payload.get("refresh", False)) is not bool:
                 raise ValueError("fetch accepts data requirements and refresh only")
             from quanto.backtest.market_dataset import build_data_requirement

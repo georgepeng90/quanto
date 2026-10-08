@@ -6,6 +6,7 @@ import pytest
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.workbench.store import WorkbenchStore
 from tests.fixtures.backtest_cases import dataset_case
+from tests.fixtures.framework_imports import fixture_identity_evidence
 
 
 def test_draft_revision_conflict_keeps_first_save(tmp_path):
@@ -25,10 +26,10 @@ def test_registered_parquet_dataset_preserves_leading_zero_symbol(tmp_path):
         pd.read_csv(path, dtype={"symbol": str}).to_parquet(source / f"{name}.parquet", index=False)
         path.unlink()
     store = WorkbenchStore(tmp_path / "workbench")
-    version = store.register_dataset(source)
+    version = store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
     loaded = load_dataset(version.path)
-    assert loaded.prices.iloc[0].symbol == "000001"
-    assert loaded.instruments.iloc[0].symbol == "000001"
+    assert loaded.prices.iloc[0].symbol == "SZSE:etf:000001"
+    assert loaded.instruments.iloc[0].symbol == "SZSE:etf:000001"
     assert loaded.price_mode == "raw_cash"
     assert json.loads((version.path / "manifest.json").read_text())["data_start"] == "2024-01-01"
 
@@ -37,7 +38,7 @@ def test_dataset_registration_excludes_unrelated_secret_file(tmp_path):
     source = dataset_case(tmp_path / "source")
     (source / ".env").write_text("TOKEN=private")
     store = WorkbenchStore(tmp_path / "workbench")
-    version = store.register_dataset(source)
+    version = store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
     assert not (version.path / ".env").exists()
     assert (source / ".env").read_text() == "TOKEN=private"
 

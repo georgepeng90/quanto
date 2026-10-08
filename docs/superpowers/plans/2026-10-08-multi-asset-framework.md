@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T02 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T03 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -146,7 +146,7 @@ T01 验证：新增契约、既有市场契约及 ETF 冻结基准共 56 项通�
 
 **Interfaces:** 保留 `build_data_requirement(payload: dict) -> DataRequirement`、`assemble_dataset(...) -> DatasetBundle` 的调用职责，payload 改用 T01 FetchRequest 的显式身份。扩展 `WorkbenchStore.register_dataset(bundle_dir: Path, *, identity_evidence: Mapping[str, object]) -> DatasetVersion`；产出 `BindingStore.bind_dataset(dataset_id: str, evidence_ref: str, key: str) -> AssetBinding`。evidence_ref 只能指向该数据对象登记的可信源记录或导入资料。AssetBinding 的 `table_semantics` 同时冻结表语义 ID/版本、schema/时间规则、证据引用与声明摘要；纳入 binding_hash，旧数据通过附录登记，不修改其 manifest。
 
-- [ ] 修改旧测试中“六位代码自动 ETF”的过时输入。新增新数据恒等映射、旧数据来自市场快照的映射、超集数据、辅助表未知 symbol、伪造证据引用、登记故障回滚案例：
+- [x] 修改旧测试中“六位代码自动 ETF”的过时输入。新增新数据恒等映射、旧数据来自市场快照的映射、超集数据、辅助表未知 symbol、伪造证据引用、登记故障回滚案例：
   ```python
   assert set(new_bundle.prices.symbol) == set(canonical_ids)
   assert old_binding.assets[0].local_symbol == original_local_symbol
@@ -154,10 +154,12 @@ T01 验证：新增契约、既有市场契约及 ETF 冻结基准共 56 项通�
   assert benchmark_identity not in binding_trade_asset_ids
   assert failed_publication_dataset_count == initial_dataset_count
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/integration/test_asset_bindings.py tests/unit/test_market_dataset_assembly.py tests/integration/test_shared_dataset_snapshots.py tests/integration/test_market_workbench.py -q`，确认缺少映射和发布事务的测试失败。
-- [ ] 让请求/组装全程保留 InstrumentId；基准保留独立角色（现有基准表没有 symbol）。新对象及绑定同事务可见；文件先写暂存并核验再发布，失败无已注册的半成品。导入要求可审计身份资料；历史资料不足返回 `IDENTITY_UNRESOLVED`，不猜映射。更新所有 register_dataset 调用和测试夹具；不接入真实股票供应商。
-- [ ] 重跑同一命令通过；确认新数据原内容摘要和 binding_hash 分别保存，关联不重算或替换旧数据摘要。
-- [ ] 审核并提交：`feat: preserve instrument identity in dataset registration`。
+- [x] 运行 `uv run --no-sync pytest tests/integration/test_asset_bindings.py tests/unit/test_market_dataset_assembly.py tests/integration/test_shared_dataset_snapshots.py tests/integration/test_market_workbench.py -q`，确认缺少映射和发布事务的测试失败。
+- [x] 让请求/组装全程保留 InstrumentId；基准保留独立角色（现有基准表没有 symbol）。新对象及绑定同事务可见；文件先写暂存并核验再发布，失败无已注册的半成品。导入要求可审计身份资料；历史资料不足返回 `IDENTITY_UNRESOLVED`，不猜映射。更新所有 register_dataset 调用和测试夹具；不接入真实股票供应商。
+- [x] 重跑同一命令通过；确认新数据原内容摘要和 binding_hash 分别保存，关联不重算或替换旧数据摘要。
+- [x] 审核并提交：`feat: preserve instrument identity in dataset registration`。
+
+验证记录：数据入口/身份/共享快照/作业/ETF 基线 72 项通过，受影响的注册/模型/输出测试 70 项通过，公共契约/存储/数据加载器 75 项通过。量化数据审核发现的前导零、无行情停牌证券、扩展身份列及辅助表重名四项问题已用失败/通过测试修复，最终审核无阻断。新增 `data/dataset_identity.py` 集中导入证据及表声明；导入资料冻结为内容摘要覆盖的 `identity_evidence.json`。现有 `SourceRecord`、`SnapshotManifest`、`data.imports` 足以承载市场证据，无需重复协议。`sample_data.py` 仅显式声明合成证券身份；加载器提前修复 instrument_id 字符串读取。旧数据未提供可信资料时保持未绑定，已绑定对象重复登记返回原冻结语义。
 
 ## T04 时点数据、特征框架与变换接口
 

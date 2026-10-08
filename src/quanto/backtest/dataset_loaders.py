@@ -20,7 +20,7 @@ def _read_table(path: str | Path) -> pd.DataFrame:
     if path.suffix.lower() == ".parquet":
         return pd.read_parquet(path)
     if path.suffix.lower() == ".csv":
-        return pd.read_csv(path, dtype={"symbol": str})
+        return pd.read_csv(path, dtype={"symbol": str, "instrument_id": str})
     raise ValueError(f"Unsupported data format: {path}")
 
 

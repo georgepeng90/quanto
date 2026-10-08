@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from quanto.api.app import create_app
 from quanto.workbench.store import WorkbenchStore
+from tests.fixtures.framework_imports import fixture_identity_evidence
 
 
 @pytest.fixture(autouse=True)
@@ -79,8 +80,10 @@ def test_policy_submission_frozen_and_cancel_cannot_publish(tmp_path):
 def test_standalone_policy_training_queues_new_action_version(tmp_path):
     from tests.fixtures.investing_training_cases import investing_case
     spec, _ = investing_case(tmp_path / 'data')
+    spec['backtest']['symbols'] = ['SZSE:etf:000001']
     app = create_app(tmp_path / 'workspace')
-    dataset = app.state.service.store.register_dataset(tmp_path / 'data')
+    source = tmp_path / 'data'
+    dataset = app.state.service.store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
     client = TestClient(app, base_url='http://127.0.0.1')
     headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
     response = client.post('/api/investing/train', headers=headers, json={'dataset_id': dataset.id, 'spec': spec})
@@ -120,8 +123,10 @@ def test_supervised_policy_training_backtest_export_and_tamper(tmp_path):
     from quanto.investing.service import InvestingService
     from quanto.learning.registry import verify_ref
     spec, _ = investing_case(tmp_path / 'data')
+    spec['backtest']['symbols'] = ['SZSE:etf:000001']
     app = create_app(tmp_path / 'workspace')
-    dataset = app.state.service.store.register_dataset(tmp_path / 'data')
+    source = tmp_path / 'data'
+    dataset = app.state.service.store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
     with TestClient(app, base_url='http://127.0.0.1') as client:
         headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
 

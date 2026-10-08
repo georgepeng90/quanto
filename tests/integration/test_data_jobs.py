@@ -13,6 +13,7 @@ from quanto.backtest.dataset_loaders import load_dataset
 import quanto.workbench.data_jobs as data_jobs
 from tests.fixtures.market_dataset_cases import research_market
 from tests.fixtures.backtest_cases import dataset_case
+from tests.fixtures.framework_imports import fixture_identity_evidence
 
 
 def _fake_feed_in_frozen_job(service, job_id, mode):
@@ -40,7 +41,7 @@ def stock_zh_index_daily_em(symbol):
 @pytest.mark.parametrize("mode", ["complete", "prefix"])
 def test_fetch_job_publishes_verified_outcome_through_scheduler(tmp_path, mode):
     service = WorkbenchService(tmp_path / "data")
-    job_id = service.submit_job("fetch", {"symbols": ["000001"], "start_date": "2024-01-01",
+    job_id = service.submit_job("fetch", {"instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "000001"}], "start_date": "2024-01-01",
         "end_date": "2024-01-05", "refresh": False})["id"]
     _fake_feed_in_frozen_job(service, job_id, mode)
     service.scheduler.start(background=False)
@@ -75,7 +76,7 @@ def missing_days(result):
 
 def test_provider_runtime_error_reports_failed_market_state(tmp_path, monkeypatch):
     monkeypatch.setattr(data_jobs, "MarketData", lambda root: research_market(root, "broken"))
-    result = execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "symbols": ["000001"],
+    result = execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "000001"}],
         "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: False)
     assert result["state"] == "incomplete"
     assert result["market_prefetch_state"] == "failed"
@@ -86,7 +87,7 @@ def test_cancellation_during_market_preparation_is_not_incomplete(tmp_path, monk
     monkeypatch.setattr(data_jobs, "MarketData", lambda root: research_market(root))
     calls = iter([False, True])
     with pytest.raises(RuntimeError, match="CANCELLED"):
-        execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "symbols": ["000001"],
+        execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "000001"}],
             "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: next(calls))
 
 
@@ -124,12 +125,12 @@ def test_complete_fake_qfq_feed_maps_to_research_bundle(tmp_path, monkeypatch):
     monkeypatch.setattr(data_jobs, "MarketData", lambda root: research_market(root))
     output = tmp_path / "bundle"
     result = execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "_output_dir": str(output),
-        "symbols": ["000001"], "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: False)
+        "instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "000001"}], "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: False)
     assert result["state"] == "complete"
     assert result["market_prefetch_state"] == "ready"
     bundle = load_dataset(output)
     assert bundle.price_mode == "adjusted_research"
-    assert bundle.prices.symbol.iloc[0] == "000001"
+    assert bundle.prices.symbol.iloc[0] == "SZSE:etf:000001"
     assert bundle.manifest.calendar_end.isoformat() > "2024-01-05"
     assert result["market_snapshot_ref"]["id"] in bundle.manifest.source
     assert bundle.manifest.limitations
@@ -138,7 +139,7 @@ def test_complete_fake_qfq_feed_maps_to_research_bundle(tmp_path, monkeypatch):
 def test_prefix_only_feed_is_incomplete(tmp_path, monkeypatch):
     monkeypatch.setattr(data_jobs, "MarketData", lambda root: research_market(root, "prefix"))
     result = execute_data_job("fetch", {"workspace": str(tmp_path), "market_root": str(tmp_path / "market"), "_output_dir": str(tmp_path / "bundle"),
-        "symbols": ["000001"], "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: False)
+        "instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": "000001"}], "start_date": "2024-01-01", "end_date": "2024-01-05"}, lambda _: None, lambda: False)
     assert result["state"] == "incomplete"
     assert result["market_prefetch_state"] == "incomplete"
     assert missing_days(result) == ["2024-01-04", "2024-01-05"]
@@ -147,6 +148,7 @@ def test_prefix_only_feed_is_incomplete(tmp_path, monkeypatch):
 
 def test_import_job_uses_frozen_upload_and_registers_raw_cash(tmp_path):
     source = dataset_case(tmp_path / "source")
+    (source / "identity_evidence.json").write_text(json.dumps(fixture_identity_evidence(source)))
     archive = tmp_path / "dataset.zip"
     with zipfile.ZipFile(archive, "w") as output:
         for file in source.iterdir():
@@ -177,11 +179,17 @@ def test_import_nested_auxiliary_table_preserves_registered_file_hashes(tmp_path
     manifest = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
     manifest["auxiliary_tables"] = {"signals": "aux/signals.csv"}
     (source / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (source / "aux").mkdir()
+    (source / "aux/signals.csv").write_text("available_at,symbol,score\n2024-01-01T00:00:00Z,000001,1\n")
+    evidence = fixture_identity_evidence(source)
+    evidence["table_semantics"].append(dict(table="signals", semantic_id="fixture-signal", version="1",
+        schema_definition={"score": {"dtype": "float", "unit": "score"}}, temporal_rules={"availability_rule": "available_at"}, evidence_ref="fixture:declared-identities"))
+    (source / "identity_evidence.json").write_text(json.dumps(evidence))
     archive = tmp_path / "dataset.zip"
     with zipfile.ZipFile(archive, "w") as output:
-        for file in source.iterdir():
-            output.write(file, file.name)
-        output.writestr("aux/signals.csv", "available_at,symbol,score\n2024-01-01T00:00:00Z,000001,1\n")
+        for file in source.rglob("*"):
+            if file.is_file():
+                output.write(file, file.relative_to(source).as_posix())
     service = WorkbenchService(tmp_path / "data")
     upload_id = service.upload("dataset.zip", archive.read_bytes())
     identity = service.submit_job("import", {"upload_id": upload_id})["id"]

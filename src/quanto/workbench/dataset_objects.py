@@ -16,6 +16,12 @@ def _hashes(root: Path) -> dict[str, str]:
     return {name: _file_hash(path) for name, path in _paths(root).items()}
 
 
+def verify_dataset_version(version) -> Path:
+    if digest(json_bytes(_hashes(version.path))) != version.content_hash:
+        raise ValueError("registered dataset hash mismatch")
+    return version.path
+
+
 def verify_dataset_object(workspace: Path, ref: dict) -> Path:
     if not isinstance(ref, dict) or set(ref) != {"version_id", "content_hash", "files"}:
         raise ValueError("dataset reference invalid")

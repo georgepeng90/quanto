@@ -33,12 +33,16 @@
 
 ## Tasks
 
-- [ ] Implement and test `scripts/diagnose_policy_stagnation.py` with `tests/test_policy_stagnation_diagnostics.py`: deterministic/random action selection, action trace, null-preserving summaries, and real synthetic-account replay.
-- [ ] Implement and test `scripts/run_policy_lr_trial.py` with `tests/test_policy_lr_trial.py`: load optimizer and weights, apply actual learning rate, advance exact budget, keep paired sampling provenance, and preserve source artifacts.
-- [ ] Independently review scripts, run applicable existing evaluator/continuation tests, and commit verified research tooling.
-- [ ] Run the fixed diagnosis and both training arms; verify counts, hashes, initial metrics, timestep totals and paired seeds.
-- [ ] Commit compact evidence and a report distinguishing observations, hypotheses and limitations.
+- [x] Implement and test `scripts/diagnose_policy_stagnation.py` with `tests/test_policy_stagnation_diagnostics.py`: deterministic/random action selection, action trace, null-preserving summaries, and real synthetic-account replay.
+- [x] Implement and test `scripts/run_policy_lr_trial.py` with `tests/test_policy_lr_trial.py`: load optimizer and weights, apply actual learning rate, advance exact budget, keep paired sampling provenance, and preserve source artifacts.
+- [x] Independently review scripts, run applicable existing evaluator/continuation tests, and commit verified research tooling.
+- [x] Run the fixed diagnosis and both training arms; verify counts, hashes, initial metrics, timestep totals and paired seeds.
+- [x] Commit compact evidence and a report distinguishing observations, hypotheses and limitations.
 
 ## Execution notes
 
 The existing untracked `docs/planning-artifacts/prd.md` is unrelated and excluded from all commits. Work remains in the existing research workspace so source datasets and the installed environment can be reused. No product feature or model API is changed.
+
+Both arms completed exactly 50 sessions and exited successfully. The final ten evaluations in each arm had zero trades and undefined Sharpe; neither replaced round 36. All 50 paired training windows matched, and A reproduced all 50 historical control parameter sets and financial metrics exactly. The applicable test suite passed 30 tests. See the [final report](../../research/2026-10-08-ppo-stagnation/README.md) and its numeric evidence.
+
+Two additional read-only deterministic replays over the full training dates archive the previously observed round 36/600 training-period comparison. They add no training steps and are not the sampled training reward curve. Source artifacts and the dataset were verified unchanged after the experiment.

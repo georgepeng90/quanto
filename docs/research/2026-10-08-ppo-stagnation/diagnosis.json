@@ -2226,5 +2226,69 @@
       "total_return": 0.17529403072049998,
       "turnover": 2.7053169886927435
     }
-  }
+  },
+  "training_period_replays": [
+    {
+      "round": 36,
+      "start": "2022-07-08",
+      "end": "2024-09-30",
+      "device": "cpu",
+      "metrics": {
+        "action_net_log_return": -0.021542175593937785,
+        "average_cash_ratio": 0.18878295609217347,
+        "decision_steps": 113,
+        "deterministic": true,
+        "evaluation_reward_sum": -0.021542175593937785,
+        "execution_cost": 6392.800157409725,
+        "fill_count": 618,
+        "final_equity": 978688.1998425903,
+        "first_entry_date": "2022-09-19",
+        "hold_count": 100,
+        "max_drawdown": 0.25220548120109054,
+        "net_log_return": -0.02154217559393878,
+        "observed_sessions": 543,
+        "pre_entry_hold_probability_mean": 0.5263805687427521,
+        "prefix_net_log_return": 0.0,
+        "reward_daily_count": 543,
+        "reward_dsr_max_abs": 6.922376307937032,
+        "reward_variance_floor_count": 0,
+        "seed": null,
+        "sharpe": 0.005314167359955702,
+        "total_return": -0.021311800157409744,
+        "turnover": 5.496931070226047
+      },
+      "raw_sha256": "8430670519e42b607c4e9a74fb3af0daf963a08d532945e89f50df3aa5a9518a"
+    },
+    {
+      "round": 600,
+      "start": "2022-07-08",
+      "end": "2024-09-30",
+      "device": "cpu",
+      "metrics": {
+        "action_net_log_return": 0.13221525244621368,
+        "average_cash_ratio": 0.22661015122993067,
+        "decision_steps": 113,
+        "deterministic": true,
+        "evaluation_reward_sum": 0.13221525244621368,
+        "execution_cost": 22687.027937913936,
+        "fill_count": 2030,
+        "final_equity": 1141353.9720620858,
+        "first_entry_date": "2022-10-31",
+        "hold_count": 61,
+        "max_drawdown": 0.23494669505883004,
+        "net_log_return": 0.13221525244621335,
+        "observed_sessions": 543,
+        "pre_entry_hold_probability_mean": 0.9387594312429428,
+        "prefix_net_log_return": 0.0,
+        "reward_daily_count": 543,
+        "reward_dsr_max_abs": 6.928301986051007,
+        "reward_variance_floor_count": 0,
+        "seed": null,
+        "sharpe": 0.4692998285205412,
+        "total_return": 0.14135397206208578,
+        "turnover": 19.311656347512944
+      },
+      "raw_sha256": "c22f27254ae4f01e1eb9e5f2fe406999ea8d30dcc52643e64247bd27e25838f7"
+    }
+  ]
 }

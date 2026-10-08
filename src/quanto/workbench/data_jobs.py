@@ -13,7 +13,7 @@ import pandas as pd
 
 from quanto.data import MarketData
 from quanto.data.contracts import MarketDataError, SnapshotRef
-from quanto.data.dataset_identity import (EVIDENCE_FILE, ImportIdentityEvidence, canonicalize_import, declared_dataset_files,
+from quanto.backtest.dataset_identity import (EVIDENCE_FILE, ImportIdentityEvidence, canonicalize_import, declared_dataset_files,
                                          file_digests, make_import_evidence, publish_import_evidence, standard_table_semantics)
 from quanto.backtest.market_dataset import build_data_requirement, assemble_dataset
 from quanto.backtest.dataset_loaders import load_dataset

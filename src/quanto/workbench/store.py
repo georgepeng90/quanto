@@ -94,7 +94,7 @@ class WorkbenchStore:
             db.close()
 
     def register_dataset(self, bundle_dir: Path, *, identity_evidence: Mapping[str, object]) -> DatasetVersion:
-        from quanto.data.dataset_identity import (ImportIdentityEvidence, canonicalize_import, declared_dataset_files,
+        from quanto.backtest.dataset_identity import (ImportIdentityEvidence, canonicalize_import, declared_dataset_files,
                                                   file_digests, import_binding, publish_import_evidence)
         from quanto.workbench.bindings import BindingStore
         source = Path(bundle_dir)
@@ -280,7 +280,7 @@ class WorkbenchStore:
                 with MarketData(Path(frozen["input"]["market_root"]), providers=()) as market:
                     binding = market_asset_binding(identity, digest(json_bytes(hashes)), bundle, market, market_ref)
             else:
-                from quanto.data.dataset_identity import import_binding
+                from quanto.backtest.dataset_identity import import_binding
                 binding = import_binding(identity, digest(json_bytes(hashes)), bundle_path, bundle)
         elif result.get("state") != "incomplete":
             raise ValueError("invalid data result state")

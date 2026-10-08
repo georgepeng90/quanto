@@ -1,4 +1,4 @@
-"""Auditable import identities and canonicalization of newly created datasets."""
+"""Auditable import identities for daily datasets consumed by the account engine."""
 from __future__ import annotations
 
 from collections.abc import Mapping

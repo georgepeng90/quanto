@@ -4,7 +4,7 @@ from pathlib import Path
 
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.data.contracts import InstrumentId
-from quanto.data.dataset_identity import make_import_evidence, standard_table_semantics
+from quanto.backtest.dataset_identity import make_import_evidence, standard_table_semantics
 from quanto.framework import AssetMapping, BenchmarkBinding
 
 

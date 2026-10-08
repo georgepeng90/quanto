@@ -124,7 +124,7 @@ def assemble_dataset(market: MarketData, snapshot: SnapshotRef, requirement: Dat
 def market_asset_binding(dataset_id, content_hash, bundle, market, snapshot, *, allow_local=False):
     """Prove identities against the registered snapshot, not a user supplied name."""
     from pandas.testing import assert_frame_equal
-    from quanto.data.dataset_identity import CORE_TABLES, standard_table_semantics, validate_binding_tables
+    from quanto.backtest.dataset_identity import CORE_TABLES, standard_table_semantics, validate_binding_tables
     from quanto.framework import AssetBinding, AssetMapping, BenchmarkBinding, TableSemanticBinding
     manifest = market.store.verify_snapshot(snapshot)
     bars = [item for item in manifest.requirement.requests if item.kind == "bars"]

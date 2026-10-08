@@ -56,7 +56,8 @@ def test_relative_root_cannot_depend_on_current_directory(isolated_market_config
 def test_existing_service_freezes_current_root_for_each_new_job(tmp_path):
     first_root = configure_market_root(tmp_path / "first-market")
     service = WorkbenchService(tmp_path / "workspace")
-    payload = dict(symbols=["159915"], start_date="2024-01-02", end_date="2024-01-03")
+    payload = dict(instruments=[dict(exchange="SZSE", instrument_type="etf", code="159915")],
+                   start_date="2024-01-02", end_date="2024-01-03")
     first = service.submit_job("fetch", payload)["id"]
     second_root = configure_market_root(tmp_path / "second-market")
     second = service.submit_job("fetch", payload)["id"]

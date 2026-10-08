@@ -4,7 +4,7 @@ Run with ``python scripts/research_expanded_etfs.py --phase cache|assemble|backt
 --selection selection.json --output <new-directory>``. The configured shared
 market library is used; an explicit --root must name that same library.
 Selection is a list, or a mapping with a ``symbols`` list, of objects containing
-symbol, name, category and an evidenced listing_date. Ranking metadata is retained
+symbol, instrument_id, name, category and an evidenced listing_date. Ranking metadata is retained
 in the input file; selection is retrospective and is not a point-in-time universe.
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ from quanto.backtest.dataset_loaders import load_dataset, validate_dataset
 from quanto.backtest.dataset_storage import write_parquet_dataset
 from quanto.backtest.market_dataset import assemble_dataset, build_data_requirement
 from quanto.data import MarketConfig, MarketData
-from quanto.data.contracts import DataRequirement, MarketDataError, QualityPolicy, content_key
+from quanto.data.contracts import DataRequirement, InstrumentId, MarketDataError, QualityPolicy, content_key
 from quanto.data.settings import get_market_root
 from quanto.data.providers.akshare import AKShareProvider
 from quanto.data.providers.tencent import TencentProvider
@@ -78,11 +78,13 @@ def load_unit_evidence(path):
         raw_path = path.parent / "unit_evidence" / f"{symbol}.json"
         if digest(raw_path) != row.get("raw_sha256"):
             raise ValueError(f"unit audit Tencent evidence changed: {symbol}")
-        ticker = ("sh" if symbol.startswith(("5", "6")) else "sz") + symbol
         raw = read_json(raw_path)
         if raw.get("code") != 0:
             raise ValueError(f"unit audit Tencent response failed: {symbol}")
-        daily = raw["data"][ticker]["day"][-1]
+        tickers = [ticker for ticker in raw.get("data", {}) if ticker[2:] == symbol]
+        if len(tickers) != 1:
+            raise ValueError(f"unit audit Tencent symbol evidence invalid: {symbol}")
+        daily = raw["data"][tickers[0]]["day"][-1]
         quote = quotes[symbol]
         volume, amount = float(daily[5]) * 100, float(daily[8]) * 10000
         implied = amount / volume if volume else 0
@@ -103,6 +105,19 @@ def validate_evidence(evidence):
         raise ValueError("unit audit artifact is missing or changed")
 
 
+def _selection_instrument(row):
+    value = row.get("instrument_id") if isinstance(row, dict) else None
+    if not isinstance(value, dict):
+        raise ValueError("IDENTITY_UNRESOLVED: selection requires explicit instrument_id")
+    try:
+        instrument = InstrumentId.model_validate(value)
+    except ValueError as error:
+        raise ValueError("IDENTITY_UNRESOLVED: invalid selection instrument_id") from error
+    if instrument.instrument_type != "etf" or instrument.code != row.get("symbol"):
+        raise ValueError("IDENTITY_UNRESOLVED: ETF instrument_id must match selection symbol")
+    return instrument
+
+
 def load_selection(path):
     payload = read_json(path)
     rows = payload["symbols"] if isinstance(payload, dict) else payload
@@ -117,12 +132,14 @@ def load_selection(path):
             raise ValueError("invalid or duplicate ETF symbol")
         if not row["name"] or not row["category"] or date.fromisoformat(row["listing_date"]) > date.fromisoformat(END):
             raise ValueError("invalid ETF metadata or listing date after study end")
+        _selection_instrument(row)
         seen.add(symbol)
     return rows
 
 
 def requirement_for(row):
-    requirement = build_data_requirement({"symbols": [row["symbol"]],
+    requirement = build_data_requirement({"instruments": [_selection_instrument(row).model_dump(mode="json")],
+        "benchmark": {"exchange": "SSE", "instrument_type": "index", "code": "000300"},
         "start_date": HISTORY_START, "end_date": END})
     requests = list(requirement.requests)
     requests[0] = requests[0].model_copy(update={"start": pd.Timestamp(max(HISTORY_START, row["listing_date"]), tz="UTC").to_pydatetime()})
@@ -158,6 +175,8 @@ def open_market(root, evidence=None):
 
 
 def validate_progress(rows, root, progress):
+    for row in rows:
+        _selection_instrument(row)
     expected = {"market_root": str(Path(root).resolve()),
                 "history_start": HISTORY_START, "end": END}
     original = progress.get("selection", rows)
@@ -169,6 +188,8 @@ def validate_progress(rows, root, progress):
 
 
 def cache(rows, root, output, evidence=None):
+    for row in rows:
+        _selection_instrument(row)
     validate_evidence(evidence)
     output = Path(output)
     path = output / "cache_progress.json"
@@ -260,7 +281,7 @@ def assemble_symbol(market, row, entry, evidence):
     requests = list(requirement.requests)
     requests[1] = requests[1].model_copy(update={"start": requests[0].start})
     local_requirement = requirement.model_copy(update={"requests": tuple(requests)})
-    assumptions = {"instruments": [{"symbol": row["symbol"], "lot_size": 100,
+    assumptions = {"instruments": [{"symbol": _selection_instrument(row).key, "lot_size": 100,
         "settlement_sessions": 1, "listing_date": row["listing_date"], "group": row["category"]}],
         "universe_rule": {"min_history_days": 120, "min_avg_turnover_20d": 0}}
     bundle = assemble_dataset(market, ref, local_requirement, assumptions)
@@ -314,6 +335,8 @@ def qualify(rows, root, output, minimum_amount=10_000_000):
 
 
 def require_ready(rows, output, minimum=200):
+    for row in rows:
+        _selection_instrument(row)
     if len(rows) < minimum:
         raise ValueError(f"at least {minimum} complete ready ETFs required; selected {len(rows)}")
     progress = read_json(Path(output) / "cache_progress.json")
@@ -366,7 +389,7 @@ def assemble(rows, root, output):
             entry = progress["symbols"][row["symbol"]]
             bundles.append(assemble_symbol(market, row, entry, evidence))
     bundle = combine_bundles(bundles)
-    if set(bundle.prices.symbol) != {row["symbol"] for row in rows}:
+    if set(bundle.prices.symbol) != {_selection_instrument(row).key for row in rows}:
         raise ValueError("assembled pool differs from selected pool")
     write_parquet_dataset(bundle, dataset)
     load_dataset(dataset)
@@ -417,7 +440,7 @@ def backtest(rows, root, output, pool="expanded"):
     sys.path.insert(0, str(PROJECT / "scripts"))
     import research_round2 as study
     spec = copy.deepcopy(original["spec"])
-    spec["symbols"] = sorted(row["symbol"] for row in rows)
+    spec["symbols"] = sorted(_selection_instrument(row).key for row in rows)
     added_groups = sorted(set(bundle.instruments.group) - set(spec["risk"]["group_caps"]))
     spec["risk"]["group_caps"].update({group: .5 for group in added_groups})
     sources = [*sorted((PROJECT / "src/quanto").rglob("*.py")), Path(__file__),

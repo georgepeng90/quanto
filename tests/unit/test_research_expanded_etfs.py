@@ -14,8 +14,19 @@ from quanto.data.providers.akshare import AKShareProvider
 from quanto.data.providers.tencent import TencentProvider
 
 
-def selection(*codes):
-    return [{"symbol": code, "name": code, "category": "technology", "listing_date": "2024-01-01"} for code in codes]
+_DECLARED_EXCHANGES = {"512480": "SSE", "159995": "SZSE", "515050": "SSE"}
+FROZEN_TEST = study.PROJECT / "docs/research/2026-10-02-etf-universe/original27-protocol.json"
+
+
+def selection(*codes, synthetic_exchange=None):
+    rows = []
+    for code in codes:
+        exchange = _DECLARED_EXCHANGES.get(code, synthetic_exchange)
+        if exchange is None:
+            raise ValueError(f"Fixture has no declared exchange for {code}")
+        rows.append({"symbol": code, "instrument_id": {"exchange": exchange, "instrument_type": "etf", "code": code},
+                     "name": code, "category": "technology", "listing_date": "2024-01-01"})
+    return rows
 
 
 def evidence_for(tmp_path, rows):
@@ -24,7 +35,7 @@ def evidence_for(tmp_path, rows):
     quotes, audited = [], []
     for row in rows:
         symbol = row["symbol"]
-        ticker = ("sh" if symbol.startswith("5") else "sz") + symbol
+        ticker = {"SSE": "sh", "SZSE": "sz"}[row["instrument_id"]["exchange"]] + symbol
         daily = [study.END, "1", "1", "1.1", ".9", "1000", {}, "0", "10"]
         path = directory / "unit_evidence" / f"{symbol}.json"
         study.write_json(path, {"code": 0, "data": {ticker: {"day": [daily]}}})
@@ -68,6 +79,24 @@ def test_listing_boundary_keeps_shared_benchmark_history():
     assert benchmark.start.date().isoformat() == "2022-10-01"
     assert etf.end.date().isoformat() == "2026-10-01"
     assert calendar.end > etf.end
+
+
+@pytest.mark.parametrize("instrument_id", [None,
+    {"exchange": "SSE", "instrument_type": "etf", "code": "159995"},
+    {"exchange": "SSE", "instrument_type": "stock", "code": "512480"}])
+def test_selection_rejects_missing_or_mismatched_identity(tmp_path, instrument_id):
+    row = selection("512480")[0]
+    if instrument_id is None:
+        row.pop("instrument_id")
+    else:
+        row["instrument_id"] = instrument_id
+    path = tmp_path / "selection.json"
+    study.write_json(path, [row])
+    with pytest.raises(ValueError, match="IDENTITY_UNRESOLVED"):
+        study.load_selection(path)
+    with pytest.raises(ValueError, match="IDENTITY_UNRESOLVED"):
+        study.cache([row], tmp_path / "market", tmp_path / "output")
+    assert not (tmp_path / "output").exists()
 
 
 def test_cli_uses_configured_shared_root_and_rejects_output_market(tmp_path, monkeypatch):
@@ -131,7 +160,7 @@ def test_ready_resume_no_fetch_and_assembly_includes_all_symbols(tmp_path, offli
     assert study.cache(rows, root, output, evidence) == first
     assert len(calls) == count
     bundle = study.assemble(rows, root, output)
-    assert set(bundle.prices.symbol) == {"512480", "159995"}
+    assert set(bundle.prices.symbol) == {"SSE:etf:512480", "SZSE:etf:159995"}
     assert len(bundle.prices) == 8
     assert bundle.manifest.amount_unit == "CNY"
     assert bundle.manifest.volume_unit == "share"
@@ -217,12 +246,13 @@ def test_qualification_uses_sixty_day_mean_and_requires_cny(tmp_path, monkeypatc
     assert result["decisions"][2]["reason"] == "ETF amount unit not evidenced as CNY"
 
 
-def test_expanded_gate_rejects_small_or_incomplete_pool_and_liquidity(tmp_path):
+def test_expanded_gate_rejects_small_or_incomplete_pool_and_liquidity(tmp_path, monkeypatch):
+    monkeypatch.setattr(study, "FROZEN", FROZEN_TEST)
     rows = selection("512480")
     study.write_json(tmp_path / "cache_progress.json", {"symbols": {"512480": {"state": "ready"}}})
     with pytest.raises(ValueError, match="200"):
         study.backtest(rows, tmp_path, tmp_path)
-    large = selection(*(f"{500000 + i:06d}" for i in range(200)))
+    large = selection(*(f"{500000 + i:06d}" for i in range(200)), synthetic_exchange="SSE")
     with pytest.raises(ValueError, match="not ready"):
         study.backtest(large, tmp_path, tmp_path)
     progress = {"selection_key": content_key(rows)}
@@ -245,8 +275,9 @@ def test_expanded_gate_rejects_small_or_incomplete_pool_and_liquidity(tmp_path):
 
 
 def test_original27_control_keeps_eight_configs_periods_and_costs(tmp_path, monkeypatch):
+    monkeypatch.setattr(study, "FROZEN", FROZEN_TEST)
     original = study.read_json(study.FROZEN)
-    rows = selection(*original["spec"]["symbols"])
+    rows = selection(*original["spec"]["symbols"], synthetic_exchange="SSE")
     study.write_json(tmp_path / "cache_progress.json", {"symbols": {row["symbol"]: {"state": "ready"} for row in rows}})
     (tmp_path / "dataset").mkdir()
     study.write_json(tmp_path / "source_audit.json", {"validated": True})

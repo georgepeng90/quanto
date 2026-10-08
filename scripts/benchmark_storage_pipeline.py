@@ -12,12 +12,15 @@ import pandas as pd
 
 from quanto.config import BacktestSpec
 from quanto.backtest import dataset_loaders as loaders
+from quanto.backtest.dataset_identity import make_import_evidence, standard_table_semantics
+from quanto.data.contracts import InstrumentId
+from quanto.framework import AssetMapping, BenchmarkBinding
 from quanto.workbench.models import FrozenRun
 from quanto.workbench.snapshots import SnapshotBuilder
 from quanto.workbench.store import WorkbenchStore
 
 
-def fixture(root: Path, count: int, days: int) -> list[str]:
+def fixture(root: Path, count: int, days: int) -> tuple[tuple[InstrumentId, ...], InstrumentId]:
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from scripts.benchmark_market_data import synthetic_case
@@ -32,7 +35,8 @@ def fixture(root: Path, count: int, days: int) -> list[str]:
         ref = market.wait_ready(market.prefetch(requirement).id)
         bundle = assemble_dataset(market, ref, requirement, {"universe_rule": {"min_history_days": 120, "min_avg_turnover_20d": 0}})
     write_parquet_dataset(bundle, root)
-    return payload["symbols"]
+    return (tuple(InstrumentId.model_validate(item) for item in payload["instruments"]),
+            InstrumentId.model_validate(payload["benchmark"]))
 
 
 def timed(operation):
@@ -54,10 +58,19 @@ def main():
         parser.error("symbols >= 5 and days >= 250 required")
     with tempfile.TemporaryDirectory(prefix="quanto-pipeline-bench-") as directory:
         root = Path(directory)
-        symbols = fixture(root / "input", args.symbols, args.days)
+        instruments, benchmark = fixture(root / "input", args.symbols, args.days)
+        symbols = [item.key for item in instruments]
         bundle, load_seconds = timed(lambda: loaders.load_dataset(root / "input"))
         store = WorkbenchStore(root / "workspace")
-        dataset, registration_seconds = timed(lambda: store.register_dataset(root / "input"))
+        evidence_ref = "synthetic:benchmark-storage-pipeline"
+        evidence = make_import_evidence(root / "input",
+            assets=tuple(AssetMapping(instrument_id=item, local_symbol=item.key, evidence_ref=evidence_ref)
+                         for item in instruments),
+            benchmark=BenchmarkBinding(instrument_id=benchmark,
+                                       return_basis=bundle.manifest.benchmark_type, evidence_ref=evidence_ref),
+            source_document="Explicit synthetic benchmark generator identities.",
+            table_semantics=standard_table_semantics(bundle, evidence_ref))
+        dataset, registration_seconds = timed(lambda: store.register_dataset(root / "input", identity_evidence=evidence))
         template = Path(__file__).resolve().parents[1] / "strategies" / "buy_hold"
         declaration = json.loads((template / "strategy.json").read_text(encoding="utf-8"))
         strategy = store.register_strategy({p.name: p.read_bytes() for p in template.iterdir() if p.is_file()}, declaration)

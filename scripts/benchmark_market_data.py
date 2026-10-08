@@ -26,7 +26,9 @@ from quanto.data.providers.base import ProviderCapabilities
 def synthetic_case(count, days, frequency="1d"):
     dates = pd.bdate_range("2020-01-02", periods=days)
     symbols = [f"{index + 1:06d}" for index in range(count)]
-    payload = dict(symbols=symbols, start_date=str(dates[0].date()), end_date=str(dates[-1].date()), price_mode="raw_cash")
+    payload = dict(instruments=[dict(exchange="SZSE", instrument_type="etf", code=symbol) for symbol in symbols],
+        benchmark=dict(exchange="SSE", instrument_type="index", code="000300"),
+        start_date=str(dates[0].date()), end_date=str(dates[-1].date()), price_mode="raw_cash")
     requirement = build_data_requirement(payload)
     if frequency == "1m":
         requirement = requirement.model_copy(update={"requests": tuple(request.model_copy(update={"frequency": "1m"})

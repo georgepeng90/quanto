@@ -14,7 +14,7 @@ class BindingStore:
 
     def bind_dataset(self, dataset_id: str, evidence_ref: str, key: str) -> AssetBinding:
         from quanto.backtest.dataset_loaders import load_dataset
-        from quanto.data.dataset_identity import EVIDENCE_FILE, PublishedIdentityEvidence, import_binding
+        from quanto.backtest.dataset_identity import EVIDENCE_FILE, PublishedIdentityEvidence, import_binding
         from quanto.workbench.dataset_objects import verify_dataset_version
         if not isinstance(key, str) or not key or not isinstance(evidence_ref, str) or not evidence_ref:
             raise ValueError("identity evidence reference and idempotency key required")

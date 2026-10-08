@@ -7,7 +7,7 @@ import pytest
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.backtest.dataset_storage import write_parquet_dataset
 from quanto.data.contracts import InstrumentId
-from quanto.data.dataset_identity import make_import_evidence, standard_table_semantics
+from quanto.backtest.dataset_identity import make_import_evidence, standard_table_semantics
 from quanto.framework import AssetMapping, BenchmarkBinding
 from quanto.objects import digest, json_bytes
 from quanto.workbench.bindings import BindingStore
@@ -70,7 +70,7 @@ def test_unmapped_auxiliary_symbol_is_rejected(tmp_path):
     manifest["auxiliary_tables"] = {"signals": "signals.csv"}
     (source / "manifest.json").write_text(json.dumps(manifest))
     pd.DataFrame(dict(available_at=["2024-01-01T00:00:00Z"], symbol=["foreign"], score=[1])).to_csv(source / "signals.csv", index=False)
-    from quanto.data.dataset_identity import declared_dataset_files
+    from quanto.backtest.dataset_identity import declared_dataset_files
     evidence["input_files"] = {name: digest(data) for name, data in declared_dataset_files(source).items()}
     evidence["table_semantics"].append(dict(table="signals", semantic_id="test-signal", version="1", schema_definition={"score": {"dtype": "float", "unit": "score"}}, temporal_rules={"availability_rule": "available_at"}, evidence_ref="fixture:identities"))
     store = WorkbenchStore(tmp_path / "workspace")
@@ -198,7 +198,7 @@ def test_import_preserves_leading_zero_auxiliary_instrument_id(tmp_path):
 
 def test_repeated_binding_keeps_frozen_semantics_instead_of_reinterpreting(tmp_path, monkeypatch):
     from tests.integration.test_market_workbench import prepared_job
-    import quanto.data.dataset_identity as identity
+    import quanto.backtest.dataset_identity as identity
     service, dataset_id, output, result = prepared_job(tmp_path, monkeypatch)
     assert service.store.finish_data_job(dataset_id, output, result)
     store = BindingStore(service.store)

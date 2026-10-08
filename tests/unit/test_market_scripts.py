@@ -53,7 +53,8 @@ def test_prefetch_script_reuses_prepared_cache_offline(tmp_path):
 
 
 def test_research_acquisition_uses_module_and_never_vendor_paths(tmp_path):
-    requirement = build_data_requirement(dict(symbols=["000001"], start_date="2024-01-01", end_date="2024-01-05"))
+    requirement = build_data_requirement(dict(instruments=[dict(exchange="SZSE", instrument_type="etf", code="000001")],
+        start_date="2024-01-01", end_date="2024-01-05"))
     root = tmp_path / "market"
     with research_market(root) as market:
         ref = market.wait_ready(market.prefetch(requirement).id, 10)

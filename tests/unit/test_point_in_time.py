@@ -126,6 +126,28 @@ def test_execution_event_and_undated_static_facts_are_not_disclosure_evidence():
             view.table(table, ("A",))
 
 
+def test_realized_splits_are_visible_only_after_ex_close_and_do_not_expose_events_table():
+    bundle, binding, semantics = facts_bundle()
+    bundle = replace(bundle, events=pd.DataFrame([
+        dict(symbol="A", event_type="split", record_date=pd.Timestamp("2024-01-01"),
+             ex_date=pd.Timestamp("2024-01-02"), pay_date=pd.NaT, cash_per_share=None, split_ratio=2.),
+        dict(symbol="A", event_type="split", record_date=pd.Timestamp("2024-01-02"),
+             ex_date=pd.Timestamp("2024-01-05"), pay_date=pd.NaT, cash_per_share=None, split_ratio=3.),
+    ]))
+    before = view_at(bundle, binding, semantics, cutoff=pd.Timestamp("2024-01-02T06:59:59Z").to_pydatetime())
+    at = view_at(bundle, binding, semantics, "2024-01-02")
+    assert before.realized_splits(("A",)).empty
+    known = at.realized_splits(("A",))
+    assert known[["symbol", "ex_date", "split_ratio"]].values.tolist() == [["A", pd.Timestamp("2024-01-02"), 2.]]
+    assert known.source_available_at.iloc[0] == pd.Timestamp("2024-01-02T07:00:00Z")
+    assert known.source_ref.iloc[0].startswith("fixture:events:")
+    known.loc[0, "split_ratio"] = 99.
+    assert at.realized_splits(("A",)).split_ratio.tolist() == [2.]
+    assert at.price_mode == "raw_cash"
+    with pytest.raises(ValueError, match="TEMPORAL_EVIDENCE_MISSING"):
+        at.table("events", ("A",))
+
+
 @pytest.mark.parametrize("raw", ["2024-01-02T14:00:00", "2024-01-02 00:00:00"])
 @pytest.mark.parametrize("for_run", [False, True])
 def test_dataset_loader_does_not_invent_timezone_for_naive_disclosure(tmp_path, raw, for_run):

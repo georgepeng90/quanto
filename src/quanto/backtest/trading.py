@@ -191,7 +191,9 @@ def _etf_requirements(
                     "status": "session_close", "events": "execution_event"}
     return tuple(RequirementItem(
         requirement_id=f"etf-trading-{table}", table=table, semantic_version="1",
-        fields=tuple(RequirementField(name=name, dtype=dtype, unit=unit) for name, dtype, unit in columns),
+        fields=tuple(RequirementField(name=name, dtype=dtype, unit=unit,
+                     currency="CNY" if unit in {"price", "cash_per_share"} else None)
+                     for name, dtype, unit in columns),
         scope="basket", interval=interval, availability_rule=availability[table],
         price_modes=("raw_cash", "adjusted_research"), required=True, missing_policy="reject",
     ) for table, columns in fields.items())

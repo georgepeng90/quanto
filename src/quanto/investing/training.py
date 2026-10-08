@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import platform
 import shutil
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -13,10 +14,15 @@ from quanto.backtest.dataset_loaders import load_dataset
 from quanto.config import BacktestSpec
 from quanto.investing.contracts import PolicyTrainingSpec
 from quanto.investing.evaluation import check_policy_identity, evaluate_policy, policy_identity
-from quanto.learning.artifacts import read_manifest, write_manifest
+from quanto.learning.artifacts import read_frozen_transform, read_manifest, write_frozen_transform, write_manifest
 from quanto.learning.contracts import check_cancelled
 from quanto.learning.models import resolve_device
+from quanto.learning.registry import hash_files
 from quanto.objects import json_bytes
+from quanto.objects import digest
+
+if TYPE_CHECKING:
+    from quanto.investing.feature_runtime import LearningRuntime
 
 
 def split_spec(config, split):
@@ -26,27 +32,35 @@ def split_spec(config, split):
     return BacktestSpec.model_validate(values)
 
 
-def validate_training_data(config, bundle):
+def validate_training_data(config, bundle, *, learning_runtime=None, transform=None):
     from quanto.investing.environment import DailyETFEnv, decision_dates
 
     config.backtest.validate_for_dataset(bundle)
     for split in ("train", "validation") + (("test",) if config.test_start is not None else ()):
         spec = split_spec(config, split)
-        decisions = decision_dates(bundle.calendar, spec.start, spec.end, config.frequency)
+        decisions = (learning_runtime.definition.schedule(bundle.calendar, spec.start, spec.end, config.frequency)
+                     if learning_runtime is not None else decision_dates(bundle.calendar, spec.start, spec.end, config.frequency))
         if not len(decisions):
             raise ValueError(f"{split} partition has no executable {config.frequency} decision")
         history = bundle.prices[pd.to_datetime(bundle.prices.date) <= decisions[0]]
         counts = history.groupby("symbol").size()
-        if not any(counts.get(symbol, 0) >= config.lookback for symbol in spec.symbols):
+        coverage = (counts.get(symbol, 0) >= config.lookback for symbol in spec.symbols)
+        has_history = all(coverage) if learning_runtime is not None else any(coverage)
+        if not has_history:
             raise ValueError(f"{split} partition has insufficient lookback history for all basket symbols")
-        env = DailyETFEnv(bundle, spec, frequency=config.frequency, lookback=config.lookback,
-                          episode_sessions=config.episode_sessions, training=split == "train",
-                          action_version=config.action_version, reward_version=config.reward_version, collect=False)
+        if learning_runtime is None:
+            env = DailyETFEnv(bundle, spec, frequency=config.frequency, lookback=config.lookback,
+                              episode_sessions=config.episode_sessions, training=split == "train",
+                              action_version=config.action_version, reward_version=config.reward_version, collect=False)
+        else:
+            env = learning_runtime.create_environment(bundle, config, transform, backtest=spec,
+                                                      training=split == "train", cancelled=lambda: False, collect=False)
         env.close()
 
 
 def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content_hash, *,
-                 resume_dir=None, model_id=None, evaluate_test=True):
+                 resume_dir=None, model_id=None, evaluate_test=True,
+                 learning_runtime: LearningRuntime | None = None):
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     import torch
     from stable_baselines3 import PPO
@@ -56,7 +70,10 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     config = PolicyTrainingSpec.model_validate(spec)
     check_cancelled(cancelled)
     bundle = load_dataset(Path(dataset_dir))
-    validate_training_data(config, bundle)
+    if learning_runtime is not None:
+        if digest(json_bytes(hash_files(Path(dataset_dir)))) != dataset_content_hash:
+            raise ValueError("BINDING_MISMATCH: supplied dataset content hash differs from dataset files")
+        learning_runtime.validate_bundle(bundle, config, dataset_content_hash)
     device = resolve_device(config.device)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -69,6 +86,8 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
     parent, best_source_content_id = None, None
     metric_name = "sharpe" if config.selection_metric == "validation_sharpe" else "net_log_return"
     expected = policy_identity(config)
+    framework_learning = learning_runtime.identity(config) if learning_runtime is not None else None
+    transform, parent_transform_descriptor = None, None
     if resume_dir is not None:
         resume_dir = Path(resume_dir)
         parent = read_manifest(resume_dir, "policy")
@@ -82,6 +101,18 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
         if (parent["dataset_content_hash"] != dataset_content_hash or parent.get("model_id") != model_id
                 or parent["basket"] != config.backtest.symbols or parent.get("price_mode") != bundle.price_mode):
             raise ValueError("resume dataset, model, basket or environment identity mismatch")
+        if parent.get("framework_learning") != framework_learning:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: resume framework learning identity differs")
+        parent_transform_descriptor = parent.get("feature_transform")
+        if parent_transform_descriptor is not None:
+            if learning_runtime is None:
+                raise ValueError("MODEL_IDENTITY_MISMATCH: resume needs bound learning runtime")
+            if learning_runtime.definition.feature_definition.fit is None:
+                raise ValueError("MODEL_IDENTITY_MISMATCH: fixed feature parent has unexpected transform")
+            transform = read_frozen_transform(resume_dir, parent_transform_descriptor)
+            learning_runtime.validate_transform(transform, config)
+        elif learning_runtime is not None and learning_runtime.definition.feature_definition.fit is not None:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: fitted parent transform is missing")
         history = list(parent["history"])
         best_timesteps, best_metrics = parent["best_timesteps"], parent["metrics"]["validation"]
         score = best_metrics[metric_name]
@@ -89,13 +120,19 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
             best_score = score
         best_source_content_id = parent.get("best_source_content_id") or parent["id"]
         shutil.copyfile(resume_dir / "policy.zip", output_dir / "policy.zip")
+    elif learning_runtime is not None:
+        check_cancelled(cancelled)
+        transform = learning_runtime.fit_transform(bundle, config)
+        check_cancelled(cancelled)
+    validate_training_data(config, bundle, learning_runtime=learning_runtime, transform=transform)
     validation = split_spec(config, "validation")
 
     def select(model):
         nonlocal best_score, best_timesteps, best_metrics, best_source_content_id, last_evaluated_updates, next_evaluation
         check_cancelled(cancelled)
         metrics, _, _ = evaluate_policy(model, bundle, validation, config.frequency, config.lookback,
-                                        cancelled, action_version=config.action_version, reward_version=config.reward_version)
+                                        cancelled, action_version=config.action_version, reward_version=config.reward_version,
+                                        learning_runtime=learning_runtime, training_config=config, feature_transform=transform)
         if not math.isfinite(metrics["net_log_return"]):
             raise ValueError("nonfinite validation net log return")
         if metrics["sharpe"] is not None and not math.isfinite(metrics["sharpe"]):
@@ -130,10 +167,14 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
             if self.model._n_updates > last_evaluated_updates and self.model.num_timesteps >= next_evaluation:
                 select(self.model)
 
-    env = DailyETFEnv(bundle, split_spec(config, "train"), frequency=config.frequency,
-                      lookback=config.lookback, episode_sessions=config.episode_sessions,
-                      training=True, action_version=config.action_version, reward_version=config.reward_version,
-                      cancelled=cancelled, collect=False)
+    if learning_runtime is None:
+        env = DailyETFEnv(bundle, split_spec(config, "train"), frequency=config.frequency,
+                          lookback=config.lookback, episode_sessions=config.episode_sessions,
+                          training=True, action_version=config.action_version, reward_version=config.reward_version,
+                          cancelled=cancelled, collect=False)
+    else:
+        env = learning_runtime.create_environment(bundle, config, transform, backtest=split_spec(config, "train"),
+                                                  training=True, cancelled=cancelled, collect=False)
     try:
         if parent is not None:
             model = PPO.load(resume_dir / "last.zip", env=env, device=device)
@@ -178,7 +219,9 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
         selected = PPO.load(output_dir / "policy.zip", device=device)
         test_metrics, _, _ = evaluate_policy(selected, bundle, split_spec(config, "test"),
                                              config.frequency, config.lookback, cancelled,
-                                             action_version=config.action_version, reward_version=config.reward_version)
+                                             action_version=config.action_version, reward_version=config.reward_version,
+                                             learning_runtime=learning_runtime, training_config=config,
+                                             feature_transform=transform)
     check_cancelled(cancelled)
     (output_dir / "curves.json").write_bytes(json_bytes(history))
     runtime = dict(python=platform.python_version(), torch=torch.__version__,
@@ -200,6 +243,16 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
                     research_limits=(["test evaluated once after checkpoint selection within this run"] if test_evaluated else []) + [
                                      "no protection against repeated research on the test period",
                                      "continuation resets account and reseeds only the window sampler from base seed plus parent timesteps; not exact uninterrupted replay"])
+    if learning_runtime is not None:
+        manifest["framework_learning"] = framework_learning
+        if transform is None:
+            manifest["feature_transform"] = None
+        elif parent_transform_descriptor is not None:
+            shutil.copyfile(resume_dir / parent_transform_descriptor["path"],
+                            output_dir / parent_transform_descriptor["path"])
+            manifest["feature_transform"] = parent_transform_descriptor
+        else:
+            manifest["feature_transform"] = write_frozen_transform(output_dir, transform)
     check_cancelled(cancelled)
     emit(dict(kind="progress", message="policy training evaluated", progress=1., metrics=manifest["metrics"],
               training_sampling=env.training_sampling))

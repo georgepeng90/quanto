@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -10,13 +11,17 @@ from quanto.backtest.dataset_loaders import load_dataset
 from quanto.backtest.models import TABLE_COLUMNS
 from quanto.config import BacktestSpec
 from quanto.investing.contracts import LEGACY_ACTION_VERSION, PolicyBacktestSpec, PolicyTrainingSpec
-from quanto.learning.artifacts import read_manifest
+from quanto.learning.artifacts import read_frozen_transform, read_manifest
 from quanto.learning.contracts import check_cancelled
 from quanto.learning.models import resolve_device
 from quanto.learning.registry import hash_files
 from quanto.objects import digest, json_bytes
 from quanto.investing.rewards import LEGACY_REWARD_VERSION, reward_parameters
 from quanto.reports.backtest_report import build_report
+
+if TYPE_CHECKING:
+    from quanto.factors.features import FrozenTransform
+    from quanto.investing.feature_runtime import LearningRuntime
 
 
 def policy_identity(config):
@@ -39,13 +44,27 @@ def check_policy_identity(manifest, config):
 
 def evaluate_policy(model, bundle, spec, frequency="weekly", lookback=120,
                     cancelled=lambda: False, baseline="policy", emit=lambda event: None,
-                    *, action_version=LEGACY_ACTION_VERSION, reward_version=LEGACY_REWARD_VERSION):
+                    *, action_version=LEGACY_ACTION_VERSION, reward_version=LEGACY_REWARD_VERSION,
+                    learning_runtime: LearningRuntime | None = None,
+                    training_config: PolicyTrainingSpec | None = None,
+                    feature_transform: FrozenTransform | None = None,
+                    allow_foreign_transform: bool = False):
     from quanto.investing.environment import DailyETFEnv
 
     check_cancelled(cancelled)
-    env = DailyETFEnv(bundle, spec, frequency=frequency, lookback=lookback,
-                      training=False, action_version=action_version, reward_version=reward_version,
-                      cancelled=cancelled, collect=True)
+    if learning_runtime is None:
+        env = DailyETFEnv(bundle, spec, frequency=frequency, lookback=lookback,
+                          training=False, action_version=action_version, reward_version=reward_version,
+                          cancelled=cancelled, collect=True)
+    else:
+        if training_config is None or (frequency, lookback, action_version, reward_version) != (
+                training_config.frequency, training_config.lookback,
+                training_config.action_version, training_config.reward_version):
+            raise ValueError("MODEL_IDENTITY_MISMATCH: evaluation settings differ from bound learning config")
+        env = learning_runtime.create_environment(bundle, training_config, feature_transform,
+                                                  backtest=spec, training=False,
+                                                  cancelled=cancelled, collect=True,
+                                                  allow_foreign_transform=allow_foreign_transform)
     try:
         observation, info = env.reset(seed=spec.seed)
         prefix_return = info["prefix_net_log_return"] if reward_version != LEGACY_REWARD_VERSION else 0.
@@ -92,22 +111,30 @@ def evaluate_policy(model, bundle, spec, frequency="weekly", lookback=120,
         env.close()
 
 
-def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled):
-    return _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled, validation=False)
+def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled, *,
+                    learning_runtime: LearningRuntime | None = None):
+    return _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled,
+                                  validation=False, learning_runtime=learning_runtime)
 
 
-def evaluate_validation_policy(policy_dir, dataset_dir, output_dir, emit, cancelled):
+def evaluate_validation_policy(policy_dir, dataset_dir, output_dir, emit, cancelled, *,
+                               learning_runtime: LearningRuntime | None = None):
     """Report the selected snapshot on its original model-selection data."""
-    return _evaluate_saved_policy(policy_dir, dataset_dir, None, output_dir, emit, cancelled, validation=True)
+    return _evaluate_saved_policy(policy_dir, dataset_dir, None, output_dir, emit, cancelled,
+                                  validation=True, learning_runtime=learning_runtime)
 
 
-def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled, *, validation):
+def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled, *, validation,
+                           learning_runtime: LearningRuntime | None):
     from stable_baselines3 import PPO
 
     check_cancelled(cancelled)
     policy_dir, output_dir = Path(policy_dir), Path(output_dir)
     manifest = read_manifest(policy_dir, "policy")
     config = PolicyTrainingSpec.model_validate(manifest["config"])
+    framework_learning = manifest.get("framework_learning")
+    if (framework_learning is None) != (learning_runtime is None):
+        raise ValueError("MODEL_IDENTITY_MISMATCH: framework model requires matching learning runtime")
     if validation:
         if digest(json_bytes(hash_files(Path(dataset_dir)))) != manifest["dataset_content_hash"]:
             raise ValueError("validation dataset content hash must match training dataset identity")
@@ -115,6 +142,35 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
     request = PolicyBacktestSpec.model_validate(spec)
     expected = check_policy_identity(manifest, config)
     bundle = load_dataset(Path(dataset_dir))
+    transform = None
+    if learning_runtime is not None:
+        evaluation_hash = digest(json_bytes(hash_files(Path(dataset_dir))))
+        learning_runtime.validate_bundle(bundle, config, evaluation_hash)
+        actual = learning_runtime.identity(config)
+        if validation:
+            if actual != framework_learning:
+                raise ValueError("MODEL_IDENTITY_MISMATCH: validation framework learning identity differs")
+        else:
+            immutable = ("learning_ref", "learning_definition_hash", "learning_params",
+                         "feature_ref", "feature_definition_hash", "feature_params",
+                         "trading_ref", "trading_definition_hash", "ordered_assets")
+            if any(actual[key] != framework_learning.get(key) for key in immutable):
+                raise ValueError("MODEL_IDENTITY_MISMATCH: policy framework learning identity differs")
+        descriptor = manifest.get("feature_transform")
+        if learning_runtime.definition.feature_definition.fit is not None:
+            if descriptor is None:
+                raise ValueError("MODEL_IDENTITY_MISMATCH: fitted policy transform is missing")
+            transform = read_frozen_transform(policy_dir, descriptor)
+            # Backtests may use a different dataset; the transform provenance remains the training binding.
+            if (transform.definition_ref != learning_runtime.definition.feature_definition.ref
+                    or transform.definition_hash != learning_runtime.definition.feature_definition.definition_hash
+                    or set(transform.training_dataset_hashes) != {framework_learning["dataset_content_hash"]}
+                    or set(transform.training_binding_hashes) != {framework_learning["binding_hash"]}):
+                raise ValueError("MODEL_IDENTITY_MISMATCH: policy transform provenance differs")
+            if validation:
+                learning_runtime.validate_transform(transform, config)
+        elif descriptor is not None:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: fixed feature policy has unexpected transform")
     if "price_mode" in manifest and manifest["price_mode"] != bundle.price_mode:
         raise ValueError("policy price mode mismatch")
     values = config.backtest.model_dump(mode="json")
@@ -135,7 +191,9 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
         policy_device = str(model.device)
     metrics, result, report = evaluate_policy(model, bundle, backtest, config.frequency,
                                               config.lookback, cancelled, request.baseline, emit,
-                                              action_version=config.action_version, reward_version=config.reward_version)
+                                              action_version=config.action_version, reward_version=config.reward_version,
+                                              learning_runtime=learning_runtime, training_config=config,
+                                              feature_transform=transform, allow_foreign_transform=not validation)
     check_cancelled(cancelled)
     output_dir.mkdir(parents=True, exist_ok=True)
     daily = result.equity.copy()

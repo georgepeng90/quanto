@@ -98,6 +98,13 @@ def finish_learning_job(store, identity: str, final: Path, result: dict) -> bool
         raise ValueError('INVALID_ARTIFACT: publication hash mismatch')
     name = 'summary.json' if kind in {'backtest', 'policy_backtest'} else 'manifest.json'
     manifest = json.loads((root / name).read_text(encoding='utf-8'))
+    if kind == 'policy':
+        descriptor = manifest.get('feature_transform')
+        if (descriptor is None) != ('transform.json' not in files):
+            raise ValueError('INVALID_ARTIFACT: transform descriptor and file must appear together')
+        if descriptor is not None:
+            from quanto.learning.artifacts import read_frozen_transform
+            read_frozen_transform(root, descriptor)
     with store.transaction() as db:
         state = db.execute('SELECT state FROM jobs WHERE id=?', (identity,)).fetchone()
         if state is None or state[0] != 'running':

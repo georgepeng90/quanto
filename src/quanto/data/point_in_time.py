@@ -216,15 +216,20 @@ class PointInTimeView:
     ordered_symbols: tuple[str, ...]
     dataset_content_hash: str
     binding_hash: str
+    price_mode: Literal["raw_cash", "adjusted_research"] | None
     _tables: Mapping[str, pd.DataFrame]
     _semantics: Mapping[str, TableSemantics]
+    _realized_splits: pd.DataFrame
+    _split_semantics_valid: bool
 
-    def __init__(self, token, *, cutoff, symbols, binding, tables, semantics):
+    def __init__(self, token, *, cutoff, symbols, binding, tables, semantics, realized_splits, split_semantics_valid):
         if token is not _ENGINE_VIEW_TOKEN:
             raise TypeError("Only the engine can bind a market view")
         for name, value in dict(asof=cutoff.astimezone(SHANGHAI).date(), signal_cutoff=cutoff, ordered_symbols=tuple(symbols),
                                 dataset_content_hash=binding.dataset_content_hash, binding_hash=binding.binding_hash,
-                                _tables=MappingProxyType(tables), _semantics=MappingProxyType(semantics)).items():
+                                price_mode=semantics["prices"].rules.price_mode,
+                                _tables=MappingProxyType(tables), _semantics=MappingProxyType(semantics),
+                                _realized_splits=realized_splits, _split_semantics_valid=split_semantics_valid).items():
             object.__setattr__(self, name, value)
 
     def table(self, name: str, symbols: tuple[str, ...]) -> pd.DataFrame:
@@ -244,6 +249,14 @@ class PointInTimeView:
         table = self.table("prices", symbols)
         return table.loc[pd.to_datetime(table.date).dt.date >= start].reset_index(drop=True)
 
+    def realized_splits(self, symbols: tuple[str, ...]) -> pd.DataFrame:
+        """Occurred split facts, not advance corporate-action disclosures."""
+        if not self._split_semantics_valid:
+            raise ValueError("DEFINITION_UNAVAILABLE: realized splits need frozen daily execution semantics")
+        if len(set(symbols)) != len(symbols) or not set(symbols).issubset(self.ordered_symbols):
+            raise ValueError("Query assets must belong to the frozen basket")
+        return _copy_frame(self._realized_splits.loc[self._realized_splits.symbol.isin(symbols)]).reset_index(drop=True)
+
 
 def _bind_point_in_time(tables: Mapping[str, pd.DataFrame], binding: AssetBinding, ordered_symbols: tuple[str, ...],
                         signal_cutoff: datetime, *, semantics: tuple[TableSemantics, ...] | None = None) -> PointInTimeView:
@@ -254,6 +267,31 @@ def _bind_point_in_time(tables: Mapping[str, pd.DataFrame], binding: AssetBindin
     by_name = {item.binding.table: item for item in resolved}
     if len(by_name) != len(resolved) or {name: item.binding for name, item in by_name.items()} != {item.table: item for item in binding.table_semantics}:
         raise ValueError("BINDING_MISMATCH: reader declarations differ from frozen binding")
+    events_semantics = by_name.get("events")
+    prices_semantics = by_name.get("prices")
+    split_semantics_valid = (events_semantics is not None and prices_semantics is not None
+        and (events_semantics.binding.semantic_id, events_semantics.binding.version) == ("daily-events", "1")
+        and events_semantics.rules.availability_rule == "execution_event"
+        and prices_semantics.rules.price_mode in {"raw_cash", "adjusted_research"}
+        and events_semantics.rules.price_mode == prices_semantics.rules.price_mode)
+    realized = pd.DataFrame(columns=["symbol", "ex_date", "split_ratio", "source_available_at", "source_ref"])
+    if split_semantics_valid:
+        event_rows = tables.get("events")
+        if event_rows is None or not {"symbol", "event_type", "ex_date", "split_ratio"}.issubset(event_rows.columns):
+            raise ValueError("DATA_REQUIREMENT_UNSATISFIED: realized split facts missing")
+        realized = _copy_frame(event_rows.loc[event_rows.event_type == "split", ["symbol", "ex_date", "split_ratio"]])
+        if not realized.empty:
+            realized["ex_date"] = pd.to_datetime(realized.ex_date)
+            if realized.ex_date.isna().any():
+                raise ValueError("TEMPORAL_EVIDENCE_MISSING: split ex-date missing")
+            realized["source_available_at"] = pd.to_datetime([session_cutoff(day.date()) for day in realized.ex_date], utc=True)
+            realized = realized.loc[realized.source_available_at <= cutoff].copy()
+            realized["source_ref"] = [f"{binding.dataset_version_id}:events:" + canonical_hash({
+                "symbol": row.symbol, "event_type": "split", "ex_date": row.ex_date.date().isoformat(),
+            }) for row in realized.itertuples(index=False)]
+        else:
+            realized["source_available_at"] = pd.Series(dtype="datetime64[ns, UTC]")
+            realized["source_ref"] = pd.Series(dtype="str")
     sessions = tuple(sorted(set(pd.to_datetime(tables["calendar"].date).dt.date)))
     visible = {}
     for name, definition in by_name.items():
@@ -263,4 +301,6 @@ def _bind_point_in_time(tables: Mapping[str, pd.DataFrame], binding: AssetBindin
         if frame is None:
             raise ValueError(f"DATA_REQUIREMENT_UNSATISFIED: missing table {name}")
         visible[name] = _visible(frame, definition, cutoff, sessions, binding.dataset_version_id)
-    return PointInTimeView(_ENGINE_VIEW_TOKEN, cutoff=cutoff, symbols=ordered_symbols, binding=binding, tables=visible, semantics=by_name)
+    return PointInTimeView(_ENGINE_VIEW_TOKEN, cutoff=cutoff, symbols=ordered_symbols, binding=binding,
+                           tables=visible, semantics=by_name, realized_splits=realized.reset_index(drop=True),
+                           split_semantics_valid=split_semantics_valid)

@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T05 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T06 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -209,11 +209,11 @@ T05 验证：定义、固定策略、订单、每日风险、冻结 ETF 基准�
 
 ## T06 ETF 学习定义、特征变换及等价证据
 
-**Files:** Create `src/quanto/investing/definitions.py`, `tests/unit/test_learning_definitions.py`, `tests/integration/test_transform_publication.py`; Modify `src/quanto/investing/environment.py`, `src/quanto/investing/training.py`, `src/quanto/investing/evaluation.py`, `src/quanto/investing/jobs.py`, `src/quanto/investing/models.py`, `src/quanto/learning/registry.py`, `src/quanto/learning/artifacts.py`, `tests/unit/test_investing_environment.py`, `tests/unit/test_investing_training.py`, `tests/unit/test_investing_rewards.py`, `tests/unit/test_investing_reward_training.py`, `tests/unit/test_investing_continuation.py`, `tests/fixtures/framework_cases.py`。
+**Files:** Create `src/quanto/investing/definitions.py`, `src/quanto/investing/feature_runtime.py`, `tests/unit/test_learning_definitions.py`, `tests/unit/test_feature_training.py`, `tests/integration/test_transform_publication.py`; Modify `src/quanto/investing/environment.py`, `src/quanto/investing/training.py`, `src/quanto/investing/evaluation.py`, `src/quanto/learning/registry.py`, `src/quanto/learning/artifacts.py`, `src/quanto/data/point_in_time.py`, `src/quanto/backtest/trading.py`, `tests/unit/test_point_in_time.py`。现有 jobs/models 的公共接线留 T08/T09，其余原测试作为回归证据，无需改写。
 
 **Interfaces:** 消费 T00/T04/T05；产出 `LearningDefinition`（严格 schema、feature ref/参数映射、需求、encode/decode/reward/schedule/env_factory、允许 trading refs）、`etf_learning_definitions() -> tuple[LearningDefinition, ...]`、`create_environment(definition: LearningDefinition, bundle: DatasetBundle, spec: PolicyTrainingSpec, transform: FrozenTransform | None) -> gym.Env`。训练入口新增只读定义与变换输入；实际发布点为 `learning/registry.py::finish_learning_job(store, identity: str, final: Path, result: dict) -> bool`，在其成功事务中使变换与 policy 工件同时可引用。
 
-- [ ] 使用 T00 的接线前基准，不重新生成期望输出；覆盖原实际 feature/action/reward 组合、现金动作和 DSR 状态。新增训练段拟合、验证极值不影响拟合、首次发布失败/取消、续训和回测不再 fit：
+- [x] 使用 T00 的接线前基准，不重新生成期望输出；覆盖原实际 feature/action/reward 组合、现金动作和 DSR 状态。新增训练段拟合、验证极值不影响拟合、首次发布失败/取消、续训和回测不再 fit：
   ```python
   np.testing.assert_array_equal(new_observations, reference_observations)
   assert new_actions == reference_actions
@@ -223,10 +223,12 @@ T05 验证：定义、固定策略、订单、每日风险、冻结 ETF 基准�
   assert failed_first_session.published_transform is None
   assert fixed_intent_ledger == learning_intent_ledger
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/unit/test_learning_definitions.py tests/integration/test_transform_publication.py tests/unit/test_investing_environment.py tests/unit/test_investing_training.py tests/unit/test_investing_rewards.py tests/unit/test_investing_reward_training.py tests/unit/test_investing_continuation.py -q`，新增接线/生命周期测试应失败，旧行为基准先通过。
-- [ ] 登记实际 ETF 定义组合，禁止任意拼装或 stock 改名占位。保留原数组长度/顺序、现金动作和 DSR 输入；固定/学习消费同一市场视图，学习不另开账户。需拟合方案在模型创建只冻结配方/区间，训练只在训练段拟合。transform 文件及摘要写入本次 policy artifact/manifest，与 learning_artifacts 插入和 job=succeeded 同事务可见；失败/取消/发布失败不产生可引用版本，不改 model_framework_bindings。后续版本保存核验后的同一 transform 文件/摘要，任一成功版本回测均可定位，续训/验证/回测不重拟合；用内部合成拟合定义验证。保留 best 来源会话、last 累计步数和取消规则。
-- [ ] 重跑上述命令通过；短 CPU 训练仅用于 checkpoint/事务集成，不作收益优劣判断。ETF 现有固定公式不人为引入拟合步骤。
-- [ ] 审核并提交：`feat: register ETF learning definitions with frozen transforms`。
+- [x] 运行 `uv run --no-sync pytest tests/unit/test_learning_definitions.py tests/integration/test_transform_publication.py tests/unit/test_investing_environment.py tests/unit/test_investing_training.py tests/unit/test_investing_rewards.py tests/unit/test_investing_reward_training.py tests/unit/test_investing_continuation.py -q`，新增接线/生命周期测试应失败，旧行为基准先通过。
+- [x] 登记实际 ETF 定义组合，禁止任意拼装或 stock 改名占位。保留原数组长度/顺序、现金动作和 DSR 输入；固定/学习消费同一市场视图，学习不另开账户。需拟合方案在模型创建只冻结配方/区间，训练只在训练段拟合。transform 文件及摘要写入本次 policy artifact/manifest，与 learning_artifacts 插入和 job=succeeded 同事务可见；失败/取消/发布失败不产生可引用版本，不改 model_framework_bindings。后续版本保存核验后的同一 transform 文件/摘要，任一成功版本回测均可定位，续训/验证/回测不重拟合；用内部合成拟合定义验证。保留 best 来源会话、last 累计步数和取消规则。
+- [x] 重跑上述命令通过；短 CPU 训练仅用于 checkpoint/事务集成，不作收益优劣判断。ETF 现有固定公式不人为引入拟合步骤。
+- [x] 审核并提交：`feat: register ETF learning definitions with frozen transforms`。
+
+T06 验证：定义、拟合生命周期、事务发布、PIT、交易执行、原学习环境及训练/奖励/续训、冻结基准和无未来数据共 219 项通过。新 bound factory 逐元素复现 10 组原基准，并直接证明两条路径接受相同意图时全部账户表相同。实际注册六种 ETF 动作/奖励组合；九项市场特征复用一份原算式，账户与 DSR 状态仍在编码器中。`LearningRuntime` 单独冻结运行绑定与交易定义；拟合只读取训练段，验证极值不影响结果，续训逐字节复制父版本变换，回测仅校验读取。取消及发布事务失败均不形成可用版本。资深审核发现成交额单位与标准绑定不一致，已由失败测试复现并修复，同时明确人民币金额字段。新增 `realized_splits` 仅提供 ex-date 收盘已生效的拆分事实；公告 events 仍不可作为无可得时间证据的披露表读取。定义工厂显式接收 backtest/training/asset_binding/trading_definition，避免把每次运行状态放进注册定义。现有固定公式无额外拟合；未测试研究规模的训练吞吐。API 身份断言单独修正并通过 7 项接口测试，提交 `b62204a`。
 
 ## T07 定义注册、配置解析与能力报告
 

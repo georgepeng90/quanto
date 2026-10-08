@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import gymnasium as gym
 from gymnasium import spaces
@@ -18,11 +18,20 @@ from quanto.investing.rewards import (LEGACY_REWARD_VERSION, STATE_REWARD_VERSIO
     DSR_REWARD_VERSION, DifferentialSharpeState, reward_parameters)
 from quanto.strategies.base import Hold, TargetPortfolio, validate_intent
 
+if TYPE_CHECKING:
+    from quanto.backtest.trading import TradingDefinition
+    from quanto.data.point_in_time import TableSemantics
+    from quanto.factors.features import FeatureSetDefinition, FrozenTransform
+    from quanto.framework import AssetBinding
+    from quanto.investing.definitions import LearningDefinition
+
 
 FEATURE_VERSION = "daily-etf-v2"
 ACTION_VERSION = LEGACY_ACTION_VERSION
 ENVIRONMENT_VERSION = "daily-session-v1"
 EXECUTION_VERSION = "next-open-ledger-v1"
+MARKET_FIELDS = ("return_5", "return_20", "return_60", "return_lookback", "volatility_20",
+                 "drawdown_lookback", "amount_ratio_20", "bar_range", "quote_mask")
 
 
 def feature_version(lookback: int, reward_version: str = LEGACY_REWARD_VERSION) -> str:
@@ -51,6 +60,29 @@ def decision_dates(calendar, start, end, frequency: str) -> pd.DatetimeIndex:
     return dates[:-1][valid]
 
 
+def etf_market_values(window, splits, *, lookback: int, asof, price_mode: str) -> tuple[float, ...]:
+    """The historical ETF arithmetic used by both direct and bound environments."""
+    if window is None or window.empty:
+        return (0.,) * len(MARKET_FIELDS)
+    close = window.close.to_numpy(dtype=float).copy()
+    if price_mode == "raw_cash" and splits is not None and not splits.empty:
+        for event in splits.itertuples():
+            if pd.Timestamp(event.ex_date) <= asof:
+                close[window.index < pd.Timestamp(event.ex_date)] /= event.split_ratio
+    returns = [math.log(close[-1] / close[max(0, len(close) - 1 - count)])
+               for count in (5, 20, 60, lookback - 1)]
+    daily_returns = np.diff(np.log(close[-21:]))
+    volatility = float(daily_returns.std()) if daily_returns.size else 0.
+    drawdown = close[-1] / close[-lookback:].max() - 1.
+    amount = window.amount.to_numpy(dtype=float)
+    mean_amount = float(amount[-20:].mean())
+    amount_ratio = math.log(amount[-1] / mean_amount) if amount[-1] > 0 and mean_amount > 0 else 0.
+    last = window.iloc[-1]
+    bar_range = float((last.high - last.low) / last.close)
+    available = float(window.index[-1] == asof)
+    return (*returns, volatility, drawdown, amount_ratio, bar_range, available)
+
+
 class DailyETFEnv(gym.Env):
     """One action spans a natural decision period, with daily account/risk checks.
 
@@ -67,7 +99,12 @@ class DailyETFEnv(gym.Env):
     def __init__(self, bundle: DatasetBundle, spec: BacktestSpec, frequency: str = "weekly",
                  lookback: int = 120, episode_sessions: int | None = None, training: bool = False,
                  *, action_version: str = ACTION_VERSION, cancelled: Callable[[], bool] = lambda: False,
-                 collect: bool = True, reward_version: str = LEGACY_REWARD_VERSION):
+                 collect: bool = True, reward_version: str = LEGACY_REWARD_VERSION,
+                 learning_definition: LearningDefinition | None = None, asset_binding: AssetBinding | None = None,
+                 trading_definition: TradingDefinition | None = None,
+                 feature_definition: FeatureSetDefinition | None = None,
+                 feature_params: dict[str, object] | None = None, feature_transform: FrozenTransform | None = None,
+                 table_semantics: tuple[TableSemantics, ...] | None = None):
         super().__init__()
         spec.validate_for_dataset(bundle)
         if isinstance(lookback, bool) or not isinstance(lookback, int) or lookback < 2:
@@ -88,9 +125,14 @@ class DailyETFEnv(gym.Env):
         self.training_sampling_intervals = []
         self.episode_sessions, self.training = episode_sessions, training
         self.cancelled, self.collect = cancelled, collect
+        self.learning_definition = learning_definition
+        self.asset_binding, self.trading_definition = asset_binding, trading_definition
+        self.feature_definition, self.feature_params = feature_definition, feature_params
+        self.feature_transform, self.table_semantics = feature_transform, table_semantics
         self.calendar = pd.DatetimeIndex(bundle.calendar.date).sort_values().unique()
         self.sessions = self.calendar[(self.calendar >= pd.Timestamp(spec.start)) & (self.calendar <= pd.Timestamp(spec.end))]
-        self._decisions = decision_dates(self.calendar, spec.start, spec.end, frequency)
+        self._decisions = (learning_definition.schedule(self.calendar, spec.start, spec.end, frequency)
+                           if learning_definition is not None else decision_dates(self.calendar, spec.start, spec.end, frequency))
         if self._decisions.empty:
             raise ValueError("No decision date with a following execution session")
         self._episode_starts = np.array([0], dtype=np.int64)
@@ -128,6 +170,11 @@ class DailyETFEnv(gym.Env):
                 and len(window) >= self.lookback and window.index[-1] == self.context.asof}
 
     def _observation(self) -> np.ndarray:
+        if self.learning_definition is not None:
+            return self.learning_definition.encode_observation(self)
+        return self._encode_etf_observation()
+
+    def _encode_etf_observation(self) -> np.ndarray:
         portfolio = self.context.portfolio
         equity = portfolio.equity
         eligible = self._entry_symbols()
@@ -137,29 +184,15 @@ class DailyETFEnv(gym.Env):
             weight = portfolio.market_values.get(symbol, 0.) / equity if equity else 0.
             shares = portfolio.shares.get(symbol, 0)
             sellable = portfolio.sellable_shares.get(symbol, 0) / shares if shares else 0.
-            if window is None or window.empty:
-                features.extend([0.] * 10 + [weight, sellable])
-                continue
-            close = window.close.to_numpy(dtype=float).copy()
-            # Splits known by this close adjust only earlier observations.
-            if self.bundle.price_mode == "raw_cash" and not self.bundle.events.empty:
+            if self.context.features is not None:
+                market = [self.context.features.per_symbol[symbol][name].value or 0.
+                          for name in MARKET_FIELDS]
+            else:
                 splits = self.bundle.events.loc[(self.bundle.events.symbol == symbol)
-                    & (self.bundle.events.event_type == "split")
-                    & (pd.to_datetime(self.bundle.events.ex_date) <= self.context.asof)]
-                for event in splits.itertuples():
-                    close[window.index < pd.Timestamp(event.ex_date)] /= event.split_ratio
-            returns = [math.log(close[-1] / close[max(0, len(close) - 1 - count)]) for count in (5, 20, 60, self.lookback - 1)]
-            daily_returns = np.diff(np.log(close[-21:]))
-            volatility = float(daily_returns.std()) if daily_returns.size else 0.
-            drawdown = close[-1] / close[-self.lookback:].max() - 1.
-            amount = window.amount.to_numpy(dtype=float)
-            mean_amount = float(amount[-20:].mean())
-            amount_ratio = math.log(amount[-1] / mean_amount) if amount[-1] > 0 and mean_amount > 0 else 0.
-            last = window.iloc[-1]
-            bar_range = float((last.high - last.low) / last.close)
-            available = float(window.index[-1] == self.context.asof)
-            features.extend(returns + [volatility, drawdown, amount_ratio, bar_range, available,
-                                       float(symbol in eligible), weight, sellable])
+                    & (self.bundle.events.event_type == "split")] if not self.bundle.events.empty else None
+                market = etf_market_values(window, splits, lookback=self.lookback,
+                                           asof=self.context.asof, price_mode=self.bundle.price_mode)
+            features.extend([*market, float(symbol in eligible), weight, sellable])
         reference = max(self.runner.risk.state["risk_reference"], equity)
         drawdown = 1. - equity / reference if reference else 0.
         features.extend([portfolio.cash / equity if equity else 0., portfolio.receivables / equity if equity else 0.,
@@ -183,8 +216,14 @@ class DailyETFEnv(gym.Env):
         start = int(self.np_random.choice(self._episode_starts)) if self.training else 0
         length = self.episode_sessions if self.training and self.episode_sessions is not None else len(self.sessions)
         episode = self.backtest_spec.model_copy(update=dict(start=self.sessions[start].date(), end=self.sessions[start + length - 1].date()))
-        self.runner = SessionRunner(self.bundle, episode, self.cancelled, collect=self.collect, prepared=self._session_data)
-        self.decision_dates = decision_dates(self.calendar, episode.start, episode.end, self.frequency)
+        runner_options = {} if self.learning_definition is None else dict(
+            trading_definition=self.trading_definition, asset_binding=self.asset_binding,
+            feature_definition=self.feature_definition, feature_params=self.feature_params,
+            feature_transform=self.feature_transform, table_semantics=self.table_semantics)
+        self.runner = SessionRunner(self.bundle, episode, self.cancelled, collect=self.collect,
+                                    prepared=self._session_data, **runner_options)
+        self.decision_dates = (self.learning_definition.schedule(self.calendar, episode.start, episode.end, self.frequency)
+                               if self.learning_definition is not None else decision_dates(self.calendar, episode.start, episode.end, self.frequency))
         self._decision_set = set(self.decision_dates)
         self._done = False
         self._sampling_interval = None
@@ -232,6 +271,11 @@ class DailyETFEnv(gym.Env):
     def step(self, action):
         if not self.action_space.contains(action):
             raise ValueError("Action does not match configured action space")
+        intent = (self.learning_definition.decode_action(self, action) if self.learning_definition is not None
+                  else self._decode_etf_action(action))
+        return self._step_intent(intent)
+
+    def _decode_etf_action(self, action):
         if int(action[0]) == 0:
             intent = Hold("policy hold")
         elif self.action_version == CASH_ACTION_VERSION and int(action[0]) == 2:
@@ -242,7 +286,7 @@ class DailyETFEnv(gym.Env):
             if total > 1.:
                 weights = {symbol: weight / total for symbol, weight in weights.items()}
             intent = TargetPortfolio(weights, {}, {})
-        return self._step_intent(intent)
+        return intent
 
     def step_weights(self, weights: dict[str, float]):
         """Exact targets for frozen comparison strategies using this same account."""
@@ -267,11 +311,8 @@ class DailyETFEnv(gym.Env):
         equity = self.context.portfolio.equity
         if equity <= 0 or self._reward_equity <= 0:
             raise ValueError("Positive equity required for log-return reward")
-        if self._has_reward_state:
-            reward = interval["dsr_sum"] if self.reward_version == DSR_REWARD_VERSION else interval["net_log_return"]
-        else:
-            reward = math.log(equity / self._reward_equity)
-            interval["net_log_return"] = reward
+        reward = (self.learning_definition.reward(self, interval, equity) if self.learning_definition is not None
+                  else self._etf_reward(interval, equity))
         self._reward_equity = equity
         session_index = self.runner.dates.get_loc(self.context.asof)
         elapsed = session_index - self._reward_session_index
@@ -292,6 +333,13 @@ class DailyETFEnv(gym.Env):
             self._sampling_interval["end"] = info["asof"]
             self.training_sampling["end"] = max(self.training_sampling["end"], info["asof"])
         return observation, reward, self._done, False, info
+
+    def _etf_reward(self, interval, equity):
+        if self._has_reward_state:
+            return interval["dsr_sum"] if self.reward_version == DSR_REWARD_VERSION else interval["net_log_return"]
+        reward = math.log(equity / self._reward_equity)
+        interval["net_log_return"] = reward
+        return reward
 
     def result(self) -> BacktestResult:
         if self.runner is None:

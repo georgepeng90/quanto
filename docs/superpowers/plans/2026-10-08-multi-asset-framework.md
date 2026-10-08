@@ -90,10 +90,10 @@ T00 必须在所有产品行为改动前完成。T04 依赖 T03 冻结的表语�
 
 **Interfaces:** `capture_etf_reference() -> dict` 使用现有 DatasetBundle、DailyETFEnv 和 SessionRunner，在固定小行情及动作序列上返回每步观察/奖励、意图、风险裁定、订单、成交与账本；JSON 固定输入、期望输出、源码/依赖摘要、价格口径及实际 feature/action/reward 版本。T06 和 T08 引用该证据，不在新实现上重新生成期望值。
 
-- [ ] 核对原 ETF 行为测试和实际已支持的版本组合；覆盖 legacy action、现金动作、DSR 状态、周/月决策与两种已有价格口径。夹具使用明确证券身份和可核验事件；不靠随机训练收益判断等价。
-- [ ] 在记录的改动前 HEAD 生成基准并检查数据/动作、原代码摘要和来源限制；记录方法为 `uv run --no-sync python -m tests.fixtures.etf_framework_baseline --write-reference`，生成器默认拒绝覆盖已有基准。此任务验证现有行为，不制造人为失败测试。
-- [ ] 运行 `uv run --no-sync pytest tests/unit/test_etf_framework_baseline.py tests/unit/test_investing_environment.py tests/unit/test_order_ledger.py -q`，逐元素验证观测/动作、奖励和账本；浮点比较沿用原计算顺序和明确容差。期望全部通过，失败先确认是否基线本身存在问题。
-- [ ] 审核基准与现有实现符合当前需求后提交 `test: capture ETF behavior before framework integration`。后续差异先诊断，不随新输出重写基准；确属需求变化须明确记录，不用于证明旧模型等价。
+- [x] 核对原 ETF 行为测试和实际已支持的版本组合；覆盖 legacy action、现金动作、DSR 状态、周/月决策与两种已有价格口径。夹具使用明确证券身份和可核验事件；不靠随机训练收益判断等价。
+- [x] 在记录的改动前 HEAD 生成基准并检查数据/动作、原代码摘要和来源限制；记录方法为 `uv run --no-sync python -m tests.fixtures.etf_framework_baseline --write-reference`，生成器默认拒绝覆盖已有基准。此任务验证现有行为，不制造人为失败测试。
+- [x] 运行 `uv run --no-sync pytest tests/unit/test_etf_framework_baseline.py tests/unit/test_investing_environment.py tests/unit/test_order_ledger.py -q`，逐元素验证观测/动作、奖励和账本；浮点比较沿用原计算顺序和明确容差。期望全部通过，失败先确认是否基线本身存在问题。
+- [x] 审核基准与现有实现符合当前需求后提交 `test: capture ETF behavior before framework integration`。后续差异先诊断，不随新输出重写基准；确属需求变化须明确记录，不用于证明旧模型等价。
 
 ## T01 公共身份与严格输入契约
 

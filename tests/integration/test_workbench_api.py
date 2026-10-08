@@ -57,7 +57,7 @@ def test_dataset_detail_exposes_registered_instruments_for_browser_selection(tmp
         token = client.get("/api/session").json()["token"]
         headers = {"Authorization": f"Bearer {token}"}
         detail = client.get(f"/api/datasets/{dataset.id}", headers=headers).json()
-        assert detail["instruments"] == [{"symbol": "000001", "lot_size": 100,
+        assert detail["instruments"] == [{"symbol": "SZSE:etf:000001", "lot_size": 100,
                                           "settlement_sessions": 1, "listing_date": "2024-01-01",
                                           "group": "industry"}]
         assert "instruments" not in client.get("/api/datasets", headers=headers).json()["items"][0]

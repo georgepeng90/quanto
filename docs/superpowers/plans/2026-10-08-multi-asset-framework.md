@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。本文件中的复选框均为将来开发任务；尚未实施、迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00、T01 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -95,6 +95,8 @@ T00 必须在所有产品行为改动前完成。T04 依赖 T03 冻结的表语�
 - [x] 运行 `uv run --no-sync pytest tests/unit/test_etf_framework_baseline.py tests/unit/test_investing_environment.py tests/unit/test_order_ledger.py -q`，逐元素验证观测/动作、奖励和账本；浮点比较沿用原计算顺序和明确容差。期望全部通过，失败先确认是否基线本身存在问题。
 - [x] 审核基准与现有实现符合当前需求后提交 `test: capture ETF behavior before framework integration`。后续差异先诊断，不随新输出重写基准；确属需求变化须明确记录，不用于证明旧模型等价。
 
+T00 验证：91 项测试通过；冻结 10 个确定性场景、4 份输入与 91 个源码摘要，独立审核无阻断。两种合成价格口径只验证事件回放差异，不证明真实复权收益等价。提交：`f49128b`。
+
 ## T01 公共身份与严格输入契约
 
 **Files:** Create `src/quanto/framework.py`, `src/quanto/workbench/framework_requests.py`, `tests/fixtures/framework_cases.py`, `tests/unit/test_framework_contracts.py`; Modify `src/quanto/data/contracts.py`（仅必要的身份校验），`tests/unit/test_market_contracts.py`。
@@ -103,17 +105,19 @@ T00 必须在所有产品行为改动前完成。T04 依赖 T03 冻结的表语�
 
 framework_requests.py 消费 BacktestSpec/PolicyTrainingSpec，产出 `FixedRequest`、`ModelCreateRequest`、`FetchRequest`、`ResumeRequest`、`PolicyBacktestRequest`；`FrameworkRequest` 为带 operation 的严格联合，`CapabilityCheckRequest` 是其 API 名称，不再嵌第二份 config。另产出 `BasketCreateRequest(name, members, selection_note, idempotency_key)`、`BasketRevisionRequest(expected_revision, members, selection_note)`、`DatasetBindingRequest(evidence_ref, idempotency_key)`、`ModelBindingRequest(idempotency_key)`；均按设计字段类型严格校验。固定实验保留现有路由 envelope：创建 `{payload: FixedRequest}`，更新 `{expected_revision, payload: FixedRequest}`，提交 `{experiment_id, expected_revision, idempotency_key}`；不要将 payload 与提交请求混为一谈。
 
-- [ ] 审查 test_market_contracts 的身份假设；编写 `test_framework_contracts.py`：同代码跨类型/交易所不相等、绑定覆盖和双向唯一、篮子顺序改变摘要、重复成员/指数成员/NaN 被拒绝；公共输入含 symbols 或重复 feature 参数即拒绝。核心断言：
+- [x] 审查 test_market_contracts 的身份假设；编写 `test_framework_contracts.py`：同代码跨类型/交易所不相等、绑定覆盖和双向唯一、篮子顺序改变摘要、重复成员/指数成员/NaN 被拒绝；公共输入含 symbols 或重复 feature 参数即拒绝。核心断言：
   ```python
   assert etf.key != stock_same_code.key
   assert basket_ab.content_hash != basket_ba.content_hash
   assert binding.dataset_content_hash == original_dataset_hash
   assert canonical_hash(first_input) == canonical_hash(same_input_different_key_order)
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/unit/test_framework_contracts.py tests/unit/test_market_contracts.py -q`，确认新增测试因缺少契约/校验失败。
-- [ ] 实现上述类型、严格输入和摘要；运行配置与公共请求分开。`FetchRequest` 无数据版本，resume/policy_backtest 从模型和版本引用推导定义；不给客户端第二份篮子/训练参数。先不挂载新 API。
-- [ ] 重跑同一命令，期望全部通过；检查 JSON 往返、数组顺序与 immutable 深层成员均受保护。
-- [ ] 审核并提交：`feat: define multi-asset framework contracts`。
+- [x] 运行 `uv run --no-sync pytest tests/unit/test_framework_contracts.py tests/unit/test_market_contracts.py -q`，确认新增测试因缺少契约/校验失败。
+- [x] 实现上述类型、严格输入和摘要；运行配置与公共请求分开。`FetchRequest` 无数据版本，resume/policy_backtest 从模型和版本引用推导定义；不给客户端第二份篮子/训练参数。先不挂载新 API。
+- [x] 重跑同一命令，期望全部通过；检查 JSON 往返、数组顺序与 immutable 深层成员均受保护。
+- [x] 审核并提交：`feat: define multi-asset framework contracts`。
+
+T01 验证：新增契约、既有市场契约及 ETF 冻结基准共 56 项通过；补充的版本布尔值、报告时区、基准类型拒绝案例均经历 RED→GREEN。公共获取请求首版仅支持现有指数基准，绑定格式仍可表达经核验的其他基准来源。
 
 ## T02 篮子、绑定元数据与数据库迁移
 

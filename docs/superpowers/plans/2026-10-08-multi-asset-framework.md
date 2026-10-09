@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T06 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T07 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -232,11 +232,11 @@ T06 验证：定义、拟合生命周期、事务发布、PIT、交易执行、�
 
 ## T07 定义注册、配置解析与能力报告
 
-**Files:** Create `src/quanto/workbench/definitions.py`, `src/quanto/workbench/configuration.py`, `tests/unit/test_framework_resolution.py`, `tests/integration/test_framework_capabilities.py`; Modify `src/quanto/workbench/framework_requests.py`, `src/quanto/framework.py`, `tests/fixtures/framework_cases.py`。
+**Files:** Create `src/quanto/workbench/definitions.py`, `src/quanto/workbench/configuration.py`, `src/quanto/workbench/framework_capabilities.py`, `tests/unit/test_definition_registry.py`, `tests/unit/test_framework_resolution.py`, `tests/unit/test_framework_requirement_checks.py`, `tests/integration/test_framework_capabilities.py`。现有公共类型及测试夹具无需修改；数据检查单独放入纯函数模块，配置解析负责读取已登记对象和冻结摘要。
 
 **Interfaces:** 消费 T02–T06；产出 `DefinitionRegistry.get(ref: DefinitionRef) -> FeatureSetDefinition | LearningDefinition | TradingDefinition`、`list() -> tuple[Mapping[str, object], ...]`；固定策略从既有 revision 解析。`FrameworkResolver.resolve(request: FixedRequest | ModelCreateRequest | ResumeRequest | PolicyBacktestRequest) -> ResolvedConfiguration`、`check(request: FrameworkRequest) -> CapabilityReport`；失败用 `FrameworkBlocked(report: CapabilityReport)`。fetch 仅由 check 检查提供者声明能力，对规范获取请求计算 hash，dataset_version_id 为 null，不伪造运行配置/数据引用。本任务完成 fetch/fixed_backtest/train；resume/policy_backtest 的请求形状已确定，完整校验留 T08 后接通，T09 才公开端点。check 不联网、不创建任务；运行 submit 调用 resolve 并重新检查。
 
-- [ ] 编写按操作能力矩阵：相同数据价格策略 ready/财报策略 blocked，fetch 不要求已有数据，超集不扩大篮子、预热不足、可选缺失、混合篮子、未知定义、参数重复覆盖、同需求 ID 语义冲突，以及逐成员绑定缺失。核心断言：
+- [x] 编写按操作能力矩阵：相同数据价格策略 ready/财报策略 blocked，fetch 不要求已有数据，超集不扩大篮子、预热不足、可选缺失、混合篮子、未知定义、参数重复覆盖、同需求 ID 语义冲突，以及逐成员绑定缺失。核心断言：
   ```python
   assert price_check.status == "ready"
   assert financial_check.status == "blocked"
@@ -245,10 +245,14 @@ T06 验证：定义、拟合生命周期、事务发布、PIT、交易执行、�
   assert stock_without_definition.error_codes == ("DEFINITION_UNAVAILABLE",)
   assert fetch_check.dataset_version_id is None
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/unit/test_framework_resolution.py tests/integration/test_framework_capabilities.py -q`，确认缺少解析器/能力检查失败。
-- [ ] 显式注册 T04–T06 已实现定义，冻结实现 hash；合成定义仅测试注入。解析唯一参数、篮子有序对、时间/单位/价格/状态/变换需求，等价需求按 ID 合并、冲突拒绝。严格继承设计的八种错误码和字段路径。所有引用成功解析才产生 request_hash；已解析但缺数据/能力的 blocked 报告仍有 hash，未解析引用的 blocked 报告该字段为 null 并列出缺项，不能成为提交凭证；ready 必须有非空 hash。固定草稿可保存有效格式的未就绪配置；创建 RL 模型要求完整身份和数据，未拟合产物在首训前不是缺失错误。
-- [ ] 重跑同一命令通过；验证 check 无数据库写入/网络调用；版本升级和参数变化改变请求摘要，检查时间变化不改变摘要。
-- [ ] 审核并提交：`feat: resolve framework configurations and operation capabilities`。
+- [x] 运行 `uv run --no-sync pytest tests/unit/test_framework_resolution.py tests/integration/test_framework_capabilities.py -q`，确认缺少解析器/能力检查失败。
+- [x] 显式注册 T04–T06 已实现定义，冻结实现 hash；合成定义仅测试注入。解析唯一参数、篮子有序对、时间/单位/价格/状态/变换需求，等价需求按 ID 合并、冲突拒绝。严格继承设计的八种错误码和字段路径。所有引用成功解析才产生 request_hash；已解析但缺数据/能力的 blocked 报告仍有 hash，未解析引用的 blocked 报告该字段为 null 并列出缺项，不能成为提交凭证；ready 必须有非空 hash。固定草稿可保存有效格式的未就绪配置；创建 RL 模型要求完整身份和数据，未拟合产物在首训前不是缺失错误。
+- [x] 重跑同一命令通过；验证 check 无数据库写入/网络调用；版本升级和参数变化改变请求摘要，检查时间变化不改变摘要。
+- [x] 审核并提交：`feat: resolve framework configurations and operation capabilities`。
+
+T07 验证（2026-10-10）：配置与能力检查、身份/存储/绑定、PIT/特征/交易定义、ETF 学习与原基准、无未来数据共 224 项通过；资深审核的反例修复后复核无剩余阻断。注册表只有八个已实现 ETF 定义，不自动注册合成股票方案。真实登记数据证明相同数据可满足价格策略而阻塞缺失财务事实的策略；训练预检查覆盖三段自然决策、episode 长度、逐成员预热，不创建环境或拟合产物。请求参数或实现改变会改变摘要，检查时间和公共 operation 包装不改变同一配置摘要。缺成员映射时保留完整已解析声明及缺项的 blocked 摘要，不伪造内部 symbols 或可执行配置；未解析引用仍无摘要。
+
+T07 审核修正：可选缺字段不能跳过同表已有值及时间证据；值检查在可知版本和需求区间内执行，未来空修订不影响过去检查；辅助事实可显式不依赖价格口径。非价格表的预热解释尚未实现，要求非零预热时明确返回 `DEFINITION_UNAVAILABLE`。自由文本数据限制原样列入报告，不能自动解释为已接受或未接受；事件完整性、交易状态、价格/单位等结构化条件仍严格检查。检查在已初始化工作区上保持文件和数据库内容不变，并通过禁用网络连接的测试。T08 的模型操作及 T09 的公共提交入口继续按计划接通，当前未更新运行中的服务。
 
 ## T08 模型关联、旧对象重用和按操作身份匹配
 

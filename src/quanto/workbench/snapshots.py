@@ -141,10 +141,12 @@ class SnapshotBuilder:
         file_hashes = {name: digest(data) for name, data in files.items()}
         if any(file_hashes[name] != expected for name, expected in environment["lock_hashes"].items()):
             raise ValueError("lock hash differs from frozen input")
+        frozen_configuration = resolved.model_dump(mode="json")
+        frozen_configuration["capability_report"]["generated_at"] = None
         manifest = {
             "schema_version": 3,
             "framework_contract_version": resolved.framework_contract_version,
-            "resolved_configuration": resolved.model_dump(mode="json"),
+            "resolved_configuration": frozen_configuration,
             "run_id": run_id,
             "experiment_id": experiment.id,
             "experiment_revision": experiment.revision,

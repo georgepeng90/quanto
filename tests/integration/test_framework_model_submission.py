@@ -1,16 +1,29 @@
 """Model publication and queueing revalidate immutable inputs at commit time."""
 import json
+from pathlib import Path
 
 import pytest
 
 from quanto.investing.models import InvestingModels
 from quanto.workbench.configuration import FrameworkConflict, FrameworkResolver
+from quanto.workbench.framework_requests import ResumeRequest
 from tests.integration.test_investing_models import model_workspace
 
 
 def _change_dataset(store, identity):
     with store.transaction() as db:
         db.execute("UPDATE datasets SET content_hash=? WHERE id=?", ("0" * 64, identity))
+
+
+def test_learning_snapshot_normalizes_observation_time_but_live_report_keeps_it(model_workspace):
+    app, _, _, request = model_workspace
+    service = InvestingModels(app.state.service)
+    model = service.create_model(request)
+    operation = ResumeRequest(model_id=model["id"], additional_timesteps=8)
+    assert FrameworkResolver(service.store).resolve(operation).capability_report.generated_at is not None
+    job = service.train_model(model["id"], {"additional_timesteps": 8})
+    frozen = json.loads(Path(service.store.get_job(job["id"]).input_path).read_text(encoding="utf-8"))
+    assert frozen["input"]["resolved_configuration"]["capability_report"]["generated_at"] is None
 
 
 def test_model_creation_rechecks_dataset_before_publishing(model_workspace, monkeypatch):

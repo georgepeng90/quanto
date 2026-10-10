@@ -197,6 +197,7 @@ class LearningService:
                 raise ValueError('engine or environment files changed during freeze')
             trusted = dict(trusted)
             trusted['resolved_configuration'] = resolved.model_dump(mode='json')
+            trusted['resolved_configuration']['capability_report']['generated_at'] = None
             payload = {'request': request, 'environment': runtime_versions(),
                        'execution_environment': _environment(source_root, execution_files), **trusted}
             hashes = hash_files(root)

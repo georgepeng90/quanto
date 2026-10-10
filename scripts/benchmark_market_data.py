@@ -18,7 +18,7 @@ import psutil
 
 from quanto.backtest.market_dataset import build_data_requirement
 from quanto.data import MarketData, MarketConfig
-from quanto.data.contracts import DataQuery, DataRequirement, NormalizedChunk, SourceRecord
+from quanto.data.contracts import DataQuery, DataRequirement, NormalizedChunk, PriceBasis, SourceRecord
 from quanto.data.imports import import_table
 from quanto.data.providers.base import ProviderCapabilities
 
@@ -28,14 +28,17 @@ def synthetic_case(count, days, frequency="1d"):
     symbols = [f"{index + 1:06d}" for index in range(count)]
     payload = dict(instruments=[dict(exchange="SZSE", instrument_type="etf", code=symbol) for symbol in symbols],
         benchmark=dict(exchange="SSE", instrument_type="index", code="000300"),
-        start_date=str(dates[0].date()), end_date=str(dates[-1].date()), price_mode="raw_cash")
+        start_date=str(dates[0].date()), end_date=str(dates[-1].date()),
+        price_mode="adjusted_research" if frequency == "1d" else "raw_cash")
     requirement = build_data_requirement(payload)
     if frequency == "1m":
         requirement = requirement.model_copy(update={"requests": tuple(request.model_copy(update={"frequency": "1m"})
             if request.kind == "bars" else request for request in requirement.requests)})
-    source = SourceRecord(provider="synthetic", upstream="seeded_generator", interface="benchmark", actual_mode="raw",
-        downloaded_at=pd.Timestamp("2020-01-01", tz="UTC").to_pydatetime(), units={"volume": "share", "amount": "CNY"},
-        verified=("units", "price_basis", "calendar", "instruments", "status", "actions"))
+    source = SourceRecord(provider="synthetic", upstream="seeded_generator", interface="benchmark",
+        actual_mode="synthetic_research" if frequency == "1d" else "raw",
+        downloaded_at=pd.Timestamp("2020-01-01", tz="UTC").to_pydatetime(),
+        units={} if frequency == "1d" else {"volume": "share", "amount": "CNY"},
+        verified=("calendar",) if frequency == "1d" else ("units", "price_basis", "calendar", "instruments", "status", "actions"))
     chunks = []
     random = np.random.default_rng(20261001)
     for request in requirement.requests:
@@ -65,6 +68,8 @@ def synthetic_case(count, days, frequency="1d"):
             frame = pd.DataFrame([dict(instrument_id=item.key, trading_date=day, status="trading", can_buy=True, can_sell=True) for item in request.instruments for day in dates])
         else:
             frame = pd.DataFrame(columns=request.columns)
+        if request.kind == "bars" and frequency == "1d":
+            request = request.model_copy(update={"price_basis": PriceBasis(mode="vendor_research", basis_id="synthetic-seed-20261001")})
         evidence = json.dumps(dict(seed=20261001, synthetic=True, frequency=frequency, rows=len(frame), request=request.model_dump(mode="json")), sort_keys=True).encode()
         chunks.append(NormalizedChunk(request, frame, source, evidence))
     return payload, requirement, tuple(chunks)
@@ -77,7 +82,7 @@ class SyntheticProvider:
         self.chunks, self.calls = chunks, []
 
     def capabilities(self):
-        return ProviderCapabilities(("bars",), ("1d", "1m"), {"etf": ("open", "high", "low", "close", "volume", "amount"), "index": ("close", "amount")}, ("raw",))
+        return ProviderCapabilities(("bars",), ("1d", "1m"), {"etf": ("open", "high", "low", "close", "volume", "amount"), "index": ("close", "amount")}, ("raw", "vendor_research"))
 
     def fetch(self, request, context):
         context.remaining()
@@ -86,7 +91,8 @@ class SyntheticProvider:
             if chunk.request.kind == "bars" and set(request.instruments).issubset(chunk.request.instruments):
                 frame = chunk.frame.loc[chunk.frame.instrument_id.isin([item.key for item in request.instruments])
                     & (chunk.frame.bar_start >= request.start) & (chunk.frame.bar_end <= request.end)].copy()
-                return NormalizedChunk(request, frame, chunk.source, json.dumps(self.calls[-1], sort_keys=True).encode())
+                return NormalizedChunk(request.model_copy(update={"price_basis": chunk.request.price_basis}), frame,
+                    chunk.source, json.dumps(self.calls[-1], sort_keys=True).encode())
         raise ValueError("synthetic request not generated")
 
 
@@ -117,7 +123,7 @@ def measure(count=32, days=20, frequency="1d"):
             again, repeat_seconds = timed(lambda: market.wait_ready(market.prefetch(requirement).id, 60))
             assert ref == again and provider.calls == gap_calls
             request = requirement.requests[0]
-            query = DataQuery(**request.model_dump())
+            query = DataQuery(**{**request.model_dump(), "price_basis": chunks[0].request.price_basis})
             full, read_seconds = timed(lambda: market.read_bars(ref, query))
             selected, selected_seconds = timed(lambda: market.read_bars(ref, query.model_copy(update={"instruments": request.instruments[:1]})))
             assert len(full) == count * days * (240 if frequency == "1m" else 1)
@@ -160,17 +166,17 @@ def measure(count=32, days=20, frequency="1d"):
                     time.sleep(.02)
                 assert job.state == "succeeded", service.get_resource("jobs", identity)
                 assert service.store.dataset_market_source(identity)["id"] == ref.id
-                service.store.get_dataset(identity)
+                assert service.store.get_dataset(identity).manifest["price_mode"] == "adjusted_research"
             finally:
                 service.scheduler.stop()
             workbench_seconds = time.perf_counter() - start
-        return dict(frequency=frequency, symbols=count, sessions=days, etf_rows=len(full), object_bytes=object_bytes,
+        return dict(frequency=frequency, price_mode=payload["price_mode"], symbols=count, sessions=days, etf_rows=len(full), object_bytes=object_bytes,
             object_bytes_per_row=object_bytes / len(full), total_cache_bytes=cache_bytes, gap_request_count=len(gap_calls),
             gap_requests=gap_calls, repeat_request_count=len(provider.calls) - len(gap_calls),
             seconds=dict(import_tables=import_seconds, prepare_gaps=gap_seconds, repeat=repeat_seconds, full_read=read_seconds,
                 one_symbol_read=selected_seconds, integrity_verification=verify_seconds, batch_read=batch_seconds, workbench_job=workbench_seconds),
             batch_rss_baseline=baseline, batch_rss_peak=peak[0], batch_rss_increase=peak[0] - baseline,
-            methodology="Synthetic seed 20261001, random OHLC, 240 minute bars/session, benchmark plus factual reference tables; one sample, warm OS cache, batch peak sampled every 5ms; workbench time includes frozen child and parent registration; no real source throughput measured.")
+            methodology="Synthetic seed 20261001, random OHLC, 240 minute bars/session; daily research-mode child uses a prepared synthetic cache, minute cache includes synthetic reference tables; one sample, warm OS cache, batch peak sampled every 5ms; workbench time includes frozen child and parent registration; no real source throughput measured.")
 
 
 def main():

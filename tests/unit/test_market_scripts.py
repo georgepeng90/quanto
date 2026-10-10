@@ -82,7 +82,9 @@ def test_daily_measurement_isolates_shared_library_in_worker():
     from scripts.benchmark_market_data import measure
     configured = get_market_root()
     result = measure(2, 3, "1d")
+    assert result["price_mode"] == "adjusted_research"
     assert result["seconds"]["workbench_job"] is not None
+    assert result["gap_request_count"] == 3
     assert result["repeat_request_count"] == 0
     assert get_market_root() == configured
     assert not configured.exists()

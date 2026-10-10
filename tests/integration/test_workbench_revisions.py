@@ -11,13 +11,15 @@ from tests.fixtures.strategy_declarations import etf_declaration
 
 
 def test_draft_revision_conflict_keeps_first_save(tmp_path):
-    store = WorkbenchStore(tmp_path / "workbench")
-    first = store.save_experiment(None, None, {"name": "first"})
-    saved = store.save_experiment(first.id, first.revision, {"name": "second"})
+    from tests.integration.test_snapshot_submission import _ready
+
+    store, first, _, _ = _ready(tmp_path)
+    changed = {**first.payload, "sample_purpose": "second"}
+    saved = store.save_experiment(first.id, first.revision, changed)
     with pytest.raises(ValueError, match="revision"):
-        store.save_experiment(first.id, first.revision, {"name": "third"})
+        store.save_experiment(first.id, first.revision, {**changed, "sample_purpose": "third"})
     assert saved.revision == 2
-    assert store.get_experiment(first.id).payload == {"name": "second"}
+    assert store.get_experiment(first.id).payload == changed
 
 
 def test_registered_parquet_dataset_preserves_leading_zero_symbol(tmp_path):

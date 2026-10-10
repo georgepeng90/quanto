@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T08 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T09 已完成；其余任务继续执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -287,7 +287,7 @@ T08 审核修正：原始 spec 的摘要与规范化训练配置分别核验，�
 
 **Interfaces:** 新路由完全按设计 9.1；现有提交 payload 完全按设计 9.2。新增 `verify_framework_snapshot(snapshot_dir: Path) -> ResolvedConfiguration` 于 snapshots.py；bootstrap 先以 stdlib 校验文件/依赖，再从已验证快照导入解析器，调用它校验框架内容，最后才调用策略/环境。SnapshotBuilder.freeze 与 LearningService._submit 接收解析结果，并与原数据/源码清单一同冻结。CLI 复用 WorkbenchClient，提供 baskets list/create/revise/show、definitions list、capabilities check、datasets bind、models bind 和既有提交命令的新 JSON 输入。
 
-- [ ] 新增认证、窄路由优先、旧请求拒绝、预检后条件变化、排队后修订、代码/资源损坏、依赖变化、批量幂等测试；枚举所有旧 RL/固定提交入口确保受同一规则约束。核心断言：
+- [x] 新增认证、窄路由优先、旧请求拒绝、预检后条件变化、排队后修订、代码/资源损坏、依赖变化、批量幂等测试；枚举所有旧 RL/固定提交入口确保受同一规则约束。核心断言：
   ```python
   assert api_report == cli_report
   assert queued.snapshot.basket_revision_ref == submitted_ref
@@ -298,11 +298,13 @@ T08 审核修正：原始 spec 的摘要与规范化训练配置分别核验，�
   assert old_shape_submission.status_code == 422
   assert specific_definitions_route.status_code == 200
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/integration/test_framework_api.py tests/integration/test_snapshot_submission.py tests/integration/test_worker_snapshot.py tests/integration/test_api_cli_equivalence.py tests/unit/test_cli.py -q`，确认新路由/冻结校验缺失失败。
-- [ ] 在 app.py 中先 `include_router(framework_router, prefix='/api')`，再挂载含 `/{resource}` 与 `/{resource}/{identity}` 的通用 router；通过真实 app 测 baskets/definitions/capabilities 的命中和认证。能力 check 返回 report（blocked 也为 200），正式提交 blocked 用 422 且附 report，CAS/幂等冲突用现有 409。复用现有源文件冻结，不新增环境平台。
-- [ ] RunService 和 LearningService 都先解析/写未登记快照，再在最终插入事务内重新解析全部引用及能力，逐项比较 request_hash、binding_hash、定义/表语义实现 hash 与快照；一致才登记 job/run，失败清理本次未登记临时快照并返回冲突，不清理共享或历史产物。worker 在定义导入/执行前先核验 input/source/resource hash、依赖和原引用；已验证源码解析出同份配置/能力后方可运行。旧 learning 保留只读历史，所有可写旧入口关闭或要求新契约；数据详情暴露 evidence_ref，CLI 不另写判断真源。
-- [ ] 重跑上述命令全部通过；检查 API/CLI/worker 无读取 latest 的旁路，引用不存在或哈希变更时明确失败；阶段尚不发布服务。
-- [ ] 审核并提交：`feat: freeze and validate framework requests across entrypoints`。
+- [x] 运行 `uv run --no-sync pytest tests/integration/test_framework_api.py tests/integration/test_snapshot_submission.py tests/integration/test_worker_snapshot.py tests/integration/test_api_cli_equivalence.py tests/unit/test_cli.py -q`，确认新路由/冻结校验缺失失败。
+- [x] 在 app.py 中先 `include_router(framework_router, prefix='/api')`，再挂载含 `/{resource}` 与 `/{resource}/{identity}` 的通用 router；通过真实 app 测 baskets/definitions/capabilities 的命中和认证。能力 check 返回 report（blocked 也为 200），正式提交 blocked 用 422 且附 report，CAS/幂等冲突用现有 409。复用现有源文件冻结，不新增环境平台。
+- [x] RunService 和 LearningService 都先解析/写未登记快照，再在最终插入事务内重新解析全部引用及能力，逐项比较 request_hash、binding_hash、定义/表语义实现 hash 与快照；一致才登记 job/run，失败清理本次未登记临时快照并返回冲突，不清理共享或历史产物。worker 在定义导入/执行前先核验 input/source/resource hash、依赖和原引用；已验证源码解析出同份配置/能力后方可运行。旧 learning 保留只读历史，所有可写旧入口关闭或要求新契约；数据详情暴露 evidence_ref，CLI 不另写判断真源。
+- [x] 重跑上述命令全部通过；检查 API/CLI/worker 无读取 latest 的旁路，引用不存在或哈希变更时明确失败；阶段尚不发布服务。
+- [x] 审核并提交：`feat: freeze and validate framework requests across entrypoints`。
+
+T09 验证：18 个相关测试文件的综合回归 176 项通过，另 1 项仅旧错误文案断言失败，更新为冲突类型后通过；最终提交/快照/worker/API 45 项复验通过，fetch 阻塞报告 2 项通过。实际短 CPU 首训、续训、指定版本回测、导出均已执行。独立资深审核三项 P2 已用失败/通过测试关闭：最终重检查统一 409 并保留新报告、学习作业核验完整已安装依赖、登记前再次核验冻结源码和输入摘要。历史读取和新快照重跑不依赖当前定义注册表；旧分钟写入口关闭但列表、详情和结果导出仍可读。草稿只保存规范输入，不保存第二份 effective 参数。API/CLI/Web 仍为同一发布单元，未更新运行中的服务。
 
 ## T10 结果来源、导出与比较
 

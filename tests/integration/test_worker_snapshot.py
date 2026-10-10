@@ -11,6 +11,7 @@ from quanto.workbench.runs import RunService
 from quanto.workbench.scheduler import Scheduler
 from quanto.workbench.worker import read_partial
 from tests.integration.test_snapshot_submission import _ready
+from tests.integration.test_investing_models import model_workspace
 
 
 def test_environment_is_independent_of_duplicate_import_paths(tmp_path, monkeypatch):
@@ -116,10 +117,9 @@ def test_exact_rerun_uses_original_inputs_and_same_canonical_hashes(tmp_path):
     assert first == second
 
 
-def test_v1_embedded_csv_snapshot_executes_clones_and_replays(tmp_path):
+def test_v1_embedded_csv_snapshot_remains_readable_but_cannot_be_requeued(tmp_path):
     import shutil
     from quanto.workbench.revisions import digest, json_bytes, source_files
-    from quanto.workbench.service import WorkbenchService
 
     store, run, _ = ready_run(tmp_path)
     snapshot = run.manifest_path.parent
@@ -137,21 +137,10 @@ def test_v1_embedded_csv_snapshot_executes_clones_and_replays(tmp_path):
     with store.transaction() as db:
         db.execute("UPDATE runs SET manifest_hash=? WHERE run_id=?", (digest(original), run.run_id))
 
-    job = run_until_finished(store, run.job_id)
-    assert job.state == "succeeded", job.error
-    replay = RunService(store).rerun(run.run_id, "legacy-replay", "web")
-    assert replay.manifest_path == run.manifest_path
-    job = run_until_finished(store, replay.job_id)
-    assert job.state == "succeeded", job.error
-    first = (store.artifact_root / run.job_id / "final" / "manifest.json").read_bytes()
-    assert (store.artifact_root / replay.job_id / "final" / "manifest.json").read_bytes() == first
-
-    clone = WorkbenchService(store.root).clone_run(run.run_id)
-    child = RunService(store).submit(clone["id"], clone["revision"], "legacy-clone", "web")
-    assert child.parent_run_id == run.run_id
-    assert json.loads(child.manifest_path.read_text())["schema_version"] == 2
-    job = run_until_finished(store, child.job_id)
-    assert job.state == "succeeded", job.error
+    assert store.get_run(run.run_id).manifest_path.read_bytes() == original
+    with pytest.raises(ValueError, match="framework contract"):
+        RunService(store).rerun(run.run_id, "legacy-replay", "web")
+    assert run_until_finished(store, run.job_id).state == "failed"
     assert run.manifest_path.read_bytes() == original
 
 
@@ -181,7 +170,7 @@ def test_worker_rejects_environment_drift_even_for_non_exact_strategy(tmp_path, 
     job = run_until_finished(store, run.job_id)
     assert job.state == "failed"
     control = store.artifact_root / run.job_id / "control"
-    assert (control / "environment.json").exists()
+    assert "ENVIRONMENT_CHANGED" in (control / "traceback.txt").read_text(encoding="utf-8")
     assert not (control / "runtime.json").exists()
 
 
@@ -331,10 +320,47 @@ def test_changed_frozen_dataset_fails_before_strategy_entry(tmp_path, target):
     path.write_text("raise RuntimeError('unverified source executed')")
     job = run_until_finished(store, run.job_id)
     assert job.state == "failed"
-    assert job.pid is not None
     traceback = (store.artifact_root / run.job_id / "control" / "traceback.txt").read_text(encoding="utf-8")
     assert "SNAPSHOT_INVALID" in traceback
     assert not (store.artifact_root / run.job_id / "control" / "runtime.json").exists()
+
+
+def test_corrupt_strategy_resource_stops_before_strategy_import(tmp_path):
+    source = "from pathlib import Path\nPath('strategy-imported.marker').touch()\n" + STRATEGY
+    store, run, _ = ready_run(tmp_path, source, extra_files={"resources/rules.json": b'{"version": 1}'})
+    resource = run.manifest_path.parent / "strategy" / "resources" / "rules.json"
+    resource.write_text('{"version": 2}')
+    job = run_until_finished(store, run.job_id)
+    assert job.state == "failed"
+    control = store.artifact_root / run.job_id / "control"
+    assert "SNAPSHOT_INVALID" in (control / "traceback.txt").read_text(encoding="utf-8")
+    assert not (control / "strategy-imported.marker").exists()
+
+
+def test_policy_worker_rejects_transitive_dependency_drift_before_import(model_workspace, monkeypatch):
+    from quanto.investing.models import InvestingModels
+    from quanto.workbench import snapshots
+
+    app, _, _, request = model_workspace
+    service = InvestingModels(app.state.service)
+    model = service.create_model(request)
+    original = snapshots._environment
+
+    def changed_pydantic(*args, **kwargs):
+        environment = original(*args, **kwargs)
+        environment["installed_distributions"] = [[name, "0.0-drift" if name == "pydantic" else version]
+                                                  for name, version in environment["installed_distributions"]]
+        assert any(name == "pydantic" for name, _ in environment["installed_distributions"])
+        return environment
+
+    monkeypatch.setattr(snapshots, "_environment", changed_pydantic)
+    queued = service.train_model(model["id"], {"additional_timesteps": 8})
+    monkeypatch.setattr(snapshots, "_environment", original)
+    job = run_until_finished(service.store, queued["id"])
+    assert job.state == "failed"
+    control = service.store.artifact_root / queued["id"] / "control"
+    assert "ENVIRONMENT_CHANGED" in (control / "traceback.txt").read_text(encoding="utf-8")
+    assert not (control / "events.ndjson").exists()
 
 
 def _identity_alive(identity):

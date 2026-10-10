@@ -11,7 +11,9 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from quanto.api.routes import router
+from quanto.api.framework import router as framework_router
 from quanto.api.security import security_error, session_token
+from quanto.workbench.configuration import FrameworkBlocked, FrameworkConflict
 from quanto.workbench.service import WorkbenchService
 from quanto.workbench.revisions import digest, json_bytes
 
@@ -66,6 +68,17 @@ def create_app(root: Path, frontend_dir: Path | None = None, *, templates_dir: P
     async def missing(request: Request, exc: KeyError):
         return JSONResponse({"code": "NOT_FOUND", "message": "记录不存在", "details": {}}, status_code=404)
 
+    @app.exception_handler(FrameworkBlocked)
+    async def framework_blocked(request: Request, exc: FrameworkBlocked):
+        return JSONResponse({"code": "FRAMEWORK_BLOCKED", "message": "框架能力检查未通过",
+                             "details": {"report": exc.report.model_dump(mode="json")}}, status_code=422)
+
+    @app.exception_handler(FrameworkConflict)
+    async def framework_conflict(request: Request, exc: FrameworkConflict):
+        details = {"report": exc.report.model_dump(mode="json")} if exc.report is not None else {}
+        return JSONResponse({"code": "FRAMEWORK_CONFLICT", "message": "提交条件已变化，请重新检查配置后重试",
+                             "details": details}, status_code=409)
+
     @app.exception_handler(ValueError)
     async def invalid(request: Request, exc: ValueError):
         message = str(exc)
@@ -91,6 +104,7 @@ def create_app(root: Path, frontend_dir: Path | None = None, *, templates_dir: P
         message = "接口不存在" if exc.status_code == 404 else "请求无法完成"
         return JSONResponse({"code": code, "message": message, "details": {}}, status_code=exc.status_code)
 
+    app.include_router(framework_router, prefix="/api")
     from quanto.learning.api import router as learning_router
     app.include_router(learning_router, prefix="/api")
     from quanto.investing.api import router as investing_router

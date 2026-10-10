@@ -5,7 +5,7 @@ import tempfile
 import zipfile
 
 from fastapi import APIRouter, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.background import BackgroundTask
 
 from quanto.investing.service import InvestingService
@@ -62,12 +62,14 @@ def overview(request: Request):
 
 @router.post('/train')
 def train(request: Request, body: dict):
-    return service(request).train(body)
+    return JSONResponse({"code": "MIGRATION_REQUIRED", "message": "Create a framework model and train it through its model ID",
+                         "details": {}}, status_code=422)
 
 
 @router.post('/backtests')
 def backtest(request: Request, body: dict):
-    return service(request).backtest(body)
+    return JSONResponse({"code": "MIGRATION_REQUIRED", "message": "Backtest a saved framework model version through its model ID",
+                         "details": {}}, status_code=422)
 
 
 @router.get('/backtests/{identity}/tables/{name}')

@@ -63,6 +63,7 @@ class FixedRequest(StrictSpec):
     strategy_params: JsonMap
     backtest_spec: BacktestInput
     sample_purpose: Name
+    source_run_id: Name | None = None
 
     @field_validator("trading_definition_ref")
     @classmethod

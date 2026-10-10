@@ -40,13 +40,14 @@ def test_api_rejects_conflicts_and_invalid_parameters(tmp_path):
 
 
 def test_list_resources_and_experiment_revision_conflict(tmp_path):
+    _, draft, _, _ = _ready(tmp_path / "fixture")
     app = create_app(tmp_path)
     with TestClient(app, base_url="http://127.0.0.1:8765") as client:
         token = client.get("/api/session").json()["token"]
         headers = {"Authorization": f"Bearer {token}"}
         assert client.get("/api/datasets", headers=headers).json() == {"items": [], "next_cursor": None}
-        created = client.post("/api/experiments", json={"payload": {}}, headers=headers).json()
-        response = client.put(f"/api/experiments/{created['id']}", json={"expected_revision": 0, "payload": {}}, headers=headers)
+        created = client.post("/api/experiments", json={"payload": draft.payload}, headers=headers).json()
+        response = client.put(f"/api/experiments/{created['id']}", json={"expected_revision": 0, "payload": draft.payload}, headers=headers)
         assert response.status_code == 409
 
 
@@ -125,7 +126,7 @@ def test_100_valid_batch_items_retry_and_101_rejection(tmp_path):
     item = {"experiment_id": draft.id, "expected_revision": draft.revision}
     body = {"items": [item] * 100, "idempotency_key": "hundred"}
     response = client.post("/api/runs/batch", json=body, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     runs = response.json()["items"]
     assert len({run["run_id"] for run in runs}) == 100
     assert len({run["job_id"] for run in runs}) == 100

@@ -57,13 +57,14 @@ def test_policy_overview_auth_and_separate_resources(tmp_path):
     assert app.state.service.store.list_jobs() == []
 
 
-def test_policy_submission_frozen_and_cancel_cannot_publish(tmp_path):
-    from quanto.investing.service import InvestingService
+def test_policy_submission_frozen_and_cancel_cannot_publish(model_workspace, tmp_path):
+    from quanto.investing.models import InvestingModels
     from quanto.learning.registry import finish_learning_job
     from quanto.workbench.scheduler import Scheduler
-    app = create_app(tmp_path / 'workspace')
-    service = InvestingService(app.state.service)
-    submitted = service._submit('train_policy', {'spec': {}}, {})
+    app, _, _, request = model_workspace
+    service = InvestingModels(app.state.service)
+    model = service.create_model(request)
+    submitted = service.train_model(model['id'], {'additional_timesteps': 8})
     record = service.store.get_job(submitted['id'])
     path = Path(record.input_path)
     payload = json.loads(path.read_bytes())

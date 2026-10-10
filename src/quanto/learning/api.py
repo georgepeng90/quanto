@@ -5,7 +5,7 @@ from pathlib import Path
 import zipfile
 
 from fastapi import APIRouter, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.background import BackgroundTask
 
 from quanto.learning.service import LearningService
@@ -18,6 +18,11 @@ def service(request):
     return LearningService(request.app.state.service)
 
 
+def legacy_write_closed():
+    return JSONResponse({"code": "MIGRATION_REQUIRED", "message": "Use framework baskets and definitions with the current model APIs",
+                         "details": {}}, status_code=422)
+
+
 @router.get('/overview')
 def overview(request: Request):
     return service(request).overview()
@@ -25,17 +30,17 @@ def overview(request: Request):
 
 @router.post('/datasets')
 def prepare(request: Request, body: dict):
-    return service(request).prepare(body)
+    return legacy_write_closed()
 
 
 @router.post('/train')
 def train(request: Request, body: dict):
-    return service(request).train(body)
+    return legacy_write_closed()
 
 
 @router.post('/backtests')
 def backtest(request: Request, body: dict):
-    return service(request).backtest(body)
+    return legacy_write_closed()
 
 
 @router.get('/backtests/{identity}/tables/{name}')

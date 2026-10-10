@@ -11,7 +11,7 @@ from quanto.investing.evaluation import policy_identity
 from quanto.investing.service import InvestingService
 from quanto.objects import json_bytes
 from quanto.workbench.bindings import BindingStore
-from quanto.workbench.configuration import FrameworkResolver
+from quanto.workbench.configuration import FrameworkResolver, recheck_unchanged
 from quanto.workbench.framework_requests import ModelCreateRequest, PolicyBacktestRequest, ResumeRequest
 from quanto.workbench.store import utc_now
 
@@ -209,6 +209,7 @@ class InvestingModels(InvestingService):
             evidence={'method': 'resolved-new-model', 'request_hash': resolved.request_hash},
             created_at=datetime.now(timezone.utc))
         with self.store.transaction() as db:
+            recheck_unchanged(resolved, lambda: FrameworkResolver(self.store).resolve(request, db=db))
             db.execute('INSERT INTO investing_models VALUES (?,?,?,?)',
                        (identity, request.dataset_id, json_bytes(spec.model_dump(mode='json')).decode(), utc_now()))
             BindingStore(self.store)._insert_model_binding(db, binding)
@@ -226,6 +227,7 @@ class InvestingModels(InvestingService):
         trusted = {'dataset_ref': self._dataset(binding.dataset_version_id, spec.backtest),
                    'resolved_configuration': resolved.model_dump(mode='json'),
                    'model_binding': binding.model_dump(mode='json')}
+        trusted['training_dataset_ref'] = trusted['dataset_ref']
         if base_version:
             trusted['policy_resume_ref'] = self.reference(base_version, 'policy')
 
@@ -240,7 +242,8 @@ class InvestingModels(InvestingService):
 
         request = {'dataset_id': binding.dataset_version_id, 'model_id': identity, 'base_version_id': base_version,
                    'spec': spec.model_dump(mode='json')}
-        return self._submit('train_policy', request, trusted, register=register)
+        return self._submit('train_policy', request, trusted, register=register, resolved=resolved,
+                            recheck=lambda db: FrameworkResolver(self.store).resolve(operation, db=db))
 
     def backtest_model(self, identity, body):
         self._model(identity)
@@ -256,7 +259,10 @@ class InvestingModels(InvestingService):
         from quanto.config import BacktestSpec
         daily = BacktestSpec.model_validate(thaw_json(resolved.internal_backtest_spec))
         dataset = self._dataset(request.dataset_id, daily)
+        original = PolicyTrainingSpec.model_validate(thaw_json(binding.original_spec))
         return self._submit('policy_backtest', {'dataset_id': request.dataset_id, 'policy_id': request.version_id,
             'model_id': identity, 'spec': request.spec.model_dump(mode='json')},
             {'dataset_ref': dataset, 'policy_ref': self.reference(request.version_id, 'policy'),
-             'resolved_configuration': resolved.model_dump(mode='json'), 'model_binding': binding.model_dump(mode='json')})
+             'training_dataset_ref': self._dataset(binding.dataset_version_id, original.backtest),
+             'resolved_configuration': resolved.model_dump(mode='json'), 'model_binding': binding.model_dump(mode='json')},
+            resolved=resolved, recheck=lambda db: FrameworkResolver(self.store).resolve(request, db=db))

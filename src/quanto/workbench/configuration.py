@@ -1,7 +1,8 @@
 """Resolve immutable framework inputs and report operation capabilities."""
 from __future__ import annotations
 
-from collections.abc import Collection, Mapping
+from collections.abc import Callable, Collection, Mapping
+from contextlib import nullcontext
 from datetime import date, datetime, timezone
 import json
 from pathlib import Path
@@ -34,12 +35,34 @@ from quanto.workbench.revisions import source_files
 
 
 CHECKER_VERSION = "framework-resolver-v1"
+_UNSET = object()
 
 
 class FrameworkBlocked(ValueError):
     def __init__(self, report: CapabilityReport):
         self.report = report
         super().__init__(", ".join(report.error_codes) or "Framework capability blocked")
+
+
+class FrameworkConflict(ValueError):
+    def __init__(self, report: CapabilityReport | None = None):
+        self.report = report
+        super().__init__("framework conflict: frozen configuration changed before execution")
+
+
+def recheck_unchanged(frozen: ResolvedConfiguration, check: Callable[[], ResolvedConfiguration]) -> None:
+    try:
+        current = check()
+    except FrameworkBlocked as exc:
+        raise FrameworkConflict(exc.report) from exc
+    assert_unchanged(frozen, current)
+
+
+def assert_unchanged(frozen: ResolvedConfiguration, current: ResolvedConfiguration) -> None:
+    """Compare the entire resolved decision, excluding its observation time."""
+    exclude = {"capability_report": {"generated_at"}}
+    if frozen.model_dump(mode="json", exclude=exclude) != current.model_dump(mode="json", exclude=exclude):
+        raise FrameworkConflict(current.capability_report)
 
 
 def _blocked(name: str, path: str, code: str, message: str) -> CapabilityCheck:
@@ -77,6 +100,10 @@ def _source_hashes(path):
 def _request_values(request):
     # The operation is already part of the enclosing canonical input.
     return request.model_dump(mode="json", exclude={"operation"})
+
+
+def _db_call(function, *args, db=None, **kwargs):
+    return function(*args, **kwargs) if db is None else function(*args, db=db, **kwargs)
 
 
 def _training_schedule_checks(bundle, learning: LearningDefinition, training) -> tuple[CapabilityCheck, ...]:
@@ -125,28 +152,28 @@ class FrameworkResolver:
         self.provider_capabilities = provider_capabilities
         self.supported_table_versions = tuple(supported_table_versions)
 
-    def check(self, request) -> CapabilityReport:
+    def check(self, request, *, db=None) -> CapabilityReport:
         if isinstance(request, FetchRequest):
             return self._check_fetch(request)
         if isinstance(request, FixedRequest):
-            _, report = self._resolve(request, "fixed_backtest")
+            _, report = self._resolve(request, "fixed_backtest", db=db)
             return report
         if isinstance(request, ModelCreateRequest):
-            _, report = self._resolve(request, "train")
+            _, report = self._resolve(request, "train", db=db)
             return report
         if isinstance(request, (ResumeRequest, PolicyBacktestRequest)):
-            _, report = self._resolve_model_operation(request)
+            _, report = self._resolve_model_operation(request, db=db)
             return report
         raise TypeError(f"Unsupported framework request: {type(request).__name__}")
 
     def resolve(self, request: FixedRequest | ModelCreateRequest | ResumeRequest |
-                PolicyBacktestRequest) -> ResolvedConfiguration:
+                PolicyBacktestRequest, *, db=None) -> ResolvedConfiguration:
         if isinstance(request, FixedRequest):
-            resolved, report = self._resolve(request, "fixed_backtest")
+            resolved, report = self._resolve(request, "fixed_backtest", db=db)
         elif isinstance(request, ModelCreateRequest):
-            resolved, report = self._resolve(request, "train")
+            resolved, report = self._resolve(request, "train", db=db)
         elif isinstance(request, (ResumeRequest, PolicyBacktestRequest)):
-            resolved, report = self._resolve_model_operation(request)
+            resolved, report = self._resolve_model_operation(request, db=db)
         else:
             raise TypeError(f"Unsupported framework request: {type(request).__name__}")
         if resolved is None:
@@ -172,7 +199,8 @@ class FrameworkResolver:
                                        "DATA_REQUIREMENT_UNSATISFIED", f"No declared provider supports {data_request.kind}"))
         return _report("fetch", checks, request_hash=request_hash)
 
-    def _resolve(self, request: FixedRequest | ModelCreateRequest, operation: str, *, basket_override=None):
+    def _resolve(self, request: FixedRequest | ModelCreateRequest, operation: str, *, basket_override=None,
+                 dataset_override=None, binding_override=None, strategy_override=None, db=None):
         checks: list[CapabilityCheck] = []
         dataset_id = request.dataset_version_id if operation == "fixed_backtest" else request.dataset_id
         if basket_override is not None:
@@ -181,20 +209,22 @@ class FrameworkResolver:
             basket = basket_override
         else:
             try:
-                basket = BasketStore(self.store).get(request.basket_revision_ref)
+                basket = _db_call(BasketStore(self.store).get, request.basket_revision_ref, db=db)
             except KeyError:
                 basket = None
                 checks.append(_blocked("basket_reference", "basket_revision_ref", "IDENTITY_UNRESOLVED",
                                        "Basket revision does not exist"))
         try:
-            dataset = self.store.get_dataset(dataset_id)
+            dataset = (dataset_override if dataset_override is not None
+                       else _db_call(self.store.get_dataset, dataset_id, db=db))
         except KeyError:
             dataset = None
             checks.append(_blocked("dataset_reference", "dataset_version_id" if operation == "fixed_backtest" else "dataset_id",
                                    "IDENTITY_UNRESOLVED", "Dataset version does not exist"))
         if dataset is not None:
             try:
-                binding = BindingStore(self.store).get_asset_binding(dataset_id)
+                binding = (binding_override if binding_override is not None
+                           else _db_call(BindingStore(self.store).get_asset_binding, dataset_id, db=db))
             except KeyError:
                 binding = None
                 checks.append(_blocked("asset_binding", "asset_binding", "IDENTITY_UNRESOLVED",
@@ -208,7 +238,8 @@ class FrameworkResolver:
         strategy = strategy_definition = strategy_hashes = None
         if operation == "fixed_backtest":
             try:
-                strategy = self.store.get_strategy(request.strategy_revision_id)
+                strategy = (strategy_override if strategy_override is not None
+                            else _db_call(self.store.get_strategy, request.strategy_revision_id, db=db))
             except KeyError:
                 checks.append(_blocked("strategy_reference", "strategy_revision_id", "IDENTITY_UNRESOLVED",
                                        "Strategy revision does not exist"))
@@ -427,10 +458,10 @@ class FrameworkResolver:
                                          request_hash=request_hash, capability_report=report)
         return resolved, report
 
-    def _model_binding(self, model_id: str):
-        binding = BindingStore(self.store).get_model_binding(model_id)
-        with self.store.transaction() as db:
-            row = db.execute("SELECT dataset_id, spec_json FROM investing_models WHERE id=?", (model_id,)).fetchone()
+    def _model_binding(self, model_id: str, *, db=None):
+        binding = _db_call(BindingStore(self.store).get_model_binding, model_id, db=db)
+        with nullcontext(db) if db is not None else self.store.transaction() as connection:
+            row = connection.execute("SELECT dataset_id, spec_json FROM investing_models WHERE id=?", (model_id,)).fetchone()
         if row is None:
             raise ValueError("IDENTITY_UNRESOLVED: model does not exist")
         stored_spec = json.loads(row["spec_json"])
@@ -439,9 +470,15 @@ class FrameworkResolver:
                 canonical_hash(stored_spec) != binding.original_spec_hash or
                 normalized_spec != thaw_json(binding.training_configuration.internal_training_spec)):
             raise ValueError("MODEL_IDENTITY_MISMATCH: model row differs from frozen binding")
-        original_dataset = self.store.get_dataset(binding.dataset_version_id)
+        original_dataset = _db_call(self.store.get_dataset, binding.dataset_version_id, db=db)
+        original_binding = _db_call(BindingStore(self.store).get_asset_binding, binding.dataset_version_id, db=db)
+        return self._validate_model_binding(binding, original_dataset, original_binding)
+
+    def _validate_model_binding(self, binding, original_dataset, original_binding):
+        if original_dataset.id != binding.dataset_version_id or original_dataset.content_hash != binding.asset_binding.dataset_content_hash:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: original dataset differs from frozen binding")
         original_bundle = load_dataset(verify_dataset_version(original_dataset))
-        if BindingStore(self.store).get_asset_binding(binding.dataset_version_id) != binding.asset_binding:
+        if original_binding != binding.asset_binding:
             raise ValueError("MODEL_IDENTITY_MISMATCH: original dataset binding changed")
         binding.asset_binding.validate_symbols(tuple(original_bundle.instruments.symbol))
         original_prices = next((item for item in binding.asset_binding.table_semantics
@@ -449,6 +486,8 @@ class FrameworkResolver:
         if original_prices is None or original_prices.temporal_rules.get("price_mode") != original_bundle.price_mode:
             raise ValueError("MODEL_IDENTITY_MISMATCH: original dataset price basis differs")
         original = PolicyTrainingSpec.model_validate(thaw_json(binding.original_spec))
+        if original.model_dump(mode="json") != thaw_json(binding.training_configuration.internal_training_spec):
+            raise ValueError("MODEL_IDENTITY_MISMATCH: frozen original training specification differs")
         if policy_identity(original) != thaw_json(binding.semantic_identity):
             raise ValueError("MODEL_IDENTITY_MISMATCH: policy observation or action identity differs")
         current = {}
@@ -463,9 +502,9 @@ class FrameworkResolver:
         return binding, original, current
 
     def _verified_policy_version(self, binding: ModelFrameworkBinding, version_id: str,
-                                 original: PolicyTrainingSpec, definitions):
-        with self.store.transaction() as db:
-            row = db.execute('''SELECT a.path, a.content_hash, a.files_json, a.manifest_json
+                                 original: PolicyTrainingSpec, definitions, *, db=None):
+        with nullcontext(db) if db is not None else self.store.transaction() as connection:
+            row = connection.execute('''SELECT a.path, a.content_hash, a.files_json, a.manifest_json
                 FROM investing_sessions s JOIN jobs j ON j.id=s.job_id
                 JOIN learning_artifacts a ON a.id=s.job_id
                 WHERE s.model_id=? AND s.job_id=? AND j.state='succeeded' AND a.kind='policy' ''',
@@ -474,11 +513,17 @@ class FrameworkResolver:
             raise ValueError("MODEL_IDENTITY_MISMATCH: version is not a successful policy of this model")
         ref = {"id": version_id, "path": row["path"], "content_hash": row["content_hash"],
                "files": json.loads(row["files_json"])}
+        return self._validate_policy_version_ref(binding, version_id, original, definitions,
+                                                 ref, json.loads(row["manifest_json"]))
+
+    def _validate_policy_version_ref(self, binding, version_id, original, definitions, ref, saved_manifest):
+        if ref["id"] != version_id:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: policy version reference differs")
         if digest(json_bytes(ref["files"])) != ref["content_hash"]:
             raise ValueError("MODEL_IDENTITY_MISMATCH: policy artifact registry hash differs")
         verify_ref(ref)
-        manifest = read_manifest(Path(row["path"]), "policy")
-        if manifest != json.loads(row["manifest_json"]):
+        manifest = read_manifest(Path(ref["path"]), "policy")
+        if saved_manifest is not None and manifest != saved_manifest:
             raise ValueError("MODEL_IDENTITY_MISMATCH: policy artifact differs from saved version")
         if "policy.zip" not in manifest["files"]:
             raise ValueError("MODEL_IDENTITY_MISMATCH: saved policy weights are missing")
@@ -522,16 +567,16 @@ class FrameworkResolver:
         else:
             if descriptor is None:
                 raise ValueError("MODEL_IDENTITY_MISMATCH: fitted feature transform is missing")
-            transform = read_frozen_transform(Path(row["path"]), descriptor)
+            transform = read_frozen_transform(Path(ref["path"]), descriptor)
             runtime.validate_transform(transform, previous)
         return manifest, ref
 
-    def _resolve_model_operation(self, request: ResumeRequest | PolicyBacktestRequest):
+    def _resolve_model_operation(self, request: ResumeRequest | PolicyBacktestRequest, *, db=None):
         operation = "resume" if isinstance(request, ResumeRequest) else "policy_backtest"
         model_id = request.model_id if operation == "resume" else None
         if operation == "policy_backtest":
-            with self.store.transaction() as db:
-                row = db.execute("SELECT model_id FROM investing_sessions WHERE job_id=?",
+            with nullcontext(db) if db is not None else self.store.transaction() as connection:
+                row = connection.execute("SELECT model_id FROM investing_sessions WHERE job_id=?",
                                  (request.version_id,)).fetchone()
             if row is None:
                 return None, _report(operation, [_blocked("version_reference", "version_id", "IDENTITY_UNRESOLVED",
@@ -541,20 +586,24 @@ class FrameworkResolver:
                 return None, _report(operation, [_blocked("version_owner", "model_id", "MODEL_IDENTITY_MISMATCH",
                                                          "Version does not belong to requested model")])
         try:
-            binding, original, definitions = self._model_binding(model_id)
+            binding, original, definitions = _db_call(self._model_binding, model_id, db=db)
             if operation == "resume":
-                return self._resolve_resume(request, binding, original, definitions)
-            return self._resolve_policy_backtest(request, binding, original, definitions)
+                return _db_call(self._resolve_resume, request, binding, original, definitions, db=db)
+            return _db_call(self._resolve_policy_backtest, request, binding, original, definitions, db=db)
         except (KeyError, ValueError, OSError, TypeError) as exc:
             code = "IDENTITY_UNRESOLVED" if isinstance(exc, KeyError) else _model_code(exc)
             path = "model_id" if operation == "resume" else "version_id"
             return None, _report(operation, [_blocked("model_operation", path, code, str(exc))])
 
-    def _resolve_resume(self, request, binding, original, definitions):
+    def _resolve_resume(self, request, binding, original, definitions, *, db=None,
+                        original_dataset_override=None, parent_id_override=_UNSET, policy_ref_override=None):
         frozen = binding.training_configuration
         create = model_request_from_spec(original, binding.basket, binding.asset_binding,
                                          definitions["learning"].ref, definitions["trading"].ref)
-        checked, original_report = self._resolve(create, "train")
+        checked, original_report = self._resolve(
+            create, "train", basket_override=binding.basket, db=db,
+            dataset_override=original_dataset_override,
+            binding_override=binding.asset_binding if original_dataset_override is not None else None)
         if checked is None:
             return None, _report("resume", list(original_report.checks),
                                  request_hash=original_report.request_hash,
@@ -564,17 +613,29 @@ class FrameworkResolver:
                 checked.requirements != frozen.requirements or checked.ordered_pairs != frozen.ordered_pairs or
                 checked.asset_binding != frozen.asset_binding):
             raise ValueError("MODEL_IDENTITY_MISMATCH: frozen training identity changed")
-        with self.store.transaction() as db:
-            row = db.execute('''SELECT s.job_id FROM investing_sessions s JOIN jobs j ON j.id=s.job_id
-                JOIN learning_artifacts a ON a.id=s.job_id
-                WHERE s.model_id=? AND j.state='succeeded' AND a.kind='policy'
-                ORDER BY j.enqueue_seq DESC LIMIT 1''', (binding.model_id,)).fetchone()
-        parent_id = row["job_id"] if row is not None else None
+        if parent_id_override is _UNSET:
+            with nullcontext(db) if db is not None else self.store.transaction() as connection:
+                row = connection.execute('''SELECT s.job_id FROM investing_sessions s JOIN jobs j ON j.id=s.job_id
+                    JOIN learning_artifacts a ON a.id=s.job_id
+                    WHERE s.model_id=? AND j.state='succeeded' AND a.kind='policy'
+                    ORDER BY j.enqueue_seq DESC LIMIT 1''', (binding.model_id,)).fetchone()
+            parent_id = row["job_id"] if row is not None else None
+        else:
+            parent_id = parent_id_override
         manifest = None
         if parent_id is not None:
-            manifest, _ = self._verified_policy_version(binding, parent_id, original, definitions)
+            if parent_id_override is _UNSET:
+                manifest, _ = _db_call(self._verified_policy_version, binding, parent_id, original, definitions, db=db)
+            else:
+                if policy_ref_override is None:
+                    raise ValueError("MODEL_IDENTITY_MISMATCH: frozen continuation version is missing")
+                manifest, _ = self._validate_policy_version_ref(
+                    binding, parent_id, original, definitions, policy_ref_override,
+                    None)
             if "last.zip" not in manifest["files"]:
                 raise ValueError("MODEL_IDENTITY_MISMATCH: saved policy lacks continuation state")
+        elif policy_ref_override is not None:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: unexpected frozen continuation version")
         values = original.model_dump(mode="json")
         values["total_timesteps"] = request.additional_timesteps or original.total_timesteps
         values["device"] = request.device or original.device
@@ -598,16 +659,24 @@ class FrameworkResolver:
         validate_model_operation(binding, request, resolved)
         return resolved, report
 
-    def _resolve_policy_backtest(self, request, binding, original, definitions):
+    def _resolve_policy_backtest(self, request, binding, original, definitions, *, db=None,
+                                 dataset_override=None, binding_override=None, policy_ref_override=None):
         from quanto.config import BacktestSpec
         from quanto.workbench.framework_capabilities import check_requirements
 
-        manifest, artifact_ref = self._verified_policy_version(binding, request.version_id,
-                                                                original, definitions)
+        if policy_ref_override is None:
+            manifest, artifact_ref = _db_call(self._verified_policy_version, binding, request.version_id,
+                                             original, definitions, db=db)
+        else:
+            manifest, artifact_ref = self._validate_policy_version_ref(
+                binding, request.version_id, original, definitions, policy_ref_override,
+                None)
         checks: list[CapabilityCheck] = []
         try:
-            dataset = self.store.get_dataset(request.dataset_id)
-            new_binding = BindingStore(self.store).get_asset_binding(request.dataset_id)
+            dataset = (dataset_override if dataset_override is not None
+                       else _db_call(self.store.get_dataset, request.dataset_id, db=db))
+            new_binding = (binding_override if binding_override is not None
+                           else _db_call(BindingStore(self.store).get_asset_binding, request.dataset_id, db=db))
             bundle = load_dataset(verify_dataset_version(dataset))
             new_binding.validate_symbols(tuple(bundle.instruments.symbol))
         except KeyError as exc:

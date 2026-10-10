@@ -10,7 +10,6 @@ import sqlite3
 import tempfile
 from uuid import uuid4
 
-from quanto.config import validate_parameters
 from quanto.data.settings import get_market_root
 from quanto.backtest.dataset_loaders import load_dataset
 from quanto.backtest.dataset_storage import write_parquet_dataset
@@ -164,10 +163,8 @@ class WorkbenchStore:
         return StrategyRevision(identity, target, content_hash, manifest)
 
     def save_experiment(self, experiment_id: str | None, expected_revision: int | None, payload: dict) -> ExperimentDraft:
-        normalized = json.loads(json_bytes(payload))
-        if "strategy_revision_id" in normalized and "strategy_params" in normalized:
-            strategy = self.get_strategy(normalized["strategy_revision_id"])
-            normalized["effective_strategy_params"] = validate_parameters(strategy.manifest["parameter_schema"], normalized["strategy_params"])
+        from quanto.workbench.framework_requests import FixedRequest
+        normalized = FixedRequest.model_validate(payload).model_dump(mode="json")
         encoded = json_bytes(normalized).decode()
         with self.transaction() as db:
             if experiment_id is None:

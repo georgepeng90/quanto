@@ -159,9 +159,15 @@ class WorkbenchService:
         return result
 
     def dataset_detail(self, identity: str) -> dict:
+        from quanto.backtest.dataset_identity import (EVIDENCE_FILE, PublishedIdentityEvidence,
+                                                     declared_dataset_files, file_digests)
+        from quanto.workbench.bindings import BindingStore
+        from quanto.workbench.dataset_objects import verify_dataset_version
+
         dataset = self.store.get_dataset(identity)
         detail = self._record(dataset)
-        instruments = load_dataset(dataset.path).instruments
+        root = verify_dataset_version(dataset)
+        instruments = load_dataset(root).instruments
         detail["instruments"] = [
             {"symbol": str(row.symbol), "lot_size": int(row.lot_size),
              "settlement_sessions": int(row.settlement_sessions),
@@ -169,6 +175,50 @@ class WorkbenchService:
              "group": str(row.group)}
             for row in instruments.itertuples(index=False)
         ]
+        evidence_ref = None
+        issue = None
+        published_path = root / EVIDENCE_FILE
+        if published_path.is_file() and not published_path.is_symlink():
+            try:
+                published = PublishedIdentityEvidence.model_validate_json(published_path.read_bytes())
+                if dict(published.output_files) != file_digests(declared_dataset_files(root)):
+                    raise ValueError("published import output hashes differ from dataset")
+                evidence_ref = published.ref
+            except ValueError as exc:
+                issue = {"code": "BINDING_MISMATCH", "message": str(exc)}
+        else:
+            source = self.store.dataset_market_source(identity)
+            if source is not None:
+                try:
+                    from quanto.data import MarketData, MarketDataError
+
+                    market_root = self.store.market_root
+                    try:
+                        job = self.store.get_job(identity)
+                    except KeyError:
+                        job = None
+                    if job is not None and job.input_path:
+                        market_root = Path(json.loads(Path(job.input_path).read_text(encoding="utf-8"))["input"]["market_root"])
+                    with MarketData(market_root, providers=()) as market:
+                        verified = market.resolve_snapshot(source["id"])
+                    if verified.manifest_digest != source["manifest_digest"]:
+                        raise ValueError("registered market snapshot digest differs")
+                    evidence_ref = f"market:{source['id']}"
+                except (KeyError, OSError, ValueError, MarketDataError) as exc:
+                    issue = {"code": "BINDING_MISMATCH", "message": str(exc)}
+            else:
+                issue = {"code": "IDENTITY_UNRESOLVED", "message": "Dataset has no published identity evidence or registered market source"}
+        try:
+            binding = BindingStore(self.store).get_asset_binding(identity)
+        except KeyError:
+            binding = None
+            issue = issue or {"code": "IDENTITY_UNRESOLVED", "message": "Identity evidence is available, but no asset binding is registered"}
+        except ValueError as exc:
+            binding = None
+            issue = {"code": "BINDING_MISMATCH", "message": str(exc)}
+        detail["asset_binding"] = binding.model_dump(mode="json") if binding is not None else None
+        detail["identity_evidence_ref"] = evidence_ref
+        detail["identity_binding_issue"] = issue
         return detail
 
     @staticmethod
@@ -205,11 +255,12 @@ class WorkbenchService:
     def clone_run(self, identity: str) -> dict:
         run = self.store.get_run(identity)
         manifest = self.runs.snapshots.verify(FrozenRun(identity, run.manifest_path, run.manifest_hash), exact=False)
-        payload = {"dataset_version_id": manifest["dataset_version_id"],
-                   "strategy_revision_id": manifest["strategy_revision_id"],
-                   "strategy_params": manifest["effective_strategy_params"],
-                   "backtest_spec": manifest["backtest_spec"],
-                   "sample_purpose": manifest["sample_purpose"], "source_run_id": identity}
+        if manifest.get("schema_version") != 3 or "resolved_configuration" not in manifest:
+            raise ValueError("historical run lacks a framework contract; upgrade it to a new draft")
+        from quanto.workbench.framework_requests import FixedRequest
+
+        payload = FixedRequest.model_validate({**manifest["resolved_configuration"]["request"],
+                                               "source_run_id": identity}).model_dump(mode="json")
         return self._record(self.store.save_experiment(None, None, payload))
 
     def submit(self, experiment_id: str, expected_revision: int, key: str, source: str = "web") -> dict:
@@ -434,14 +485,18 @@ class WorkbenchService:
             raise ValueError("invalid job kind")
         if not isinstance(payload, dict) or any(key in payload for key in ("path", "host_path", "source_root", "handler", "workspace", "_output_dir")):
             raise ValueError("host paths and handlers are not accepted")
+        fetch_request = fetch_report = None
         if kind == "fetch":
+            from quanto.workbench.configuration import FrameworkBlocked, FrameworkConflict, FrameworkResolver
             from quanto.workbench.framework_requests import FetchRequest
             allowed = {*FetchRequest.model_fields, "refresh"}
             if set(payload) - allowed or type(payload.get("refresh", False)) is not bool:
                 raise ValueError("fetch accepts data requirements and refresh only")
-            from quanto.backtest.market_dataset import build_data_requirement
-            build_data_requirement(payload)
-            payload = {**payload, "refresh": payload.get("refresh", False)}
+            fetch_request = FetchRequest.model_validate({key: value for key, value in payload.items() if key != "refresh"})
+            fetch_report = FrameworkResolver(self.store).check(fetch_request)
+            if fetch_report.status != "ready":
+                raise FrameworkBlocked(fetch_report)
+            payload = {**fetch_request.model_dump(mode="json"), "refresh": payload.get("refresh", False)}
         if kind == "demo" and (type(payload.get("years", 1)) is not int or not 1 <= payload.get("years", 1) <= 20
                                or type(payload.get("seed", 7)) is not int):
             raise ValueError("invalid demo settings")
@@ -450,30 +505,47 @@ class WorkbenchService:
             raise ValueError("invalid strategy validation request")
         identity = str(uuid4())
         input_root = self.store.root / "job-inputs" / identity
-        input_root.mkdir(parents=True)
         source_root = Path(__file__).resolve().parents[3]
-        shutil.copytree(source_root / "src" / "quanto", input_root / "src" / "quanto",
-                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        frozen_input = dict(payload)
-        frozen_input["workspace"] = str(self.store.root)
-        if kind == "fetch":
-            frozen_input["market_root"] = str(self.store.market_root)
-        if kind == "import":
-            from uuid import UUID
-            upload_id = frozen_input.get("upload_id", "")
-            UUID(upload_id)
-            candidates = list((self.store.root / "uploads").glob(f"{upload_id}.*"))
-            if len(candidates) != 1:
-                raise ValueError("unknown upload_id")
-            frozen = input_root / f"upload{candidates[0].suffix}"
-            shutil.copyfile(candidates[0], frozen)
-            frozen_input["_upload_path"] = str(frozen)
-        hashes = {path.relative_to(input_root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
-                  for path in input_root.rglob("*") if path.is_file()}
-        atomic_json(input_root / "input.json", {"source_root": str(input_root), "input": frozen_input,
-                                                "source_hashes": hashes})
-        with self.store.transaction() as db:
-            seq = db.execute("SELECT COALESCE(MAX(enqueue_seq),0)+1 FROM jobs").fetchone()[0]
-            db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root,input_path,created_at) VALUES (?,?,'queued',NULL,?,?,?,?)",
-                       (identity, kind, seq, str(self.store.artifact_root), str(input_root / "input.json"), utc_now()))
+        created = False
+        try:
+            input_root.mkdir(parents=True, exist_ok=False)
+            created = True
+            shutil.copytree(source_root / "src" / "quanto", input_root / "src" / "quanto",
+                            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            frozen_input = dict(payload)
+            frozen_input["workspace"] = str(self.store.root)
+            if kind == "fetch":
+                frozen_input["market_root"] = str(self.store.market_root)
+                frozen_input["framework"] = {"request": fetch_request.model_dump(mode="json"),
+                                             "capability_report": fetch_report.model_dump(mode="json")}
+            if kind == "import":
+                from uuid import UUID
+                upload_id = frozen_input.get("upload_id", "")
+                UUID(upload_id)
+                candidates = list((self.store.root / "uploads").glob(f"{upload_id}.*"))
+                if len(candidates) != 1:
+                    raise ValueError("unknown upload_id")
+                frozen = input_root / f"upload{candidates[0].suffix}"
+                shutil.copyfile(candidates[0], frozen)
+                frozen_input["_upload_path"] = str(frozen)
+            hashes = {path.relative_to(input_root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+                      for path in input_root.rglob("*") if path.is_file()}
+            atomic_json(input_root / "input.json", {"source_root": str(input_root), "input": frozen_input,
+                                                    "source_hashes": hashes})
+            with self.store.transaction() as db:
+                if fetch_request is not None:
+                    current = FrameworkResolver(self.store).check(fetch_request, db=db)
+                    exclude = {"generated_at"}
+                    if (current.status != "ready" or
+                            current.model_dump(mode="json", exclude=exclude) != fetch_report.model_dump(mode="json", exclude=exclude)):
+                        raise FrameworkConflict(current)
+                seq = db.execute("SELECT COALESCE(MAX(enqueue_seq),0)+1 FROM jobs").fetchone()[0]
+                db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root,input_path,created_at) VALUES (?,?,'queued',NULL,?,?,?,?)",
+                           (identity, kind, seq, str(self.store.artifact_root), str(input_root / "input.json"), utc_now()))
+        except BaseException:
+            if created:
+                if input_root.parent.resolve() != (self.store.root / "job-inputs").resolve():
+                    raise ValueError("invalid job input cleanup path")
+                shutil.rmtree(input_root)
+            raise
         return self.get_resource("jobs", identity)

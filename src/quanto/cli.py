@@ -66,14 +66,35 @@ def build_parser() -> argparse.ArgumentParser:
                 entry.add_argument("identity")
                 if action == "rerun":
                     entry.add_argument("--json", required=True)
+        if name == "datasets":
+            bind = actions.add_parser("bind")
+            bind.add_argument("identity")
+            bind.add_argument("--json", required=True)
+    baskets = commands.add_parser("baskets", help="Manage versioned baskets")
+    basket_actions = baskets.add_subparsers(dest="action", required=True)
+    basket_actions.add_parser("list")
+    create = basket_actions.add_parser("create")
+    create.add_argument("--json", required=True)
+    revise = basket_actions.add_parser("revise")
+    revise.add_argument("identity")
+    revise.add_argument("--json", required=True)
+    show = basket_actions.add_parser("show")
+    show.add_argument("identity")
+    show.add_argument("--revision", type=int)
+    definitions = commands.add_parser("definitions", help="List installed definitions")
+    definitions.add_subparsers(dest="action", required=True).add_parser("list")
+    capabilities = commands.add_parser("capabilities", help="Check framework capabilities")
+    check = capabilities.add_subparsers(dest="action", required=True).add_parser("check")
+    check.add_argument("--json", required=True)
+    models = commands.add_parser("models", help="Manage framework model bindings")
+    bind = models.add_subparsers(dest="action", required=True).add_parser("bind")
+    bind.add_argument("identity")
+    bind.add_argument("--json", required=True)
     compare = commands.add_parser("compare", help="比较运行")
     compare.add_argument("run_ids", nargs="+")
     learning = commands.add_parser("learning", help="分钟数据训练、模型和回测")
     actions = learning.add_subparsers(dest="action", required=True)
     actions.add_parser("overview")
-    for action in ("prepare", "train", "backtest"):
-        item = actions.add_parser(action)
-        item.add_argument("--json", required=True)
     get = actions.add_parser("get")
     get.add_argument("resource", choices=("datasets", "models", "backtests"))
     get.add_argument("identity")
@@ -89,9 +110,6 @@ def build_parser() -> argparse.ArgumentParser:
     for action in ("train-model", "model-backtest"):
         item = actions.add_parser(action)
         item.add_argument("identity")
-        item.add_argument("--json", required=True)
-    for action in ("train", "backtest"):
-        item = actions.add_parser(action)
         item.add_argument("--json", required=True)
     get = actions.add_parser("get")
     get.add_argument("resource", choices=("models", "policies", "backtests"))
@@ -140,7 +158,30 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     client = WorkbenchClient(args.url, token)
     try:
-        if args.command in {"learning", "investing"}:
+        if args.command == "baskets":
+            if args.action == "list":
+                result = client.get("/baskets")
+            elif args.action == "show":
+                path = f"/baskets/{args.identity}"
+                if args.revision is not None:
+                    path += f"/revisions/{args.revision}"
+                result = client.get(path)
+            elif args.action == "create":
+                result = client.post("/baskets", json.loads(Path(args.json).read_text(encoding="utf-8")))
+            else:
+                result = client.post(f"/baskets/{args.identity}/revisions",
+                                     json.loads(Path(args.json).read_text(encoding="utf-8")))
+        elif args.command == "definitions":
+            result = client.get("/definitions")
+        elif args.command == "capabilities":
+            result = client.post("/capabilities/check", json.loads(Path(args.json).read_text(encoding="utf-8")))
+        elif args.command == "models":
+            result = client.post(f"/investing/models/{args.identity}/framework-binding",
+                                 json.loads(Path(args.json).read_text(encoding="utf-8")))
+        elif args.command == "datasets" and args.action == "bind":
+            result = client.post(f"/datasets/{args.identity}/asset-binding",
+                                 json.loads(Path(args.json).read_text(encoding="utf-8")))
+        elif args.command in {"learning", "investing"}:
             prefix = f"/{args.command}"
             if args.action == "overview":
                 result = client.get(f"{prefix}/overview")
@@ -157,9 +198,6 @@ def main(argv: list[str] | None = None) -> int:
                 result = client.get(f"/jobs/{args.identity}/logs")
             elif args.action == "cancel":
                 result = client.post(f"/jobs/{args.identity}/cancel", {})
-            else:
-                route = {"prepare": "datasets", "train": "train", "backtest": "backtests"}[args.action]
-                result = client.post(f"{prefix}/{route}", json.loads(Path(args.json).read_text(encoding="utf-8")))
         elif args.command == "compare":
             result = client.post("/comparisons", {"run_ids": args.run_ids})
         else:

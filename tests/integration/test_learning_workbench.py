@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sqlite3
-import time
 from pathlib import Path
 
 import pytest
@@ -32,20 +32,13 @@ def test_existing_jobs_survive_learning_migration(tmp_path):
         assert db.execute("SELECT count(*) FROM learning_artifacts").fetchone()[0] == 0
 
 
-def test_frozen_learning_input_rejects_changed_request(tmp_path):
+def test_legacy_learning_submit_rejects_old_job_kind(tmp_path):
     from quanto.learning.service import LearningService
-    from quanto.workbench.scheduler import Scheduler
     app = create_app(tmp_path / 'workspace')
     service = LearningService(app.state.service)
-    submitted = service._submit('prepare_learning', {'spec': {}}, {})
-    record = service.store.get_job(submitted['id'])
-    path = Path(record.input_path)
-    payload = json.loads(path.read_bytes())
-    payload['input']['request']['spec']['name'] = 'changed after queueing'
-    path.write_text(json.dumps(payload), encoding='utf-8')
-    scheduler = Scheduler(service.store)
-    with pytest.raises(ValueError, match='INPUT_CHANGED'):
-        scheduler._launch(record)
+    with pytest.raises(ValueError, match='resolved framework configuration'):
+        service._submit('prepare_learning', {'spec': {}}, {})
+    assert service.store.list_jobs() == []
 
 
 def test_learning_environment_rejects_dependency_drift():
@@ -113,14 +106,14 @@ def test_learning_routes_auth_and_empty_overview(tmp_path):
     assert {'torch_available', 'cuda_available', 'device_name'} <= body['capabilities'].keys()
 
 
-def test_learning_submission_rejects_unknown_model_and_host_path(tmp_path):
+def test_legacy_learning_writes_are_closed(tmp_path):
     app = create_app(tmp_path)
     client = TestClient(app, base_url="http://127.0.0.1")
     headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
-    response = client.post('/api/learning/train', headers=headers, json={'dataset_id': 'missing', 'spec': {}})
-    assert response.status_code in (404, 422)
-    response = client.post('/api/learning/datasets', headers=headers, json={'spec': {}, 'path': 'C:/private'})
-    assert response.status_code == 422
+    for path in ('/api/learning/datasets', '/api/learning/train', '/api/learning/backtests'):
+        response = client.post(path, headers=headers, json={'spec': {}, 'path': 'C:/private'})
+        assert response.status_code == 422
+        assert response.json()['code'] == 'MIGRATION_REQUIRED'
     assert app.state.service.store.list_jobs() == []
 
 
@@ -138,97 +131,63 @@ def test_learning_cli_uses_same_api(monkeypatch, tmp_path, capsys):
     from quanto import cli
     calls = []
     monkeypatch.setattr(cli.WorkbenchClient, 'request', lambda self, method, path, body=None: calls.append((method, path, body)) or {'ok': True})
-    config = tmp_path / 'train.json'
-    config.write_text(json.dumps({'dataset_id': 'd', 'spec': {'name': 'training'}}), encoding='utf-8')
-    assert cli.main(['--token', 'test', 'learning', 'train', '--json', str(config)]) == 0
-    assert calls == [('POST', '/learning/train', {'dataset_id': 'd', 'spec': {'name': 'training'}})]
-    assert json.loads(capsys.readouterr().out) == {'ok': True}
+    for resource in ('datasets', 'models', 'backtests'):
+        assert cli.main(['--token', 'test', 'learning', 'get', resource, 'historical']) == 0
+        assert json.loads(capsys.readouterr().out) == {'ok': True}
+    assert calls == [('GET', f'/learning/{resource}/historical', None)
+                     for resource in ('datasets', 'models', 'backtests')]
 
 
-def test_supervised_prepare_train_backtest_and_results(tmp_path):
-    pytest.importorskip('torch')
-    from tests.fixtures.learning_cases import learning_case, training_case
-    prepare, start = learning_case(tmp_path / 'market')
-    app = create_app(tmp_path / 'workspace')
+def _historical_artifact(store, identity, kind, manifest, files):
+    root = store.artifact_root / 'historical' / identity
+    root.mkdir(parents=True, exist_ok=True)
+    for name, content in files.items():
+        (root / name).write_bytes(content)
+    hashes = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files}
+    with store.transaction() as db:
+        db.execute('INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)',
+                   (identity, kind, str(root), hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest(),
+                    json.dumps(manifest), json.dumps(hashes), '2024-01-01T00:00:00+00:00'))
+    return root
+
+
+def test_historical_learning_artifacts_and_results_remain_readable(tmp_path):
+    store = WorkbenchStore(tmp_path / 'workspace')
+    _historical_artifact(store, 'old-dataset', 'dataset', {'name': 'old minute dataset'},
+                         {'manifest.json': b'{}'})
+    _historical_artifact(store, 'old-model', 'model', {'name': 'old minute model'},
+                         {'manifest.json': b'{}', 'curves.json': b'[{"epoch": 1}]'})
+    result_root = store.artifact_root / 'historical' / 'old-backtest'
+    result_root.mkdir(parents=True)
+    with sqlite3.connect(result_root / 'results.sqlite3') as db:
+        db.execute('CREATE TABLE rows (name TEXT, number INTEGER, payload TEXT, PRIMARY KEY(name,number)) WITHOUT ROWID')
+        db.execute('CREATE TABLE counts (name TEXT PRIMARY KEY, count INTEGER)')
+        rows = [('equity', number, json.dumps({'timestamp': f'2024-01-01T00:0{number}:00Z',
+                                              'equity': str(100 + number), 'drawdown': '0'}))
+                for number in range(1, 4)]
+        db.executemany('INSERT INTO rows VALUES (?,?,?)', rows)
+        db.execute("INSERT INTO counts VALUES ('equity',3)")
+    _historical_artifact(store, 'old-backtest', 'backtest', {'counts': {'bars': 3}},
+                         {'summary.json': b'{"counts":{"bars":3}}',
+                          'results.sqlite3': (result_root / 'results.sqlite3').read_bytes(),
+                          'equity.csv': b'timestamp,equity\\n2024-01-01T00:01:00Z,101\\n'})
+
+    app = create_app(store.root)
     with TestClient(app, base_url='http://127.0.0.1') as client:
         headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
-
-        def submit(path, body):
-            response = client.post(path, headers=headers, json=body)
-            assert response.status_code == 200, response.text
-            job = response.json()
-            deadline = time.monotonic() + 90
-            while job['state'] in {'queued', 'running', 'cancel_requested'} and time.monotonic() < deadline:
-                time.sleep(.1)
-                job = client.get(f'/api/jobs/{job["id"]}', headers=headers).json()
-            if job['state'] != 'succeeded':
-                record = app.state.service.store.get_job(job['id'])
-                trace = record.artifact_root / record.id / 'control' / 'traceback.txt'
-                pytest.fail(f'{job}\n{trace.read_text(encoding="utf-8") if trace.exists() else "no traceback"}')
-            return job['id']
-
-        dataset = submit('/api/learning/datasets', {'spec': prepare})
-        training = training_case(start)
-        model = submit('/api/learning/train', {'dataset_id': dataset, 'spec': training})
-        spec = {'start': training['test_start'], 'end': training['test_end'], 'baseline': 'model',
-                'initial_cash': 10000, 'lot_size': 1, 'settlement_days': 0}
-        bad = client.post('/api/learning/backtests', headers=headers,
-                          json={'dataset_id': dataset, 'model_id': model, 'spec': {**spec, 'start': training['train_start']}})
-        assert bad.status_code == 422
-        result = submit('/api/learning/backtests', {'dataset_id': dataset, 'model_id': model, 'spec': spec})
-        details = client.get(f'/api/learning/backtests/{result}', headers=headers).json()
-        assert details['manifest']['counts']['bars'] == 30
-        table = client.get(f'/api/learning/backtests/{result}/tables/equity?limit=2', headers=headers).json()
-        assert len(table['items']) == 2 and table['next_cursor'] == '2'
-        chart = client.get(f'/api/learning/backtests/{result}/charts?max_points=5', headers=headers).json()
-        assert len(chart['points']) == 5 and chart['total_count'] == 30
-        export = client.get(f'/api/learning/backtests/{result}/export', headers=headers)
-        assert export.status_code == 200 and export.content[:2] == b'PK'
-        manifest = client.get(f'/api/learning/models/{model}', headers=headers).json()['manifest']
-        assert manifest['cutoff'] == training['validation_end']
-        assert manifest['history']
-        assert len(client.get('/api/learning/overview', headers=headers).json()['models']) == 1
-
-        # Cancel a real worker after an atomically saved epoch, then resume it.
-        long_spec = {**training, 'epochs': 1000, 'patience': 100, 'batch_size': 1}
-        interrupted = client.post('/api/learning/train', headers=headers,
-                                  json={'dataset_id': dataset, 'spec': long_spec}).json()
-        record = app.state.service.store.get_job(interrupted['id'])
-        checkpoint = record.artifact_root / record.id / 'staging' / 'artifact' / 'checkpoints' / 'checkpoint.json'
-        deadline = time.monotonic() + 60
-        while not checkpoint.exists() and time.monotonic() < deadline:
-            time.sleep(.05)
-        assert checkpoint.exists()
-        response = client.post(f'/api/jobs/{record.id}/cancel', headers=headers, json={})
-        assert response.status_code == 200, response.text
-        while time.monotonic() < deadline:
-            state = client.get(f'/api/jobs/{record.id}', headers=headers).json()['state']
-            if state == 'cancelled':
-                break
-            time.sleep(.05)
-        assert state == 'cancelled'
-        assert client.get(f'/api/learning/models/{record.id}', headers=headers).status_code == 404
-        completed_epoch = json.loads(checkpoint.read_bytes())['epoch']
-        resumed = submit('/api/learning/train', {'dataset_id': dataset, 'resume_job_id': record.id,
-                                               'spec': {**long_spec, 'epochs': completed_epoch + 1}})
-        continued = client.get(f'/api/learning/models/{resumed}', headers=headers).json()['manifest']
-        assert continued['epochs_completed'] == completed_epoch + 1
-        assert continued['resume_parent']
-
-        # Reproduce cancellation winning after a worker already moved staging to final.
-        import shutil
-        late_id = 'late-cancel-after-final-move'
-        store = app.state.service.store
-        original = store.get_job(model)
-        late_root = store.artifact_root / late_id / 'final' / 'artifact'
-        shutil.copytree(original.artifact_root / model / 'final' / 'artifact', late_root)
-        with store.transaction() as db:
-            seq = db.execute('SELECT MAX(enqueue_seq)+1 FROM jobs').fetchone()[0]
-            db.execute("INSERT INTO jobs(id,kind,state,enqueue_seq,artifact_root,input_path) VALUES (?,'train','cancelled',?,?,?)",
-                       (late_id, seq, str(store.artifact_root), original.input_path))
         overview = client.get('/api/learning/overview', headers=headers).json()
-        assert next(job for job in overview['jobs'] if job['id'] == late_id)['checkpoint_available']
-        late_resume = submit('/api/learning/train', {'dataset_id': dataset, 'resume_job_id': late_id,
-                                                    'spec': {**training, 'epochs': 3}})
-        assert client.get(f'/api/learning/models/{late_resume}', headers=headers).status_code == 200
-        assert client.get(f'/api/learning/models/{late_id}', headers=headers).status_code == 404
+        assert [item['id'] for item in overview['datasets']] == ['old-dataset']
+        assert [item['id'] for item in overview['models']] == ['old-model']
+        assert [item['id'] for item in overview['backtests']] == ['old-backtest']
+        for resource, identity in (('datasets', 'old-dataset'), ('models', 'old-model'),
+                                   ('backtests', 'old-backtest')):
+            assert client.get(f'/api/learning/{resource}', headers=headers).json()['items'][0]['id'] == identity
+            assert client.get(f'/api/learning/{resource}/{identity}', headers=headers).status_code == 200
+        model = client.get('/api/learning/models/old-model', headers=headers).json()
+        assert model['manifest']['history'] == [{'epoch': 1}]
+        table = client.get('/api/learning/backtests/old-backtest/tables/equity?limit=2', headers=headers).json()
+        assert len(table['items']) == 2 and table['next_cursor'] == '2'
+        chart = client.get('/api/learning/backtests/old-backtest/charts?max_points=2', headers=headers).json()
+        assert len(chart['points']) == 2 and chart['total_count'] == 3
+        export = client.get('/api/learning/backtests/old-backtest/export', headers=headers)
+        assert export.status_code == 200 and export.content[:2] == b'PK'

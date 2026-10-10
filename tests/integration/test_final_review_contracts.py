@@ -103,7 +103,7 @@ def test_historical_clone_uses_verified_frozen_inputs_and_records_descendant(tmp
     assert response.status_code == 200
     clone = response.json()
     assert clone["id"] != draft.id
-    assert clone["payload"]["backtest_spec"] == json.loads(original_bytes)["backtest_spec"]
+    assert clone["payload"]["backtest_spec"] == json.loads(original_bytes)["resolved_configuration"]["request"]["backtest_spec"]
     assert clone["payload"]["sample_purpose"] == "exploration"
     assert clone["payload"]["source_run_id"] == original.run_id
     child = service.submit(clone["id"], clone["revision"], "child", "agent")

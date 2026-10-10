@@ -6,6 +6,10 @@ from types import SimpleNamespace
 import pytest
 
 from quanto.workbench.models import BatchItem, FrozenRun
+from quanto.workbench.configuration import FrameworkConflict
+from quanto.data.contracts import InstrumentId
+from quanto.workbench.baskets import BasketStore
+from quanto.workbench.bindings import BindingStore
 from quanto.workbench.runs import RunService
 from quanto.workbench.snapshots import SnapshotBuilder
 import quanto.workbench.snapshots as snapshots
@@ -24,17 +28,23 @@ def _ready(tmp_path):
                           "properties": {"window": {"type": "integer", "default": 2}}})
     files = {"strategy.py": b"from helper import value\ndef create_strategy(params): return value\n", "helper.py": b"value = 1\n", "strategy.json": json.dumps(declaration).encode()}
     strategy = store.register_strategy(files, declaration)
-    spec = {"start": "2024-01-01", "end": "2024-01-03", "symbols": ["SZSE:etf:000001"], "initial_cash": 1000, "seed": 7, "execution": {"commission_rate": 0, "minimum_commission": 0, "slippage_rate": 0, "max_stale_sessions": 0, "model": "next_open"}, "risk": {"max_total_weight": 1, "max_symbol_weight": 1, "group_caps": {}, "stress_scenarios": [], "pause_action": "block_new", "recovery_mode": "never"}, "metrics": {"annual_sessions": 252, "risk_free_rate": 0, "cash_rate": 0, "definition_version": "v1"}}
-    experiment = store.save_experiment(None, None, {"strategy_revision_id": strategy.id, "dataset_version_id": dataset.id, "strategy_params": {}, "backtest_spec": spec, "sample_purpose": "exploration"})
+    spec = {"start": "2024-01-01", "end": "2024-01-03", "initial_cash": 1000, "seed": 7, "execution": {"commission_rate": 0, "minimum_commission": 0, "slippage_rate": 0, "max_stale_sessions": 0, "model": "next_open"}, "risk": {"max_total_weight": 1, "max_symbol_weight": 1, "group_caps": {}, "stress_scenarios": [], "pause_action": "block_new", "recovery_mode": "never"}, "metrics": {"annual_sessions": 252, "risk_free_rate": 0, "cash_rate": 0, "definition_version": "v1"}}
+    member = InstrumentId(exchange="SZSE", instrument_type="etf", code="000001")
+    assert BindingStore(store).get_asset_binding(dataset.id).resolve((member,))
+    basket = BasketStore(store).create("test", (member,), "fixture selection", "snapshot-fixture")
+    experiment = store.save_experiment(None, None, {"framework_contract_version": "multi-asset-v1",
+        "basket_revision_ref": basket.ref.model_dump(mode="json"), "strategy_revision_id": strategy.id,
+        "dataset_version_id": dataset.id, "trading_definition_ref": {"kind": "trading", "id": "etf-daily", "version": "1"},
+        "strategy_params": {}, "backtest_spec": spec, "sample_purpose": "exploration"})
     return store, experiment, dataset, strategy
 
 
 def test_submission_is_idempotent(tmp_path):
     store, draft, _, _ = _ready(tmp_path)
     assert draft.payload["strategy_params"] == {}
-    assert draft.payload["effective_strategy_params"] == {"window": 2}
     service = RunService(store)
     first = service.submit(draft.id, draft.revision, "same", "web")
+    assert json.loads(first.manifest_path.read_text())["effective_strategy_params"] == {"window": 2}
     assert first.run_id == service.submit(draft.id, draft.revision, "same", "web").run_id
     assert len(store.list_jobs()) == 1
     with pytest.raises(ValueError, match="idempotency"):
@@ -67,6 +77,21 @@ def test_snapshot_ignores_later_workspace_edits(tmp_path):
     assert SnapshotBuilder(store).verify(FrozenRun(run.run_id, run.manifest_path, run.manifest_hash))["run_id"] == run.run_id
 
 
+def test_registered_definition_upgrade_does_not_change_frozen_rerun(tmp_path, monkeypatch):
+    from quanto.workbench.definitions import DefinitionRegistry
+
+    store, draft, _, _ = _ready(tmp_path)
+    run = RunService(store).submit(draft.id, draft.revision, "initial", "web")
+
+    def removed_definition(self, ref):
+        raise KeyError(ref)
+
+    monkeypatch.setattr(DefinitionRegistry, "get", removed_definition)
+    assert SnapshotBuilder(store).verify(FrozenRun(run.run_id, run.manifest_path, run.manifest_hash))["run_id"] == run.run_id
+    replay = RunService(store).rerun(run.run_id, "definition-upgraded", "web")
+    assert replay.manifest_path == run.manifest_path
+
+
 def test_batch_preflight_and_ordered_retry(tmp_path):
     store, draft, _, _ = _ready(tmp_path)
     second = store.save_experiment(None, None, draft.payload)
@@ -97,6 +122,7 @@ def test_second_batch_freeze_failure_exposes_no_jobs(tmp_path, monkeypatch):
     with pytest.raises(OSError, match="disk full"):
         RunService(store).submit_batch([BatchItem(draft.id, 1), BatchItem(second.id, 1)], "second-fails", "web")
     assert store.list_jobs() == []
+    assert not list((store.root / "snapshots").iterdir())
 
 
 def test_queue_insert_failure_rolls_back_all_runs(tmp_path):
@@ -109,6 +135,25 @@ def test_queue_insert_failure_rolls_back_all_runs(tmp_path):
     with store.transaction() as db:
         assert db.execute("SELECT count(*) FROM runs").fetchone()[0] == 0
         assert db.execute("SELECT count(*) FROM idempotency").fetchone()[0] == 0
+    assert not list((store.root / "snapshots").iterdir())
+
+
+def test_submission_rechecks_registered_strategy_after_freeze(tmp_path, monkeypatch):
+    store, draft, dataset, strategy = _ready(tmp_path)
+    original = SnapshotBuilder.freeze
+
+    def change_registered_source(self, *args, **kwargs):
+        frozen = original(self, *args, **kwargs)
+        (strategy.path / "helper.py").write_text("value = 99\n")
+        return frozen
+
+    monkeypatch.setattr(SnapshotBuilder, "freeze", change_registered_source)
+    with pytest.raises(FrameworkConflict) as caught:
+        RunService(store).submit(draft.id, draft.revision, "recheck", "web")
+    assert caught.value.report.status == "blocked"
+    assert store.list_jobs() == []
+    assert not list((store.root / "snapshots").iterdir())
+    assert (store.root / "dataset_objects" / dataset.content_hash).is_dir()
 
 
 def test_undeclared_research_data_cannot_be_frozen(tmp_path):

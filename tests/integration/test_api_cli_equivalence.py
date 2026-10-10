@@ -9,6 +9,29 @@ from quanto.cli import WorkbenchClient
 from tests.integration.test_worker_snapshot import ready_run
 
 
+def test_cli_capability_report_matches_api(tmp_path, monkeypatch):
+    from datetime import datetime, timezone
+    import quanto.workbench.configuration as configuration
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 1, 1, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(configuration, "datetime", FrozenDateTime)
+    app = create_app(tmp_path / "workbench")
+    body = {"operation": "fetch", "instruments": [{"exchange": "SSE", "instrument_type": "etf",
+                                                  "code": "510300"}], "start_date": "2025-01-01",
+            "end_date": "2025-01-31"}
+    with TestClient(app, base_url="http://127.0.0.1:8765") as client:
+        token = client.get("/api/session").json()["token"]
+        command = WorkbenchClient("http://127.0.0.1:8765", token, transport=client)
+        api_report = client.post("/api/capabilities/check", json=body,
+                                 headers={"Authorization": f"Bearer {token}"}).json()
+        cli_report = command.post("/capabilities/check", body)
+        assert api_report == cli_report
+
+
 def test_cli_reads_same_run_as_api(tmp_path):
     store, run, strategy = ready_run(tmp_path)
     app = create_app(store.root)
@@ -55,8 +78,10 @@ def test_cli_reads_same_run_as_api(tmp_path):
                     assert archive.read("orders.csv") == (final / "orders.csv").read_bytes()
                     assert archive.read("fills.csv") == (final / "fills.csv").read_bytes()
         assert client.get(f"/api/runs/{run.run_id}/exports/html", headers=headers).content == (final / "report.html").read_bytes()
-        fresh = client.post("/api/runs", json={"experiment_id": run.experiment_id,
-            "expected_revision": run.experiment_revision, "idempotency_key": "fresh"}, headers=headers).json()
+        fresh_response = client.post("/api/runs", json={"experiment_id": run.experiment_id,
+            "expected_revision": run.experiment_revision, "idempotency_key": "fresh"}, headers=headers)
+        assert fresh_response.status_code == 200, fresh_response.text
+        fresh = fresh_response.json()
         assert fresh["run_id"] != run.run_id
         deadline = time.monotonic() + 20
         while time.monotonic() < deadline:
@@ -67,7 +92,9 @@ def test_cli_reads_same_run_as_api(tmp_path):
         assert fresh_result["metrics"] == cli["metrics"]
         fresh_job = store.get_run(fresh["run_id"]).job_id
         assert (store.artifact_root / fresh_job / "final" / "manifest.json").read_bytes() == (final / "manifest.json").read_bytes()
-        repeated = client.post(f"/api/runs/{run.run_id}/rerun", json={"idempotency_key": "second"}, headers=headers).json()
+        rerun_response = client.post(f"/api/runs/{run.run_id}/rerun", json={"idempotency_key": "second"}, headers=headers)
+        assert rerun_response.status_code == 200, rerun_response.text
+        repeated = rerun_response.json()
         assert repeated["run_id"] != run.run_id
         deadline = time.monotonic() + 20
         while time.monotonic() < deadline:

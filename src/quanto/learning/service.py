@@ -1,7 +1,6 @@
 """Local learning workspace API; queued workers consume frozen trusted references."""
 from __future__ import annotations
 
-from dataclasses import asdict
 from functools import lru_cache
 import hashlib
 import importlib.util
@@ -167,88 +166,53 @@ class LearningService:
                 **{resource: self.listing(resource)['items'] for resource in RESOURCES}}
 
     def prepare(self, body: dict):
-        if not isinstance(body, dict) or set(body) != {'spec'}:
-            raise ValueError('prepare requires spec only')
-        from quanto.learning.contracts import parse_prepare_spec
-        from quanto.data.catalog import MarketCatalog
-        from quanto.data.storage import MarketStore
-        spec = parse_prepare_spec(body['spec'])
-        snapshot = MarketCatalog(self.store.market_root).resolve_snapshot(spec['snapshot_id'])
-        MarketStore(self.store.market_root).verify_snapshot(snapshot)
-        return self._submit('prepare_learning', {'spec': spec}, {'market_root': str(self.store.market_root)})
+        raise ValueError('Legacy minute-data preparation is closed; historical results remain readable')
 
     def train(self, body: dict):
-        if not isinstance(body, dict) or not {'dataset_id', 'spec'} <= body.keys() or set(body) - {'dataset_id', 'spec', 'resume_job_id'}:
-            raise ValueError('training requires dataset_id and spec')
-        from quanto.learning.contracts import parse_training_spec
-        spec = parse_training_spec(body['spec'])
-        trusted = {'dataset_ref': self.reference(body['dataset_id'], 'dataset')}
-        request = {**body, 'spec': spec}
-        if body.get('resume_job_id'):
-            job = self.store.get_job(body['resume_job_id'])
-            if job.kind != 'train' or job.state not in {'failed', 'interrupted', 'cancelled'}:
-                raise ValueError('resume requires a terminal interrupted/cancelled/failed training job')
-            root = checkpoint_root(job)
-            from quanto.learning.training import read_checkpoint
-            read_checkpoint(root)
-            trusted.update(resume_source=root)
-        return self._submit('train', request, trusted)
+        raise ValueError('Legacy minute-data training is closed; historical results remain readable')
 
     def backtest(self, body: dict):
-        if not isinstance(body, dict) or not {'dataset_id', 'spec'} <= body.keys() or set(body) - {'dataset_id', 'model_id', 'spec', 'allow_in_sample'}:
-            raise ValueError('backtest requires dataset_id and spec')
-        from quanto.learning.intraday import IntradaySpec
-        from quanto.learning.contracts import timestamp
-        from quanto.learning.dataset import read_dataset_manifest
-        from quanto.learning.artifacts import read_model_manifest
-        spec = asdict(IntradaySpec.from_dict(body['spec']))
-        if type(body.get('allow_in_sample', False)) is not bool:
-            raise ValueError('allow_in_sample must be boolean')
-        trusted = {'dataset_ref': self.reference(body['dataset_id'], 'dataset')}
-        dataset = read_dataset_manifest(Path(trusted['dataset_ref']['path']))
-        if timestamp(spec['start']) < timestamp(dataset['query']['start']) or timestamp(spec['end']) > timestamp(dataset['query']['end']):
-            raise ValueError('backtest interval exceeds the prepared dataset query coverage')
-        if spec['baseline'] == 'model':
-            if not body.get('model_id'):
-                raise ValueError('model_id is required for model backtests')
-            trusted['model_ref'] = self.reference(body['model_id'], 'model')
-            model = read_model_manifest(Path(trusted['model_ref']['path']))
-            if model['frequency_minutes'] != dataset['frequency_minutes'] or model['feature_version'] != dataset['feature_version']:
-                raise ValueError('model and dataset feature/frequency mismatch')
-            if timestamp(spec['start']) < timestamp(model['cutoff']) and not body.get('allow_in_sample', False):
-                raise ValueError('backtest starts before training/validation cutoff; explicitly allow_in_sample for research replay')
-        request = {**body, 'spec': spec, 'allow_in_sample': body.get('allow_in_sample', False)}
-        return self._submit('model_backtest', request, trusted)
+        raise ValueError('Legacy minute-data backtesting is closed; historical results remain readable')
 
-    def _submit(self, kind, request, trusted, *, register=None):
+    def _submit(self, kind, request, trusted, *, register=None, resolved=None, recheck=None):
+        if kind not in {'train_policy', 'policy_backtest'} or resolved is None or recheck is None:
+            raise ValueError('new jobs require resolved framework configuration and transactional recheck')
+        from quanto.workbench.configuration import FrameworkConflict, recheck_unchanged
+        from quanto.workbench.snapshots import _environment, _execution_files
+        from quanto.framework import ResolvedConfiguration
+        resolved = ResolvedConfiguration.model_validate(resolved)
+        if resolved.capability_report.status != 'ready':
+            raise ValueError('framework capability is blocked')
         identity = str(uuid4())
         root = self.store.root / 'job-inputs' / identity
         root.mkdir(parents=True)
         source_root = Path(__file__).resolve().parents[3]
         try:
-            shutil.copytree(source_root / 'src' / 'quanto', root / 'src' / 'quanto', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+            execution_files = _execution_files(source_root)
+            for name, content in execution_files.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(content)
+            if _execution_files(source_root) != execution_files:
+                raise ValueError('engine or environment files changed during freeze')
             trusted = dict(trusted)
-            resume = trusted.pop('resume_source', None)
-            if resume:
-                # Copy only the immutable published checkpoint pair, not incomplete epochs.
-                from quanto.learning.training import read_checkpoint
-                read_checkpoint(resume)
-                target = root / 'resume'
-                target.mkdir()
-                metadata = json.loads((resume / 'checkpoint.json').read_bytes())
-                from quanto.objects import safe_name
-                shutil.copy2(resume / safe_name(metadata['file']), target / safe_name(metadata['file']))
-                shutil.copy2(resume / 'checkpoint.json', target / 'checkpoint.json')
-                trusted.update(resume_dir=str(target), resume_files=hash_files(target))
-            payload = {'request': request, 'environment': runtime_versions(), **trusted}
+            trusted['resolved_configuration'] = resolved.model_dump(mode='json')
+            payload = {'request': request, 'environment': runtime_versions(),
+                       'execution_environment': _environment(source_root, execution_files), **trusted}
             hashes = hash_files(root)
-            atomic_json(root / 'input.json', {'source_root': str(root), 'input': payload, 'source_hashes': hashes})
+            document = {'source_root': str(root), 'input': payload, 'source_hashes': hashes}
+            input_hash = hashlib.sha256(json.dumps(document, ensure_ascii=False, sort_keys=True,
+                                                  allow_nan=False).encode('utf-8')).hexdigest()
+            atomic_json(root / 'input.json', document)
             with self.store.transaction() as db:
+                if hash_files(root) != {**hashes, 'input.json': input_hash}:
+                    raise FrameworkConflict()
+                recheck_unchanged(resolved, lambda: recheck(db))
                 seq = db.execute('SELECT COALESCE(MAX(enqueue_seq),0)+1 FROM jobs').fetchone()[0]
                 db.execute("INSERT INTO jobs (id,kind,state,enqueue_seq,artifact_root,input_path,created_at) VALUES (?,?,'queued',?,?,?,?)",
                            (identity, kind, seq, str(self.store.artifact_root), str(root / 'input.json'), utc_now()))
                 db.execute('INSERT INTO learning_submissions VALUES (?,?)',
-                           (identity, hashlib.sha256((root / 'input.json').read_bytes()).hexdigest()))
+                           (identity, input_hash))
                 if register is not None:
                     register(db, identity)
         except BaseException:

@@ -5,16 +5,20 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 import hashlib
 import importlib
+import importlib.metadata
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+import platform
 import random
+import re
 import sqlite3
 from contextlib import closing
 import sys
 import threading
 import time
 import traceback
+import tomllib
 
 
 def atomic_json(path: Path, value) -> None:
@@ -142,30 +146,76 @@ def verify_bootstrap(descriptor: dict) -> dict:
     return manifest
 
 
+def _hash_tree(root: Path) -> dict[str, str]:
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("SNAPSHOT_INVALID: referenced directory missing or symbolic")
+    result = {}
+    for path in root.rglob("*"):
+        if path.is_symlink():
+            raise ValueError("SNAPSHOT_INVALID: symbolic frozen input")
+        if path.is_file():
+            result[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+
+def _verify_ref(ref: dict, expected_root: Path | None = None) -> None:
+    if not isinstance(ref, dict) or not {"id", "path", "content_hash", "files"} <= set(ref):
+        raise ValueError("SNAPSHOT_INVALID: frozen reference invalid")
+    path = Path(ref["path"])
+    if expected_root is not None and path != expected_root:
+        raise ValueError("SNAPSHOT_INVALID: frozen reference path mismatch")
+    files = ref["files"]
+    if not isinstance(files, dict) or not files:
+        raise ValueError("SNAPSHOT_INVALID: frozen reference file list invalid")
+    for name in files:
+        parts = PurePosixPath(name)
+        if not isinstance(name, str) or not name or "\\" in name or ":" in name or parts.is_absolute() or any(part in {".", ".."} for part in name.split("/")):
+            raise ValueError("SNAPSHOT_INVALID: unsafe frozen reference path")
+    if _hash_tree(path) != files:
+        raise ValueError("SNAPSHOT_INVALID: referenced artifact changed")
+    content = hashlib.sha256(json.dumps(files, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+    if content != ref["content_hash"]:
+        raise ValueError("SNAPSHOT_INVALID: referenced artifact hash mismatch")
+
+
+def _verify_environment(manifest: dict, root: Path) -> None:
+    declared = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    metadata = manifest["environment"]
+    actual = {"python": sys.version, "executable": sys.executable, "platform": platform.platform(),
+              "declared_requirements": declared.get("dependencies", []),
+              "declared_optional_requirements": declared.get("optional-dependencies", {}),
+              "installed_distributions": [list(item) for item in sorted({
+                  (re.sub(r"[-_.]+", "-", dist.metadata["Name"]).lower(), dist.version)
+                  for dist in importlib.metadata.distributions()})],
+              "lock_hashes": {name: hashlib.sha256((root / name).read_bytes()).hexdigest()
+                              for name in metadata["lock_hashes"]}}
+    if actual != metadata:
+        raise ValueError("ENVIRONMENT_CHANGED: execution environment differs from snapshot")
+
+
 def _verify_inputs(descriptor: dict) -> dict:
     manifest = verify_bootstrap(descriptor)
-    if manifest.get("schema_version") not in (1, 2):
-        raise ValueError("SNAPSHOT_INVALID: unsupported snapshot schema version")
+    if manifest.get("schema_version") != 3 or manifest.get("framework_contract_version") != "multi-asset-v1":
+        raise ValueError("SNAPSHOT_INVALID: framework contract missing")
     root = Path(descriptor["manifest_path"]).parent
-    paths = list(root.rglob("*"))
-    if any(path.is_symlink() for path in paths) or {path.relative_to(root).as_posix() for path in paths if path.is_file()} != set(manifest["files"]) | {"manifest.json"}:
+    actual = _hash_tree(root)
+    actual.pop("manifest.json", None)
+    if set(actual) != set(manifest["files"]):
         raise ValueError("SNAPSHOT_INVALID: 冻结文件集合无效")
-    for name, expected in manifest["files"].items():
-        if hashlib.sha256((root / name).read_bytes()).hexdigest() != expected:
-            raise ValueError("SNAPSHOT_INVALID: 冻结文件哈希无效")
-    if manifest["schema_version"] == 2:
-        from quanto.workbench.dataset_objects import verify_dataset_object
-        ref = manifest["dataset_ref"]
-        if ref["version_id"] != manifest["dataset_version_id"] or ref["content_hash"] != manifest["dataset_content_hash"]:
-            raise ValueError("SNAPSHOT_INVALID: dataset reference mismatch")
-        try:
-            verify_dataset_object(root.parent.parent, ref)
-        except ValueError as exc:
-            raise ValueError(f"SNAPSHOT_INVALID: {exc}") from exc
+    if actual != manifest["files"]:
+        raise ValueError("SNAPSHOT_INVALID: 冻结文件哈希无效")
+    ref = manifest["dataset_ref"]
+    if ref["id"] != manifest["dataset_version_id"] or ref["content_hash"] != manifest["dataset_content_hash"]:
+        raise ValueError("SNAPSHOT_INVALID: dataset reference mismatch")
+    _verify_ref(ref, root.parent.parent / "dataset_objects" / ref["content_hash"])
+    _verify_ref(manifest["strategy_ref"], root / "strategy")
+    if manifest["strategy_ref"]["id"] != manifest["strategy_revision_id"]:
+        raise ValueError("SNAPSHOT_INVALID: strategy reference mismatch")
+    _verify_environment(manifest, root)
     return manifest
 
 
-def verify_source_hashes(descriptor: dict) -> None:
+def verify_source_hashes(descriptor: dict, *, check_environment: bool = False) -> None:
     root = Path(descriptor["source_root"])
     expected = descriptor["source_hashes"]
     actual = {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
@@ -173,6 +223,24 @@ def verify_source_hashes(descriptor: dict) -> None:
     actual.pop("input.json", None)
     if any(path.is_symlink() for path in root.rglob("*")) or actual != expected:
         raise ValueError("SNAPSHOT_INVALID: 数据任务源码或上传快照无效")
+    payload = descriptor.get("input", {})
+    for name in ("dataset_ref", "training_dataset_ref", "policy_ref", "policy_resume_ref"):
+        if name in payload:
+            _verify_ref(payload[name])
+    expected_environment = payload.get("environment")
+    if check_environment and descriptor["kind"] in {"train_policy", "policy_backtest"}:
+        if "execution_environment" not in payload:
+            raise ValueError("SNAPSHOT_INVALID: complete execution environment missing")
+        _verify_environment({"environment": payload["execution_environment"]}, root)
+        from importlib.metadata import PackageNotFoundError, version
+        current = {"python": platform.python_version()}
+        for name in ("numpy", "pandas", "pyarrow", "torch", "stable-baselines3", "gymnasium", "cloudpickle"):
+            try:
+                current[name] = version(name)
+            except PackageNotFoundError:
+                current[name] = None
+        if current != expected_environment:
+            raise ValueError("ENVIRONMENT_CHANGED: learning dependencies differ from frozen input")
 
 
 def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
@@ -216,23 +284,25 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
     # Heartbeat and cancellation supervision already run before this potentially
     # large scan. Verify every source byte before importing project execution code.
     manifest = _verify_inputs(descriptor)
+    from quanto.workbench.snapshots import verify_framework_snapshot
+    resolved = verify_framework_snapshot(Path(descriptor["manifest_path"]).parent)
+    if resolved.request_hash != manifest["resolved_configuration"]["request_hash"]:
+        raise ValueError("SNAPSHOT_INVALID: resolved framework request changed")
     import numpy as np
     from quanto.backtest import engine
     from quanto.config import BacktestSpec
     from quanto.backtest.dataset_loaders import load_dataset, load_dataset_for_run
     from quanto.reports.backtest_report import build_report, write_backtest_outputs
     from quanto.strategies.base import validate_warmup_window
-    from quanto.workbench.snapshots import _environment, _metadata_files
+    from quanto.workbench.definitions import DefinitionRegistry
+    from quanto.data.point_in_time import TableSemantics
 
     manifest_path = Path(descriptor["manifest_path"])
     source_root = manifest_path.parent
-    # Non-exact strategy provenance does not waive environment checks.
-    if any(manifest["files"].get(name) != expected for name, expected in manifest["environment"]["lock_hashes"].items()):
-        raise ValueError("SNAPSHOT_INVALID: 锁文件哈希不一致")
-    environment = _environment(source_root, _metadata_files(source_root))
-    if environment != manifest["environment"]:
-        atomic_json(control_dir / "environment.json", {"expected": manifest["environment"], "actual": environment})
-        raise ValueError("ENVIRONMENT_CHANGED: 执行环境与冻结记录不一致")
+    registry = DefinitionRegistry()
+    definitions = {item.ref.kind: registry.get(item.ref) for item in resolved.definitions}
+    table_semantics = tuple(TableSemantics.from_binding(item) for item in resolved.asset_binding.table_semantics)
+    feature = next((item for item in resolved.definitions if item.ref.kind == "feature"), None)
     random.seed(manifest["seed"])
     np.random.seed(manifest["seed"] % 2**32)
     sys.path.insert(1, str(source_root / "strategy"))
@@ -242,11 +312,8 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
     if type(getattr(strategy, "warmup_bars", None)) is not int or strategy.warmup_bars < 0 or not all(callable(getattr(strategy, name, None)) for name in ("should_evaluate", "on_close")):
         raise ValueError("INVALID_STRATEGY: 策略协议无效")
     spec = BacktestSpec.model_validate(manifest["backtest_spec"])
-    if manifest["schema_version"] == 1:
-        bundle = load_dataset(source_root / "dataset")
-    else:
-        dataset_path = source_root.parent.parent / "dataset_objects" / manifest["dataset_ref"]["content_hash"]
-        bundle = load_dataset_for_run(dataset_path, spec)
+    dataset_path = Path(manifest["dataset_ref"]["path"])
+    bundle = load_dataset_for_run(dataset_path, spec)
     spec.validate_for_dataset(bundle)
     missing = set(manifest["strategy_manifest"].get("required_data_columns", [])) - set(bundle.prices.columns)
     if missing:
@@ -255,7 +322,11 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
     atomic_json(control_dir / "runtime.json", {"warmup_bars": strategy.warmup_bars, "engine_file": engine.__file__,
         "strategy_file": module.__file__, "reproducibility": manifest["reproducibility"], "environment_verified": True,
         "seed": manifest["seed"], "numpy_hash_seed": manifest["seed"] % 2**32})
-    result = engine.run_backtest(bundle, strategy, spec, emit, cancelled)
+    result = engine.run_backtest(bundle, strategy, spec, emit, cancelled,
+        trading_definition=definitions["trading"], asset_binding=resolved.asset_binding,
+        feature_definition=definitions.get("feature"),
+        feature_params=feature.effective_params if feature is not None else None,
+        table_semantics=table_semantics)
     report = build_report(result, bundle, spec)
     report.metadata.update({name: manifest[name] for name in ("dataset_version_id", "strategy_revision_id")})
     stage = control_dir.parent / "staging"
@@ -272,11 +343,23 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
 
 
 def run_data_job(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:
+    if descriptor["kind"] == "fetch":
+        from quanto.workbench.configuration import FrameworkResolver
+        from quanto.workbench.framework_requests import FetchRequest
+        from quanto.framework import CapabilityReport
+        framework = descriptor["input"]["framework"]
+        request = FetchRequest.model_validate(framework["request"])
+        frozen_report = CapabilityReport.model_validate(framework["capability_report"])
+        checked = FrameworkResolver(None).check(request)
+        if (checked.status != "ready" or checked.model_dump(mode="json", exclude={"generated_at"}) !=
+                frozen_report.model_dump(mode="json", exclude={"generated_at"})):
+            raise ValueError("SNAPSHOT_INVALID: fetch capability changed from frozen definition")
     from quanto.workbench.data_jobs import execute_data_job, execute_strategy_validation
     from quanto.workbench.revisions import source_files
     stage = control_dir.parent / "staging"
     stage.mkdir()
     payload = dict(descriptor["input"])
+    payload.pop("framework", None)
     payload["_output_dir"] = str(stage)
     payload["_source_root"] = descriptor["source_root"]
     if descriptor["kind"] == "validate_strategy":
@@ -292,6 +375,15 @@ def run_data_job(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:
 
 
 def run_learning_job(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:
+    if descriptor["kind"] in {"train_policy", "policy_backtest"}:
+        from quanto.framework import ModelFrameworkBinding, ResolvedConfiguration
+        from quanto.workbench.frozen_configuration import verify_frozen_configuration
+        payload = descriptor["input"]
+        resolved = ResolvedConfiguration.model_validate(payload["resolved_configuration"])
+        binding = ModelFrameworkBinding.model_validate(payload["model_binding"])
+        verify_frozen_configuration(resolved, dataset_ref=payload["dataset_ref"],
+            model_binding=binding, policy_ref=payload.get("policy_ref") or payload.get("policy_resume_ref"),
+            training_dataset_ref=payload.get("training_dataset_ref"))
     from quanto.learning.jobs import execute_learning_job
     return execute_learning_job(descriptor, control_dir, emit, cancelled)
 
@@ -384,14 +476,23 @@ def worker_main(job_path: Path, control_dir: Path) -> int:
 def _bootstrap(job_path: Path, control_dir: Path) -> int:
     descriptor = read_json(job_path)
     root = Path(descriptor["source_root"])
+    # Metadata discovery needs the interpreter's installed distribution paths.
+    # No project source is importable until its complete byte set is verified.
+    sys.path[:] = [*descriptor["site_paths"], *sys.path]
+    try:
+        if descriptor["kind"] == "backtest":
+            _verify_inputs(descriptor)
+        else:
+            verify_source_hashes(descriptor, check_environment=True)
+    except BaseException:
+        (control_dir / "traceback.txt").write_text(traceback.format_exc(), encoding="utf-8")
+        atomic_json(control_dir / "receipt.json", {"job_id": descriptor["job_id"], "state": "failed",
+            "error": "SNAPSHOT_INVALID: frozen inputs failed bootstrap verification"})
+        return 1
     # -P -S plus a sanitized environment excludes cwd, PYTHONPATH and site hooks.
     # Restore only the interpreter's dependency directories, then frozen sources.
-    sys.path[:] = [str(root / "src"), *descriptor["site_paths"], *sys.path]
+    sys.path.insert(0, str(root / "src"))
     sys.dont_write_bytecode = True
-    if descriptor["kind"] == "backtest":
-        verify_bootstrap(descriptor)
-    else:
-        verify_source_hashes(descriptor)
     return worker_main(job_path, control_dir)
 
 

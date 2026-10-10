@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 from quanto.workbench.models import BatchItem, FrozenRun
+from quanto.workbench.configuration import FrameworkConflict
 from quanto.workbench.dataset_objects import ensure_dataset_object, verify_dataset_object
 from quanto.workbench.runs import RunService
 from quanto.workbench.snapshots import SnapshotBuilder
@@ -21,8 +22,8 @@ def test_runs_share_one_verified_dataset_object(tmp_path):
     assert objects[0].name == dataset.content_hash
     for run in runs:
         manifest = SnapshotBuilder(store).verify(FrozenRun(run.run_id, run.manifest_path, run.manifest_hash))
-        assert manifest["schema_version"] == 2
-        assert manifest["dataset_ref"]["version_id"] == dataset.id
+        assert manifest["schema_version"] == 3
+        assert manifest["dataset_ref"]["id"] == dataset.id
         assert manifest["dataset_ref"]["content_hash"] == dataset.content_hash
         assert not (run.manifest_path.parent / "dataset").exists()
 
@@ -78,7 +79,7 @@ def test_concurrent_publication_reuses_complete_object(tmp_path):
     assert [item.name for item in (store.root / "dataset_objects").iterdir()] == [dataset.content_hash]
 
 
-def test_freeze_loads_published_object_after_source_changes(tmp_path, monkeypatch):
+def test_final_recheck_blocks_source_changes_but_preserves_shared_object(tmp_path, monkeypatch):
     store, draft, dataset, _ = _ready(tmp_path)
     original = snapshots.ensure_dataset_object
 
@@ -88,8 +89,12 @@ def test_freeze_loads_published_object_after_source_changes(tmp_path, monkeypatc
         return value
 
     monkeypatch.setattr(snapshots, "ensure_dataset_object", source_changes)
-    run = RunService(store).submit(draft.id, draft.revision, "source-change", "web")
-    assert SnapshotBuilder(store).verify(FrozenRun(run.run_id, run.manifest_path, run.manifest_hash))["dataset_version_id"] == dataset.id
+    with pytest.raises(FrameworkConflict) as caught:
+        RunService(store).submit(draft.id, draft.revision, "source-change", "web")
+    assert "BINDING_MISMATCH" in caught.value.report.error_codes
+    assert store.list_jobs() == []
+    assert not list((store.root / "snapshots").iterdir())
+    assert (store.root / "dataset_objects" / dataset.content_hash).is_dir()
 
 
 def test_tamper_after_freeze_prevents_batch_queue(tmp_path, monkeypatch):
@@ -102,6 +107,7 @@ def test_tamper_after_freeze_prevents_batch_queue(tmp_path, monkeypatch):
         return frozen
 
     monkeypatch.setattr(SnapshotBuilder, "freeze", tamper)
-    with pytest.raises(ValueError, match="hash mismatch"):
+    with pytest.raises(FrameworkConflict) as caught:
         RunService(store).submit(draft.id, draft.revision, "tamper-before-queue", "web")
+    assert "hash mismatch" in str(caught.value.__cause__)
     assert store.list_jobs() == []

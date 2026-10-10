@@ -24,7 +24,6 @@ def _fixed_case(tmp_path):
     binding = BindingStore(store).get_asset_binding(dataset.id)
     basket = BasketStore(store).create("selected", (binding.assets[0].instrument_id,), "synthetic", "basket")
     values = dict(draft.payload["backtest_spec"])
-    del values["symbols"]
     request = FixedRequest(framework_contract_version="multi-asset-v1", basket_revision_ref=basket.ref,
         dataset_version_id=dataset.id, strategy_revision_id=strategy.id,
         trading_definition_ref=ETF_TRADING_DEFINITION.ref, strategy_params={},

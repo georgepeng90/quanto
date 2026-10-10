@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T09、T11 已完成；T10 与 T12 继续执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施，2026-10-11 完成 T00–T13，见[框架验收记录](../../research/multi-asset-framework-acceptance.md)。尚未迁移实际工作区或运行研究规模训练。
 
 ## Global Constraints
 
@@ -326,7 +326,7 @@ T09 验证：18 个相关测试文件的综合回归 176 项通过，另 1 项�
 - [x] 重跑上述命令通过；旧报告/历史版本读取回归通过。
 - [x] 审核并提交：`feat: expose frozen framework provenance in results`。
 
-T10 ???2026-10-11??????????????????????? `c76ed5a`??????????????????????????????????????????????/??/??????? 29 ???????????? 1 ?????????? 8 ?????????????????????????????????????????schema 1 ?????????????????????????????????????????? T13 ???????
+T10 验证（2026-10-11）：来源、导出、目录与比较已提交 `c76ed5a`。最终聚焦测试 29 项、额外来源案例 1 项及独立增量审核 8 项通过。成功结果以经过校验的冻结产物为准；损坏输入保留诊断，有效输入与结果冲突时拒绝比较。旧 schema 1 报告保持原样读取，缺身份证据时不生成可排名键。冻结能力报告生成时间的确定性问题由 `9148bf4` 修复，纳入 T13 全套回归。
 
 ## T11 共享客户端协议、数据与篮子页面
 
@@ -351,7 +351,7 @@ T11 验证（2026-10-11）：篮子、共享 API、数据页面及原导航回�
 
 ## T12 固定策略、模型、回测与比较页面接线
 
-**Files:** Modify `web/src/pages/ExperimentsPage.tsx`, `web/src/pages/ExperimentListPage.tsx`, `web/src/pages/ModelsPage.tsx`, `web/src/pages/ModelDetailPage.tsx`, `web/src/pages/RunDetailPage.tsx`, `web/src/pages/ComparePage.tsx`, `web/src/components/FixedBacktestForm.tsx`, `web/src/components/ModelCreation.tsx`, `web/src/components/ModelBacktestForm.tsx`, `web/src/components/BacktestCatalog.tsx`, `web/src/components/RunSummary.tsx`, `web/src/components/RunDifferences.tsx`, `web/src/investingTypes.ts`, `web/src/api.ts`, `web/tests/fixed-backtest-form.test.tsx`, `web/tests/models.test.tsx`, `web/tests/model-history.test.tsx`, `web/tests/compare.test.tsx`, `web/tests/backtest-catalog.test.tsx`, `web/tests/results.test.tsx`, `web/tests/experiment-list.test.tsx`; Create `web/tests/framework-workflows.test.tsx`。
+**Files:** Modify `web/src/pages/ExperimentsPage.tsx`, `web/src/pages/ExperimentListPage.tsx`, `web/src/pages/ModelsPage.tsx`, `web/src/pages/ModelDetailPage.tsx`, `web/src/pages/RunDetailPage.tsx`, `web/src/pages/ComparePage.tsx`, `web/src/components/FixedBacktestForm.tsx`, `web/src/components/ModelCreation.tsx`, `web/src/components/ModelBacktestForm.tsx`, `web/src/components/BacktestCatalog.tsx`, `web/src/components/RunSummary.tsx`, `web/src/components/RunDifferences.tsx`, `web/src/investingTypes.ts`, `web/src/api.ts`, `web/tests/fixed-backtest-form.test.tsx`, `web/tests/models.test.tsx`, `web/tests/model-history.test.tsx`, `web/tests/compare.test.tsx`, `web/tests/backtest-catalog.test.tsx`, `web/tests/results.test.tsx`, `web/tests/experiment-list.test.tsx`; Create `web/tests/framework-fixed-workflows.test.tsx`, `web/tests/framework-model-workflows.test.tsx`。
 
 **Interfaces:** 所有提交使用 T01/T08 类型及 T11 api；两路配置选择同一 BasketRevisionRef。固定草稿保留 source 引用（现有草稿元数据位置），升级动作生成新的草稿修订；模型详情 bindModel 仅传幂等键。回测显式指定保存 version_id 和 evaluation_purpose。
 
@@ -364,26 +364,28 @@ T11 验证（2026-10-11）：篮子、共享 API、数据页面及原导航回�
   expect(oldRunSnapshot).toEqual(originalRunSnapshot);
   expect(modelBindingRequest).toEqual({ idempotency_key: requestKey });
   ```
-- [x] 运行 `npm.cmd --prefix web run test -- --run tests/framework-workflows.test.tsx tests/fixed-backtest-form.test.tsx tests/models.test.tsx tests/model-history.test.tsx tests/compare.test.tsx tests/backtest-catalog.test.tsx tests/results.test.tsx tests/experiment-list.test.tsx`，确认新流程失败。
+- [x] 运行 `npm.cmd --prefix web run test -- --run tests/framework-fixed-workflows.test.tsx tests/framework-model-workflows.test.tsx tests/fixed-backtest-form.test.tsx tests/models.test.tsx tests/model-history.test.tsx tests/compare.test.tsx tests/backtest-catalog.test.tsx tests/results.test.tsx tests/experiment-list.test.tsx`，确认新流程失败。
 - [x] 以服务端 schema 渲染唯一参数来源，显示篮子版本和顺序；改变参数/数据/篮子立即使旧 capability report 失效。提交仍接受服务端最新阻塞项。旧实验升级保存新草稿和来源，不改 run；旧模型详情先展示 T08 的只读关联检查、证据和阻塞，再 POST framework-binding 复查/登记。未通过核验对象保持只读，关联不产生第二份可编辑训练配置。模型缺能力只解释缺口，不默认使用 ETF 定义。列表增加资产类型/篮子/来源筛选；结果和比较消费 T10 来源，不将 DSR 标利润或后选模标盲测。
 - [x] 重跑上述测试和 `npm.cmd --prefix web run typecheck` 通过；检查旧分钟模型只读页面仍可访问，新流程不依赖旧可写入口。
 - [x] 审核并提交：`feat: connect framework configurations across research workflows`。
 
-T12 ???2026-10-11????????????????Web ?? 182 ????maxWorkers=2 ???? CPU ????????????TypeScript ????????????????????/??/?????????????????????????????????????????????/?????????????????????? source_experiment_ref???????????????????????????????? 5 ?????????????? 1 ????API/CLI/Web ???????????????? Python ????? T13?
+T12 验证（2026-10-11）：四域流程已提交 `f565246`。Web 全套 182 项通过；设置 maxWorkers=2 限制并行 CPU 竞争，没有减少覆盖或放宽断言。TypeScript 与生产构建通过。旧实验升级复制指定修订的实际配置，保存 source_experiment_ref，重新选择篮子和交易定义；相关后端 5 项及模型列表 1 项通过，独立发布边界复核无剩余阻断。API/CLI/Web 保持同版交付，浏览器及最终 Python 全套证据归入 T13。
 
 ## T13 全链路验收、迁移演练与接入说明
 
-**Files:** Create `tests/integration/test_framework_acceptance.py`, `web/e2e/framework.spec.ts`, `docs/research/multi-asset-framework-acceptance.md`, `docs/research/stock-definition-onboarding.md`; Modify `web/e2e/workbench.spec.ts`, `web/e2e/models.spec.ts`, `web/e2e/page-recovery.spec.ts`, `README.md`（新流程和命令说明）。
+**Files:** Create `tests/integration/test_framework_acceptance.py`, `tests/integration/test_framework_legacy_execution.py`, `web/e2e/framework.spec.ts`, `docs/research/multi-asset-framework-acceptance.md`, `docs/research/stock-definition-onboarding.md`; Modify `web/e2e/workbench.spec.ts`, `web/e2e/models.spec.ts`, `README.md`（新流程和命令说明）；既有 `web/e2e/page-recovery.spec.ts` 无需修改，纳入回归。
 
 **Interfaces:** 无新增产品协议；集成 T01–T12。接入说明固定交付清单：数据表语义与历史可知证据、身份/来源、特征输出/缺失/变换、固定或学习定义、执行依赖、参数唯一映射、最小行为测试、限制及版本。
 
-- [ ] 用隔离工作区建立一个已证明身份的旧 ETF 模型/数据、保留原局部键的新覆盖数据、一个新规范键 ETF 数据和一个股票篮子。旧 checkpoint 回测使用原局部键的新覆盖，规范键数据只给新模型。补缺失的集成案例，断言旧对象关联后续训/回测成功、新 ETF 两路全链路完成、股票篮子保存但缺定义拒绝执行，历史深链仍读、请求/快照/结果 hash 一致。合成股票定义不得出现在 GET definitions。只用短确定性夹具和必要的短 CPU 训练，不跑完整研究或实盘连接。
-- [ ] 先运行 `uv run --no-sync pytest tests/integration/test_framework_acceptance.py -q` 和 `npm.cmd --prefix web run test:e2e -- framework.spec.ts`，确认缺失接线导致预期失败；如已有任务已覆盖则不制造重复失败测试，仅补未验证的跨模块行为。
-- [ ] 完成必要接线修复及接入说明；迁移演练仅对临时副本执行，记录升级前后文件 hash、元数据行数、失败回滚、重复升级和旧报告可读。记录发布步骤：停止旧服务、保存数据库和产物一致备份、同版替换 API/CLI/Web 包，再启动并做最小冒烟；演练先在副本中完成。本任务准备发布证据，不自动切换用户实际实例。Web dist 必须通过现有 frontend.py 的源码 hash 核验。回退使用旧包和未升级备份，不能用旧代码打开新库或自动逆迁移新研究对象。
-- [ ] 运行全套 `uv run --no-sync pytest -q`、`npm.cmd --prefix web run test -- --run`、`npm.cmd --prefix web run typecheck`、`npm.cmd --prefix web run build`、`npm.cmd --prefix web run test:e2e`。若环境缺少已锁定依赖先按项目文档安装现有版本；任何未运行项、失败或环境限制如实登记，不能以文档审核替代。
-- [ ] 在 acceptance.md 逐条登记下表 A01–A18 的实际命令、结果和证据；资深量化 Agent 复核全分支的数据时序、账户、模型身份与旧产物，再检查发布包同时包含 API/CLI/Web。无剩余阻断后提交 `test: verify multi-asset framework workflows and migration`。未满足项保留未完成，不宣称可发布。
+- [x] 用隔离工作区建立一个已证明身份的旧 ETF 模型/数据、保留原局部键的新覆盖数据、一个新规范键 ETF 数据和一个股票篮子。旧 checkpoint 回测使用原局部键的新覆盖，规范键数据只给新模型。补缺失的集成案例，断言旧对象关联后续训/回测成功、新 ETF 两路全链路完成、股票篮子保存但缺定义拒绝执行，历史深链仍读、请求/快照/结果 hash 一致。合成股票定义不得出现在 GET definitions。只用短确定性夹具和必要的短 CPU 训练，不跑完整研究或实盘连接。
+- [x] 先运行 `uv run --no-sync pytest tests/integration/test_framework_acceptance.py -q` 和 `npm.cmd --prefix web run test:e2e -- framework.spec.ts`，确认缺失接线导致预期失败；如已有任务已覆盖则不制造重复失败测试，仅补未验证的跨模块行为。
+- [x] 完成必要接线修复及接入说明；迁移演练仅对临时副本执行，记录升级前后文件 hash、元数据行数、失败回滚、重复升级和旧报告可读。记录发布步骤：停止旧服务、保存数据库和产物一致备份、同版替换 API/CLI/Web 包，再启动并做最小冒烟；演练先在副本中完成。本任务准备发布证据，不自动切换用户实际实例。Web dist 必须通过现有 frontend.py 的源码 hash 核验。回退使用旧包和未升级备份，不能用旧代码打开新库或自动逆迁移新研究对象。
+- [x] 运行全套 `uv run --no-sync pytest -q`、`npm.cmd --prefix web run test -- --run`、`npm.cmd --prefix web run typecheck`、`npm.cmd --prefix web run build`、`npm.cmd --prefix web run test:e2e`。若环境缺少已锁定依赖先按项目文档安装现有版本；任何未运行项、失败或环境限制如实登记，不能以文档审核替代。
+- [x] 在 acceptance.md 逐条登记下表 A01–A18 的实际命令、结果和证据；资深量化 Agent 复核全分支的数据时序、账户、模型身份与旧产物，再检查发布包同时包含 API/CLI/Web。无剩余阻断后提交 `test: verify multi-asset framework workflows and migration`。未满足项保留未完成，不宣称可发布。
 
 ## 验收追踪与审核关口
+
+T13 验证（2026-10-11）：最终 Python 全套 1167 项通过、1 项因本机符号链接权限跳过；Web 25 个文件共 182 项通过，TypeScript、生产构建与源码/产物哈希核验通过；本机 Edge 的 6 个浏览器场景全部通过。隔离迁移记录原文件哈希、元数据行数、失败回滚和重复升级；真实旧格式 ETF PPO 已验证关联后续训及指定原版本的新覆盖回测，原产物字节不变。量化核心、API/CLI/Web 发布边界及文档分别经独立审核，已发现问题均关闭。个股真实数据/特征/策略/学习定义、研究规模训练和实际服务切换仍属于后续工作。
 
 | 设计验收 | 负责任务 | 主要证据位置 |
 |---|---|---|
@@ -392,22 +394,22 @@ T12 ???2026-10-11????????????????Web ?? 182 ????maxWorkers=2 ???? CPU ??????????
 | A03 超集与覆盖/预热 | T03/T07 | test_asset_bindings / test_framework_capabilities |
 | A04 时点与收盘边界 | T04/T06 | test_point_in_time / test_learning_definitions |
 | A05 缺失、拟合、缓存 | T04/T06/T07 | test_feature_frames / test_transform_publication / test_framework_capabilities |
-| A06 能力与入口一致 | T07/T09/T11/T12 | test_framework_capabilities / test_framework_api / framework-workflows.test |
+| A06 能力与入口一致 | T07/T09/T11/T12 | test_framework_capabilities / test_framework_api / test_investing_models / framework-fixed-workflows.test / framework-model-workflows.test |
 | A07 两路同账本、Hold/风险 | T05/T06 | test_trading_definitions / test_learning_definitions |
 | A08 持仓与事件生命周期 | T05/T07 | test_trading_definitions / test_framework_capabilities |
 | A09 价格/费用/状态事实 | T05/T07 | test_trading_definitions / test_order_ledger |
 | A10 ETF 观察动作奖励与版本 | T00/T06/T08 | test_etf_framework_baseline / test_learning_definitions / test_investing_continuation |
 | A11 不可冒充续训、失败保护 | T06/T08 | test_transform_publication / test_model_framework_bindings |
-| A12 旧对象有证据重用 | T03/T06/T08/T13 | test_asset_bindings / test_model_framework_bindings / test_framework_acceptance |
+| A12 旧对象有证据重用 | T03/T06/T08/T13 | test_asset_bindings / test_model_framework_bindings / test_framework_acceptance / test_framework_legacy_execution |
 | A13 历史与迁移 | T02/T08/T10/T13 | test_framework_storage / test_investing_history / test_framework_acceptance |
-| A14 四域 ETF 闭环与股票待接入 | T11/T12/T13 | framework-workflows.test / framework.spec |
+| A14 四域 ETF 闭环与股票待接入 | T11/T12/T13 | framework-fixed-workflows.test / framework-model-workflows.test / framework.spec / models.spec / workbench.spec |
 | A15 合成接入不对外发布 | T04/T05/T06/T07/T13 | test_framework_acceptance / test_framework_api |
 | A16 冻结实现/依赖与路由 | T09 | test_worker_snapshot / test_framework_api |
-| A17 新覆盖回测与原数据续训 | T08 | test_model_framework_bindings |
-| A18 单一输入与哈希 | T01/T07/T09/T12 | test_framework_contracts / test_framework_resolution / framework-workflows.test |
+| A17 新覆盖回测与原数据续训 | T08/T13 | test_model_framework_bindings / test_model_operations / test_model_backtest_coverage / test_framework_legacy_execution |
+| A18 单一输入与哈希 | T01/T07/T09/T12 | test_framework_contracts / test_framework_resolution / framework-fixed-workflows.test / framework-model-workflows.test |
 
 每项任务有本地 commit 和聚焦验证；T04、T06、T09、T13 是阶段审核关口。数据与量化工程审核重点分别是时间/身份/账本、观察/变换/续训/评价。发现影响后续接口的 P1/P2 问题时，先修订对应任务与契约再继续，不把问题留给页面收尾。
 
 推荐执行方式：由主线程按依赖逐项实施，在以上四个关口调用独立量化工程 Agent 审核；可并行的只读核查与不重叠任务再单独委派。模型按具体任务复杂度选择，字段/页面核对可用较轻模型，时点数据、账本、模型身份和整个分支审核使用高推理能力。
 
-本轮到计划审核、文档验证和本地提交为止。个股具体研究会话后续按 onboarding 清单返回接入成果；框架完成本身不表示已经具备可用的个股交易策略或学习模型。
+实施范围为框架开发、审核、验收和本地提交。个股具体研究会话后续按 onboarding 清单返回接入成果；框架完成本身不表示已经具备可用的个股交易策略或学习模型。

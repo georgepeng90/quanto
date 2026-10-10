@@ -22,6 +22,26 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
     return job.state
   }, { timeout: 60000 }).toBe('succeeded')
   expect(demoDatasetId).not.toBe('')
+  const headers = { Authorization: `Bearer ${token}` }
+  const datasetResponse = await page.request.get(`/api/datasets/${demoDatasetId}`, { headers })
+  expect(datasetResponse.ok()).toBeTruthy()
+  const datasetDetail = await datasetResponse.json()
+  expect(datasetDetail.identity_evidence_ref).toBeTruthy()
+  const binding = datasetDetail.asset_binding || await (await page.request.post(`/api/datasets/${demoDatasetId}/asset-binding`, {
+    headers, data: { evidence_ref: datasetDetail.identity_evidence_ref, idempotency_key: crypto.randomUUID() }
+  })).json()
+  expect(binding.assets).toHaveLength(6)
+  const firstLocalSymbol = binding.assets[0].local_symbol as string
+  const basketResponse = await page.request.post('/api/baskets', { headers, data: {
+    name: `浏览器演示 ${crypto.randomUUID()}`, members: binding.assets.map((asset: { instrument_id: object }) => asset.instrument_id),
+    selection_note: '保持数据证据中的六只 ETF 顺序', idempotency_key: crypto.randomUUID()
+  } })
+  expect(basketResponse.ok()).toBeTruthy()
+  const basket = await basketResponse.json() as { basket_id: string; revision: number }
+  const definitions = await (await page.request.get('/api/definitions', { headers })).json()
+  const trading = definitions.items.find((item: { ref: { kind: string }; supported_instrument_types: string[] }) => item.ref.kind === 'trading' && item.supported_instrument_types.includes('etf'))
+  expect(trading).toBeTruthy()
+  const tradingOption = `${trading.ref.id}:${trading.ref.version}`
   await page.goto('/datasets')
   await expect(page.getByRole('heading', { name: '数据版本', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: '生成演示数据', exact: true })).toHaveCount(0)
@@ -40,9 +60,10 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   await strategies.selectOption({ label: await strategies.locator('option').filter({ hasText: 'buy_hold' }).innerText() })
   const editor = page.locator('.cm-content[contenteditable="true"]')
   await expect(editor).toContainText('create_strategy')
-  await editor.fill('from quanto.strategies.base import Hold, TargetPortfolio\n\nclass Demo:\n    warmup_bars = 0\n    def __init__(self, params):\n        self.weight = params["weight"]\n        self.done = False\n    def should_evaluate(self, ctx):\n        return not self.done\n    def on_close(self, ctx):\n        self.done = True\n        symbol = "512480"\n        return TargetPortfolio({symbol: self.weight}, {symbol: "演示持有"}, {})\n\ndef create_strategy(params):\n    return Demo(params)\n')
+  await editor.fill('from quanto.strategies.base import Hold, TargetPortfolio\n\nclass Demo:\n    warmup_bars = 0\n    def __init__(self, params):\n        self.weight = params["weight"]\n        self.done = False\n    def should_evaluate(self, ctx):\n        return not self.done\n    def on_close(self, ctx):\n        self.done = True\n        symbol = next((item for item in ctx.instruments if item in ctx.eligible_symbols), None)\n        if symbol is None:\n            return Hold("没有可交易的篮子成员")\n        return TargetPortfolio({symbol: self.weight}, {symbol: "演示持有"}, {})\n\ndef create_strategy(params):\n    return Demo(params)\n')
   await page.getByRole('button', { name: 'strategy.json', exact: true }).click()
-  await editor.fill(JSON.stringify({ name: '浏览器演示', entrypoint: 'strategy.py:create_strategy', parameter_schema: { type: 'object', properties: { weight: { type: 'number', title: '目标权重', minimum: 0, maximum: 1, default: 0.5 } }, additionalProperties: false }, required_data_columns: ['date', 'symbol', 'close'], auxiliary_sources: [], research_data: [] }, null, 2))
+  const baseManifest = JSON.parse(await readFile(resolve(import.meta.dirname, '../../strategies/buy_hold/strategy.json'), 'utf8'))
+  await editor.fill(JSON.stringify({ ...baseManifest, name: '浏览器演示', parameter_schema: { type: 'object', properties: { weight: { type: 'number', title: '目标权重', minimum: 0, maximum: 1, default: 0.5 } }, additionalProperties: false } }, null, 2))
   await page.getByRole('button', { name: '保存新修订', exact: true }).click()
   await expect(page.getByLabel('目标权重', { exact: true })).toBeVisible()
   await page.getByLabel('目标权重', { exact: true }).fill('0.5')
@@ -50,9 +71,13 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   await page.getByLabel('绩效起始日').fill('2018-01-02')
   await page.getByLabel('结束日', { exact: true }).fill('2018-01-31')
   await page.getByLabel('初始资金').fill('100000')
-  await page.getByLabel('证券代码（逗号分隔）').fill('512480,159995,512760,515790,512690,512170')
+  await page.getByRole('combobox', { name: '标的篮子' }).selectOption(basket.basket_id)
+  await expect(page.getByRole('combobox', { name: '篮子修订' })).toHaveValue(String(basket.revision))
+  await page.getByRole('combobox', { name: '交易定义' }).selectOption(tradingOption)
+  const strategyRevision = await strategies.inputValue()
   await page.getByRole('button', { name: '保存实验', exact: true }).click()
   await expect(page.getByText('已保存实验修订 1')).toBeVisible()
+  await expect(page.getByLabel('能力检查报告')).toContainText('服务端检查：可执行')
   const experiment = await page.getByRole('combobox', { name: '实验草稿', exact: true }).inputValue()
   await expect(page).toHaveURL(`/experiments/${experiment}`)
   await page.getByRole('link', { name: '返回列表', exact: true }).click()
@@ -64,13 +89,16 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   await expect(savedConfiguration).toContainText('目标权重：0.5')
   await page.screenshot({ path: testInfo.outputPath('fixed-strategy-list.png') })
 
-  async function run(draftId: string) {
+  async function run(weight: string) {
     await page.getByRole('link', { name: '回测', exact: true }).click()
     await expect(page.getByRole('heading', { name: '回测', exact: true })).toBeVisible()
     await page.getByRole('button', { name: '新建回测', exact: true }).click()
-    await page.getByRole('combobox', { name: '实验草稿', exact: true }).selectOption(draftId)
+    await page.getByRole('combobox', { name: '策略', exact: true }).selectOption(strategyRevision)
+    await page.getByRole('combobox', { name: '标的篮子' }).selectOption(basket.basket_id)
+    await page.getByRole('combobox', { name: '交易定义' }).selectOption(tradingOption)
+    await page.getByLabel('目标权重', { exact: true }).fill(weight)
     const created = page.waitForResponse(response => response.url().endsWith('/api/runs') && response.request().method() === 'POST')
-    await page.getByRole('button', { name: '运行', exact: true }).click()
+    await page.getByRole('button', { name: '开始回测', exact: true }).click()
     const response = await created
     expect(response.ok()).toBeTruthy()
     const record = await response.json()
@@ -78,7 +106,7 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
     await expect(page.getByRole('heading', { name: '最终绩效', exact: true })).toBeVisible({ timeout: 60_000 })
     return record.run_id as string
   }
-  const first = await run(experiment)
+  const first = await run('0.5')
   await page.getByRole('link', { name: '回测', exact: true }).click()
   const summary = page.getByRole('row').filter({ has: page.getByRole('link', { name: '浏览器演示', exact: true }) }).filter({ has: page.locator(`[title="${first}"]`) })
   await expect(summary.getByRole('link', { name: '浏览器演示', exact: true })).toBeVisible()
@@ -104,7 +132,7 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   page.off('request', recordDetailRequest)
   await page.getByRole('button', { name: '全区间', exact: true }).click()
   await page.getByRole('tab', { name: '订单', exact: true }).click()
-  await expect(page.locator('.table-wrap').filter({ has: page.getByRole('columnheader', { name: '委托数量', exact: true }) })).toContainText('512480')
+  await expect(page.locator('.table-wrap').filter({ has: page.getByRole('columnheader', { name: '委托数量', exact: true }) })).toContainText(firstLocalSymbol)
   const chart = page.locator('.result-chart').first()
   const started = Date.now()
   await chart.scrollIntoViewIfNeeded()
@@ -119,10 +147,10 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   const allocationResponse = page.waitForResponse(response => response.url().includes(`/api/runs/${first}/charts/allocation?`))
   await page.getByRole('tab', { name: '持仓权重', exact: true }).click()
   const allocation = await (await allocationResponse).json()
-  expect([...new Set(allocation.items.map((row: { symbol: string }) => row.symbol))]).toEqual(['512480'])
+  expect([...new Set(allocation.items.map((row: { symbol: string }) => row.symbol))]).toEqual([firstLocalSymbol])
   await expect(chart.locator('svg')).toBeVisible()
-  await expect(chart.locator('svg text').filter({ hasText: /^512480$/ })).toBeVisible()
-  await expect(chart.locator('svg text').filter({ hasText: /^159995$/ })).toHaveCount(0)
+  await expect(chart.locator('svg text').filter({ hasText: firstLocalSymbol })).toBeVisible()
+  await expect(chart.locator('svg text').filter({ hasText: binding.assets[1].local_symbol as string })).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('desktop-allocation.png') })
   await page.getByRole('tab', { name: '权益与基准', exact: true }).click()
   await page.getByLabel('图表起始日', { exact: true }).fill('2018-01-10')
@@ -151,6 +179,8 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   await expect(page.getByText(/演示数据：合成绩效/).first()).toBeVisible()
   await page.getByRole('button', { name: '从此历史运行创建实验' }).click()
   await expect(page.getByRole('heading', { name: '编辑固定策略' })).toBeVisible()
+  await expect(page.getByRole('combobox', { name: '标的篮子' })).toHaveValue(basket.basket_id)
+  await expect(page.getByRole('combobox', { name: '交易定义' })).toHaveValue(tradingOption)
   await expect(page.getByLabel('目标权重', { exact: true })).toHaveValue('0.5')
   await expect(page.getByLabel('样本用途', { exact: true })).not.toHaveValue('later mutable purpose')
   await page.getByLabel('目标权重', { exact: true }).fill('0.7')
@@ -158,7 +188,7 @@ test('edits runs compares and exports a backtest', async ({ page }, testInfo) =>
   await expect(page.getByText('已保存实验修订 2')).toBeVisible()
   const cloned = await page.getByRole('combobox', { name: '实验草稿', exact: true }).inputValue()
   expect(cloned).not.toBe(experiment)
-  const second = await run(cloned)
+  const second = await run('0.7')
   await expect(page.getByText(/演示数据：合成绩效/).first()).toBeVisible()
   await page.getByText('查看冻结输入与来源').click()
   await expect(page.locator('pre').filter({ hasText: 'source_run_id' }).first()).toContainText(first)
@@ -212,7 +242,7 @@ store = WorkbenchStore(Path(sys.argv[1]))
 ids = []
 for mode in ('complete', 'prefix'):
     identity = str(uuid4())
-    payload = dict(symbols=['000001'], start_date='2024-01-01', end_date='2024-01-05',
+    payload = dict(instruments=[dict(exchange='SZSE', instrument_type='etf', code='000001')], start_date='2024-01-01', end_date='2024-01-05',
         workspace=str(store.root), market_root=str(store.market_root), refresh=mode == 'prefix')
     input_path = store.root / 'job-inputs' / identity / 'input.json'
     input_path.parent.mkdir(parents=True)

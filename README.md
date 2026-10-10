@@ -4,9 +4,9 @@
 
 本机网页回测工作台已实现：用户和 Agent 共用数据版本、策略修订、实验、队列、结果与导出服务。首版验证平台为 Windows，采用本机单用户、ETF 日线研究。第一次了解项目，先看[工作台入门与完整讲解](docs/00_工作台入门与完整讲解.md)，其中说明页面用途、一次回测的过程、结果解读和研究边界。具体操作见[使用指南](docs/05_回测工作台使用指南.md)，设计见[工作台架构](docs/planning-artifacts/architecture.md)，逐阶段验证与取舍见[实施计划](docs/superpowers/plans/2026-09-29-web-backtest-workbench.md)。
 
-工作台主导航为“行情数据、固定策略、强化学习模型、回测”。强化学习采用固定 ETF 篮子的专用模型：日线观察、自然周/月决策、持有与现金等待，使用 SB3 PPO 和 Gymnasium，复用日线账本与任务 API。模型创建不启动训练；成功会话保存最终训练状态和验证最优快照，后续可追加训练，并在回测页明确选择保存版本。操作见[固定 ETF 篮子模型训练指南](docs/07_ETF自主投资训练指南.md)。旧 PPO 与分钟回测报告保留在统一历史，分钟训练退出主导航。小规模实跑只验证软件闭环，不表示策略有效或达到实盘条件。
+工作台主导航为“数据、固定策略、强化学习模型、回测”。固定策略和强化学习引用同一份有序篮子修订、数据身份绑定及明确版本的定义，复用日线账户与风险执行。当前实际注册的学习和交易定义仍为 ETF；个股篮子可以保存，具体运行方案尚待研究接入。模型创建不启动训练；成功会话分别保存末次训练状态和验证最优权重，回测明确选择保存版本及评价用途。旧分钟模型和报告保持只读；已知 ETF 日线 PPO 组合通过原产物审核并关联后，可以续训和按原局部键回测。框架边界见[设计细则](docs/superpowers/specs/2026-10-08-multi-asset-framework-design.md)，个股研究交付要求见[接入清单](docs/research/stock-definition-onboarding.md)。
 
-分钟深度学习工作台见[深度学习使用指南](docs/06_深度学习工作台使用指南.md)：真实 1m 数据导入、训练/验证/测试切分、CPU/CUDA、检查点恢复、冻结模型回测及对照。JSON 模板位于 [examples/learning](examples/learning)，隔离合成验收与实测规模见[验收记录](docs/research/2026-10-03-deeplearning/acceptance.md)。现有在线来源仍只提供日线；合成验收不证明真实行情盈利。
+历史分钟深度学习流程见[原使用指南](docs/06_深度学习工作台使用指南.md)和[原验收记录](docs/research/2026-10-03-deeplearning/acceptance.md)。其中的旧分钟训练、数据准备和独立 PPO 提交入口现返回 `MIGRATION_REQUIRED`；历史报告和导出继续读取原产物。现有在线来源仍只提供已声明能力的日线数据。
 
 ## 目标交易设计
 
@@ -23,7 +23,7 @@
 
 工作台包含独立策略协议、买入持有与趋势轮动模板、按时间推进的账本、不可变快照、持久队列和中文网页。`configs/strategy.yaml` 不是工作台实验输入；实验使用 JSON 契约。模板可运行不表示目标交易设计的全部研究规则或盈利能力已经验证。参数校准、样本外验证和实盘可行性仍待研究。
 
-行情获取与缓存由独立的 `quanto.data.MarketData` 模块管理：Parquet 保存标准行情，SQLite 保存覆盖、来源与已提交快照。日线按标的与语义序列保存，分钟线按标的与 UTC 月份分片；换数据源沿用同一结构。新回测共享经校验的数据对象，冻结策略与配置；运行时保留所选历史范围内、绩效起点前的全部行情。CSV 作为显式导入输入和报告导出格式。旧冻结数据和运行快照继续本地重放。新模块设计见[统一行情模块](docs/superpowers/specs/2026-10-01-market-data-module-design.md)，实测与容量外推见[验收记录](docs/research/2026-10-01-market-data-module-validation.md)。
+行情获取与缓存由独立的 `quanto.data.MarketData` 模块管理：Parquet 保存标准行情，SQLite 保存覆盖、来源与已提交快照。日线按标的与语义序列保存，分钟线按标的与 UTC 月份分片；换数据源沿用同一结构。新回测共享经校验的数据对象，冻结策略与配置；运行时保留所选历史范围内、绩效起点前的全部行情。CSV 作为显式导入输入和报告导出格式。旧数据和结果保持原样读取；带框架身份的新运行可按原冻结快照重跑，旧无框架运行需升级新草稿。新模块设计见[统一行情模块](docs/superpowers/specs/2026-10-01-market-data-module-design.md)，实测与容量外推见[验收记录](docs/research/2026-10-01-market-data-module-validation.md)。
 
 ## 快速启动
 
@@ -42,13 +42,17 @@ npm.cmd --prefix web run build
 
 Git 分支切换不会迁移被忽略的本地数据库。调整端口时仍应指向同一个工作区，避免历史记录看起来消失。早期预览切换过程保留在[历史切换记录](docs/superpowers/plans/2026-09-30-preview-cutover.md)，其中的旧端口不是本机当前入口。
 
-首次启动自动登记两套策略模板。首次回测前，在“行情数据”获取 ETF 真实行情或导入符合契约的 ZIP；确认登记版本的实际覆盖后，进入“固定策略 → 新建固定策略”选择数据、模板及覆盖中的标的和日期，填写资金与用途并保存。固定策略首页列出已保存配置及有效参数，点击“编辑配置”可继续修改。随后在“回测 → 新建回测”运行，查看订单、图表、克隆实验、比较和下载。示例金额和参数只用于说明操作。
+首次启动自动登记两套策略模板。在“数据 → 标的篮子”保存有序的交易所、证券类型与代码；在“数据版本”准备带身份证据的数据。固定策略或模型配置选择篮子修订、数据和真实注册定义，检查服务端能力报告后执行。有效但尚未就绪的固定草稿可保存；模型创建与运行必须满足能力要求。参数或输入变化后需重新检查，提交时服务端还会复查。模型原训练配置固定，续训只允许追加预算和设备选择。历史无框架身份的固定回测需显式升级为新草稿；旧模型只在原证据审核通过后关联。示例金额和参数只用于说明操作。
 
-“回测任务 → 全部回测”汇总固定策略、PPO 及分钟模型的回测任务，训练任务留在各自训练页。支持类型/状态/批次筛选、收益/年化/回撤/Sharpe 排序，以及勾选后的指标对照和条件差异。区间、ETF 范围、数据内容、成本、风控或估值口径不同的结果不能直接排名；缺失和损坏的结果会保留任务并显示错误。Agent 可读取同一份 `GET /api/backtests/catalog` 分页目录。
+“回测任务 → 全部回测”汇总固定策略、PPO 及分钟模型的回测任务，训练任务留在各自训练页。支持类型/状态/批次筛选、收益/年化/回撤/Sharpe 排序，以及勾选后的指标对照和条件差异。区间、证券范围、数据内容、成本、风控或估值口径不同的结果不能直接排名；缺失和损坏的结果会保留任务并显示错误。Agent 可读取同一份 `GET /api/backtests/catalog` 分页目录。
 
 同源 `GET /api/session` 返回本机令牌；浏览器后续请求和 Agent CLI 均以 `Authorization: Bearer <token>` 调用 `/api`。CLI 可通过 `QUANTO_TOKEN` 环境变量读取令牌，例如 `uv run --extra web quanto datasets list`。任务提交和结果查询共用这套 API；`quanto runs --help` 可查看运行命令。
 
-旧版 `fetch-data`、`generate-sample-data` 和 `run-backtest` 命令已由任务 API 取代。`POST /api/jobs/data` 的 demo 请求（例如 `{"kind":"demo","payload":{"years":1}}`）仅供开发与自动化测试；合成数据生成不属于正式用户流程。行情获取使用 `{"kind":"fetch","payload":{"symbols":["512480"],"start_date":"2024-01-08","end_date":"2024-01-12","refresh":false}}`。只有 `result.market_prefetch_state == "ready"`、回测包验证通过且返回 `dataset_version_id` 才能用于回测；通用任务 `succeeded` 也可能返回不完整覆盖。重复请求优先使用本地缓存，页面“更新已有行情”才显式刷新。普通请求不接受供应商、物理根、缓存版本或重试配置。
+旧版 `fetch-data`、`generate-sample-data` 和 `run-backtest` 命令已由任务 API 取代。`POST /api/jobs/data` 的 demo 请求（例如 `{"kind":"demo","payload":{"years":1}}`）仅供开发与自动化测试。行情获取使用 `{"kind":"fetch","payload":{"instruments":[{"exchange":"SSE","instrument_type":"etf","code":"512480"}],"start_date":"2024-01-08","end_date":"2024-01-12","refresh":false}}`，不再接受裸 `symbols`。获取完成后还要对具体策略/学习配置检查身份、覆盖与需求；任务成功不等同于全部研究条件满足。重复请求优先使用缓存，页面“更新已有行情”才显式刷新。普通请求不接受供应商、物理根、缓存版本或重试配置。
+
+新协议 CLI 与 Web 共用 API：`quanto baskets list/create/revise/show`、`quanto definitions list`、`quanto capabilities check --json request.json`、`quanto datasets bind <id> --json binding.json`、`quanto models bind <id> --json binding.json`。模型操作使用 `quanto investing create-model --json request.json`、`train-model <id> --json request.json`、`model-backtest <id> --json request.json`。能力请求含 `operation`；实际提交体不重复 URL 已指定的模型 ID。所有公共回测配置禁止传入 `symbols`，内部局部代码由服务端从篮子与绑定确定。
+
+API、CLI 和 Web 须同版发布；升级在隔离副本中验证后，停止服务并一致备份数据库、产物和引用的数据，再切换整个包。回退使用旧代码与升级前备份，不能用旧代码打开新数据库。迁移演练和验证证据见[框架验收记录](docs/research/multi-asset-framework-acceptance.md)。
 
 ## 独立行情 API 与预缓存
 
@@ -59,7 +63,7 @@ from quanto.data import MarketData
 from quanto.data.contracts import DataQuery
 from quanto.backtest.market_dataset import build_data_requirement
 
-requirement = build_data_requirement({"symbols": ["512480"],
+requirement = build_data_requirement({"instruments": [{"exchange": "SSE", "instrument_type": "etf", "code": "512480"}],
     "start_date": "2024-01-08", "end_date": "2024-01-12"})
 with MarketData() as market:
     task = market.prefetch(requirement)

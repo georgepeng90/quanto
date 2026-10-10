@@ -9,13 +9,19 @@ test('creates an untrained model, continues it, and backtests the chosen saved v
 import json, sys
 from pathlib import Path
 from quanto.workbench.store import WorkbenchStore
+from quanto.workbench.baskets import BasketStore
+from quanto.workbench.bindings import BindingStore
 from tests.fixtures.investing_training_cases import investing_case
+from tests.fixtures.framework_imports import fixture_identity_evidence
 workspace = Path(sys.argv[1])
 assert workspace.resolve() != (Path.cwd() / 'workspace').resolve()
 spec, _ = investing_case(workspace / 'model-e2e-data')
 store = WorkbenchStore(workspace)
-dataset = store.register_dataset(workspace / 'model-e2e-data')
-print(json.dumps({'dataset_id': dataset.id, 'spec': spec}))
+source = workspace / 'model-e2e-data'
+dataset = store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
+asset = BindingStore(store).get_asset_binding(dataset.id).assets[0].instrument_id
+basket = BasketStore(store).create('Model E2E basket', (asset,), 'Synthetic training fixture', 'model-e2e-basket')
+print(json.dumps({'dataset_id': dataset.id, 'basket_id': basket.basket_id, 'spec': spec}))
 `, process.env.QUANTO_E2E_WORKSPACE!], { cwd: root, encoding: 'utf8' }))
   const posts: { path: string; body: any }[] = []
   const errors: string[] = []
@@ -23,29 +29,50 @@ print(json.dumps({'dataset_id': dataset.id, 'spec': spec}))
   page.on('request', request => { if (request.method() === 'POST' && request.url().includes('/api/investing/')) posts.push({ path: new URL(request.url()).pathname, body: request.postDataJSON() }) })
   const session = await (await page.request.get('/api/session')).json()
   const headers = { Authorization: `Bearer ${session.token}` }
+  const definitions = (await (await page.request.get('/api/definitions', { headers })).json()).items
+  const learning = definitions.find((item: any) => item.ref.kind === 'learning' &&
+    item.action_version === 'hold-target-cash-quartiles-v2' && item.reward_version === 'net-log-return-v1')
+  expect(learning).toBeTruthy()
+  const tradingRef = learning.allowed_trading_refs[0]
+  const trading = definitions.find((item: any) => item.ref.kind === tradingRef.kind &&
+    item.ref.id === tradingRef.id && item.ref.version === tradingRef.version)
+  expect(trading).toBeTruthy()
+  const refKey = (ref: { kind: string; id: string; version: string }) => JSON.stringify([ref.kind, ref.id, ref.version])
   await page.goto('/models')
-  await expect(page.getByRole('navigation', { name: '主导航' }).getByRole('link')).toHaveText(['行情数据', '固定策略', '强化学习模型', '回测'])
+  await expect(page.getByRole('navigation', { name: '主导航' }).getByRole('link')).toHaveText(['数据', '固定策略', '强化学习模型', '回测'])
   await page.getByRole('button', { name: '新建模型', exact: true }).click()
   await page.getByRole('combobox', { name: '日线数据版本', exact: true }).selectOption(fixture.dataset_id)
-  await expect(page.getByLabel('固定 ETF 篮子（按顺序，逗号分隔）')).toHaveValue('')
+  await page.getByRole('combobox', { name: '标的篮子' }).selectOption(fixture.basket_id)
+  await expect(page.getByRole('combobox', { name: '篮子修订' })).toHaveValue('1')
+  await page.getByRole('combobox', { name: '学习定义' }).selectOption(refKey(learning.ref))
+  await page.getByRole('combobox', { name: '交易定义' }).selectOption(refKey(trading.ref))
   await page.getByLabel('模型名称').fill('E2E 合成模型')
-  await page.getByLabel('固定 ETF 篮子（按顺序，逗号分隔）').fill('000001')
-  const labels = ['训练开始', '训练结束', '验证开始', '验证结束', '测试开始', '测试结束']
+  await page.getByLabel('lookback').fill(String(fixture.spec.lookback))
+  await page.getByLabel('frequency').selectOption('0')
+  const labels = ['训练开始', '训练结束', '验证开始', '验证结束', '留出测试开始', '留出测试结束']
   const fields = ['train_start', 'train_end', 'validation_start', 'validation_end', 'test_start', 'test_end']
   for (let index = 0; index < fields.length; index++) await page.getByLabel(labels[index], { exact: true }).fill(fixture.spec[fields[index]])
   await page.getByText('高级训练、成交与风险参数', { exact: true }).click()
-  for (const [label, key] of [['历史窗口（交易日）', 'lookback'], ['训练片段（交易日）', 'episode_sessions'], ['训练决策步数', 'total_timesteps'], ['每轮采样步数', 'n_steps'], ['批大小', 'batch_size'], ['每轮优化次数', 'n_epochs'], ['隐藏维度', 'hidden_size'], ['验证间隔（决策步）', 'eval_every_timesteps']]) await page.getByLabel(label, { exact: true }).fill(String(fixture.spec[key]))
+  await page.getByLabel('训练步数').fill(String(fixture.spec.total_timesteps))
+  for (const [label, key] of [['训练片段', 'episode_sessions'], ['每轮采样步数', 'n_steps'], ['批大小', 'batch_size'], ['每轮优化次数', 'n_epochs'], ['隐藏维度', 'hidden_size'], ['验证间隔', 'eval_every_timesteps']]) await page.getByLabel(label, { exact: true }).fill(String(fixture.spec[key]))
+  await expect(page.getByRole('button', { name: '创建模型', exact: true })).toBeDisabled()
+  await page.getByRole('button', { name: '检查运行能力', exact: true }).click()
+  await expect(page.getByRole('button', { name: '创建模型', exact: true })).toBeEnabled()
   await page.getByRole('button', { name: '创建模型', exact: true }).click()
   await expect(page).toHaveURL(/\/models\/[^/?]+$/)
   const modelId = new URL(page.url()).pathname.split('/').pop()!
   await expect(page.getByText('待训练：尚无保存版本。首次训练成功后才能回测。')).toBeVisible()
   expect(posts).toHaveLength(1)
   expect(posts[0].path).toBe('/api/investing/models')
-  await expect(page.getByLabel('固定 ETF 篮子（按顺序，逗号分隔）')).toHaveCount(0)
+  expect(posts[0].body).toMatchObject({ basket_revision_ref: { basket_id: fixture.basket_id, revision: 1 },
+    learning_definition_ref: learning.ref, trading_definition_ref: trading.ref })
+  expect(posts[0].body.spec.backtest).not.toHaveProperty('symbols')
 
   async function train(label: string, expectedVersions: number) {
     await page.getByLabel('追加决策步数').fill('16')
     const response = page.waitForResponse(response => response.url().endsWith(`/models/${modelId}/train`) && response.request().method() === 'POST')
+    await page.getByRole('button', { name: '检查续训能力', exact: true }).click()
+    await expect(page.getByRole('button', { name: label, exact: true })).toBeEnabled()
     await page.getByRole('button', { name: label, exact: true }).click()
     expect((await response).ok()).toBeTruthy()
     await expect.poll(async () => {
@@ -55,7 +82,8 @@ print(json.dumps({'dataset_id': dataset.id, 'spec': spec}))
       return detail.version_count
     }, { timeout: 90000 }).toBe(expectedVersions)
     await page.getByRole('button', { name: '刷新模型', exact: true }).click()
-    await expect(page.getByRole('heading', { name: `保存版本 · ${expectedVersions}`, exact: true })).toBeVisible()
+    await page.getByRole('button', { name: '查看最新', exact: true }).click()
+    await expect(page.getByRole('heading', { name: `训练历史 · ${expectedVersions} 次尝试`, exact: true })).toBeVisible()
   }
   await train('开始训练', 1)
   const firstVersion = new URL(await page.getByRole('link', { name: '使用此版本回测' }).getAttribute('href') || '', page.url()).searchParams.get('version')!
@@ -65,11 +93,17 @@ print(json.dumps({'dataset_id': dataset.id, 'spec': spec}))
   expect(detail.total_timesteps).toBe(32)
   await page.getByRole('link', { name: '使用此版本回测' }).last().click()
   await expect(page.getByRole('combobox', { name: '保存版本', exact: true })).toHaveValue(firstVersion)
+  await page.getByLabel('回测开始').fill(fixture.spec.validation_start)
+  await page.getByLabel('回测结束').fill(fixture.spec.validation_end)
+  await page.getByRole('combobox', { name: '评估用途' }).selectOption('development_replay')
+  await page.getByRole('button', { name: '检查运行能力', exact: true }).click()
+  await expect(page.getByRole('button', { name: '提交模型回测', exact: true })).toBeEnabled()
   const response = page.waitForResponse(response => response.url().endsWith(`/models/${modelId}/backtests`) && response.request().method() === 'POST')
   await page.getByRole('button', { name: '提交模型回测', exact: true }).click()
   const submitted = await response
   expect(submitted.ok()).toBeTruthy()
   expect(posts.at(-1)?.body.version_id).toBe(firstVersion)
+  expect(posts.at(-1)?.body.spec.evaluation_purpose).toBe('development_replay')
   const job = await submitted.json()
   await expect.poll(async () => (await (await page.request.get(`/api/jobs/${job.id}`, { headers })).json()).state, { timeout: 90000 }).toBe('succeeded')
   await page.getByRole('button', { name: '刷新回测', exact: true }).click()

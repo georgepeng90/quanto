@@ -300,6 +300,9 @@ def _bind_point_in_time(tables: Mapping[str, pd.DataFrame], binding: AssetBindin
         frame = tables.get(name)
         if frame is None:
             raise ValueError(f"DATA_REQUIREMENT_UNSATISFIED: missing table {name}")
+        symbol_column = definition.rules.symbol_column
+        if symbol_column and symbol_column in frame.columns:
+            frame = frame.loc[frame[symbol_column].isin(ordered_symbols)]
         visible[name] = _visible(frame, definition, cutoff, sessions, binding.dataset_version_id)
     return PointInTimeView(_ENGINE_VIEW_TOKEN, cutoff=cutoff, symbols=ordered_symbols, binding=binding,
                            tables=visible, semantics=by_name, realized_splits=realized.reset_index(drop=True),

@@ -210,3 +210,17 @@ def test_view_freezes_caller_owned_basket_list():
     assert view.ordered_symbols == ("A",)
     with pytest.raises(ValueError, match="basket"):
         view.bars(("B",), date(2024, 1, 1))
+
+
+def test_unselected_asset_temporal_conflicts_do_not_block_selected_basket():
+    bundle, binding, semantics = facts_bundle()
+    facts = bundle.auxiliary["facts"]
+    other = facts.iloc[[0, 0]].copy()
+    other["symbol"] = "B"
+    bundle.auxiliary["facts"] = pd.concat([facts, other], ignore_index=True)
+    view = _bind_point_in_time(tables(bundle), binding, ("A",),
+                               session_cutoff(date(2024, 1, 3)), semantics=semantics)
+    assert view.table("facts", ("A",)).value.tolist() == [10.]
+    with pytest.raises(ValueError, match="duplicate or missing revision identity"):
+        _bind_point_in_time(tables(bundle), binding, ("A", "B"),
+                            session_cutoff(date(2024, 1, 3)), semantics=semantics)

@@ -32,6 +32,7 @@ export function BasketEditor() {
       if (detail) {
         const revision = await api.reviseBasket(detail.basket_id, { expected_revision: detail.current_revision, members: normalized, selection_note: selectionNote })
         setDetail({ ...detail, current_revision: revision.revision, current: revision, revisions: [...detail.revisions, { revision: revision.revision, content_hash: revision.content_hash, created_at: revision.created_at }] })
+        setBaskets(old => old.map(basket => basket.basket_id === revision.basket_id ? { ...basket, current_revision: revision.revision } : basket))
       } else {
         const requestBody = { name: name.trim(), members: normalized, selection_note: selectionNote }
         const body = JSON.stringify(requestBody)

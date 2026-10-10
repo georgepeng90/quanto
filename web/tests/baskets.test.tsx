@@ -35,6 +35,7 @@ test('four domains and stock basket revision preserve canonical ordered members 
   await userEvent.click(screen.getByRole('button', { name: '上移成员 2' }))
   await userEvent.click(screen.getByRole('button', { name: '创建新修订' }))
   await waitFor(() => expect(screen.getByText(/已保存修订 2/)).toBeInTheDocument())
+  expect(screen.getByRole('button', { name: '股票选择 · 修订 2' })).toBeInTheDocument()
   const call = vi.mocked(fetch).mock.calls.find(([url]) => url === '/api/baskets/b1/revisions')!
   expect(JSON.parse(call[1]!.body as string)).toEqual({ expected_revision: 1, members: [{ exchange: 'SSE', instrument_type: 'etf', code: '512480' }, { exchange: 'SSE', instrument_type: 'stock', code: '600000' }], selection_note: '选择原因' })
   expect(screen.getByText(/混合篮子运行需通过服务端能力检查/)).toBeInTheDocument()

@@ -177,6 +177,7 @@ def test_unpublished_sampling_reads_only_visible_sessions_and_active_job_root(hi
 
 @pytest.mark.parametrize('outcome', ['succeeded', 'failed', 'cancelled'])
 def test_policy_job_preserves_latest_sampling_summary_before_publication(tmp_path, monkeypatch, outcome):
+    from hashlib import sha256
     from quanto.backtest.models import BacktestCancelled
     from quanto.investing import jobs as policy_jobs
     from quanto.learning import jobs
@@ -186,7 +187,9 @@ def test_policy_job_preserves_latest_sampling_summary_before_publication(tmp_pat
     control.mkdir(parents=True)
     monkeypatch.setattr(jobs, 'verify_runtime', lambda _: None)
     sampling = {'start': '2024-05-06', 'end': '2024-05-24', 'episode_count': 3}
-    def train(kind, payload, artifact, emit, cancelled):
+    source_hashes = {'quanto/investing/jobs.py': sha256(Path(policy_jobs.__file__).read_bytes()).hexdigest()}
+    def train(kind, payload, artifact, emit, cancelled, *, source_hashes):
+        assert source_hashes == descriptor['source_hashes']
         emit({'training_sampling': {'start': '2024-05-06', 'end': '2024-05-10', 'episode_count': 1}})
         assert json.loads((control / 'training-sampling.json').read_text())['episode_count'] == 1
         emit({'training_sampling': sampling, 'training_sampling_intervals': [{'start': '2024-05-06', 'end': '2024-05-24'}]})
@@ -196,7 +199,8 @@ def test_policy_job_preserves_latest_sampling_summary_before_publication(tmp_pat
             raise LearningCancelled('training cancelled')
         artifact.mkdir()
     monkeypatch.setattr(policy_jobs, 'execute_policy_job', train)
-    descriptor = {'kind': 'train_policy', 'job_id': 'job', 'input': {'environment': {}, 'request': {}}}
+    descriptor = {'kind': 'train_policy', 'job_id': 'job', 'source_hashes': source_hashes,
+                  'input': {'environment': {}, 'request': {}}}
     emitted = []
     if outcome == 'succeeded':
         jobs.execute_learning_job(descriptor, control, emitted.append, lambda: False)

@@ -1,4 +1,4 @@
-﻿import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
@@ -14,8 +14,6 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(api.investingOverview).mockResolvedValue(overview as never)
   vi.mocked(api.dataset).mockResolvedValue(overview.datasets[0] as never)
-  vi.mocked(api.trainInvesting).mockResolvedValue({ id: 't1', kind: 'train_policy', state: 'queued' } as never)
-  vi.mocked(api.backtestInvesting).mockResolvedValue({ id: 'b2', kind: 'policy_backtest', state: 'queued' } as never)
   vi.mocked(api.investingArtifact).mockImplementation(async resource => (resource === 'policies' ? policy : backtest) as never)
   vi.mocked(api.investingChart).mockResolvedValue({ points: [{ time: '2024-01-02', equity: 100, drawdown: 0 }, { time: '2024-01-03', equity: 110, drawdown: 0 }], total_count: 2 })
   vi.mocked(api.investingTable).mockResolvedValue({ items: [{ symbol: 'ETF1', quantity: 100 }], next_cursor: null })

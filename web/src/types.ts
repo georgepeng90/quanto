@@ -15,7 +15,8 @@ export type StressScenario = { name: string; symbol_shocks: Record<string, numbe
 export type RiskSpec = { max_total_weight: number; max_symbol_weight: number; group_caps: Record<string, number>; stress_scenarios: StressScenario[]; max_stress_loss?: number | null; drawdown_pause?: number | null; pause_action: 'block_new' | 'reduce' | 'liquidate'; pause_target_weight?: number | null; recovery_mode: 'never' | 'recorded_approval' }
 export type MetricSpec = { annual_sessions: number; risk_free_rate: number; cash_rate: number; definition_version: string }
 export type BacktestSpec = { start: string; end: string; symbols: string[]; initial_cash: number; seed: number; execution: ExecutionSpec; risk: RiskSpec; metrics: MetricSpec }
-export type ExperimentPayload = { source_run_id?: string; strategy_revision_id: string; dataset_version_id: string; strategy_params: Record<string, unknown>; effective_strategy_params?: Record<string, unknown>; backtest_spec: BacktestSpec; sample_purpose: string }
+export type HistoricalExperimentPayload = { source_run_id?: string; strategy_revision_id: string; dataset_version_id: string; strategy_params: Record<string, unknown>; effective_strategy_params?: Record<string, unknown>; backtest_spec: BacktestSpec; sample_purpose: string }
+export type ExperimentPayload = import('./frameworkTypes').FixedRequest
 export type ExperimentDraft = { id: string; revision: number; payload: ExperimentPayload }
 export type JobResult = { state?: 'complete' | 'incomplete'; dataset_version_id?: string | null; market_prefetch_state?: 'queued' | 'running' | 'ready' | 'incomplete' | 'failed' | 'cancelled'; market_snapshot_ref?: { id: string; manifest_digest: string } | null; coverage?: Record<string, unknown>; price_mode?: DatasetManifest['price_mode']; limitations?: string[]; failed_symbols?: string[]; reason?: string; valid?: boolean; warmup_bars?: number | null }
 export type JobRecord = { id: string; kind: 'backtest' | 'demo' | 'fetch' | 'import' | 'validate_strategy' | 'prepare_learning' | 'train' | 'model_backtest' | 'train_policy' | 'policy_backtest'; state: string; run_id: string | null; enqueue_seq: number; heartbeat: string | null; completed_through: string | null; error: string | null; created_at: string | null; started_at: string | null; finished_at: string | null; result?: JobResult; request?: Record<string, unknown>; checkpoint_available?: boolean }
@@ -27,6 +28,9 @@ export type BacktestCatalogRow = {
   start: string | null; end: string | null; symbols: string[]; metrics: Record<string, number | null> | null
   conditions: Record<string, unknown>; comparison_key: string | null; detail_url: string
   result_error?: string | null; group_id?: string | null
+  identity_status?: 'proven' | 'unknown'; canonical_assets?: string[]; asset_types?: string[]
+  basket_revision_ref?: { basket_id: string; revision: number } | null; dataset_source?: string | null
+  framework?: Record<string, unknown> | null; execution_provenance?: Record<string, unknown> | null
 }
 export type RunRecord = { run_id: string; job_id: string; experiment_id: string; experiment_revision: number; manifest_hash: string; source: string; parent_run_id: string | null; group_id: string | null; state: RunState; completed_through: string | null; error: string | null; created_at: string | null; started_at: string | null; finished_at: string | null; detail_url: string; provenance?: Record<string, unknown> }
 export type RunEvent = { seq: number; phase: string; asof: string | null; completed_days: number; total_days: number; level: string; code: string; message: string; payload: Record<string, unknown> }

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { api, describeError } from '../api'
+import { ApiError, api, describeError } from '../api'
+import { CapabilityReport as CapabilityReportView } from '../components/CapabilityReport'
 import { CurrentModelSnapshot } from '../components/CurrentModelSnapshot'
 import { JsonDetails, Metrics, metricText } from '../components/LearningResults'
 import { taskTime } from '../components/timePresentation'
 import type { InvestingArtifact, InvestingModelSummary, TrainingHistoryItem, TrainingHistoryPage, TrainingHistoryQuery } from '../investingTypes'
 import type { RunEvent } from '../types'
+import type { CapabilityReport } from '../frameworkTypes'
 
 const stateLabels: Record<string, string> = { queued: '排队中', running: '运行中', cancel_requested: '取消中', cancelled: '已取消', interrupted: '已中断', failed: '失败', succeeded: '成功' }
 type PanelState = { page: number; size: number; anchor?: number; data: TrainingHistoryPage | null; loading: boolean; error: string; lookup?: number; request: number }
@@ -74,6 +76,7 @@ function ModelDetailContent({ id }: { id: string }) {
   const [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false)
   const [refresh, setRefresh] = useState(0), [budget, setBudget] = useState(4096), [device, setDevice] = useState<'cpu' | 'cuda'>('cpu')
   const [cudaAvailable, setCudaAvailable] = useState(false)
+  const [trainReport, setTrainReport] = useState<CapabilityReport | null>(null), [trainCheckedKey, setTrainCheckedKey] = useState('')
   const [history, setHistory] = useState<PanelState>(initialPanel)
   const [expanded, setExpanded] = useState(''), [artifacts, setArtifacts] = useState<Record<string, InvestingArtifact>>({}), [artifactErrors, setArtifactErrors] = useState<Record<string, string>>({})
   const [selectedLog, setSelectedLog] = useState<TrainingHistoryItem | null>(null), [logs, setLogs] = useState<RunEvent[]>([]), [logError, setLogError] = useState('')
@@ -81,6 +84,10 @@ function ModelDetailContent({ id }: { id: string }) {
   const [artifactLoading, setArtifactLoading] = useState(''), [artifactRetry, setArtifactRetry] = useState(0)
   const initializedModel = useRef(''), focusTarget = useRef(''), previousActive = useRef<string | null>(null)
   const activeId = model?.active_job_id
+  const trainKey = JSON.stringify({ id, budget, device, binding: model?.framework_binding?.binding_hash })
+  const latestTrainKey = useRef(trainKey)
+  latestTrainKey.current = trainKey
+  const validTrainReport = trainCheckedKey === trainKey ? trainReport : null
   const newCount = history.data ? Math.max(0, (model?.session_count || 0) - history.data.total) : 0
   const logActive = !!selectedLog && selectedLog.id === activeId
 
@@ -161,15 +168,39 @@ function ModelDetailContent({ id }: { id: string }) {
     return () => { controller.abort(); clearTimeout(timer) }
   }, [selectedLog, logActive])
 
+  const checkTraining = async () => {
+    setError(''); setTrainReport(null); setTrainCheckedKey('')
+    if (!model?.framework_binding) { setError('模型缺少可验证的框架关联。'); return }
+    if (!Number.isInteger(budget) || budget < 2 || budget > 10000000) { setError('追加决策步数须为 2 到 10000000 的整数。'); return }
+    const key = latestTrainKey.current
+    setBusy(true)
+    try {
+      const report = await api.checkCapabilities({ operation: 'resume', model_id: id, additional_timesteps: budget, device })
+      if (latestTrainKey.current === key) { setTrainReport(report); setTrainCheckedKey(key) }
+    } catch (value) { setError(describeError(value)) }
+    finally { setBusy(false) }
+  }
+  const bindModel = async () => {
+    if (model?.framework_binding_check?.status !== 'ready') return
+    setBusy(true); setError('')
+    try { await api.bindModel(id, { idempotency_key: crypto.randomUUID() }); setRefresh(value => value + 1) }
+    catch (value) { setError(describeError(value)) }
+    finally { setBusy(false) }
+  }
   const submitTraining = async () => {
     if (!model || activeId || busy) return
+    if (validTrainReport?.status !== 'ready') return
     setError(''); setBusy(true)
     try {
       if (!Number.isInteger(budget) || budget < 2 || budget > 10000000) throw new Error('追加决策步数必须是 2–10000000 的整数。')
       const job = await api.trainInvestingModel(id, { additional_timesteps: budget, device })
       setModel(old => old && ({ ...old, active_job_id: job.id }))
       setNotice(`训练任务 ${job.id} 已提交。`); setRefresh(value => value + 1)
-    } catch (value) { setError(describeError(value)) }
+    } catch (value) {
+      const report = value instanceof ApiError ? value.details.report : null
+      if (report && typeof report === 'object' && 'status' in report) { setTrainReport(report as CapabilityReport); setTrainCheckedKey(latestTrainKey.current) }
+      setError(describeError(value))
+    }
     finally { setBusy(false) }
   }
   const cancelTraining = async () => {
@@ -203,18 +234,29 @@ function ModelDetailContent({ id }: { id: string }) {
     {error && <p role="alert" className="error callout">{error}</p>}{notice && <p role="status" className="callout success">{notice}</p>}{!model && !error && <p>加载模型…</p>}
     {model && <>
       <CurrentModelSnapshot model={model} />
-      <section className="panel"><h2>固定研究条件</h2><p className="model-basket">{model.spec.backtest.symbols.join(' → ')}</p>
+      <section className="panel"><h2>框架身份</h2>
+        {model.framework_binding ? <><p>来源：{model.framework_binding.origin === 'new' ? '新建模型' : '旧模型审计关联'} · 篮子 {model.framework_binding.basket_revision_ref.basket_id} 修订 {model.framework_binding.basket_revision_ref.revision}</p>
+          <p className="model-basket">{model.framework_binding.ordered_pairs.map(pair => `${pair.instrument_id.exchange}:${pair.instrument_id.instrument_type}:${pair.instrument_id.code}（${pair.local_symbol}）`).join(' → ')}</p>
+          <p>关联哈希 {model.framework_binding.binding_hash}</p><JsonDetails title="定义与关联证据" value={{ definitions: model.framework_binding.definitions, evidence: model.framework_binding.evidence }} /></>
+          : <><p className="callout warn">此历史模型尚无可证明的框架身份。原配置和历史记录保持只读。</p>
+            {model.framework_binding_check && <CapabilityReportView report={model.framework_binding_check} />}
+            <button disabled={busy || model.framework_binding_check?.status !== 'ready'} onClick={() => void bindModel()}>核验并关联旧模型</button></>}
+      </section>
+      <section className="panel"><h2>固定研究条件</h2><p className="model-basket">{model.framework_binding ? model.framework_binding.ordered_pairs.map(pair => pair.local_symbol).join(' → ') : model.spec.backtest.symbols.join(' → ')}</p>
         <p>数据 {model.dataset_id} · {model.spec.frequency === 'weekly' ? '自然周' : '自然月'} 决策 · 已保存累计决策步数 {model.total_timesteps.toLocaleString('zh-CN')} 步</p>
         <p>训练 {model.spec.train_start}–{model.spec.train_end} · 验证 {model.spec.validation_start}–{model.spec.validation_end} · 留出测试 {model.spec.test_start && model.spec.test_end ? `${model.spec.test_start}–${model.spec.test_end}` : '未设置留出测试期'}</p>
         <p>选模：{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}</p>
-        <p>奖励目标：{rewardLabel(model.spec.reward_version)}</p>
+        <p>奖励目标：{rewardLabel(model.spec.reward_version)}；奖励值与回测净收益分别记录。</p>
         <p className="muted">篮子顺序、观察窗口、网络、日期、成本和风控均已固定。训练过程不自动评估测试段。</p><JsonDetails title="完整固定配置" value={model.spec} />
       </section>
       <section className="panel"><h2>{model.version_count ? '追加训练' : '开始训练'}</h2>{!model.version_count && <p className="empty">待训练：尚无保存版本。首次训练成功后才能回测。</p>}
         <form noValidate onSubmit={event => { event.preventDefault(); void submitTraining() }}><fieldset disabled={busy || !!activeId}><div className="form-grid">
           <label>追加决策步数<input type="number" min={2} max={10000000} step={1} value={budget} onChange={event => setBudget(Number(event.target.value))} /></label>
           <label>下次提交设备<select value={device} onChange={event => setDevice(event.target.value as 'cpu' | 'cuda')}><option value="cpu">CPU</option><option value="cuda" disabled={!cudaAvailable}>CUDA</option></select></label>
-        </div><p className="muted">设备选择仅用于下次提交；每次追加有步数上限，成功后可继续追加。续训从上次成功版本的最终参数和优化器状态恢复。</p><button>{model.version_count ? '继续训练' : '开始训练'}</button></fieldset></form>
+        </div><p className="muted">设备选择仅用于下次提交；每次追加有步数上限，成功后可继续追加。续训从上次成功版本的最终参数和优化器状态恢复。</p>
+        <button type="button" disabled={!model.framework_binding} onClick={() => void checkTraining()}>检查续训能力</button>
+        <button disabled={validTrainReport?.status !== 'ready'}>{model.version_count ? '继续训练' : '开始训练'}</button></fieldset></form>
+        {validTrainReport && <CapabilityReportView report={validTrainReport} />}
         {activeId && <div className="callout"><p>当前会话 {activeId} · {model.active_session ? stateLabels[model.active_session.state] || model.active_session.state : '已提交，状态待刷新'}</p><p>取消会丢弃本次未发布进度，已有版本继续可用。</p><button disabled={busy || model.active_session?.state === 'cancel_requested'} onClick={() => void cancelTraining()}>取消当前训练</button></div>}
       </section>
       <section className="panel" aria-label="训练历史"><div className="section-heading"><div><h2>训练历史 · {history.data?.total ?? model.session_count} 次尝试</h2><p className="muted">成功训练显示本轮最终参数的验证成绩 · {model.spec.validation_start}–{model.spec.validation_end}。最优快照按{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}选定，回测使用该快照；续训使用本轮最终参数。采样日期显示本轮实际使用片段的最早与最晚日期，片段可能重叠或不连续。</p></div></div>

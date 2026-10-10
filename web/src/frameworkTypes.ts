@@ -6,6 +6,7 @@ export type TradableInstrumentId = InstrumentId & { instrument_type: 'etf' | 'st
 export type IndexInstrumentId = InstrumentId & { instrument_type: 'index' }
 export const instrumentKey = (instrument: InstrumentId) => `${instrument.exchange}:${instrument.instrument_type}:${instrument.code}`
 export type BasketRevisionRef = { basket_id: string; revision: number }
+export type SourceExperimentRef = { experiment_id: string; revision: number }
 export type FrozenBasketRevision = BasketRevisionRef & { members: TradableInstrumentId[]; created_at: string; selection_note: string; content_hash: string }
 export type BasketSummary = { basket_id: string; name: string; current_revision: number; created_at: string }
 export type BasketDetail = BasketSummary & { current: FrozenBasketRevision; revisions: { revision: number; content_hash: string; created_at: string }[] }
@@ -30,7 +31,8 @@ export type ModelBindingRequest = { idempotency_key: string }
 export type FetchRequest = { instruments: TradableInstrumentId[]; start_date: string; end_date: string; historical_start?: string | null; price_mode?: 'raw_cash' | 'adjusted_research'; benchmark?: IndexInstrumentId; auxiliary?: Record<string, unknown> }
 export type FetchJobRequest = FetchRequest & { refresh?: boolean }
 export type BacktestInput = { start: string; end: string; initial_cash: number; seed: number; execution: ExecutionSpec; risk: RiskSpec; metrics: MetricSpec }
-export type FixedRequest = { framework_contract_version: 'multi-asset-v1'; basket_revision_ref: BasketRevisionRef; dataset_version_id: string; strategy_revision_id: string; trading_definition_ref: TradingDefinitionRef; strategy_params: Record<string, unknown>; backtest_spec: BacktestInput; sample_purpose: string; source_run_id?: string | null }
+export type FixedRequest = { framework_contract_version: 'multi-asset-v1'; basket_revision_ref: BasketRevisionRef; dataset_version_id: string; strategy_revision_id: string; trading_definition_ref: TradingDefinitionRef; strategy_params: Record<string, unknown>; backtest_spec: BacktestInput; sample_purpose: string; source_run_id?: string | null; source_experiment_ref?: SourceExperimentRef | null }
+export const isFixedRequest = (value: unknown): value is FixedRequest => typeof value === 'object' && value !== null && 'framework_contract_version' in value && value.framework_contract_version === 'multi-asset-v1'
 type TrainingRequired = 'name' | 'train_start' | 'train_end' | 'validation_start' | 'validation_end'
 export type TrainingInput = Pick<PolicyTrainingSpec, TrainingRequired> & Partial<Omit<PolicyTrainingSpec, TrainingRequired | 'backtest'>> & { backtest: BacktestInput }
 export type ModelCreateRequest = { framework_contract_version: 'multi-asset-v1'; basket_revision_ref: BasketRevisionRef; dataset_id: string; learning_definition_ref: LearningDefinitionRef; trading_definition_ref: TradingDefinitionRef; spec: TrainingInput }

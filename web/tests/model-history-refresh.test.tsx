@@ -11,9 +11,16 @@ function setup() {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const url = new URL(String(input), 'http://local')
     if (url.pathname === '/api/session') return Response.json({ token: 'token', api_base: '/api' })
+    if (url.pathname === '/api/capabilities/check') return Response.json({ operation: 'resume', status: 'ready',
+      request_hash: 'resume-hash', dataset_version_id: 'd1', input_hashes: {}, checks: [], assumptions: [],
+      limitations: [], checker_version: 'v1', generated_at: null })
     if (url.pathname === '/api/investing/models/m1') return Response.json({
       id: 'm1', name: 'Model', dataset_id: 'd1', state: 'ready', active_job_id: null, active_session: null,
       total_timesteps: 156160, version_count: count, session_count: count, latest_version_id: 'latest-job', capabilities: { cuda_available: true },
+      framework_binding: { model_id: 'm1', origin: 'new', binding_hash: 'binding-hash', original_spec_hash: 'spec-hash',
+        basket_revision_ref: { basket_id: 'basket-1', revision: 1 },
+        ordered_pairs: [{ instrument_id: { exchange: 'SZSE', instrument_type: 'etf', code: '000001' }, local_symbol: 'ETF1', evidence_ref: 'fixture' }],
+        definitions: [], evidence: {} }, framework_binding_check: null,
       spec: { backtest: { symbols: ['ETF1'] }, total_timesteps: 512, device: 'cuda', frequency: 'weekly' },
     })
     if (url.pathname.endsWith('/history')) {
@@ -64,6 +71,8 @@ test('a submitted training job can still be cancelled when summary refresh fails
     if (submitted && path === '/api/investing/models/m1') return Response.json({ message: 'Summary temporarily unavailable' }, { status: 503 })
     return prior(input, init)
   }))
+  fireEvent.click(screen.getByRole('button', { name: '检查续训能力' }))
+  await waitFor(() => expect(screen.getByRole('button', { name: '继续训练' })).toBeEnabled())
   fireEvent.click(screen.getByRole('button', { name: '继续训练' }))
   await screen.findByRole('alert')
   expect(screen.getByRole('button', { name: '继续训练' })).toBeDisabled()

@@ -354,7 +354,7 @@ SQL 约束保证所有新增引用指向存在对象；应用服务校验引用�
 
 | 操作 | 外层字段 |
 |---|---|
-| 创建/保存固定策略 payload | `framework_contract_version`、`basket_revision_ref`、`dataset_version_id`、`strategy_revision_id`、`trading_definition_ref`、`strategy_params`、`backtest_spec: BacktestInput`、`sample_purpose` |
+| 创建/保存固定策略 payload | `framework_contract_version`、`basket_revision_ref`、`dataset_version_id`、`strategy_revision_id`、`trading_definition_ref`、`strategy_params`、`backtest_spec: BacktestInput`、`sample_purpose`；可选真实来源 `source_run_id`、`source_experiment_ref: { experiment_id, revision }`，升级旧实验时复制当前修订的配置并重新选择篮子与交易定义 |
 | 创建 RL 模型 body | `framework_contract_version`、`basket_revision_ref`、`dataset_id`、`learning_definition_ref`、`trading_definition_ref`、`spec: TrainingInput` |
 | RL 冻结回测 body | `version_id`、`dataset_id`、`spec`；spec 为原起止日期/baseline/cost_multiplier 加必填 evaluation_purpose；模型由 URL 确定，不再次接收篮子或训练参数 |
 

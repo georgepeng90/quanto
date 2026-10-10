@@ -6,8 +6,8 @@ import { App } from '../src/App'
 import { RunProgress } from '../src/components/RunProgress'
 import type { RunRecord } from '../src/types'
 
-const experiment = { id: 'e1', revision: 3, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: { start: '2024-01-01', end: '2024-01-31' }, sample_purpose: 'exploration' } }
-const fixedSpec = { ...experiment.payload.backtest_spec, symbols: ['ETF1'], initial_cash: 100000, seed: 0, execution: { model: 'next_open', commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0 }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
+const fixedSpec = { start: '2024-01-01', end: '2024-01-31', initial_cash: 100000, seed: 0, execution: { model: 'next_open', commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0 }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
+const experiment = { id: 'e1', revision: 3, payload: { framework_contract_version: 'multi-asset-v1', basket_revision_ref: { basket_id: 'b1', revision: 1 }, trading_definition_ref: { kind: 'trading', id: 'etf-daily', version: '1' }, strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: fixedSpec, sample_purpose: 'exploration' } }
 const queued = { run_id: 'r1', job_id: 'j1', experiment_id: 'e1', experiment_revision: 3, manifest_hash: 'hash', source: 'web', parent_run_id: null, group_id: null, state: 'queued', completed_through: null, error: null, created_at: '2024-01-01T00:00:00+00:00', started_at: null, finished_at: null, detail_url: '/runs/r1' }
 const running = { ...queued, state: 'running', completed_through: '2024-01-03', started_at: '2024-01-01T00:01:00+00:00' }
 const event = { seq: 1, phase: '回测执行', asof: '2024-01-03', completed_days: 3, total_days: 10, level: 'info', code: 'DAY_DONE', message: '已完成交易日', payload: {} }
@@ -22,9 +22,14 @@ beforeEach(() => {
     const path = String(input)
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
     if (path === '/api/experiments' && init?.method === 'POST') return Response.json({ ...experiment, payload: JSON.parse(String(init.body)).payload })
-    if (path === '/api/experiments') return Response.json({ items: [{ ...experiment, payload: { ...experiment.payload, backtest_spec: fixedSpec } }], next_cursor: null })
+    if (path === '/api/experiments') return Response.json({ items: [experiment], next_cursor: null })
     if (path === '/api/strategies') return Response.json({ items: [{ id: 's1', manifest: { name: '趋势轮动', parameter_schema: { type: 'object', properties: { window: { type: 'integer', minimum: 1 } } } } }], next_cursor: null })
     if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', manifest: { source: 'ETF日线', data_start: '2020-01-01', data_end: '2025-12-31' } }], next_cursor: null })
+    if (path === '/api/definitions') return Response.json({ items: [{ ref: experiment.payload.trading_definition_ref }] })
+    if (path === '/api/baskets') return Response.json({ items: [{ basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '' }], next_cursor: null })
+    if (path === '/api/baskets/b1') return Response.json({ basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '', current: { basket_id: 'b1', revision: 1, members: [{ exchange: 'SSE', instrument_type: 'etf', code: '512480' }], created_at: '', selection_note: '', content_hash: 'h' }, revisions: [{ revision: 1, content_hash: 'h', created_at: '' }] })
+    if (path === '/api/baskets/b1/revisions/1') return Response.json({ basket_id: 'b1', revision: 1, members: [{ exchange: 'SSE', instrument_type: 'etf', code: '512480' }], created_at: '', selection_note: '', content_hash: 'h' })
+    if (path === '/api/capabilities/check') return Response.json({ operation: 'fixed_backtest', status: 'ready', request_hash: 'h', dataset_version_id: 'd1', input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
     if (path === '/api/backtests/catalog?limit=50') return Response.json({ items: submitted ? [catalogRow(queued as RunRecord)] : [], next_cursor: null })
     if (path === '/api/runs' && init?.method === 'POST') { submitted = true; return Response.json(queued) }
     if (path === '/api/runs') return Response.json({ items: [], next_cursor: null })

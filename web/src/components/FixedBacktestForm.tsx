@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import Ajv2020 from 'ajv/dist/2020.js'
-import { api, describeError } from '../api'
+import { api, ApiError, describeError } from '../api'
+import { BasketRevisionSelect } from './BasketRevisionSelect'
+import { CapabilityReport } from './CapabilityReport'
 import { ParameterForm } from './ParameterForm'
-import type { BacktestSpec, DatasetVersion, ExperimentDraft, ExperimentPayload, Page, ParameterSchema, StrategyRevision } from '../types'
+import { isFixedRequest, type BacktestInput, type BasketRevisionRef, type CapabilityReport as Report, type SourceExperimentRef, type TradingDefinitionRef } from '../frameworkTypes'
+import type { DatasetVersion, ExperimentDraft, ExperimentPayload, Page, ParameterSchema, StrategyRevision } from '../types'
 
 type ParameterGroup = { id: string; params: Record<string, unknown>; valid: boolean }
 type Prepared = { payloads: ExperimentPayload[]; items: { experiment_id: string; expected_revision: number }[]; key: string }
-const emptySpec: BacktestSpec = { start: '', end: '', symbols: [], initial_cash: 0, seed: 0, execution: { model: 'next_open', commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0 }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
+const emptySpec: BacktestInput = { start: '', end: '', initial_cash: 0, seed: 0, execution: { model: 'next_open', commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0 }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
 const group = (params: Record<string, unknown>): ParameterGroup => ({ id: crypto.randomUUID(), params: structuredClone(params), valid: true })
 const strategyName = (item: StrategyRevision) => String(item.manifest.name || item.manifest.entrypoint)
 
@@ -24,44 +27,50 @@ async function allPages<T>(load: (cursor?: string) => Promise<Page<T>>) {
 export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) {
   const [strategies, setStrategies] = useState<StrategyRevision[]>([]), [datasets, setDatasets] = useState<DatasetVersion[]>([]), [drafts, setDrafts] = useState<ExperimentDraft[]>([])
   const [strategyId, setStrategyId] = useState(''), [datasetId, setDatasetId] = useState('')
-  const [spec, setSpec] = useState<BacktestSpec>(() => structuredClone(emptySpec)), [purpose, setPurpose] = useState('探索')
+  const [basketRef, setBasketRef] = useState<BasketRevisionRef | null>(null), [tradingRef, setTradingRef] = useState<TradingDefinitionRef | null>(null)
+  const [sourceRunId, setSourceRunId] = useState<string | null>(null)
+  const [sourceExperimentRef, setSourceExperimentRef] = useState<SourceExperimentRef | null>(null)
+  const [tradingDefinitions, setTradingDefinitions] = useState<TradingDefinitionRef[]>([])
+  const [report, setReport] = useState<Report | null>(null)
+  const [spec, setSpec] = useState<BacktestInput>(() => structuredClone(emptySpec)), [purpose, setPurpose] = useState('探索')
   const [groups, setGroups] = useState<ParameterGroup[]>([])
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [retry, setRetry] = useState(false)
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
   const prepared = useRef<Prepared | null>(null), locked = useRef(false), mounted = useRef(false)
   const strategy = strategies.find(item => item.id === strategyId), dataset = datasets.find(item => item.id === datasetId)
-  const saved = drafts.find(item => item.payload.strategy_revision_id === strategyId)
+  const saved = drafts.find(item => isFixedRequest(item.payload) && item.payload.strategy_revision_id === strategyId)
 
   useEffect(() => {
     mounted.current = true
-    Promise.all([allPages(api.strategies), allPages(api.datasets), allPages(api.experiments)]).then(([source, data, configs]) => {
+    Promise.all([allPages(api.strategies), allPages(api.datasets), allPages(api.experiments), api.listDefinitions()]).then(([source, data, configs, definitions]) => {
       if (!mounted.current) return
-      setStrategies(source.reverse()); setDatasets(data.reverse()); setDrafts(configs.reverse()); setLoading(false)
+      setStrategies(source.reverse()); setDatasets(data.reverse()); setDrafts(configs.reverse()); setTradingDefinitions(definitions.items.filter(item => item.ref.kind === 'trading').map(item => item.ref as TradingDefinitionRef)); setLoading(false)
     }).catch(value => { if (mounted.current) { setError(describeError(value)); setLoading(false) } })
     return () => { mounted.current = false }
   }, [])
 
-  const edited = () => { prepared.current = null; setRetry(false); setError(''); setNotice('') }
+  const edited = () => { prepared.current = null; setRetry(false); setReport(null); setError(''); setNotice('') }
   const chooseStrategy = (id: string) => {
     edited(); setStrategyId(id)
-    const source = strategies.find(item => item.id === id), config = drafts.find(item => item.payload.strategy_revision_id === id)
+    const source = strategies.find(item => item.id === id), config = drafts.find(item => isFixedRequest(item.payload) && item.payload.strategy_revision_id === id)
     const data = datasets.find(item => item.id === config?.payload.dataset_version_id) || datasets[0]
     setDatasetId(config?.payload.dataset_version_id || data?.id || '')
     setSpec(config ? structuredClone(config.payload.backtest_spec) : { ...structuredClone(emptySpec), start: data?.manifest.data_start || '', end: data?.manifest.data_end || '' })
     setPurpose(config?.payload.sample_purpose || '探索')
+    setBasketRef(config?.payload.basket_revision_ref || null); setTradingRef(config?.payload.trading_definition_ref || null); setSourceRunId(config?.payload.source_run_id || null); setSourceExperimentRef(config?.payload.source_experiment_ref || null)
     const defaults = Object.fromEntries(Object.entries(source?.manifest.parameter_schema.properties || {}).filter(([, field]) => field.default !== undefined).map(([key, field]) => [key, field.default]))
     setGroups(source ? [group({ ...defaults, ...config?.payload.strategy_params })] : [])
   }
-  const updateSpec = (next: BacktestSpec) => { edited(); setSpec(next) }
+  const updateSpec = (next: BacktestInput) => { edited(); setSpec(next) }
   const submit = async (isRetry = false) => {
     if (locked.current) return
     locked.current = true; setBusy(true); setError(''); setNotice('')
     try {
       if (!isRetry || !prepared.current) {
-        if (!strategy || !dataset) throw new Error('请选择策略和日线数据。')
+        if (!strategy || !dataset || !basketRef || !tradingRef) throw new Error('请选择策略、日线数据、标的篮子和交易定义。')
         if (!/^\d{4}-\d{2}-\d{2}$/.test(spec.start) || !/^\d{4}-\d{2}-\d{2}$/.test(spec.end) || spec.start > spec.end) throw new Error('请填写有效的回测起止日期。')
         if (spec.start < dataset.manifest.data_start || spec.end > dataset.manifest.data_end) throw new Error('回测日期超出数据覆盖范围。')
-        if (!spec.symbols.length || !Number.isFinite(spec.initial_cash) || spec.initial_cash <= 0 || !purpose.trim()) throw new Error('请填写证券代码、正数初始资金和样本用途。')
+        if (!Number.isFinite(spec.initial_cash) || spec.initial_cash <= 0 || !purpose.trim()) throw new Error('请填写正数初始资金和样本用途。')
         if (!Number.isInteger(spec.seed) || !Number.isInteger(spec.execution.max_stale_sessions) || spec.execution.max_stale_sessions < 0) throw new Error('随机种子须为整数，最大陈旧交易日须为非负整数。')
         if ([spec.execution.commission_rate, spec.execution.minimum_commission, spec.execution.slippage_rate].some(value => !Number.isFinite(value) || value < 0)) throw new Error('佣金和滑点须为非负数。')
         if ([spec.risk.max_total_weight, spec.risk.max_symbol_weight].some(value => !Number.isFinite(value) || value < 0 || value > 1)) throw new Error('仓位上限须在0到1之间。')
@@ -77,8 +86,14 @@ export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) 
         const payloads = groups.map((item, index) => {
           const params = structuredClone(item.params)
           if (!item.valid || !validate(params)) throw new Error(`第${index + 1}组参数无效：${validate.errors?.[0]?.message || '请检查字段'}`)
-          return { strategy_revision_id: strategyId, dataset_version_id: datasetId, strategy_params: params, backtest_spec: structuredClone(spec), sample_purpose: purpose.trim() }
+          return { framework_contract_version: 'multi-asset-v1' as const, basket_revision_ref: basketRef, trading_definition_ref: tradingRef, strategy_revision_id: strategyId, dataset_version_id: datasetId, strategy_params: params, backtest_spec: structuredClone(spec), sample_purpose: purpose.trim(), ...(sourceRunId ? { source_run_id: sourceRunId } : {}), ...(sourceExperimentRef ? { source_experiment_ref: sourceExperimentRef } : {}) }
         })
+        for (const payload of payloads) {
+          const checked = await api.checkCapabilities({ operation: 'fixed_backtest', ...payload })
+          if (!mounted.current) return
+          setReport(checked)
+          if (checked.status !== 'ready') throw new Error('服务端能力检查已阻止回测。')
+        }
         prepared.current = { payloads, items: [], key: crypto.randomUUID() }
       }
       const request = prepared.current!
@@ -91,12 +106,12 @@ export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) 
       else await api.submitRun(request.items[0].experiment_id, request.items[0].expected_revision, request.key)
       if (!mounted.current) return
       setRetry(false); setNotice(`已提交${request.items.length}组回测。`); prepared.current = null; onSubmitted()
-    } catch (value) { if (mounted.current) { setError(describeError(value)); setRetry(!!prepared.current) } }
+    } catch (value) { if (mounted.current) { if (value instanceof ApiError && value.details.report) setReport(value.details.report as Report); setError(describeError(value)); setRetry(!!prepared.current) } }
     finally { locked.current = false; if (mounted.current) setBusy(false) }
   }
 
   return <section className="panel"><h2>发起固定策略回测</h2>
-    {error && <p role="alert" className="error">{error}</p>}{notice && <p role="status" className="success">{notice}</p>}
+    {error && <p role="alert" className="error">{error}</p>}{report && <CapabilityReport report={report} />}{notice && <p role="status" className="success">{notice}</p>}
     {loading && <p role="status">加载策略与数据…</p>}
     <form noValidate onSubmit={event => { event.preventDefault(); void submit() }}><fieldset disabled={busy || loading}>
       <div className="form-grid">
@@ -109,9 +124,10 @@ export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) 
       </div>
       {strategy && <>
         {saved && <p className="muted">已带入此策略最近保存的配置，可直接修改。</p>}
-        <details open={!saved}><summary>回测条件 · {spec.symbols.length}只证券 · 初始资金 {spec.initial_cash}</summary><div className="form-grid">
+        <BasketRevisionSelect value={basketRef} onChange={value => { edited(); setBasketRef(value) }} disabled={busy} />
+        <label>交易定义<select value={tradingRef ? `${tradingRef.id}:${tradingRef.version}` : ''} onChange={event => { edited(); setTradingRef(tradingDefinitions.find(item => `${item.id}:${item.version}` === event.target.value) || null) }}><option value="">请选择交易定义</option>{tradingDefinitions.map(item => <option key={`${item.id}:${item.version}`} value={`${item.id}:${item.version}`}>{item.id} · {item.version}</option>)}</select></label>
+        <details open={!saved}><summary>回测条件 · 初始资金 {spec.initial_cash}</summary><div className="form-grid">
           <label>日线数据<select value={datasetId} onChange={event => { edited(); setDatasetId(event.target.value) }}><option value="">请选择数据</option>{datasets.map(item => <option key={item.id} value={item.id}>{item.manifest.source} · {item.manifest.data_start}–{item.manifest.data_end} · {item.id.slice(0, 8)}</option>)}</select></label>
-          <label>证券代码<input value={spec.symbols.join(',')} placeholder="逗号分隔，如 512480,515880" onChange={event => updateSpec({ ...spec, symbols: [...new Set(event.target.value.split(/[,，\s]+/).filter(Boolean))] })} /></label>
           <label>初始资金<input type="number" min={0} value={spec.initial_cash || ''} onChange={event => updateSpec({ ...spec, initial_cash: Number(event.target.value) })} /></label>
           <label>样本用途<input value={purpose} onChange={event => { edited(); setPurpose(event.target.value) }} /></label>
           <label>随机种子<input type="number" step={1} value={spec.seed} onChange={event => updateSpec({ ...spec, seed: Number(event.target.value) })} /></label>

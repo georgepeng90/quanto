@@ -3,9 +3,14 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { FixedBacktestForm } from '../src/components/FixedBacktestForm'
 import { api } from '../src/api'
+import { MemoryRouter } from 'react-router-dom'
 
-const spec = { start: '2024-01-01', end: '2024-12-31', symbols: ['ETF1', 'ETF2'], initial_cash: 100000, seed: 42, execution: { model: 'next_open', commission_rate: .001, minimum_commission: 5, slippage_rate: .002, max_stale_sessions: 3 }, risk: { max_total_weight: .9, max_symbol_weight: .5, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
-const draft = { id: 'opaque-experiment', revision: 3, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: spec, sample_purpose: '验证' } }
+const spec = { start: '2024-01-01', end: '2024-12-31', initial_cash: 100000, seed: 42, execution: { model: 'next_open', commission_rate: .001, minimum_commission: 5, slippage_rate: .002, max_stale_sessions: 3 }, risk: { max_total_weight: .9, max_symbol_weight: .5, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
+const basketRef = { basket_id: 'b1', revision: 1 }
+const tradingRef = { kind: 'trading' as const, id: 'etf-trading', version: 'v1' }
+const basket = { basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '' }
+const revision = { ...basketRef, members: [{ exchange: 'SSE', instrument_type: 'etf' as const, code: '512480' }], created_at: '', selection_note: '', content_hash: 'h' }
+const draft = { id: 'opaque-experiment', revision: 3, payload: { framework_contract_version: 'multi-asset-v1' as const, basket_revision_ref: basketRef, trading_definition_ref: tradingRef, strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: spec, sample_purpose: '验证' } }
 const strategy = { id: 's1', manifest: { name: '趋势轮动', entrypoint: 'strategy.py:create_strategy', parameter_schema: { type: 'object', properties: { window: { type: 'integer', title: '观察窗口', minimum: 1, default: 20 } }, required: ['window'] } } }
 const dataset = { id: 'd1', manifest: { source: 'ETF日线', data_start: '2020-01-01', data_end: '2025-12-31' } }
 const onSubmitted = vi.fn()
@@ -14,12 +19,17 @@ beforeEach(() => {
   vi.spyOn(api, 'strategies').mockResolvedValue({ items: [strategy] as any, next_cursor: null })
   vi.spyOn(api, 'datasets').mockResolvedValue({ items: [dataset] as any, next_cursor: null })
   vi.spyOn(api, 'experiments').mockResolvedValue({ items: [draft] as any, next_cursor: null })
+  vi.spyOn(api, 'listDefinitions').mockResolvedValue({ items: [{ ref: tradingRef }] as any })
+  vi.spyOn(api, 'listBaskets').mockResolvedValue({ items: [basket], next_cursor: null })
+  vi.spyOn(api, 'getBasket').mockResolvedValue({ ...basket, current: revision, revisions: [{ revision: 1, content_hash: 'h', created_at: '' }] })
+  vi.spyOn(api, 'getBasketRevision').mockResolvedValue(revision)
+  vi.spyOn(api, 'checkCapabilities').mockResolvedValue({ operation: 'fixed_backtest', status: 'ready', request_hash: 'h', dataset_version_id: 'd1', input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
   vi.spyOn(api, 'createExperiment').mockImplementation(async payload => ({ id: `variant-${vi.mocked(api.createExperiment).mock.calls.length}`, revision: 1, payload }))
   vi.spyOn(api, 'submitRun').mockResolvedValue({ run_id: 'r1' } as any)
   vi.spyOn(api, 'submitBatch').mockResolvedValue({ items: [] })
 })
 async function open() {
-  render(<FixedBacktestForm onSubmitted={onSubmitted} />)
+  render(<MemoryRouter><FixedBacktestForm onSubmitted={onSubmitted} /></MemoryRouter>)
   await screen.findAllByRole('option', { name: /趋势轮动/ })
   await userEvent.selectOptions(screen.getByLabelText('策略'), 's1')
 }
@@ -80,11 +90,12 @@ test('can run a registered strategy without any saved experiment', async () => {
   vi.mocked(api.experiments).mockResolvedValue({ items: [], next_cursor: null })
   await open()
   expect(screen.getByLabelText('观察窗口')).toHaveValue(20)
-  fireEvent.change(screen.getByLabelText('证券代码'), { target: { value: 'ETF1，ETF2' } })
+  await userEvent.selectOptions(screen.getByLabelText('标的篮子'), 'b1')
+  await userEvent.selectOptions(screen.getByLabelText('交易定义'), 'etf-trading:v1')
   fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '100000' } })
   await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
   await waitFor(() => expect(api.submitRun).toHaveBeenCalledTimes(1))
-  expect(vi.mocked(api.createExperiment).mock.calls[0][0]).toMatchObject({ strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 20 }, backtest_spec: { start: '2020-01-01', end: '2025-12-31', symbols: ['ETF1', 'ETF2'] } })
+  expect(vi.mocked(api.createExperiment).mock.calls[0][0]).toMatchObject({ strategy_revision_id: 's1', dataset_version_id: 'd1', basket_revision_ref: basketRef, trading_definition_ref: tradingRef, strategy_params: { window: 20 }, backtest_spec: { start: '2020-01-01', end: '2025-12-31' } })
 })
 
 test('batch retry resumes after a saved group and preserves the batch key after transport failure', async () => {
@@ -138,4 +149,13 @@ test('uses the most recent saved configuration and distinguishes same-name revis
   expect(screen.getByLabelText('观察窗口')).toHaveValue(8)
   expect(screen.getByRole('option', { name: '趋势轮动 · 版本2' })).toHaveValue('s2')
   expect(screen.getByRole('option', { name: '趋势轮动 · 版本1' })).toHaveValue('s1')
+})
+
+test('running a saved upgraded draft retains both actual source references', async () => {
+  const source_experiment_ref = { experiment_id: 'legacy-e1', revision: 4 }
+  vi.mocked(api.experiments).mockResolvedValue({ items: [{ ...draft, payload: { ...draft.payload, source_run_id: 'parent-r1', source_experiment_ref } }] as any, next_cursor: null })
+  await open()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  await waitFor(() => expect(api.createExperiment).toHaveBeenCalledOnce())
+  expect(vi.mocked(api.createExperiment).mock.calls[0][0]).toMatchObject({ source_run_id: 'parent-r1', source_experiment_ref })
 })

@@ -4,8 +4,9 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { App } from '../src/App'
 
-const spec = { start: '2024-02-01', end: '2024-03-01', symbols: ['000001', '000002'], initial_cash: 1000, seed: 7, execution: { commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0, model: 'next_open' }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: 'v1' } }
-const draft = (id: string) => ({ id, revision: 2, payload: { strategy_revision_id: 's1', dataset_version_id: 'dataset-123456789', strategy_params: { window: 4 }, effective_strategy_params: { window: 6 }, backtest_spec: spec, sample_purpose: '探索' } })
+const spec = { start: '2024-02-01', end: '2024-03-01', initial_cash: 1000, seed: 7, execution: { commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0, model: 'next_open' }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: 'v1' } }
+const draft = (id: string) => ({ id, revision: 2, payload: { framework_contract_version: 'multi-asset-v1', basket_revision_ref: { basket_id: 'b1', revision: 1 }, trading_definition_ref: { kind: 'trading', id: 'etf-trading', version: 'v1' }, strategy_revision_id: 's1', dataset_version_id: 'dataset-123456789', strategy_params: { window: 4 }, backtest_spec: spec, sample_purpose: '探索' } })
+const basket = { basket_id: 'b1', revision: 1, members: [{ exchange: 'SSE', instrument_type: 'etf', code: '512480' }], created_at: '', selection_note: '研究选择', content_hash: 'h' }
 const strategy = { id: 's1', content_hash: 'hash', manifest: { name: '均线策略', entrypoint: 'strategy.py:create_strategy', parameter_schema: { type: 'object', properties: { window: { type: 'integer', title: '窗口' } } }, auxiliary_sources: [], research_data: [] }, files: {} }
 const dataset = { id: 'dataset-123456789', content_hash: 'hash', manifest: { source: 'sample', is_demo: true, price_mode: 'adjusted_research', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'unknown', limitations: [] } }
 const renderAt = (path = '/experiments') => {
@@ -22,19 +23,24 @@ beforeEach(() => {
     if (path === '/api/strategies') return Response.json({ items: [strategy], next_cursor: null })
     if (path === '/api/experiments/e1' || path === '/api/experiments/e2') return Response.json(draft(path.slice(-2)))
     if (path === '/api/strategies/s1') return Response.json(strategy)
+    if (path === '/api/baskets/b1/revisions/1') return Response.json(basket)
+    if (path === '/api/baskets') return Response.json({ items: [{ basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '' }], next_cursor: null })
+    if (path === '/api/baskets/b1') return Response.json({ basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '', current: basket, revisions: [{ revision: 1, content_hash: 'h', created_at: '' }] })
+    if (path === '/api/definitions') return Response.json({ items: [{ ref: { kind: 'trading', id: 'etf-trading', version: 'v1' } }] })
     if (path === '/api/datasets') return Response.json({ items: [dataset], next_cursor: null })
     if (path === `/api/datasets/${dataset.id}`) return Response.json(dataset)
     throw new Error(`unexpected GET ${path}`)
   }))
 })
 
-test('lists each saved configuration with effective parameters and separate edit routes', async () => {
+test('lists each saved framework configuration with requested parameters and basket identity', async () => {
   const router = renderAt()
   expect(await screen.findByRole('heading', { name: '固定策略' })).toBeInTheDocument()
   const rows = await screen.findAllByRole('link', { name: '编辑配置' })
   expect(rows).toHaveLength(2)
   expect(screen.getAllByText('均线策略')).toHaveLength(2)
-  expect(screen.getAllByText('窗口：6')).toHaveLength(2)
+  expect(screen.getAllByText('窗口：4')).toHaveLength(2)
+  expect(screen.getAllByText(/SSE:etf:512480/)).toHaveLength(2)
   expect(screen.getAllByRole('article')[0]).toHaveTextContent('配置 e1 · 修订 2')
   expect(screen.getAllByRole('article')[1]).toHaveTextContent('配置 e2 · 修订 2')
   expect(screen.getAllByText(/2024-02-01.*2024-03-01/)).toHaveLength(2)
@@ -60,7 +66,7 @@ test('keeps a saved configuration visible when its strategy metadata fails', asy
   }))
   renderAt()
   expect(await screen.findAllByText(/策略修订 s1/)).toHaveLength(2)
-  expect(screen.getAllByText('window：6')).toHaveLength(2)
+  expect(screen.getAllByText('window：4')).toHaveLength(2)
   expect(screen.getAllByRole('link', { name: '编辑配置' })).toHaveLength(2)
 })
 
@@ -112,4 +118,19 @@ test('shows an empty state without exposing unsaved strategy templates', async (
   renderAt()
   expect(await screen.findByText(/暂无固定策略配置/)).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: '编辑配置' })).not.toBeInTheDocument()
+})
+
+test('lists an upgraded legacy experiment as sourced even without a parent run', async () => {
+  const previous = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/experiments') return Response.json({ items: [draft('direct'), {
+      ...draft('upgraded'), payload: { ...draft('upgraded').payload, source_experiment_ref: { experiment_id: 'legacy-e1', revision: 4 } }
+    }], next_cursor: null })
+    return previous(input, init)
+  }))
+  renderAt()
+  expect(await screen.findAllByRole('article')).toHaveLength(2)
+  await userEvent.selectOptions(screen.getByLabelText('来源'), 'upgrade')
+  expect(screen.getAllByRole('article')).toHaveLength(1)
+  expect(screen.getByRole('article')).toHaveTextContent('来源实验 legacy-e1 · 修订 4')
 })

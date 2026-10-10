@@ -62,7 +62,8 @@ class InvestingModels(InvestingService):
             raise ValueError('invalid cursor')
         with self.store.transaction() as db:
             rows = db.execute('SELECT * FROM investing_models ORDER BY rowid DESC LIMIT ? OFFSET ?', (limit + 1, offset)).fetchall()
-        return {'items': [self._summary(row, self._sessions(row['id'])) for row in rows[:limit]],
+        return {'items': [self._with_framework(self._summary(row, self._sessions(row['id'])), inspect_legacy=False)
+                          for row in rows[:limit]],
                 'next_cursor': str(offset + limit) if len(rows) > limit else None}
 
     def _history_index(self, identity):
@@ -147,13 +148,14 @@ class InvestingModels(InvestingService):
                               if item['state'] == 'succeeded' and item['manifest_json']]
         return self._with_framework(result)
 
-    def _with_framework(self, result):
+    def _with_framework(self, result, *, inspect_legacy=True):
         bindings = BindingStore(self.store)
         try:
             binding = bindings.get_model_binding(result['id'])
         except (KeyError, ValueError):
             result['framework_binding'] = None
-            result['framework_binding_check'] = bindings.inspect_model_binding(result['id']).model_dump(mode='json')
+            result['framework_binding_check'] = (bindings.inspect_model_binding(result['id']).model_dump(mode='json')
+                                                 if inspect_legacy else None)
         else:
             result['framework_binding'] = dict(model_id=binding.model_id, origin=binding.origin,
                 binding_hash=binding.binding_hash, original_spec_hash=binding.original_spec_hash,

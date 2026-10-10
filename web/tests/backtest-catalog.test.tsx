@@ -13,7 +13,7 @@ const row = (id: string, kind: BacktestCatalogRow['kind'], total_return: number 
   start: '2024-01-01', end: '2024-12-31', symbols: ['510300'],
   metrics: total_return === null ? null : { total_return, annual_return: total_return / 2, max_drawdown: .2, sharpe: 1 },
   conditions, comparison_key: 'same-conditions', detail_url: kind === 'fixed' ? `/runs/${id}` : kind === 'policy' ? `/investing?backtest=${id}` : `/learning?backtest=${id}`,
-  group_id: kind === 'fixed' ? 'batch-1' : null, ...changes,
+  group_id: kind === 'fixed' ? 'batch-1' : null, identity_status: 'proven', canonical_assets: ['SSE:etf:510300'], asset_types: ['etf'], ...changes,
 })
 const fixed = row('fixed-1', 'fixed', .1)
 const policy = row('policy-1', 'policy', .3)
@@ -87,15 +87,15 @@ test('a succeeded row with a damaged saved result never appears directly compara
 })
 
 test('large fixed baskets stay compact in a row while the full list remains available', async () => {
-  const symbols = Array.from({ length: 314 }, (_, index) => `ETF${String(index).padStart(3, '0')}`)
+  const symbols = Array.from({ length: 314 }, (_, index) => `SSE:etf:${String(index).padStart(6, '0')}`)
   const prior = globalThis.fetch
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input) === '/api/backtests/catalog?limit=50'
-    ? Response.json({ items: [row('fixed-with-a-long-id', 'fixed', .1, { symbols })], next_cursor: null }) : prior(input, init)))
+    ? Response.json({ items: [row('fixed-with-a-long-id', 'fixed', .1, { symbols, canonical_assets: symbols })], next_cursor: null }) : prior(input, init)))
   app()
   const link = await screen.findByRole('link', { name: /研究 fixed-with-a-long-id/ })
   const tableRow = link.closest('tr')!
-  expect(within(tableRow).getByText('314 只 · ETF000、ETF001、ETF002…')).toHaveAttribute('title', symbols.join('、'))
-  expect(tableRow).not.toHaveTextContent('ETF313')
+  expect(within(tableRow).getByText('314 只 · SSE:etf:000000、SSE:etf:000001、SSE:etf:000002…')).toHaveAttribute('title', symbols.join('、'))
+  expect(tableRow).not.toHaveTextContent('SSE:etf:000313')
   expect(within(tableRow).getByTitle('fixed-with-a-long-id')).toHaveTextContent('fixed-wi…')
 })
 
@@ -137,6 +137,11 @@ test('submission refresh overtakes an unfinished initial catalog read', async ()
     const path = String(input)
     if (path === '/api/strategies') return Response.json({ items: [{ id: 's1', manifest: { name: '趋势轮动', parameter_schema: { type: 'object', properties: {} } } }], next_cursor: null })
     if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', manifest: { source: 'ETF日线', data_start: '2024-01-01', data_end: '2024-12-31' } }], next_cursor: null })
+    if (path === '/api/definitions') return Response.json({ items: [{ ref: { kind: 'trading', id: 'etf-trading', version: 'v1' } }] })
+    if (path === '/api/baskets') return Response.json({ items: [{ basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '' }], next_cursor: null })
+    if (path === '/api/baskets/b1') return Response.json({ basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '', current: { basket_id: 'b1', revision: 1, members: [{ exchange: 'SSE', instrument_type: 'etf', code: '510300' }], created_at: '', selection_note: '', content_hash: 'h' }, revisions: [{ revision: 1, content_hash: 'h', created_at: '' }] })
+    if (path === '/api/baskets/b1/revisions/1') return Response.json({ basket_id: 'b1', revision: 1, members: [{ exchange: 'SSE', instrument_type: 'etf', code: '510300' }], created_at: '', selection_note: '', content_hash: 'h' })
+    if (path === '/api/capabilities/check') return Response.json({ operation: 'fixed_backtest', status: 'ready', request_hash: 'h', dataset_version_id: 'd1', input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
     if (path === '/api/experiments' && init?.method === 'POST') return Response.json({ id: 'e1', revision: 1, payload: JSON.parse(String(init.body)).payload })
     if (path === '/api/backtests/catalog?limit=50') {
       reads++
@@ -149,7 +154,8 @@ test('submission refresh overtakes an unfinished initial catalog read', async ()
   await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
   await screen.findByRole('option', { name: /趋势轮动/ })
   await userEvent.selectOptions(screen.getByLabelText('策略'), 's1')
-  fireEvent.change(screen.getByLabelText('证券代码'), { target: { value: 'ETF1' } })
+  await userEvent.selectOptions(screen.getByLabelText('标的篮子'), 'b1')
+  await userEvent.selectOptions(screen.getByLabelText('交易定义'), 'etf-trading:v1')
   fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '100000' } })
   await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
   expect(await screen.findByRole('link', { name: /研究 submitted/ })).toBeVisible()

@@ -103,7 +103,7 @@ T00 验证：91 项测试通过；冻结 10 个确定性场景、4 份输入与 
 
 **Interfaces:** 消费现有 `InstrumentId.key`。framework.py 产出不可变 `BasketRevisionRef`、`FrozenBasketRevision`、`DefinitionRef`、`AssetBinding`、`ResearchInterval(start: date, end: date, warmup_start: date)`、`RequirementItem`、`DataRequirements = tuple[RequirementItem, ...]`、`CapabilityReport`、`ResolvedConfiguration`。字段逐项按设计 3–5 节，ResolvedConfiguration 保存 `ordered_pairs`、原始 request、内部 specs 的冻结 JSON 和完整来源；公共类型不导入 investing/backtest/workbench，实际 spec 验证在请求/执行边界。`canonical_hash(value: Mapping[str, object]) -> str` 复用既有确定性 JSON/hash 算法；由 T07 先构造排除报告、自身摘要和生成时间的规范输入，再调用。
 
-framework_requests.py 消费 BacktestSpec/PolicyTrainingSpec，产出 `FixedRequest`、`ModelCreateRequest`、`FetchRequest`、`ResumeRequest`、`PolicyBacktestRequest`；`FrameworkRequest` 为带 operation 的严格联合，`CapabilityCheckRequest` 是其 API 名称，不再嵌第二份 config。另产出 `BasketCreateRequest(name, members, selection_note, idempotency_key)`、`BasketRevisionRequest(expected_revision, members, selection_note)`、`DatasetBindingRequest(evidence_ref, idempotency_key)`、`ModelBindingRequest(idempotency_key)`；均按设计字段类型严格校验。固定实验保留现有路由 envelope：创建 `{payload: FixedRequest}`，更新 `{expected_revision, payload: FixedRequest}`，提交 `{experiment_id, expected_revision, idempotency_key}`；不要将 payload 与提交请求混为一谈。
+framework_requests.py 消费 BacktestSpec/PolicyTrainingSpec，产出 `FixedRequest`、`ModelCreateRequest`、`FetchRequest`、`ResumeRequest`、`PolicyBacktestRequest`；`FrameworkRequest` 为带 operation 的严格联合，`CapabilityCheckRequest` 是其 API 名称，不再嵌第二份 config。`FixedRequest` 可选 `source_experiment_ref: {experiment_id, revision}`，从旧实验当前修订升级时保留真实来源及其配置，并要求重新选择篮子与交易定义；有真实父运行时另保留 `source_run_id`。另产出 `BasketCreateRequest(name, members, selection_note, idempotency_key)`、`BasketRevisionRequest(expected_revision, members, selection_note)`、`DatasetBindingRequest(evidence_ref, idempotency_key)`、`ModelBindingRequest(idempotency_key)`；均按设计字段类型严格校验。固定实验保留现有路由 envelope：创建 `{payload: FixedRequest}`，更新 `{expected_revision, payload: FixedRequest}`，提交 `{experiment_id, expected_revision, idempotency_key}`；不要将 payload 与提交请求混为一谈。
 
 - [x] 审查 test_market_contracts 的身份假设；编写 `test_framework_contracts.py`：同代码跨类型/交易所不相等、绑定覆盖和双向唯一、篮子顺序改变摘要、重复成员/指数成员/NaN 被拒绝；公共输入含 symbols 或重复 feature 参数即拒绝。核心断言：
   ```python
@@ -312,7 +312,7 @@ T09 验证：18 个相关测试文件的综合回归 176 项通过，另 1 项�
 
 **Interfaces:** 新结果 `framework` 字段取自完整 ResolvedConfiguration；增加选择记录、规范/局部有序映射、请求/批准/成交、定义/数据/代码 hash、能力、用途、训练/验证边界、best 来源、变换摘要。`comparison()` 和导出继续现有入口，表格增加 canonical instrument_id；旧无绑定结果标记身份未知，不自动连接。
 
-- [ ] 扩充两份同裸代码不同证券结果、同规范证券不同局部键、不同口径基准、开发回放/后选模评价、DSR/利润分离、最佳权重旧会话和旧报告夹具：
+- [x] 扩充两份同裸代码不同证券结果、同规范证券不同局部键、不同口径基准、开发回放/后选模评价、DSR/利润分离、最佳权重旧会话和旧报告夹具：
   ```python
   assert exported.instrument_id.tolist() == expected_canonical_ids
   assert unrelated_same_code_join_count == 0
@@ -321,10 +321,12 @@ T09 验证：18 个相关测试文件的综合回归 176 项通过，另 1 项�
   assert best_policy_source_steps != last_cumulative_steps
   assert legacy_result.is_readable and not legacy_result.has_proven_identity
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/integration/test_framework_provenance.py tests/integration/test_backtest_outputs.py tests/integration/test_backtest_catalog.py tests/integration/test_comparison.py tests/integration/test_result_query.py -q`，确认新增来源和比较断言失败。
-- [ ] 所有结果含完整绑定，独立于本地数据库仍可解释；比较同时保留模型输入顺序和用于展示的资产集合，不能简单取消全部排序或按裸代码连接。显示费用/风控/数据/基准收益口径差异，记录观察日数、决策步数、更新量；不把手选篮子回测称为选股能力，不自动标记盲测；无测试成绩保留未评估。学习 reward 与净值各列，回测结束不新增强制清仓。
-- [ ] 重跑上述命令通过；旧报告/历史版本读取回归通过。
-- [ ] 审核并提交：`feat: expose frozen framework provenance in results`。
+- [x] 运行 `uv run --no-sync pytest tests/integration/test_framework_provenance.py tests/integration/test_backtest_outputs.py tests/integration/test_backtest_catalog.py tests/integration/test_comparison.py tests/integration/test_result_query.py -q`，确认新增来源和比较断言失败。
+- [x] 所有结果含完整绑定，独立于本地数据库仍可解释；比较同时保留模型输入顺序和用于展示的资产集合，不能简单取消全部排序或按裸代码连接。显示费用/风控/数据/基准收益口径差异，记录观察日数、决策步数、更新量；不把手选篮子回测称为选股能力，不自动标记盲测；无测试成绩保留未评估。学习 reward 与净值各列，回测结束不新增强制清仓。
+- [x] 重跑上述命令通过；旧报告/历史版本读取回归通过。
+- [x] 审核并提交：`feat: expose frozen framework provenance in results`。
+
+T10 ???2026-10-11??????????????????????? `c76ed5a`??????????????????????????????????????????????/??/??????? 29 ???????????? 1 ?????????? 8 ?????????????????????????????????????????schema 1 ?????????????????????????????????????????? T13 ???????
 
 ## T11 共享客户端协议、数据与篮子页面
 
@@ -353,7 +355,7 @@ T11 验证（2026-10-11）：篮子、共享 API、数据页面及原导航回�
 
 **Interfaces:** 所有提交使用 T01/T08 类型及 T11 api；两路配置选择同一 BasketRevisionRef。固定草稿保留 source 引用（现有草稿元数据位置），升级动作生成新的草稿修订；模型详情 bindModel 仅传幂等键。回测显式指定保存 version_id 和 evaluation_purpose。
 
-- [ ] 更新过时测试而不保留旧 symbols 表单；覆盖草稿可保存但不能运行、预检查过期、未知学习定义不能创建、旧模型关联后训练/回测、purpose 提示、best/last、历史深链：
+- [x] 更新过时测试而不保留旧 symbols 表单；覆盖草稿可保存但不能运行、预检查过期、未知学习定义不能创建、旧模型关联后训练/回测、purpose 提示、best/last、历史深链：
   ```typescript
   expect(saveDraftButton).toBeEnabled();
   expect(blockedRunButton).toBeDisabled();
@@ -362,10 +364,12 @@ T11 验证（2026-10-11）：篮子、共享 API、数据页面及原导航回�
   expect(oldRunSnapshot).toEqual(originalRunSnapshot);
   expect(modelBindingRequest).toEqual({ idempotency_key: requestKey });
   ```
-- [ ] 运行 `npm.cmd --prefix web run test -- --run tests/framework-workflows.test.tsx tests/fixed-backtest-form.test.tsx tests/models.test.tsx tests/model-history.test.tsx tests/compare.test.tsx tests/backtest-catalog.test.tsx tests/results.test.tsx tests/experiment-list.test.tsx`，确认新流程失败。
-- [ ] 以服务端 schema 渲染唯一参数来源，显示篮子版本和顺序；改变参数/数据/篮子立即使旧 capability report 失效。提交仍接受服务端最新阻塞项。旧实验升级保存新草稿和来源，不改 run；旧模型详情先展示 T08 的只读关联检查、证据和阻塞，再 POST framework-binding 复查/登记。未通过核验对象保持只读，关联不产生第二份可编辑训练配置。模型缺能力只解释缺口，不默认使用 ETF 定义。列表增加资产类型/篮子/来源筛选；结果和比较消费 T10 来源，不将 DSR 标利润或后选模标盲测。
-- [ ] 重跑上述测试和 `npm.cmd --prefix web run typecheck` 通过；检查旧分钟模型只读页面仍可访问，新流程不依赖旧可写入口。
-- [ ] 审核并提交：`feat: connect framework configurations across research workflows`。
+- [x] 运行 `npm.cmd --prefix web run test -- --run tests/framework-workflows.test.tsx tests/fixed-backtest-form.test.tsx tests/models.test.tsx tests/model-history.test.tsx tests/compare.test.tsx tests/backtest-catalog.test.tsx tests/results.test.tsx tests/experiment-list.test.tsx`，确认新流程失败。
+- [x] 以服务端 schema 渲染唯一参数来源，显示篮子版本和顺序；改变参数/数据/篮子立即使旧 capability report 失效。提交仍接受服务端最新阻塞项。旧实验升级保存新草稿和来源，不改 run；旧模型详情先展示 T08 的只读关联检查、证据和阻塞，再 POST framework-binding 复查/登记。未通过核验对象保持只读，关联不产生第二份可编辑训练配置。模型缺能力只解释缺口，不默认使用 ETF 定义。列表增加资产类型/篮子/来源筛选；结果和比较消费 T10 来源，不将 DSR 标利润或后选模标盲测。
+- [x] 重跑上述测试和 `npm.cmd --prefix web run typecheck` 通过；检查旧分钟模型只读页面仍可访问，新流程不依赖旧可写入口。
+- [x] 审核并提交：`feat: connect framework configurations across research workflows`。
+
+T12 ???2026-10-11????????????????Web ?? 182 ????maxWorkers=2 ???? CPU ????????????TypeScript ????????????????????/??/?????????????????????????????????????????????/?????????????????????? source_experiment_ref???????????????????????????????? 5 ?????????????? 1 ????API/CLI/Web ???????????????? Python ????? T13?
 
 ## T13 全链路验收、迁移演练与接入说明
 

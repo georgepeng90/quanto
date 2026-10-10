@@ -12,8 +12,9 @@ import type { ParameterSchema } from '../src/types'
 const manifest = { entrypoint: 'strategy.py:create_strategy', parameter_schema: { type: 'object', properties: { window: { type: 'integer', title: '窗口', default: 4 } } }, auxiliary_sources: ['helper.py'], research_data: [] }
 const strategy = { id: 's1', content_hash: 'hash', manifest, files: { 'strategy.json': JSON.stringify(manifest), 'strategy.py': 'from helper import value\ndef create_strategy(params): return value', 'helper.py': 'value = 1' } }
 const dataset = { id: 'd1', content_hash: 'hash', manifest: { source: 'sample', is_demo: true, price_mode: 'adjusted_research', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'unknown', limitations: ['示例'] } }
-const spec = { start: '2024-02-01', end: '2024-03-01', symbols: ['000001'], initial_cash: 1000, seed: 7, execution: { commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0, model: 'next_open' }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: 'v1' } }
-const experiment = { id: 'e1', revision: 1, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: spec, sample_purpose: 'exploration' } }
+const spec = { start: '2024-02-01', end: '2024-03-01', initial_cash: 1000, seed: 7, execution: { commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0, model: 'next_open' }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: 'v1' } }
+const basket = { basket_id: 'b1', revision: 1, members: [{ exchange: 'SSE', instrument_type: 'etf', code: '512480' }], created_at: '', selection_note: '研究选择', content_hash: 'h' }
+const experiment = { id: 'e1', revision: 1, payload: { framework_contract_version: 'multi-asset-v1', basket_revision_ref: { basket_id: 'b1', revision: 1 }, trading_definition_ref: { kind: 'trading', id: 'etf-trading', version: 'v1' }, strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: 4 }, backtest_spec: spec, sample_purpose: 'exploration' } }
 const renderApp = () => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/new'] })} />)
 
 beforeEach(() => {
@@ -23,6 +24,11 @@ beforeEach(() => {
     if (path === '/api/datasets') return Response.json({ items: [dataset], next_cursor: null })
     if (path === '/api/strategies') return Response.json({ items: [strategy], next_cursor: null })
     if (path === '/api/experiments') return Response.json({ items: [experiment], next_cursor: null })
+    if (path === '/api/baskets') return Response.json({ items: [{ basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '' }], next_cursor: null })
+    if (path === '/api/baskets/b1') return Response.json({ basket_id: 'b1', name: 'ETF 篮子', current_revision: 1, created_at: '', current: basket, revisions: [{ revision: 1, content_hash: 'h', created_at: '' }] })
+    if (path === '/api/baskets/b1/revisions/1') return Response.json(basket)
+    if (path === '/api/definitions') return Response.json({ items: [{ ref: experiment.payload.trading_definition_ref }] })
+    if (path === '/api/capabilities/check') return Response.json({ operation: 'fixed_backtest', status: 'ready', request_hash: 'h', dataset_version_id: 'd1', input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
     if (path === '/api/strategies/s1') return Response.json(strategy)
     if (path === '/api/experiments/e1' && init?.method === 'PUT') return Response.json({ code: 'CONFLICT', message: '修订或幂等键冲突', details: {} }, { status: 409 })
     if (path === '/api/experiments/e1') return Response.json(experiment)
@@ -197,12 +203,21 @@ test('removes a completed valid result when its strategy parameters change', asy
   expect(screen.queryByText(/策略协议有效/)).not.toBeInTheDocument()
 })
 
-test('blocks dates outside the selected dataset price coverage', async () => {
+test('saves a date-range draft while service capability blocks running it', async () => {
+  const previous = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/experiments/e1' && init?.method === 'PUT') return Response.json({ ...experiment, revision: 2, payload: JSON.parse(String(init.body)).payload })
+    if (path === '/api/capabilities/check') return Response.json({ operation: 'fixed_backtest', status: 'blocked', request_hash: null, dataset_version_id: 'd1', input_hashes: {}, checks: [{ name: 'coverage', status: 'blocked', field_path: 'backtest_spec.end', code: 'DATA_REQUIREMENT_UNSATISFIED', message: '超出数据价格覆盖范围' }], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
+    return previous(input, init)
+  }))
   renderApp()
+  await screen.findByRole('option', { name: /e1 · 修订 1/ })
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   fireEvent.change(await screen.findByLabelText('结束日'), { target: { value: '2025-01-01' } })
   await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
   expect(await screen.findByText(/超出数据价格覆盖范围/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '提交回测' })).toBeDisabled()
 })
 
 test('rejects a risk cap above the engine-supported range before save', async () => {

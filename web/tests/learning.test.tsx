@@ -1,4 +1,4 @@
-﻿import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
@@ -15,9 +15,6 @@ const app = (path = '/learning') => render(<MemoryRouter initialEntries={[path]}
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(api.learningOverview).mockResolvedValue(overview as never)
-  vi.mocked(api.prepareLearning).mockResolvedValue({ id: 'p1', kind: 'prepare_learning', state: 'queued' } as never)
-  vi.mocked(api.trainLearning).mockResolvedValue({ id: 't1', kind: 'train', state: 'queued' } as never)
-  vi.mocked(api.backtestLearning).mockResolvedValue({ id: 'b2', kind: 'model_backtest', state: 'queued' } as never)
   vi.mocked(api.learningArtifact).mockResolvedValue(result as never)
   vi.mocked(api.learningChart).mockResolvedValue({ points: [{ time: '2024-07-01T01:30:00Z', equity: 100, drawdown: 0 }, { time: '2024-07-02T01:30:00Z', equity: 110, drawdown: -.01 }], total_count: 2000 })
   vi.mocked(api.learningTable).mockResolvedValue({ items: [{ order_id: 'o1', quantity: 100 }], next_cursor: 100 })

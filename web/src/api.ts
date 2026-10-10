@@ -1,7 +1,7 @@
-import type { InvestingModel, InvestingModelDetail, InvestingModelSummary, TrainingHistoryPage, TrainingHistoryQuery, InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage, PolicyBacktestSpec, PolicyTrainingSpec } from './investingTypes'
+import type { InvestingModel, InvestingModelDetail, InvestingModelSummary, TrainingHistoryPage, TrainingHistoryQuery, InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage } from './investingTypes'
 import type { BacktestCatalogRow, ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
-import type { LearningArtifact, LearningBacktestSpec, LearningChart, LearningOverview, LearningTablePage, TrainingSpec } from './learningTypes'
-import type { AssetBinding, BasketCreateRequest, BasketDetail, BasketRevisionRequest, BasketSummary, CapabilityCheckRequest, CapabilityReport, DatasetBindingRequest, Definition, FrozenBasketRevision, ModelBindingRequest, ModelFrameworkBinding, FetchJobRequest } from './frameworkTypes'
+import type { LearningArtifact, LearningChart, LearningOverview, LearningTablePage } from './learningTypes'
+import type { AssetBinding, BasketCreateRequest, BasketDetail, BasketRevisionRequest, BasketSummary, CapabilityCheckRequest, CapabilityReport, DatasetBindingRequest, Definition, FrozenBasketRevision, ModelBindingRequest, ModelFrameworkBinding, FetchJobRequest, ModelCreateRequest, ResumeRequest, PolicyBacktestRequest } from './frameworkTypes'
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}, public status = 0) { super(message) }
@@ -77,23 +77,18 @@ export const api = {
   investingModel: (id: string, signal?: AbortSignal) => request<InvestingModelDetail>(`/investing/models/${encodeURIComponent(id)}`, { signal }),
   investingModelSummary: (id: string, signal?: AbortSignal) => request<InvestingModelSummary>(`/investing/models/${encodeURIComponent(id)}?include_history=false`, { signal }),
   investingModelHistory: (id: string, query: TrainingHistoryQuery, signal?: AbortSignal) => request<TrainingHistoryPage>(`/investing/models/${encodeURIComponent(id)}/history${queryString(query)}`, { signal }),
-  createInvestingModel: (body: { dataset_id: string; spec: PolicyTrainingSpec }) => request<InvestingModel>('/investing/models', json(body)),
-  trainInvestingModel: (id: string, body: { additional_timesteps: number; device: 'cpu' | 'cuda' }) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/train`, json(body)),
-  backtestInvestingModel: (id: string, body: { version_id: string; dataset_id: string; spec: PolicyBacktestSpec }) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/backtests`, json(body)),
+  createInvestingModel: (body: ModelCreateRequest) => request<InvestingModel>('/investing/models', json(body)),
+  trainInvestingModel: (id: string, body: Omit<ResumeRequest, 'model_id'>) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/train`, json(body)),
+  backtestInvestingModel: (id: string, body: PolicyBacktestRequest) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/backtests`, json(body)),
   backtestCatalog: (cursor?: string, signal?: AbortSignal) => request<Page<BacktestCatalogRow>>(`/backtests/catalog${queryString({ cursor, limit: 50 })}`, { signal }),
   investingOverview: (signal?: AbortSignal) => request<InvestingOverview>('/investing/overview', { signal }),
   investingArtifact: (resource: 'policies' | 'backtests', id: string, signal?: AbortSignal) => request<InvestingArtifact>(`/investing/${resource}/${encodeURIComponent(id)}`, { signal }),
-  trainInvesting: (body: { dataset_id: string; spec: PolicyTrainingSpec }) => request<JobRecord>('/investing/train', json(body)),
-  backtestInvesting: (body: { dataset_id: string; policy_id: string; spec: PolicyBacktestSpec }) => request<JobRecord>('/investing/backtests', json(body)),
   investingChart: (id: string, signal?: AbortSignal) => request<InvestingChart>(`/investing/backtests/${encodeURIComponent(id)}/charts?max_points=1000`, { signal }),
   investingTable: (id: string, name: string, cursor: number | string = 0, signal?: AbortSignal) => request<InvestingTablePage>(`/investing/backtests/${encodeURIComponent(id)}/tables/${encodeURIComponent(name)}?cursor=${encodeURIComponent(cursor)}&limit=100`, { signal }),
   exportInvesting: (id: string, signal?: AbortSignal) => download(`/investing/backtests/${encodeURIComponent(id)}/export`, signal),
   learningOverview: (signal?: AbortSignal) => request<LearningOverview>('/learning/overview', { signal }),
   learningArtifacts: (resource: 'datasets' | 'models' | 'backtests', cursor: number | string = 0, signal?: AbortSignal) => request<{ items: LearningArtifact[]; next_cursor: number | string | null }>(`/learning/${resource}?cursor=${encodeURIComponent(cursor)}&limit=50`, { signal }),
   learningArtifact: (resource: 'datasets' | 'models' | 'backtests', id: string, signal?: AbortSignal) => request<LearningArtifact>(`/learning/${resource}/${encodeURIComponent(id)}`, { signal }),
-  prepareLearning: (body: { spec: { name: string; snapshot_id: string; query: Record<string, unknown>; frequency_minutes: number } }) => request<JobRecord>('/learning/datasets', json(body)),
-  trainLearning: (body: { dataset_id: string; spec: TrainingSpec; resume_job_id?: string }) => request<JobRecord>('/learning/train', json(body)),
-  backtestLearning: (body: { dataset_id: string; model_id?: string; spec: LearningBacktestSpec; allow_in_sample: boolean }) => request<JobRecord>('/learning/backtests', json(body)),
   learningChart: (id: string, signal?: AbortSignal) => request<LearningChart>(`/learning/backtests/${encodeURIComponent(id)}/charts?max_points=1000`, { signal }),
   learningTable: (id: string, name: string, cursor: number | string = 0, signal?: AbortSignal) => request<LearningTablePage>(`/learning/backtests/${encodeURIComponent(id)}/tables/${encodeURIComponent(name)}?cursor=${encodeURIComponent(cursor)}&limit=100`, { signal }),
   exportLearning: (id: string, signal?: AbortSignal) => download(`/learning/backtests/${encodeURIComponent(id)}/export`, signal),

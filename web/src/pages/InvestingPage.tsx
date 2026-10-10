@@ -3,11 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { api, describeError } from '../api'
 import { JsonDetails, Metrics, record } from '../components/LearningResults'
 import { cell } from '../components/ResultTables'
+import { FrameworkProvenance } from '../components/FrameworkProvenance'
 import type { InvestingArtifact, InvestingChart, InvestingTablePage } from '../investingTypes'
 
 const columnLabels: Record<string, string> = {
   date: '日期', cash: '现金余额', receivables: '应收款项', market_value: '持仓市值', equity: '账户权益', stale_value: '陈旧报价估值', drawdown: '回撤',
-  id: '订单编号', order_id: '订单编号', symbol: '证券代码', side: '买卖方向', quantity: '数量', price: '成交价格',
+  id: '订单编号', order_id: '订单编号', symbol: '局部证券代码', instrument_id: '规范证券身份', side: '买卖方向', quantity: '数量', price: '成交价格',
   signal_date: '信号日期', execution_date: '执行日期', trade_date: '成交日期', sellable_date: '可卖日期',
   status: '订单状态', reason: '原因', source: '来源', filled_quantity: '已成交数量', expired_quantity: '到期未成交数量',
   lot_size: '每手数量', settlement_sessions: '结算交易日数', full_exit: '是否清仓', commission: '佣金', slippage_cost: '滑点成本',
@@ -49,7 +50,7 @@ function InvestingResults({ id }: { id: string }) {
   }
   const columns = Array.from(new Set(table?.items.flatMap(row => Object.keys(row)) || []))
   return <section className="panel" aria-label="日线回测结果"><div className="section-heading"><h2>日线回测结果 · {id}</h2><button disabled={downloading} onClick={() => void download()}>{downloading ? '导出中…' : '下载完整 ZIP'}</button></div>
-    {error && <p role="alert" className="error">{error}</p>}{artifact && <><Metrics values={record(artifact.manifest.metrics)} /><JsonDetails title="执行假设、数据来源与完整配置" value={artifact.manifest} /></>}{chart && <DailyCurve chart={chart} />}
+    {error && <p role="alert" className="error">{error}</p>}{artifact && <><Metrics values={record(artifact.manifest.metrics)} /><FrameworkProvenance value={artifact.manifest} /><JsonDetails title="执行假设、数据来源与完整配置" value={artifact.manifest} /></>}{chart && <DailyCurve chart={chart} />}
     <label>结果明细<select value={tableName} onChange={event => { setTableName(event.target.value); setCursors([0]) }}>{Object.entries({ daily_equity: '每日净值', orders: '订单', fills: '成交', signals: '决策信号', positions: '持仓' }).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label>
     {tableError && <p role="alert" className="error">{tableError}</p>}{!table && !tableError && <p>加载明细…</p>}{table && <><div className="table-wrap"><table><thead><tr>{columns.map(key => <th key={key}>{columnLabels[key] || key}</th>)}</tr></thead><tbody>{table.items.map((row, index) => <tr key={index}>{columns.map(key => <td key={key}>{typeof row[key] === 'boolean' ? row[key] ? '是' : '否' : cell(row[key], key.replace(/^approved_/, ''))}</td>)}</tr>)}</tbody></table></div>{!table.items.length && <p>暂无明细。</p>}<div className="inline-actions"><button disabled={cursors.length < 2} onClick={() => setCursors(previous => previous.slice(0, -1))}>上一页明细</button><span>第 {cursors.length} 页 · 每页最多 100 行</span><button disabled={table.next_cursor === null} onClick={() => { if (table.next_cursor !== null) setCursors(previous => [...previous, table.next_cursor!]) }}>下一页明细</button></div></>}
   </section>

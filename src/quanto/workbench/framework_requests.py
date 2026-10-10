@@ -54,6 +54,11 @@ def _kind(ref: DefinitionRef, expected: str) -> DefinitionRef:
     return ref
 
 
+class SourceExperimentRef(StrictSpec):
+    experiment_id: Name
+    revision: PositiveRevision
+
+
 class FixedRequest(StrictSpec):
     framework_contract_version: Literal["multi-asset-v1"]
     basket_revision_ref: BasketRevisionRef
@@ -64,6 +69,7 @@ class FixedRequest(StrictSpec):
     backtest_spec: BacktestInput
     sample_purpose: Name
     source_run_id: Name | None = None
+    source_experiment_ref: SourceExperimentRef | None = None
 
     @field_validator("trading_definition_ref")
     @classmethod

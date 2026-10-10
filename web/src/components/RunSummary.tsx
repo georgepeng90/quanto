@@ -3,6 +3,7 @@ import type { RunRecord, RunResult } from '../types'
 import { DataDisclosure, metricValue } from './metricPresentation'
 import { stateLabel } from './RunProgress'
 import { taskTime } from './timePresentation'
+import { FrameworkProvenance } from './FrameworkProvenance'
 
 const metrics = [
   ['total_return', '累计收益'], ['annual_return', '年化收益'],
@@ -47,6 +48,7 @@ export function RunSummary({ run, provenance, result }: {
       <p>有效参数 <code>{provenance?.effective_strategy_params ? JSON.stringify(provenance.effective_strategy_params) : '读取中'}</code></p>
       {provenance?.sample_purpose != null && <p>样本用途 {String(provenance.sample_purpose)}</p>}
       <DataDisclosure provenance={provenance} />
+      <FrameworkProvenance value={provenance} />
       <p>已完成至 {run.completed_through || '尚无完整交易日'}</p>
       <small>开始 {taskTime(run.started_at)} · 结束 {taskTime(run.finished_at)}</small>
     </details>

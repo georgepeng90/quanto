@@ -13,8 +13,13 @@ import pandas as pd
 from quanto.config import BacktestSpec
 from quanto.backtest import dataset_loaders as loaders
 from quanto.backtest.dataset_identity import make_import_evidence, standard_table_semantics
+from quanto.backtest.trading import ETF_TRADING_DEFINITION
 from quanto.data.contracts import InstrumentId
 from quanto.framework import AssetMapping, BenchmarkBinding
+from quanto.workbench.baskets import BasketStore
+from quanto.workbench.bindings import BindingStore
+from quanto.workbench.configuration import FrameworkResolver
+from quanto.workbench.framework_requests import FixedRequest
 from quanto.workbench.models import FrozenRun
 from quanto.workbench.snapshots import SnapshotBuilder
 from quanto.workbench.store import WorkbenchStore
@@ -59,7 +64,6 @@ def main():
     with tempfile.TemporaryDirectory(prefix="quanto-pipeline-bench-") as directory:
         root = Path(directory)
         instruments, benchmark = fixture(root / "input", args.symbols, args.days)
-        symbols = [item.key for item in instruments]
         bundle, load_seconds = timed(lambda: loaders.load_dataset(root / "input"))
         store = WorkbenchStore(root / "workspace")
         evidence_ref = "synthetic:benchmark-storage-pipeline"
@@ -71,32 +75,40 @@ def main():
             source_document="Explicit synthetic benchmark generator identities.",
             table_semantics=standard_table_semantics(bundle, evidence_ref))
         dataset, registration_seconds = timed(lambda: store.register_dataset(root / "input", identity_evidence=evidence))
+        members = instruments[:5]
+        BindingStore(store).get_asset_binding(dataset.id).resolve(members)
+        basket = BasketStore(store).create("storage-benchmark", members, "synthetic ETF selection", "storage-benchmark")
         template = Path(__file__).resolve().parents[1] / "strategies" / "buy_hold"
         declaration = json.loads((template / "strategy.json").read_text(encoding="utf-8"))
         strategy = store.register_strategy({p.name: p.read_bytes() for p in template.iterdir() if p.is_file()}, declaration)
-        spec = BacktestSpec.model_validate({"start": str(bundle.calendar.date.iloc[-251].date()),
-            "end": str(bundle.manifest.data_end), "symbols": symbols[:5], "initial_cash": 100000, "seed": 7,
+        spec = {"start": str(bundle.calendar.date.iloc[-251].date()),
+            "end": str(bundle.manifest.data_end), "initial_cash": 100000, "seed": 7,
             "execution": {"model": "next_open", "commission_rate": 0, "minimum_commission": 0, "slippage_rate": 0, "max_stale_sessions": 0},
             "risk": {"max_total_weight": 1, "max_symbol_weight": 1, "group_caps": {}, "stress_scenarios": [], "pause_action": "block_new", "recovery_mode": "never"},
-            "metrics": {"annual_sessions": 252, "risk_free_rate": 0, "cash_rate": 0, "definition_version": "1"}})
-        draft = store.save_experiment(None, None, {"strategy_revision_id": strategy.id, "dataset_version_id": dataset.id,
-            "strategy_params": {}, "backtest_spec": spec.model_dump(mode="json"), "sample_purpose": "storage benchmark"})
+            "metrics": {"annual_sessions": 252, "risk_free_rate": 0, "cash_rate": 0, "definition_version": "1"}}
+        draft = store.save_experiment(None, None, {"framework_contract_version": "multi-asset-v1",
+            "basket_revision_ref": basket.ref.model_dump(mode="json"),
+            "strategy_revision_id": strategy.id, "dataset_version_id": dataset.id,
+            "trading_definition_ref": ETF_TRADING_DEFINITION.ref.model_dump(mode="json"),
+            "strategy_params": {}, "backtest_spec": spec, "sample_purpose": "storage benchmark"})
+        resolved = FrameworkResolver(store).resolve(FixedRequest.model_validate(draft.payload))
+        run_spec = BacktestSpec.model_validate(resolved.internal_backtest_spec)
         builder = SnapshotBuilder(store)
-        first, first_seconds = timed(lambda: builder.freeze(draft, "agent", None))
-        _, second_seconds = timed(lambda: builder.freeze(draft, "agent", None))
+        first, first_seconds = timed(lambda: builder.freeze(draft, "agent", None, resolved))
+        _, second_seconds = timed(lambda: builder.freeze(draft, "agent", None, resolved))
         manifest, verification_seconds = timed(lambda: builder.verify(FrozenRun(first.run_id, first.manifest_path, first.manifest_hash), exact=False))
         if manifest["schema_version"] == 1:
             data_path = first.manifest_path.parent / "dataset"
             runtime, runtime_seconds = timed(lambda: loaders.load_dataset(data_path))
         else:
             data_path = store.root / "dataset_objects" / manifest["dataset_ref"]["content_hash"]
-            runtime, runtime_seconds = timed(lambda: loaders.load_dataset_for_run(data_path, spec))
-        expected = bundle.prices[bundle.prices.symbol.isin(spec.symbols) & (bundle.prices.date <= pd.Timestamp(spec.end))].reset_index(drop=True)
-        actual = runtime.prices[runtime.prices.symbol.isin(spec.symbols) & (runtime.prices.date <= pd.Timestamp(spec.end))].reset_index(drop=True)
+            runtime, runtime_seconds = timed(lambda: loaders.load_dataset_for_run(data_path, run_spec))
+        expected = bundle.prices[bundle.prices.symbol.isin(run_spec.symbols) & (bundle.prices.date <= pd.Timestamp(run_spec.end))].reset_index(drop=True)
+        actual = runtime.prices[runtime.prices.symbol.isin(run_spec.symbols) & (runtime.prices.date <= pd.Timestamp(run_spec.end))].reset_index(drop=True)
         pd.testing.assert_frame_equal(actual, expected)
         print(json.dumps({"platform": platform.platform(), "python": platform.python_version(),
             "rows": args.symbols * args.days, "schema": manifest["schema_version"],
-            "method": "synthetic prepared market snapshot; one observation per pipeline phase; OS cache not cleared; not comparable to prior CSV input benchmark; not end-to-end",
+            "method": "synthetic prepared market snapshot; basket, binding and framework resolution outside timed phases; one observation per pipeline phase; OS cache not cleared; not comparable to prior CSV input benchmark; not end-to-end",
             "seconds": {"assembled_load_validate": load_seconds, "register": registration_seconds,
                 "freeze_first": first_seconds, "freeze_second": second_seconds,
                 "snapshot_verify": verification_seconds, "runtime_load": runtime_seconds},

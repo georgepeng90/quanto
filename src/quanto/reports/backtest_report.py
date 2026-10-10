@@ -17,6 +17,7 @@ from quanto.backtest.dataset_schemas import DatasetBundle
 
 
 SCHEMA_VERSION = "2"
+FRAMEWORK_SCHEMA_VERSION = "3"
 REPORT_TABLE_COLUMNS = {"curves": ["date", "equity", "return", "drawdown", "benchmark_equity", "benchmark_return"],
     "monthly_returns": ["period", "return"], "annual_returns": ["period", "return"],
     "matched_trades": MATCH_COLUMNS, "open_lots": OPEN_COLUMNS}
@@ -202,16 +203,34 @@ def _html(report: ReportBundle, result: BacktestResult) -> bytes:
 
 def write_backtest_outputs(target_dir: Path, result: BacktestResult, report: ReportBundle) -> dict[str, str]:
     target_dir = Path(target_dir)
+    version = FRAMEWORK_SCHEMA_VERSION if "framework" in report.metadata else SCHEMA_VERSION
     frames = {name: getattr(result, name)[TABLE_COLUMNS[name]] if name in TABLE_COLUMNS else getattr(report, name)[REPORT_TABLE_COLUMNS[name]]
         for name in OUTPUT_TABLES}
+    if version == FRAMEWORK_SCHEMA_VERSION:
+        pairs = report.metadata["framework"]["ordered_pairs"]
+        by_symbol = {item["local_symbol"]: ":".join(item["instrument_id"][key]
+                     for key in ("exchange", "instrument_type", "code")) for item in pairs}
+        for name, frame in frames.items():
+            if "symbol" not in frame.columns:
+                continue
+            missing = {symbol for symbol in frame["symbol"] if symbol and symbol not in by_symbol}
+            if missing:
+                raise ValueError(f"BINDING_MISMATCH: result contains unbound symbols {sorted(missing)}")
+            frame = frame.copy()
+            frame.insert(frame.columns.get_loc("symbol") + 1, "instrument_id",
+                         frame["symbol"].map(lambda symbol: by_symbol[symbol] if symbol else None))
+            frames[name] = frame
+        report.metadata["table_columns"] = {name: list(frame.columns) for name, frame in frames.items() if name in TABLE_COLUMNS}
+        report.metadata["schema_version"] = version
+        report.metric_definitions["schema_version"]["value"] = version
     payloads = {f"{name}.csv": _csv_bytes(frame) for name, frame in frames.items()}
-    payloads["metrics.json"] = _json_bytes({"schema_version": SCHEMA_VERSION, "metrics": report.metrics,
+    payloads["metrics.json"] = _json_bytes({"schema_version": version, "metrics": report.metrics,
         "metric_definitions": report.metric_definitions, "warnings": report.warnings,
         "completed_through": result.completed_through, "artifacts": report.artifact_manifest})
     payloads["metadata.json"] = _json_bytes(report.metadata)
     payloads["report.html"] = _html(report, result)
     hashes = {name: hashlib.sha256(data).hexdigest() for name, data in sorted(payloads.items())}
-    payloads["manifest.json"] = _json_bytes({"schema_version": SCHEMA_VERSION, "files": hashes})
+    payloads["manifest.json"] = _json_bytes({"schema_version": version, "files": hashes})
     hashes["manifest.json"] = hashlib.sha256(payloads["manifest.json"]).hexdigest()
     target_dir.mkdir(parents=True, exist_ok=False)
     for name, data in payloads.items():

@@ -254,7 +254,7 @@ def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
             raise ValueError("INVALID_OUTPUT: 产物哈希不一致")
     manifest = read_json(directory / "manifest.json")
     version = manifest.get("schema_version")
-    if version not in {"1", "2"}:
+    if version not in {"1", "2", "3"}:
         raise ValueError("INVALID_OUTPUT: 不支持的报告结构版本")
     if manifest != {"schema_version": version, "files": {name: value for name, value in hashes.items() if name != "manifest.json"}}:
         raise ValueError("INVALID_OUTPUT: 产物清单不一致")
@@ -263,6 +263,10 @@ def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
     if version == "1":
         table_columns["signals"] = ["date", "intent", "weights", "reasons", "diagnostics"]
     columns = {**table_columns, **REPORT_TABLE_COLUMNS}
+    if version == "3":
+        columns = {name: ([*expected[:expected.index("symbol") + 1], "instrument_id", *expected[expected.index("symbol") + 1:]]
+                  if "symbol" in expected else expected) for name, expected in columns.items()}
+        table_columns = {name: columns[name] for name in table_columns}
     for name, expected in columns.items():
         with (directory / f"{name}.csv").open(encoding="utf-8", newline="") as stream:
             reader = csv.reader(stream)
@@ -276,8 +280,13 @@ def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
         raise ValueError("INVALID_OUTPUT: 指标结构无效")
     if metadata.get("table_columns") != table_columns or metadata.get("schema_version") != version:
         raise ValueError("INVALID_OUTPUT: 元数据结构无效")
-    if version == "2" and (type(metadata.get("is_demo")) is not bool or not isinstance(metadata.get("source"), str)):
+    if version in {"2", "3"} and (type(metadata.get("is_demo")) is not bool or not isinstance(metadata.get("source"), str)):
         raise ValueError("INVALID_OUTPUT: 数据来源元数据无效")
+    if version == "3":
+        from quanto.framework import ResolvedConfiguration
+        framework = ResolvedConfiguration.model_validate(metadata.get("framework"))
+        if framework.operation != "fixed_backtest" or not isinstance(metadata.get("execution_provenance"), dict):
+            raise ValueError("INVALID_OUTPUT: framework provenance missing")
 
 
 def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) -> dict:
@@ -329,6 +338,15 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
         table_semantics=table_semantics)
     report = build_report(result, bundle, spec)
     report.metadata.update({name: manifest[name] for name in ("dataset_version_id", "strategy_revision_id")})
+    from quanto.framework import canonical_hash
+    report.metadata["framework"] = manifest["resolved_configuration"]
+    report.metadata["execution_provenance"] = {
+        "source_hashes": manifest["files"], "environment_fingerprint": canonical_hash(manifest["environment"]),
+        "model_id": None, "policy_version_id": None, "training_boundaries": None,
+        "basket_selection_note": resolved.basket.selection_note,
+        "best_checkpoint": None, "last_checkpoint": None,
+        "feature_transform": None, "training_updates": None,
+    }
     stage = control_dir.parent / "staging"
     hashes = write_backtest_outputs(stage, result, report)
     validate_backtest_output(stage, hashes)

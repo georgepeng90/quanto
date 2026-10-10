@@ -92,7 +92,7 @@ def test_catalog_auth_union_states_and_append_stable_pages(tmp_path):
     assert client.get("/api/backtests/catalog?cursor=bad", headers=headers).status_code == 422
 
 
-def test_fixed_policy_and_baseline_share_exact_condition_key(tmp_path):
+def test_legacy_rows_remain_visible_without_claiming_identity(tmp_path):
     store, client, headers = _client(tmp_path)
     _fixed(store)
     _policy(store, "ppo", 2)
@@ -101,10 +101,7 @@ def test_fixed_policy_and_baseline_share_exact_condition_key(tmp_path):
     _policy(store, "later", 4, spec=later)
     _policy(store, "costly", 5, cost_multiplier=2)
     rows = {item["id"]: item for item in client.get("/api/backtests/catalog", headers=headers).json()["items"]}
-    assert rows["fixed"]["comparison_key"]
-    assert rows["fixed"]["comparison_key"] == rows["ppo"]["comparison_key"] == rows["equal"]["comparison_key"]
-    assert rows["later"]["comparison_key"] != rows["ppo"]["comparison_key"]
-    assert rows["costly"]["comparison_key"] != rows["ppo"]["comparison_key"]
+    assert all(row["identity_status"] == "unknown" and row["comparison_key"] is None for row in rows.values())
     assert rows["ppo"]["conditions"]["period"] == {"start": SPEC["start"], "end": SPEC["end"]}
     assert rows["costly"]["conditions"]["execution"]["commission_rate"] == .0006
     assert rows["ppo"]["detail_url"] == "/investing?backtest=ppo"
@@ -136,15 +133,15 @@ def test_incomplete_conditions_have_no_comparison_key(tmp_path):
     assert item["comparison_key"] is None
 
 
-def test_optional_risk_nulls_are_comparable_but_different_baskets_are_not(tmp_path):
+def test_legacy_local_symbols_cannot_establish_basket_identity(tmp_path):
     store, client, headers = _client(tmp_path)
     from quanto.config import BacktestSpec
     complete = BacktestSpec.model_validate(SPEC).model_dump(mode="json")
     _fixed(store, "base", 1, spec=complete)
     _fixed(store, "different-basket", 2, spec={**complete, "symbols": ["159915"]})
     rows = {item["id"]: item for item in client.get("/api/backtests/catalog", headers=headers).json()["items"]}
-    assert rows["base"]["comparison_key"]
-    assert rows["different-basket"]["comparison_key"] != rows["base"]["comparison_key"]
+    assert rows["base"]["comparison_key"] is None
+    assert rows["different-basket"]["comparison_key"] is None
 
 
 def test_successful_rows_use_validated_saved_metrics_and_policy_backtest_settings(tmp_path):
@@ -180,7 +177,8 @@ def test_successful_rows_use_validated_saved_metrics_and_policy_backtest_setting
     assert rows["ppo"]["metrics"] == {"total_return": .2, "sharpe": None}
     assert rows["ppo"]["result_error"] is None
     assert rows["ppo"]["conditions"]["execution"]["commission_rate"] == .0009
-    assert rows["fixed"]["comparison_key"] != rows["ppo"]["comparison_key"]
+    assert rows["fixed"]["comparison_key"] is None
+    assert rows["ppo"]["comparison_key"] is None
 
 
 def test_model_backtest_reads_frozen_interval_and_prepared_basket(tmp_path):

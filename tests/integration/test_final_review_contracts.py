@@ -3,7 +3,6 @@ import csv
 import hashlib
 import json
 from dataclasses import replace
-from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -19,28 +18,25 @@ from tests.integration.test_snapshot_submission import _ready
 
 
 @pytest.mark.parametrize("change,field,comparable", [
-    ({"symbols": ["B"]}, "symbols", True),
     ({"metrics": {"cash_rate": .1}}, "evaluation", False),
     ({"metrics": {"annual_sessions": 250}}, "evaluation", False),
-    ({"initial_cash": 2000}, "initial_cash", True),
+    ({"initial_cash": 2000}, "initial_cash", False),
+    ({"seed": 9}, "seed", True),
 ])
 def test_effective_frozen_configuration_comparison(tmp_path, change, field, comparable):
     store, draft, _, _ = _ready(tmp_path)
     service = WorkbenchService(store.root)
-    run = service.runs.submit(draft.id, draft.revision, "base", "web")
-    manifest = json.loads(run.manifest_path.read_text(encoding="utf-8"))
-    bundle = bundle_case(symbols=("A", "B"))
+    revised_spec = {**draft.payload["backtest_spec"], **change}
+    if "metrics" in change:
+        revised_spec["metrics"] = {**draft.payload["backtest_spec"]["metrics"], **change["metrics"]}
+    updated = {**draft.payload, "backtest_spec": revised_spec}
+    other = store.save_experiment(None, None, updated)
+    runs = [service.runs.submit(item.id, item.revision, key, "web")
+            for item, key in ((draft, "base"), (other, "changed"))]
     summaries = []
-    for index, spec in enumerate([spec_case(bundle, symbols=["A"]), spec_case(bundle, symbols=change.get("symbols", ["A"]), **{k:v for k,v in change.items() if k != "symbols"})]):
-        # Hydrate actual report definitions and frozen-manifest projection, not hand-picked comparison fields.
-        frozen = copy.deepcopy(manifest)
-        frozen["backtest_spec"] = spec.model_dump(mode="json")
-        path = tmp_path / f"frozen-{index}.json"
-        path.write_text(json.dumps(frozen))
-        result = run_backtest(bundle, ScriptedStrategy({}), spec, lambda _: None, lambda: False)
-        report = build_report(result, bundle, spec)
-        summaries.append({"state": "succeeded", "metrics": report.metrics, "metric_definitions": report.metric_definitions,
-                          **service._run_provenance(SimpleNamespace(manifest_path=path, parent_run_id=None))})
+    for run in runs:
+        summaries.append({"state": "succeeded", "metrics": {}, "metric_definitions": {},
+                          **service._run_provenance(run)})
     compared = compare_runs(summaries)
     assert field in compared.differences
     assert "backtest_spec" in compared.differences
@@ -191,19 +187,30 @@ def test_schema_one_historical_results_exports_and_mixed_comparison_remain_reada
     root = store.artifact_root / run.job_id / "final"
     # Construct a schema-1 historical artifact in this test's temporary workspace only.
     old_columns = ["date", "intent", "weights", "reasons", "diagnostics"]
-    with (root / "signals.csv").open(newline="", encoding="utf-8") as stream:
-        signals = list(csv.DictReader(stream))
-    with (root / "signals.csv").open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=old_columns, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(signals)
+    for path in root.glob("*.csv"):
+        with path.open(newline="", encoding="utf-8") as stream:
+            reader = csv.DictReader(stream)
+            columns = [name for name in reader.fieldnames or [] if name != "instrument_id"]
+            if path.name == "signals.csv":
+                columns = old_columns
+            rows = list(reader)
+        with path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=columns, extrasaction="ignore")
+            writer.writeheader()
+            writer.writerows(rows)
     for name in ("metadata.json", "metrics.json"):
         value = json.loads((root / name).read_text(encoding="utf-8"))
         value["schema_version"] = "1"
         if name == "metadata.json":
+            value["table_columns"] = {table: [column for column in columns if column != "instrument_id"]
+                                      for table, columns in value["table_columns"].items()}
             value["table_columns"]["signals"] = old_columns
             value.pop("is_demo", None)
             value.pop("source", None)
+            value.pop("framework", None)
+            value.pop("execution_provenance", None)
+        else:
+            value["metric_definitions"]["schema_version"]["value"] = "1"
         (root / name).write_text(json.dumps(value))
     hashes = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in root.iterdir() if path.name != "manifest.json"}
     (root / "manifest.json").write_text(json.dumps({"schema_version": "1", "files": hashes}))
@@ -225,9 +232,11 @@ def test_schema_one_historical_results_exports_and_mixed_comparison_remain_reada
     assert service.export(run.run_id, "html")[0] == before["report.html"]
     fresh = service.runs.submit(run.experiment_id, run.experiment_revision, "fresh-schema", "web")
     assert run_until_finished(store, fresh.job_id).state == "succeeded"
-    assert service.results(fresh.run_id)["metadata"]["schema_version"] == "2"
+    assert service.results(fresh.run_id)["metadata"]["schema_version"] == "3"
     mixed = service.comparison([run.run_id, fresh.run_id])
     assert [item["is_demo"] for item in mixed["runs"]] == [False, False]
+    assert [item["identity_status"] for item in mixed["runs"]] == ["unknown", "proven"]
+    assert mixed["directly_comparable"] is False
     assert {path.name: path.read_bytes() for path in root.iterdir()} == before
 
 

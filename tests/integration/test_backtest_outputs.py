@@ -1,8 +1,11 @@
+import json
+
 from quanto.backtest.engine import run_backtest
 from quanto.backtest.models import TABLE_COLUMNS
 from quanto.reports.backtest_report import build_report, write_backtest_outputs
 from quanto.strategies.buy_hold import BuyHold
 from quanto.strategies.trend_rotation import TrendRotation
+from quanto.workbench.worker import validate_backtest_output
 from tests.fixtures.engine_cases import bundle_case, spec_case
 
 
@@ -15,6 +18,8 @@ def test_both_templates_write_standalone_reports(tmp_path):
         report = build_report(result, bundle, spec)
         output = tmp_path / str(index)
         manifest = write_backtest_outputs(output, result, report)
+        assert json.loads((output / "metadata.json").read_bytes())["schema_version"] == "2"
+        validate_backtest_output(output, manifest)
         assert "report.html" in manifest
         assert (output / "report.html").read_text(encoding="utf-8").startswith("<!doctype html>")
         for name, columns in TABLE_COLUMNS.items():

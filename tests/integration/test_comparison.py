@@ -10,3 +10,13 @@ def test_comparison_reports_all_material_differences():
     assert {"dataset_version_id", "benchmark", "start", "end", "costs", "price_mode", "metric_definitions"} <= set(result.differences)
     assert {"strategy_source_hashes", "engine_source_hashes", "environment_fingerprint", "seed", "risk", "initial_cash"} <= set(result.differences)
     assert not result.directly_comparable
+
+
+def test_method_specific_metric_does_not_erase_shared_economic_comparison():
+    shared = {"state": "succeeded", "identity_status": "proven", "comparison_key": "same-conditions"}
+    fixed = {**shared, "method": "fixed", "metric_definitions": {"total_return": {"formula": "equity/end"}}}
+    policy = {**shared, "method": "PPO", "metric_definitions": {
+        "total_return": {"formula": "equity/end"}, "average_cash_ratio": {"formula": "mean(cash/equity)"}}}
+    assert compare_runs([fixed, policy]).directly_comparable is True
+    changed = {**policy, "metric_definitions": {"total_return": {"formula": "gross/equity"}}}
+    assert compare_runs([fixed, changed]).directly_comparable is False

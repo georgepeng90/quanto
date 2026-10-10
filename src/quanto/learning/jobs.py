@@ -51,7 +51,8 @@ def execute_learning_job(descriptor: dict, control_dir: Path, emit, cancelled) -
         request = payload['request']
         if kind in {'train_policy', 'policy_backtest'}:
             from quanto.investing.jobs import execute_policy_job
-            execute_policy_job(kind, payload, artifact, progress, cancelled)
+            execute_policy_job(kind, payload, artifact, progress, cancelled,
+                               source_hashes=descriptor['source_hashes'])
         elif kind == 'prepare_learning':
             from quanto.learning.dataset import prepare_dataset
             prepare_dataset(request['spec'], Path(payload['market_root']), artifact, progress, cancelled)

@@ -2,23 +2,21 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from datetime import datetime, timezone
 from uuid import uuid4
 
-from quanto.investing.contracts import CASH_ACTION_VERSION, PolicyBacktestSpec, PolicyTrainingSpec
+from quanto.framework import ModelFrameworkBinding, thaw_json
+from quanto.investing.contracts import PolicyTrainingSpec
+from quanto.investing.evaluation import policy_identity
 from quanto.investing.service import InvestingService
-from quanto.learning.artifacts import read_manifest
 from quanto.objects import json_bytes
+from quanto.workbench.bindings import BindingStore
+from quanto.workbench.configuration import FrameworkResolver
+from quanto.workbench.framework_requests import ModelCreateRequest, PolicyBacktestRequest, ResumeRequest
 from quanto.workbench.store import utc_now
 
 
 ACTIVE_STATES = {'queued', 'running', 'cancel_requested'}
-
-
-def _identity(value, name):
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f'{name} must be a nonempty string')
-    return value
 
 
 class InvestingModels(InvestingService):
@@ -134,18 +132,36 @@ class InvestingModels(InvestingService):
             self._session_sampling(active)
             latest = versions[0] if versions else None
             spec = json.loads(row['spec_json'])
-            return dict(id=identity, name=spec['name'], dataset_id=row['dataset_id'], spec=spec,
+            result = dict(id=identity, name=spec['name'], dataset_id=row['dataset_id'], spec=spec,
                         created_at=row['created_at'], state=active['state'] if active else 'ready' if latest else 'untrained',
                         active_job_id=active['id'] if active else None, active_session=active,
                         session_count=len(items), version_count=len(versions),
                         total_timesteps=latest['timesteps_completed'] if latest else 0,
                         latest_version_id=latest['id'] if latest else None, capabilities=capabilities())
+            return self._with_framework(result)
         sessions = self._sessions(identity)
         result = self._summary(row, sessions)
         result['sessions'] = [{**self.workbench.get_resource('jobs', item['job_id']),
                                'base_version_id': item['base_version_id']} for item in sessions]
         result['versions'] = [self.detail('policies', item['job_id']) for item in sessions
                               if item['state'] == 'succeeded' and item['manifest_json']]
+        return self._with_framework(result)
+
+    def _with_framework(self, result):
+        bindings = BindingStore(self.store)
+        try:
+            binding = bindings.get_model_binding(result['id'])
+        except (KeyError, ValueError):
+            result['framework_binding'] = None
+            result['framework_binding_check'] = bindings.inspect_model_binding(result['id']).model_dump(mode='json')
+        else:
+            result['framework_binding'] = dict(model_id=binding.model_id, origin=binding.origin,
+                binding_hash=binding.binding_hash, original_spec_hash=binding.original_spec_hash,
+                basket_revision_ref=binding.basket.ref.model_dump(mode='json'),
+                ordered_pairs=[item.model_dump(mode='json') for item in binding.ordered_pairs],
+                definitions=[item.model_dump(mode='json') for item in binding.training_configuration.definitions],
+                evidence=thaw_json(binding.evidence))
+            result['framework_binding_check'] = None
         return result
 
     def history(self, identity, kind='versions', page=1, page_size=10, anchor=None,
@@ -182,73 +198,65 @@ class InvestingModels(InvestingService):
                     page=page, page_size=page_size, total_pages=total_pages, anchor=anchor)
 
     def create_model(self, body):
-        if not isinstance(body, dict) or set(body) != {'dataset_id', 'spec'}:
-            raise ValueError('model creation requires dataset_id and spec only')
-        dataset_id = _identity(body['dataset_id'], 'dataset_id')
-        requested = {'action_version': CASH_ACTION_VERSION, **body['spec']} if isinstance(body['spec'], dict) else body['spec']
-        spec = PolicyTrainingSpec.model_validate(requested)
+        request = ModelCreateRequest.model_validate(body)
+        resolved = FrameworkResolver(self.store).resolve(request)
+        spec = PolicyTrainingSpec.model_validate(thaw_json(resolved.internal_training_spec))
         if not spec.name.strip():
             raise ValueError('model name must not be blank')
-        ref = self._dataset(dataset_id, spec.backtest)
-        from quanto.backtest.dataset_loaders import load_dataset
-        from quanto.investing.training import validate_training_data
-        validate_training_data(spec, load_dataset(Path(ref['path'])))
         identity = str(uuid4())
+        binding = ModelFrameworkBinding(model_id=identity, origin='new', original_spec=spec.model_dump(mode='json'),
+            training_configuration=resolved, semantic_identity=policy_identity(spec),
+            evidence={'method': 'resolved-new-model', 'request_hash': resolved.request_hash},
+            created_at=datetime.now(timezone.utc))
         with self.store.transaction() as db:
             db.execute('INSERT INTO investing_models VALUES (?,?,?,?)',
-                       (identity, dataset_id, json_bytes(spec.model_dump(mode='json')).decode(), utc_now()))
+                       (identity, request.dataset_id, json_bytes(spec.model_dump(mode='json')).decode(), utc_now()))
+            BindingStore(self.store)._insert_model_binding(db, binding)
         return self.get_model(identity)
 
     def train_model(self, identity, body):
-        if not isinstance(body, dict) or set(body) - {'additional_timesteps', 'device'}:
-            raise ValueError('training accepts additional_timesteps and device only; model configuration is fixed')
-        row = self._model(identity)
-        values = json.loads(row['spec_json'])
-        budget = body.get('additional_timesteps', values['total_timesteps'])
-        if type(budget) is not int or not 2 <= budget <= 10000000:
-            raise ValueError('additional_timesteps must be an integer between 2 and 10000000')
-        values.update(total_timesteps=budget, device=body.get('device', values['device']))
-        spec = PolicyTrainingSpec.model_validate(values)
-        with self.store.transaction() as db:
-            base_version = self._head(db, identity)
-        trusted = {'dataset_ref': self._dataset(row['dataset_id'], spec.backtest)}
+        if not isinstance(body, dict) or 'model_id' in body:
+            raise ValueError('training accepts additional_timesteps and device only')
+        self._model(identity)
+        operation = ResumeRequest.model_validate({'model_id': identity, **body})
+        resolved = FrameworkResolver(self.store).resolve(operation)
+        binding = BindingStore(self.store).get_model_binding(identity)
+        spec = PolicyTrainingSpec.model_validate(thaw_json(resolved.internal_training_spec))
+        base_version = resolved.capability_report.input_hashes['parent_version']
+        trusted = {'dataset_ref': self._dataset(binding.dataset_version_id, spec.backtest),
+                   'resolved_configuration': resolved.model_dump(mode='json'),
+                   'model_binding': binding.model_dump(mode='json')}
         if base_version:
             trusted['policy_resume_ref'] = self.reference(base_version, 'policy')
-            manifest = read_manifest(Path(trusted['policy_resume_ref']['path']), 'policy')
-            if manifest.get('model_id') != identity or 'last.zip' not in trusted['policy_resume_ref']['files']:
-                raise ValueError('model has no valid continuation state')
 
         def register(db, job_id):
             active = db.execute('''SELECT j.id FROM investing_sessions s JOIN jobs j ON j.id=s.job_id
                 WHERE s.model_id=? AND j.state IN ('queued','running','cancel_requested')''', (identity,)).fetchone()
             if active or self._head(db, identity) != base_version:
                 raise ValueError('model training conflict: another session is active or the saved version changed')
+            if BindingStore(self.store).get_model_binding(identity, db) != binding:
+                raise ValueError('MODEL_IDENTITY_MISMATCH: model binding changed before submission')
             db.execute('INSERT INTO investing_sessions VALUES (?,?,?)', (job_id, identity, base_version))
 
-        request = {'dataset_id': row['dataset_id'], 'model_id': identity, 'base_version_id': base_version,
+        request = {'dataset_id': binding.dataset_version_id, 'model_id': identity, 'base_version_id': base_version,
                    'spec': spec.model_dump(mode='json')}
         return self._submit('train_policy', request, trusted, register=register)
 
     def backtest_model(self, identity, body):
         self._model(identity)
-        if not isinstance(body, dict) or set(body) != {'version_id', 'dataset_id', 'spec'}:
-            raise ValueError('model backtest requires version_id, dataset_id and spec')
-        version_id = _identity(body['version_id'], 'version_id')
-        dataset_id = _identity(body['dataset_id'], 'dataset_id')
+        request = PolicyBacktestRequest.model_validate(body)
         with self.store.transaction() as db:
             owned = db.execute('''SELECT s.job_id FROM investing_sessions s JOIN learning_artifacts a ON a.id=s.job_id
                 JOIN jobs j ON j.id=s.job_id WHERE s.model_id=? AND s.job_id=? AND j.state='succeeded' AND a.kind='policy' ''',
-                               (identity, version_id)).fetchone()
+                               (identity, request.version_id)).fetchone()
         if owned is None:
             raise ValueError('version_id must identify a saved version belonging to this model')
-        policy = self.reference(version_id, 'policy')
-        manifest = read_manifest(Path(policy['path']), 'policy')
-        training = PolicyTrainingSpec.model_validate(manifest['config'])
-        spec = PolicyBacktestSpec.model_validate(body['spec'])
-        daily = training.backtest.model_copy(update={'start': spec.start, 'end': spec.end})
-        dataset = self._dataset(dataset_id, daily)
-        from quanto.backtest.dataset_loaders import load_dataset
-        if manifest.get('price_mode') != load_dataset(Path(dataset['path'])).price_mode:
-            raise ValueError('model and backtest dataset price modes must match')
-        return self._submit('policy_backtest', {'dataset_id': dataset_id, 'policy_id': version_id,
-            'model_id': identity, 'spec': spec.model_dump(mode='json')}, {'dataset_ref': dataset, 'policy_ref': policy})
+        resolved = FrameworkResolver(self.store).resolve(request)
+        binding = BindingStore(self.store).get_model_binding(identity)
+        from quanto.config import BacktestSpec
+        daily = BacktestSpec.model_validate(thaw_json(resolved.internal_backtest_spec))
+        dataset = self._dataset(request.dataset_id, daily)
+        return self._submit('policy_backtest', {'dataset_id': request.dataset_id, 'policy_id': request.version_id,
+            'model_id': identity, 'spec': request.spec.model_dump(mode='json')},
+            {'dataset_ref': dataset, 'policy_ref': self.reference(request.version_id, 'policy'),
+             'resolved_configuration': resolved.model_dump(mode='json'), 'model_binding': binding.model_dump(mode='json')})

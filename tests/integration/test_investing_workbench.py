@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from quanto.api.app import create_app
 from quanto.workbench.store import WorkbenchStore
 from tests.fixtures.framework_imports import fixture_identity_evidence
+from tests.integration.test_investing_models import model_workspace
 
 
 @pytest.fixture(autouse=True)
@@ -77,7 +78,7 @@ def test_policy_submission_frozen_and_cancel_cannot_publish(tmp_path):
         assert db.execute('SELECT count(*) FROM learning_artifacts').fetchone()[0] == 0
 
 
-def test_standalone_policy_training_queues_new_action_version(tmp_path):
+def test_standalone_policy_training_requires_model_identity(tmp_path):
     from tests.fixtures.investing_training_cases import investing_case
     spec, _ = investing_case(tmp_path / 'data')
     spec['backtest']['symbols'] = ['SZSE:etf:000001']
@@ -87,46 +88,17 @@ def test_standalone_policy_training_queues_new_action_version(tmp_path):
     client = TestClient(app, base_url='http://127.0.0.1')
     headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
     response = client.post('/api/investing/train', headers=headers, json={'dataset_id': dataset.id, 'spec': spec})
-    assert response.status_code == 200, response.text
-    record = app.state.service.store.get_job(response.json()['id'])
-    payload = json.loads(Path(record.input_path).read_text(encoding='utf-8'))
-    assert payload['input']['request']['spec']['action_version'] == 'hold-target-cash-quartiles-v2'
+    assert response.status_code == 422
+    assert app.state.service.store.list_jobs() == []
 
 
-def test_investing_cli_uses_same_api(monkeypatch, tmp_path, capsys):
-    from quanto import cli
-    calls = []
-    monkeypatch.setattr(cli.WorkbenchClient, 'request', lambda self, method, path, body=None: calls.append((method, path, body)) or {'ok': True})
-    config = tmp_path / 'train.json'
-    config.write_text(json.dumps({'dataset_id': 'd', 'spec': {'name': 'weekly'}}), encoding='utf-8')
-    assert cli.main(['--token', 'test', 'investing', 'train', '--json', str(config)]) == 0
-    assert calls == [('POST', '/investing/train', {'dataset_id': 'd', 'spec': {'name': 'weekly'}})]
-    assert json.loads(capsys.readouterr().out) == {'ok': True}
-
-
-@pytest.mark.parametrize('identity', [[], {}, None, 123, '', ' '])
-def test_policy_ids_must_be_nonempty_strings(tmp_path, identity):
-    from tests.fixtures.investing_training_cases import investing_case
-    spec, _ = investing_case(tmp_path / 'data')
-    client = TestClient(create_app(tmp_path / 'workspace'), base_url='http://127.0.0.1', raise_server_exceptions=False)
-    headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
-    assert client.post('/api/investing/train', headers=headers, json={'dataset_id': identity, 'spec': spec}).status_code == 422
-    for field in ('dataset_id', 'policy_id'):
-        body = {'dataset_id': 'd', 'policy_id': 'p', 'spec': {'start': spec['test_start'], 'end': spec['test_end']}}
-        body[field] = identity
-        assert client.post('/api/investing/backtests', headers=headers, json=body).status_code == 422
-
-
-def test_supervised_policy_training_backtest_export_and_tamper(tmp_path):
+def test_supervised_policy_training_backtest_export_and_tamper(model_workspace):
     pytest.importorskip('stable_baselines3')
-    from tests.fixtures.investing_training_cases import investing_case
     from quanto.investing.service import InvestingService
     from quanto.learning.registry import verify_ref
-    spec, _ = investing_case(tmp_path / 'data')
-    spec['backtest']['symbols'] = ['SZSE:etf:000001']
-    app = create_app(tmp_path / 'workspace')
-    source = tmp_path / 'data'
-    dataset = app.state.service.store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
+    app, _, _, model_request = model_workspace
+    spec = model_request['spec']
+    dataset_id = model_request['dataset_id']
     with TestClient(app, base_url='http://127.0.0.1') as client:
         headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
 
@@ -145,22 +117,30 @@ def test_supervised_policy_training_backtest_export_and_tamper(tmp_path):
             return job['id']
 
         invalid = {**spec, 'validation_start': spec['train_end']}
-        assert client.post('/api/investing/train', headers=headers, json={'dataset_id': dataset.id, 'spec': invalid}).status_code == 422
-        policy = submit('train', {'dataset_id': dataset.id, 'spec': spec})
+        assert client.post('/api/investing/models', headers=headers,
+                           json={**model_request, 'spec': invalid}).status_code == 422
+        model_response = client.post('/api/investing/models', headers=headers, json=model_request)
+        assert model_response.status_code == 200, model_response.text
+        model_id = model_response.json()['id']
+        policy = submit(f'models/{model_id}/train', {'additional_timesteps': spec['total_timesteps']})
         manifest = client.get(f'/api/investing/policies/{policy}', headers=headers).json()['manifest']
         assert manifest['cutoff'] == spec['validation_end'] and manifest['history']
         assert manifest['best_timesteps'] > 0
         assert {'validation', 'test'} <= manifest['metrics'].keys()
-        request = {'start': spec['test_start'], 'end': spec['test_end'], 'baseline': 'policy'}
-        historical_request = {**request, 'start': spec['validation_start'], 'end': spec['validation_end']}
-        historical = submit('backtests', {'dataset_id': dataset.id, 'policy_id': policy, 'spec': historical_request})
+        backtest_spec = {'start': spec['test_start'], 'end': spec['test_end'], 'baseline': 'policy',
+                         'evaluation_purpose': 'post_selection_backtest'}
+        historical_request = {**backtest_spec, 'start': spec['validation_start'], 'end': spec['validation_end'],
+                              'evaluation_purpose': 'development_replay'}
+        historical = submit(f'models/{model_id}/backtests',
+                            {'dataset_id': dataset_id, 'version_id': policy, 'spec': historical_request})
         historical_details = client.get(f'/api/investing/backtests/{historical}', headers=headers).json()['manifest']
         assert historical_details['period'] == {'start': spec['validation_start'], 'end': spec['validation_end']}
         assert historical_details['counts']['equity'] == 20
-        backtest = submit('backtests', {'dataset_id': dataset.id, 'policy_id': policy, 'spec': request})
+        backtest = submit(f'models/{model_id}/backtests',
+                          {'dataset_id': dataset_id, 'version_id': policy, 'spec': backtest_spec})
         details = client.get(f'/api/investing/backtests/{backtest}', headers=headers).json()['manifest']
         assert details['counts']['equity'] == 30
-        assert details['dataset_content_hash'] == dataset.content_hash
+        assert details['dataset_content_hash'] == app.state.service.store.get_dataset(dataset_id).content_hash
         assert details['policy_id'] == policy
         page = client.get(f'/api/investing/backtests/{backtest}/tables/equity?limit=2', headers=headers).json()
         assert len(page['items']) == 2 and page['next_cursor'] == '2'
@@ -174,5 +154,5 @@ def test_supervised_policy_training_backtest_export_and_tamper(tmp_path):
         ref = service.reference(policy, 'policy')
         path = verify_ref(ref) / 'policy.zip'
         path.write_bytes(path.read_bytes() + b'tamper')
-        assert client.post('/api/investing/backtests', headers=headers, json={
-            'dataset_id': dataset.id, 'policy_id': policy, 'spec': request}).status_code == 422
+        assert client.post(f'/api/investing/models/{model_id}/backtests', headers=headers, json={
+            'dataset_id': dataset_id, 'version_id': policy, 'spec': backtest_spec}).status_code == 422

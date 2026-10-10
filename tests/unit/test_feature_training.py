@@ -83,7 +83,8 @@ def test_training_resume_and_backtest_reuse_one_frozen_transform(tmp_path):
     assert (tmp_path / "first" / "transform.json").read_bytes() == (tmp_path / "resumed" / "transform.json").read_bytes()
     assert len(fit_dates) == 1
     backtest_policy(tmp_path / "first", dataset_dir,
-                    {"start": str(config.validation_start), "end": str(config.validation_end)},
+                    {"start": str(config.validation_start), "end": str(config.validation_end),
+                     "evaluation_purpose": "development_replay"},
                     tmp_path / "report", lambda event: None, lambda: False,
                     learning_runtime=runtime)
     assert len(fit_dates) == 1
@@ -96,7 +97,8 @@ def test_framework_manifest_requires_matching_runtime_and_verified_transform(tmp
     dataset_dir, spec, config, bundle, runtime, fit_dates = _case(tmp_path)
     train_policy(spec, dataset_dir, tmp_path / "first", lambda event: None, lambda: False,
                  runtime.binding.dataset_content_hash, learning_runtime=runtime)
-    request = {"start": str(config.validation_start), "end": str(config.validation_end)}
+    request = {"start": str(config.validation_start), "end": str(config.validation_end),
+               "evaluation_purpose": "development_replay"}
     with pytest.raises(ValueError, match="runtime|framework"):
         backtest_policy(tmp_path / "first", dataset_dir, request, tmp_path / "no-runtime",
                         lambda event: None, lambda: False)
@@ -127,7 +129,8 @@ def test_new_evaluation_dataset_uses_saved_training_transform(tmp_path):
     values.update(dataset_version_id="changed-evaluation-dataset",
                   dataset_content_hash=digest(json_bytes(hash_files(changed_dir))), binding_hash="")
     changed_runtime = replace(runtime, binding=AssetBinding.model_validate(values))
-    request = {"start": str(config.validation_start), "end": str(config.validation_end)}
+    request = {"start": str(config.validation_start), "end": str(config.validation_end),
+               "evaluation_purpose": "development_replay"}
     report = backtest_policy(tmp_path / "first", changed_dir, request, tmp_path / "report",
                              lambda event: None, lambda: False, learning_runtime=changed_runtime)
     assert report["policy_content_id"] == first["id"]

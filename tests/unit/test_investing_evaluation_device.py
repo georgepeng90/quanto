@@ -19,7 +19,8 @@ def case(tmp_path, monkeypatch, device):
         cutoff=config.validation_end.isoformat(), feature_version=feature_version(config.lookback),
         action_version=ACTION_VERSION, environment_version=ENVIRONMENT_VERSION, execution_version=EXECUTION_VERSION)
     monkeypatch.setattr(evaluation, "read_manifest", lambda *_: manifest)
-    request = dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="policy")
+    request = dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="policy",
+                   evaluation_purpose="post_selection_backtest")
     return request
 
 
@@ -119,7 +120,8 @@ def test_baseline_from_cuda_manifest_needs_no_policy_device(tmp_path, monkeypatc
 def test_saved_policy_replays_requested_historical_interval(tmp_path, monkeypatch, start_field):
     request = case(tmp_path, monkeypatch, "cpu")
     config = evaluation.read_manifest(tmp_path / "policy", "policy")["config"]
-    request.update(start=config[start_field], end=config["test_end"])
+    request.update(start=config[start_field], end=config["test_end"],
+                   evaluation_purpose="development_replay")
     monkeypatch.setattr(PPO, "load", lambda *_args, **_kwargs: HoldModel("cpu"))
     summary = evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", request,
         tmp_path / "result", lambda _: None, lambda: False)

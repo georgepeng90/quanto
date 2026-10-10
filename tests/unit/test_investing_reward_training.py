@@ -76,7 +76,8 @@ def test_legacy_manifest_without_reward_fields_loads_and_continues_unchanged(tmp
     write_manifest(tmp_path / "old", manifest)
     old_files = hash_files(tmp_path / "old")
     summary = backtest_policy(tmp_path / "old", tmp_path / "data",
-        dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="cash"),
+        dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="cash",
+             evaluation_purpose="post_selection_backtest"),
         tmp_path / "backtest", lambda _: None, lambda: False)
     assert summary["metadata"]["reward_version"] == "net-log-return-v1"
     resumed = train_policy(spec, tmp_path / "data", tmp_path / "new", lambda _: None,

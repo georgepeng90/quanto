@@ -133,13 +133,22 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
     manifest = read_manifest(policy_dir, "policy")
     config = PolicyTrainingSpec.model_validate(manifest["config"])
     framework_learning = manifest.get("framework_learning")
+    if framework_learning is None and learning_runtime is not None:
+        framework_learning = learning_runtime.audited_legacy_identity(manifest)
     if (framework_learning is None) != (learning_runtime is None):
         raise ValueError("MODEL_IDENTITY_MISMATCH: framework model requires matching learning runtime")
     if validation:
         if digest(json_bytes(hash_files(Path(dataset_dir)))) != manifest["dataset_content_hash"]:
             raise ValueError("validation dataset content hash must match training dataset identity")
-        spec = dict(start=config.validation_start, end=config.validation_end)
+        spec = dict(start=config.validation_start, end=config.validation_end,
+                    evaluation_purpose="model_selection")
     request = PolicyBacktestSpec.model_validate(spec)
+    if not validation:
+        if request.evaluation_purpose == "model_selection":
+            raise ValueError("evaluation_purpose model_selection is reserved for internal validation")
+        if (request.start <= config.validation_end
+                and request.evaluation_purpose != "development_replay"):
+            raise ValueError("evaluation_purpose must be development_replay on or before validation_end")
     expected = check_policy_identity(manifest, config)
     bundle = load_dataset(Path(dataset_dir))
     transform = None
@@ -175,7 +184,9 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
         raise ValueError("policy price mode mismatch")
     values = config.backtest.model_dump(mode="json")
     values.update(start=request.start.isoformat(), end=request.end.isoformat())
-    for name in ("commission_rate", "minimum_commission", "slippage_rate"):
+    scalable_costs = (learning_runtime.trading.scalable_costs if learning_runtime is not None else
+                      ("commission_rate", "minimum_commission", "slippage_rate"))
+    for name in scalable_costs:
         values["execution"][name] *= request.cost_multiplier
     backtest = BacktestSpec.model_validate(values).validate_for_dataset(bundle)
     if output_dir.exists() and any(output_dir.iterdir()):
@@ -207,7 +218,7 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
                                              if isinstance(value, (dict, list)) else value)
         frame.to_csv(output_dir / f"{name}.csv", index=False)
     summary = dict(kind="policy_validation" if validation else "policy_backtest", version=1,
-                   evaluation_purpose="model_selection" if validation else "post_selection_backtest",
+                   evaluation_purpose=request.evaluation_purpose,
                    policy_content_id=manifest["id"],
                    training_dataset_content_hash=manifest["dataset_content_hash"], baseline=request.baseline,
                    policy_device=policy_device,
@@ -224,7 +235,8 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
                                     terminal_positions="marked to close; no forced liquidation"),
                    metadata=dict(config=config.model_dump(mode="json"), backtest=backtest.model_dump(mode="json"),
                                  source=bundle.manifest.source, limitations=bundle.manifest.limitations,
-                                 policy_cutoff=manifest["cutoff"], **expected))
+                                 policy_cutoff=manifest["cutoff"],
+                                 validation_end=config.validation_end.isoformat(), **expected))
     check_cancelled(cancelled)
     (output_dir / "summary.json").write_bytes(json_bytes(summary))
     return summary

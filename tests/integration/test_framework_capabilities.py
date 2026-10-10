@@ -125,11 +125,26 @@ def test_training_rejects_short_history_before_any_model_or_job_is_created(tmp_p
     values = request.model_dump(mode="json")
     values["spec"]["backtest"]["start"] = "2024-01-15"
     values["spec"]["train_start"] = "2024-01-15"
+    values["spec"]["lookback"] = 61
     report = FrameworkResolver(store).check(ModelCreateRequest.model_validate(values))
     assert report.status == "blocked"
     assert "DATA_REQUIREMENT_UNSATISFIED" in report.error_codes
     assert report.request_hash is not None
     assert store.list_jobs() == []
+
+
+def test_etf_short_lookback_keeps_its_declared_adaptive_horizons(tmp_path):
+    from quanto.workbench.configuration import FrameworkResolver
+
+    store, request, _ = _training_case(tmp_path)
+    values = request.model_dump(mode="json")
+    values["spec"]["backtest"]["start"] = "2024-01-15"
+    values["spec"]["train_start"] = "2024-01-15"
+    resolved = FrameworkResolver(store).resolve(ModelCreateRequest.model_validate(values))
+    price_requirements = [item for item in resolved.requirements
+                          if item.table == "prices" and "etf-learning" in item.requirement_id]
+    assert price_requirements
+    assert all(item.warmup_sessions == values["spec"]["lookback"] for item in price_requirements)
 
 
 def test_same_registered_dataset_can_support_prices_but_block_missing_financial_facts(tmp_path):

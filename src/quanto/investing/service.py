@@ -40,28 +40,7 @@ class InvestingService(LearningService):
         return {'id': version.id, 'path': str(root), 'content_hash': version.content_hash, 'files': files}
 
     def train(self, body):
-        if not isinstance(body, dict) or set(body) != {'dataset_id', 'spec'}:
-            raise ValueError('training requires dataset_id and spec only')
-        if not isinstance(body['dataset_id'], str) or not body['dataset_id'].strip():
-            raise ValueError('dataset_id must be a nonempty string')
-        from quanto.investing.contracts import CASH_ACTION_VERSION, PolicyTrainingSpec
-        requested = {'action_version': CASH_ACTION_VERSION, **body['spec']} if isinstance(body['spec'], dict) else body['spec']
-        spec = PolicyTrainingSpec.model_validate(requested)
-        ref = self._dataset(body['dataset_id'], spec.backtest)
-        return self._submit('train_policy', {'dataset_id': body['dataset_id'], 'spec': spec.model_dump(mode='json')}, {'dataset_ref': ref})
+        raise ValueError('Create a model and submit training through /investing/models/{model_id}/train')
 
     def backtest(self, body):
-        if not isinstance(body, dict) or set(body) != {'dataset_id', 'policy_id', 'spec'}:
-            raise ValueError('backtest requires dataset_id, policy_id and spec only')
-        if any(not isinstance(body[key], str) or not body[key].strip() for key in ('dataset_id', 'policy_id')):
-            raise ValueError('dataset_id and policy_id must be nonempty strings')
-        from quanto.investing.contracts import PolicyBacktestSpec, PolicyTrainingSpec
-        from quanto.learning.artifacts import read_manifest
-        spec = PolicyBacktestSpec.model_validate(body['spec'])
-        policy = self.reference(body['policy_id'], 'policy')
-        manifest = read_manifest(Path(policy['path']), 'policy')
-        training = PolicyTrainingSpec.model_validate(manifest['config'])
-        daily = training.backtest.model_copy(update={'start': spec.start, 'end': spec.end})
-        dataset = self._dataset(body['dataset_id'], daily)
-        return self._submit('policy_backtest', {**body, 'spec': spec.model_dump(mode='json')},
-                            {'dataset_ref': dataset, 'policy_ref': policy})
+        raise ValueError('Submit saved-version backtests through /investing/models/{model_id}/backtests')

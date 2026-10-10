@@ -81,7 +81,8 @@ def _etf_feature_requirements(params: Mapping[str, object], basket: FrozenBasket
                                  fields=tuple(RequirementField(name=name, dtype=dtype, unit=unit,
                                               currency="CNY" if table == "prices" and dtype == "float" else None)
                                               for name, dtype, unit in fields), scope="basket", interval=interval,
-                                 warmup_sessions=max(params["lookback"], 61) if table == "prices" else 0,
+                                 # Longer return horizons use all available bars in the original ETF encoder.
+                                 warmup_sessions=params["lookback"] if table == "prices" else 0,
                                  availability_rule=availability, price_modes=("raw_cash", "adjusted_research"),
                                  required=True, missing_policy="reject")
                  for table, availability, fields in requirements)
@@ -111,7 +112,10 @@ ETF_MARKET_FEATURES = FeatureSetDefinition(
     parameter_schema={"type": "object", "properties": {"lookback": {"type": "integer", "minimum": 3, "maximum": 512}},
                       "required": ["lookback"], "additionalProperties": False},
     resolve_requirements=_etf_feature_requirements,
-    fields=tuple(FeatureField(name=name, semantic=name.replace("_", " "), unit="ratio", scope="per_symbol",
+    fields=tuple(FeatureField(name=name,
+                              semantic=(f"log return over up to {name.removeprefix('return_')} available bars"
+                                        if name in {"return_5", "return_20", "return_60"} else name.replace("_", " ")),
+                              unit="ratio", scope="per_symbol",
                               age_unit="days", missing_policy="mask") for name in MARKET_FIELDS),
     compute=_etf_market_features,
 )

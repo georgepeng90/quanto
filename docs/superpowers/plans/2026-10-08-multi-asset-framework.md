@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T07 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T08 已完成；其余任务待执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -260,7 +260,7 @@ T07 审核修正：可选缺字段不能跳过同表已有值及时间证据；�
 
 **Interfaces:** 产出不可变 `ModelFrameworkBinding`（在 framework.py 的公共类型区声明）、`BindingStore.inspect_model_binding(model_id: str) -> CapabilityReport`（只读，operation=bind_model）、`bind_model(model_id: str, key: str) -> ModelFrameworkBinding`；用户不能传篮子/定义覆盖。模型详情返回关联检查的证据摘要和阻塞项，POST 时复查并原子登记。`validate_model_operation(binding: ModelFrameworkBinding, request: ResumeRequest | PolicyBacktestRequest, resolved: ResolvedConfiguration) -> None` 分操作实施设计第 7 节矩阵；T08 补齐 FrameworkResolver 的两类模型操作。公共 PolicyBacktestRequest.spec 加必填 evaluation_purpose，只接受 development_replay/post_selection_backtest；内部 PolicyBacktestSpec 另允许 model_selection，仅内部验证流程赋值，公共边界拒绝。
 
-- [ ] 审查旧模型测试，不把“此前没有 purpose”当兼容要求。新增已知 ETF 版本组合等价证据、缺证据只读、原 zip/manifest hash 不变、并发关联/创建回滚、身份逐字段变更、保存版本归属和用途测试。匹配矩阵逐例覆盖同规范不同局部键、同局部键不同规范、额外资产不扩动作空间，以及单位/available_at/价格口径/预热/规则证据变化；resume 检查原 ID/hash/binding、拟合摘要和日期分区均不变：
+- [x] 审查旧模型测试，不把“此前没有 purpose”当兼容要求。新增已知 ETF 版本组合等价证据、缺证据只读、原 zip/manifest hash 不变、并发关联/创建回滚、身份逐字段变更、保存版本归属和用途测试。匹配矩阵逐例覆盖同规范不同局部键、同局部键不同规范、额外资产不扩动作空间，以及单位/available_at/价格口径/预热/规则证据变化；resume 检查原 ID/hash/binding、拟合摘要和日期分区均不变：
   ```python
   assert linked.original_spec_hash == original_spec_hash
   assert artifact_hashes_after == artifact_hashes_before
@@ -272,10 +272,14 @@ T07 审核修正：可选缺字段不能跳过同表已有值及时间证据；�
   assert failed_training.model_head == previous_successful_head
   assert internal_validation.evaluation_purpose == "model_selection"
   ```
-- [ ] 运行 `uv run --no-sync pytest tests/integration/test_model_framework_bindings.py tests/integration/test_investing_models.py tests/integration/test_investing_history.py tests/unit/test_investing_continuation.py tests/unit/test_investing_reward_training.py -q`，确认新身份规则失败。
-- [ ] 新模型与框架关联同事务发布；旧模型从原 spec/数据/工件和 T06 已知语义等价证据推导关联和不可变篮子，校验来源区别于历史源码证据。不伪造旧源码 hash、不接受未知组合。resume 限原 data ID/hash/binding、所有研究条件，仅可改步数/设备；回测可换覆盖数据但选定规范与局部顺序都须相同，需求语义/变换/风控不变。禁止把规范键新数据自动投影给旧 checkpoint。保留 baseline/cost_multiplier，仅缩放交易定义声明项；开始日≤validation_end 只允许 development_replay，之后可用 post_selection_backtest。
-- [ ] 为 evaluation.py 的内部验证显式构造 model_selection 并保留验证数据 hash 校验，公共回测 summary 使用请求用途，不再固定写 post_selection_backtest。重跑同一命令通过；确认仅有旧 artifact 读取支持，没有绕过解析器的旧业务提交后门。固定实验升级由 T12 创建有来源的新草稿，旧 run 不变。
-- [ ] 审核并提交：`feat: enforce model identity and audited legacy bindings`。
+- [x] 运行 `uv run --no-sync pytest tests/integration/test_model_framework_bindings.py tests/integration/test_investing_models.py tests/integration/test_investing_history.py tests/unit/test_investing_continuation.py tests/unit/test_investing_reward_training.py -q`，确认新身份规则失败。
+- [x] 新模型与框架关联同事务发布；旧模型从原 spec/数据/工件和 T06 已知语义等价证据推导关联和不可变篮子，校验来源区别于历史源码证据。不伪造旧源码 hash、不接受未知组合。resume 限原 data ID/hash/binding、所有研究条件，仅可改步数/设备；回测可换覆盖数据但选定规范与局部顺序都须相同，需求语义/变换/风控不变。禁止把规范键新数据自动投影给旧 checkpoint。保留 baseline/cost_multiplier，仅缩放交易定义声明项；开始日≤validation_end 只允许 development_replay，之后可用 post_selection_backtest。
+- [x] 为 evaluation.py 的内部验证显式构造 model_selection 并保留验证数据 hash 校验，公共回测 summary 使用请求用途，不再固定写 post_selection_backtest。重跑同一命令通过；确认仅有旧 artifact 读取支持，没有绕过解析器的旧业务提交后门。固定实验升级由 T12 创建有来源的新草稿，旧 run 不变。
+- [x] 审核并提交：`feat: enforce model identity and audited legacy bindings`。
+
+T08 验证（2026-10-10）：模型身份、旧对象关联、操作解析、内部/公共评价用途、作业运行时、拟合生命周期及 ETF 原参考共 187 项综合回归通过；另用两个真实登记的数据版本验证新数据仅覆盖回测及预热、包含额外资产时仍保持原有动作空间，1 项通过。模型创建与绑定、旧模型推导篮子与绑定均原子发布；并发幂等及中途失败回滚已验证。端到端覆盖首次训练、续训、取消后模型头保持、指定历史版本回测及导出，未运行研究规模训练。
+
+T08 审核修正：原始 spec 的摘要与规范化训练配置分别核验，省略默认字段的历史配置仍可审计重用。旧 ETF 等价验证凭据随包发布，固定引用原 T00 证据和经过回归验证的精确定义摘要；实现改变即阻塞，不在运行时依赖 tests 目录，也不冒充原模型源码或现场重跑证明。原 ETF 短窗口公式本就按可用历史截断较长收益周期，最低预热按 lookback 声明，字段明确为“至多 N 根可用 bar”；原观察/账本参考未改。两项独立审核 P1 均修复，最终复核无剩余阻断。模型作业接线及旧无模型提交入口关闭随 T08 提前落实；T09 继续完成提交事务最终重检查和执行前快照验证。
 
 ## T09 冻结提交、API 和 CLI 一次切换
 

@@ -13,6 +13,10 @@ from fastapi.testclient import TestClient
 from quanto.api.app import create_app
 from tests.fixtures.investing_training_cases import investing_case
 from tests.fixtures.framework_imports import fixture_identity_evidence
+from quanto.backtest.trading import ETF_TRADING_DEFINITION
+from quanto.investing.definitions import etf_learning_definitions
+from quanto.workbench.baskets import BasketStore
+from quanto.workbench.bindings import BindingStore
 
 
 @pytest.fixture
@@ -28,15 +32,27 @@ def model_workspace(tmp_path, monkeypatch):
     app = create_app(tmp_path / 'workspace')
     source = tmp_path / 'data'
     dataset = app.state.service.store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
-    spec['backtest']['symbols'] = ['SZSE:etf:000001']
+    del spec['backtest']['symbols']
+    binding = BindingStore(app.state.service.store).get_asset_binding(dataset.id)
+    basket = BasketStore(app.state.service.store).create('Model basket', (binding.assets[0].instrument_id,),
+                                                       'Synthetic fixture', 'model-basket')
+    definition = next(item for item in etf_learning_definitions()
+                      if item.action_version == 'hold-target-cash-quartiles-v2'
+                      and item.reward_version == 'net-log-return-v1')
     client = TestClient(app, base_url='http://127.0.0.1')
     headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
-    return app, client, headers, {'dataset_id': dataset.id, 'spec': spec}
+    return app, client, headers, {'dataset_id': dataset.id, 'spec': spec,
+        'framework_contract_version': 'multi-asset-v1', 'basket_revision_ref': basket.ref.model_dump(mode='json'),
+        'learning_definition_ref': definition.ref.model_dump(mode='json'),
+        'trading_definition_ref': ETF_TRADING_DEFINITION.ref.model_dump(mode='json')}
 
 
 def test_model_creation_persists_without_training_and_keeps_order(model_workspace):
     app, client, headers, request = model_workspace
-    request['spec']['backtest']['symbols'] = ['SZSE:etf:000002', 'SZSE:etf:000001']
+    binding = BindingStore(app.state.service.store).get_asset_binding(request['dataset_id'])
+    basket = BasketStore(app.state.service.store).revise(request['basket_revision_ref']['basket_id'], 1,
+        tuple(item.instrument_id for item in reversed(binding.assets)), 'Order is part of model identity')
+    request['basket_revision_ref'] = basket.ref.model_dump(mode='json')
     response = client.post('/api/investing/models', headers=headers, json=request)
     assert response.status_code == 200, response.text
     model = response.json()
@@ -50,6 +66,8 @@ def test_model_creation_persists_without_training_and_keeps_order(model_workspac
     assert client.get('/api/investing/models', headers=headers).json()['items'][0]['id'] == model['id']
     detail = client.get(f'/api/investing/models/{model["id"]}', headers=headers).json()
     assert detail['sessions'] == detail['versions'] == []
+    assert detail['framework_binding']['origin'] == 'new'
+    assert detail['framework_binding']['ordered_pairs'][0]['local_symbol'] == 'SZSE:etf:000002'
     reopened = create_app(app.state.service.store.root)
     with reopened.state.service.store.transaction() as db:
         assert db.execute('SELECT count(*) FROM investing_models').fetchone()[0] == 1
@@ -58,6 +76,8 @@ def test_model_creation_persists_without_training_and_keeps_order(model_workspac
 def test_model_creation_accepts_dsr_without_test_dates(model_workspace):
     app, client, headers, request = model_workspace
     request['spec'].update(reward_version='differential-sharpe-v1', test_start=None, test_end=None)
+    request['learning_definition_ref'] = next(item.ref.model_dump(mode='json') for item in etf_learning_definitions()
+        if item.action_version == 'hold-target-cash-quartiles-v2' and item.reward_version == 'differential-sharpe-v1')
     request['spec']['backtest']['end'] = request['spec']['validation_end']
     response = client.post('/api/investing/models', headers=headers, json=request)
     assert response.status_code == 200, response.text
@@ -68,18 +88,35 @@ def test_model_creation_accepts_dsr_without_test_dates(model_workspace):
     assert app.state.service.store.list_jobs() == []
 
 
-def test_existing_model_without_action_version_queues_legacy_continuation(model_workspace):
+def test_existing_model_without_action_version_requires_audited_binding(model_workspace):
     app, client, headers, request = model_workspace
-    model = client.post('/api/investing/models', headers=headers, json=request).json()
-    historical_spec = {key: value for key, value in model['spec'].items() if key != 'action_version'}
+    from quanto.investing.contracts import PolicyTrainingSpec
+    from quanto.workbench.store import utc_now
+    historical_spec = PolicyTrainingSpec.model_validate({**request['spec'], 'backtest': {
+        **request['spec']['backtest'], 'symbols': ['SZSE:etf:000001']}}).model_dump(mode='json', exclude={'action_version'})
     with app.state.service.store.transaction() as db:
-        db.execute('UPDATE investing_models SET spec_json=? WHERE id=?', (json.dumps(historical_spec), model['id']))
-    response = client.post(f'/api/investing/models/{model["id"]}/train', headers=headers,
+        db.execute('INSERT INTO investing_models VALUES (?,?,?,?)',
+                   ('legacy-model', request['dataset_id'], json.dumps(historical_spec), utc_now()))
+    assert client.post('/api/investing/models/legacy-model/train', headers=headers,
+                       json={'additional_timesteps': 8}).status_code == 422
+    BindingStore(app.state.service.store).bind_model('legacy-model', 'audited-legacy')
+    response = client.post('/api/investing/models/legacy-model/train', headers=headers,
                            json={'additional_timesteps': 8})
     assert response.status_code == 200, response.text
     record = app.state.service.store.get_job(response.json()['id'])
     payload = json.loads(Path(record.input_path).read_text(encoding='utf-8'))
     assert payload['input']['request']['spec']['action_version'] == 'hold-target-quartiles-v1'
+
+
+def test_create_model_and_binding_publish_in_one_transaction(model_workspace, monkeypatch):
+    app, client, headers, request = model_workspace
+    def fail(*args, **kwargs):
+        raise ValueError('binding publication failed')
+    monkeypatch.setattr(BindingStore, '_insert_model_binding', fail)
+    assert client.post('/api/investing/models', headers=headers, json=request).status_code == 422
+    with app.state.service.store.transaction() as db:
+        assert db.execute('SELECT count(*) FROM investing_models').fetchone()[0] == 0
+        assert db.execute('SELECT count(*) FROM model_framework_bindings').fetchone()[0] == 0
 
 
 def test_create_rejects_invalid_basket_and_bad_research_without_queueing(model_workspace):
@@ -189,7 +226,8 @@ def test_model_continues_and_backtests_explicit_immutable_version(model_workspac
         assert continued['latest_version_id'] == third and continued['total_timesteps'] == 24
         assert continued['sessions'][0]['base_version_id'] == second
         backtest = {'dataset_id': request['dataset_id'], 'version_id': first,
-                    'spec': {'start': request['spec']['validation_start'], 'end': request['spec']['validation_end'], 'baseline': 'policy'}}
+                    'spec': {'start': request['spec']['validation_start'], 'end': request['spec']['validation_end'],
+                             'baseline': 'policy', 'evaluation_purpose': 'development_replay'}}
         assert client.post(f'/api/investing/models/{other["id"]}/backtests', headers=headers, json=backtest).status_code == 422
         assert client.post(f'/api/investing/models/{model["id"]}/backtests', headers=headers,
                            json={key: value for key, value in backtest.items() if key != 'version_id'}).status_code == 422

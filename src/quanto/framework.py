@@ -300,3 +300,51 @@ class ResolvedConfiguration(FrozenContract):
         if tuple(self.internal_backtest_spec.get("symbols", ())) != tuple(item.local_symbol for item in self.ordered_pairs):
             raise ValueError("BINDING_MISMATCH: internal symbols differ from binding order")
         return self
+
+
+class ModelFrameworkBinding(FrozenContract):
+    schema_version: Literal[1] = 1
+    model_id: Name
+    origin: Literal["new", "legacy_audited"]
+    original_spec: JsonMap
+    original_spec_hash: str = ""
+    training_configuration: ResolvedConfiguration
+    semantic_identity: JsonMap
+    evidence: JsonMap
+    created_at: datetime
+    binding_hash: str = ""
+
+    _timestamp = field_validator("created_at")(utc)
+
+    @model_validator(mode="after")
+    def fixed_training_identity(self):
+        config = self.training_configuration
+        if config.operation != "train" or config.capability_report.status != "ready" or config.internal_training_spec is None:
+            raise ValueError("Model binding requires a resolved training configuration")
+        expected_spec_hash = canonical_hash(self.original_spec)
+        if self.original_spec_hash and self.original_spec_hash != expected_spec_hash:
+            raise ValueError("Model original spec hash differs")
+        object.__setattr__(self, "original_spec_hash", expected_spec_hash)
+        original_symbols = tuple(self.original_spec.get("backtest", {}).get("symbols", ()))
+        if original_symbols != tuple(pair.local_symbol for pair in config.ordered_pairs):
+            raise ValueError("MODEL_IDENTITY_MISMATCH: original model basket differs from bound order")
+        if not self.semantic_identity or not self.evidence:
+            raise ValueError("Model binding requires semantic identity and audit evidence")
+        _content_hash(self, "binding_hash")
+        return self
+
+    @property
+    def basket(self) -> FrozenBasketRevision:
+        return self.training_configuration.basket
+
+    @property
+    def asset_binding(self) -> AssetBinding:
+        return self.training_configuration.asset_binding
+
+    @property
+    def dataset_version_id(self) -> str:
+        return self.asset_binding.dataset_version_id
+
+    @property
+    def ordered_pairs(self) -> tuple[AssetMapping, ...]:
+        return self.training_configuration.ordered_pairs

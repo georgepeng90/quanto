@@ -101,7 +101,10 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
         if (parent["dataset_content_hash"] != dataset_content_hash or parent.get("model_id") != model_id
                 or parent["basket"] != config.backtest.symbols or parent.get("price_mode") != bundle.price_mode):
             raise ValueError("resume dataset, model, basket or environment identity mismatch")
-        if parent.get("framework_learning") != framework_learning:
+        parent_learning = parent.get("framework_learning")
+        if parent_learning is None and learning_runtime is not None:
+            parent_learning = learning_runtime.audited_legacy_identity(parent)
+        if parent_learning != framework_learning:
             raise ValueError("MODEL_IDENTITY_MISMATCH: resume framework learning identity differs")
         parent_transform_descriptor = parent.get("feature_transform")
         if parent_transform_descriptor is not None:

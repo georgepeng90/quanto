@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -9,7 +10,7 @@ import pandas as pd
 from quanto.backtest.trading import TradingDefinition
 from quanto.data.point_in_time import TableSemantics, _bind_point_in_time, session_cutoff
 from quanto.factors.features import FrozenTransform, compute_fit_frame, fit_transform
-from quanto.framework import AssetBinding, canonical_hash, thaw_json
+from quanto.framework import AssetBinding, ModelFrameworkBinding, ResolvedConfiguration, canonical_hash, thaw_json
 from quanto.investing.contracts import PolicyTrainingSpec
 from quanto.investing.definitions import LearningDefinition, create_environment
 
@@ -30,6 +31,54 @@ class LearningRuntime:
     binding: AssetBinding
     trading: TradingDefinition
     table_semantics: tuple[TableSemantics, ...] | None = None
+    model_binding: ModelFrameworkBinding | None = None
+
+    def audited_legacy_identity(self, manifest: Mapping[str, object]) -> dict:
+        from quanto.investing.evaluation import check_policy_identity, policy_identity
+
+        binding = self.model_binding
+        if binding is None or binding.origin != "legacy_audited":
+            raise ValueError("MODEL_IDENTITY_MISMATCH: legacy policy has no audited model binding")
+        artifacts = binding.evidence.get("policy_artifacts")
+        if (not isinstance(artifacts, Mapping) or not any(
+                isinstance(entry, Mapping) and entry.get("manifest_id") == manifest.get("id")
+                for entry in artifacts.values())):
+            raise ValueError("MODEL_IDENTITY_MISMATCH: legacy policy is absent from audited versions")
+        try:
+            original = PolicyTrainingSpec.model_validate(thaw_json(binding.original_spec))
+            previous = PolicyTrainingSpec.model_validate(manifest["config"])
+        except (KeyError, ValueError) as exc:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: legacy policy training spec is invalid") from exc
+        prices = next((item for item in binding.asset_binding.table_semantics if item.table == "prices"), None)
+        if (manifest.get("model_id") != binding.model_id
+                or manifest.get("dataset_content_hash") != binding.asset_binding.dataset_content_hash
+                or tuple(manifest.get("basket", ())) != tuple(original.backtest.symbols)
+                or prices is None or manifest.get("price_mode") != prices.temporal_rules.get("price_mode")
+                or previous.model_dump(mode="json", exclude={"total_timesteps", "device"}) !=
+                   original.model_dump(mode="json", exclude={"total_timesteps", "device"})
+                or self.definition.feature_definition.fit is not None
+                or manifest.get("feature_transform") is not None):
+            raise ValueError("MODEL_IDENTITY_MISMATCH: legacy policy training identity differs")
+        if (canonical_hash(binding.original_spec) != binding.original_spec_hash
+                or policy_identity(original) != thaw_json(binding.semantic_identity)
+                or thaw_json(binding.training_configuration.internal_training_spec) != original.model_dump(mode="json")):
+            raise ValueError("MODEL_IDENTITY_MISMATCH: audited policy semantics differ")
+        try:
+            check_policy_identity(manifest, previous)
+        except (KeyError, ValueError) as exc:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: legacy policy semantic identity differs") from exc
+        training_runtime = LearningRuntime(self.definition, binding.asset_binding, self.trading)
+        identity = training_runtime.identity(original)
+        frozen = {item.ref.kind: item for item in binding.training_configuration.definitions}
+        for kind, prefix in (("learning", "learning"), ("feature", "feature"), ("trading", "trading")):
+            item = frozen.get(kind)
+            if (item is None or identity[f"{prefix}_ref"] != item.ref.model_dump(mode="json")
+                    or identity[f"{prefix}_definition_hash"] != item.declaration["definition_hash"]):
+                raise ValueError("MODEL_IDENTITY_MISMATCH: legacy runtime definition differs from audit")
+        if (identity["learning_params"] != thaw_json(frozen["learning"].effective_params)
+                or identity["feature_params"] != thaw_json(frozen["feature"].effective_params)):
+            raise ValueError("MODEL_IDENTITY_MISMATCH: legacy runtime parameters differ from audit")
+        return identity
 
     def identity(self, config: PolicyTrainingSpec) -> dict:
         learning_params = self.definition.validate_config(config)
@@ -117,3 +166,35 @@ class LearningRuntime:
                                   training=training, asset_binding=self.binding,
                                   trading_definition=self.trading, table_semantics=self.table_semantics,
                                   cancelled=cancelled, collect=collect)
+
+
+def learning_runtime_for(binding: ModelFrameworkBinding, resolved: ResolvedConfiguration,
+                         registry=None) -> LearningRuntime:
+    from quanto.workbench.definitions import DefinitionRegistry
+
+    registry = DefinitionRegistry() if registry is None else registry
+    frozen = binding.training_configuration.definitions
+    if (resolved.definitions != frozen or resolved.basket != binding.basket
+            or {item.ref.kind for item in frozen} != {"feature", "learning", "trading"}
+            or len(frozen) != 3):
+        raise ValueError("MODEL_IDENTITY_MISMATCH: resolved model definitions or basket differ")
+    definitions = {}
+    for item in frozen:
+        try:
+            definition = registry.get(item.ref)
+        except KeyError as exc:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: frozen model definition is unavailable") from exc
+        try:
+            snapshot = registry.snapshot(definition, item.effective_params)
+        except ValueError as exc:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: registered definition parameters differ") from exc
+        if snapshot != item:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: registered definition differs from frozen model")
+        definitions[item.ref.kind] = definition
+    learning = definitions["learning"]
+    if (learning.feature_definition.definition_hash != definitions["feature"].definition_hash
+            or learning.feature_definition.ref != definitions["feature"].ref
+            or definitions["trading"].ref not in learning.allowed_trading_refs):
+        raise ValueError("MODEL_IDENTITY_MISMATCH: frozen learning dependencies differ")
+    return LearningRuntime(learning, resolved.asset_binding, definitions["trading"],
+                           model_binding=binding)

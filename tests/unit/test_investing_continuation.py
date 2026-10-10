@@ -151,7 +151,8 @@ def test_saved_feature_identity_only_rejects_affected_short_window_models(tmp_pa
     assert first["feature_version"] == expected_version
     write_manifest(tmp_path / "first", {**{key: value for key, value in first.items() if key not in {"id", "files"}},
                                          "feature_version": "daily-etf-v2"})
-    backtest = dict(start=spec["test_start"], end=spec["test_end"], baseline="cash")
+    backtest = dict(start=spec["test_start"], end=spec["test_end"], baseline="cash",
+                    evaluation_purpose="post_selection_backtest")
 
     def resume():
         return train_policy(spec, tmp_path / "data", tmp_path / "second", lambda event: None,
@@ -188,7 +189,8 @@ def test_validation_sharpe_comes_from_daily_report_and_price_mode_is_frozen(tmp_
     data_manifest["limitations"] = ["Synthetic adjusted research prices"]
     (tmp_path / "data" / "manifest.json").write_text(json.dumps(data_manifest))
     with pytest.raises(ValueError, match="price mode|price_mode"):
-        backtest_policy(tmp_path / "policy", tmp_path / "data", dict(start=str(dates[60].date()), end=str(dates[89].date())),
+        backtest_policy(tmp_path / "policy", tmp_path / "data", dict(start=str(dates[60].date()), end=str(dates[89].date()),
+                                                                   evaluation_purpose="post_selection_backtest"),
                         tmp_path / "backtest", lambda event: None, lambda: False)
 
 

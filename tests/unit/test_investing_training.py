@@ -61,7 +61,8 @@ def test_real_ppo_updates_selects_after_training_and_freezes_reload(tmp_path, mo
                                                if row["validation_net_log_return"] == best_score)
     assert read_manifest(tmp_path / "policy", "policy")["id"] == manifest["id"]
     model_hash = file_hash(tmp_path / "policy" / "policy.zip")
-    backtest = dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="policy")
+    backtest = dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="policy",
+                    evaluation_purpose="post_selection_backtest")
     first = backtest_policy(tmp_path / "policy", tmp_path / "data", backtest, tmp_path / "first", lambda event: None, lambda: False)
     second = backtest_policy(tmp_path / "policy", tmp_path / "data", backtest, tmp_path / "second", lambda event: None, lambda: False)
     assert first["metrics"] == second["metrics"]
@@ -150,7 +151,8 @@ def test_frozen_baselines_use_experiment_execution_and_cost_multiplier(tmp_path)
     from quanto.investing.evaluation import backtest_policy
     spec, dates = investing_case(tmp_path / "data")
     train_policy(spec, tmp_path / "data", tmp_path / "policy", lambda event: None, lambda: False, "a" * 64)
-    interval = dict(start=str(dates[60].date()), end=str(dates[89].date()))
+    interval = dict(start=str(dates[60].date()), end=str(dates[89].date()),
+                    evaluation_purpose="post_selection_backtest")
     cash = backtest_policy(tmp_path / "policy", tmp_path / "data", {**interval, "baseline": "cash"},
                            tmp_path / "cash", lambda event: None, lambda: False)
     assert cash["metrics"]["total_return"] == 0.

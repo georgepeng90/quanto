@@ -64,6 +64,7 @@ class PolicyTrainingSpec(StrictSpec):
 class PolicyBacktestSpec(StrictSpec):
     start: date
     end: date
+    evaluation_purpose: Literal["development_replay", "post_selection_backtest", "model_selection"]
     baseline: Literal["policy", "cash", "equal_weight", "buy_hold"] = "policy"
     cost_multiplier: float = Field(default=1., ge=0, le=100)
 

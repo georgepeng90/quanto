@@ -38,7 +38,7 @@ class FakeAPI:
 
 
 def runner(tmp_path, api):
-    protocol = {"dataset_path": str(tmp_path), "spec": {"name": "test"},
+    protocol = {"dataset_path": str(tmp_path), "workspace_path": str(tmp_path), "spec": {"name": "test"},
                 "rounds": 50, "timesteps_per_round": 512,
                 "monitor_period": {"start": "2025-01-01", "end": "2025-12-31"},
                 "final_period": {"start": "2026-01-01", "end": "2026-09-30"}}
@@ -139,6 +139,7 @@ def test_overlapping_monitor_and_final_rejected_before_dataset_import(tmp_path, 
 def extension_fixture(tmp_path):
     root = Path(__file__).parents[1]
     protocol = json.loads((root / "docs/research/2026-10-05-fixed-basket-training/protocol.json").read_text(encoding="utf-8"))
+    protocol["workspace_path"] = str(tmp_path)
     from quanto.investing.contracts import PolicyTrainingSpec
     spec = PolicyTrainingSpec.model_validate(protocol["spec"]).model_dump(mode="json")
     rounds = [{"round": n, "version_id": f"v{n}", "content_id": f"c{n}",

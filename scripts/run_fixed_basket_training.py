@@ -105,8 +105,11 @@ class Runner:
             self.save()
         self.elapsed_before = self.state.get("elapsed_seconds", 0.)
         self.api = api or API(self.url)
-        config = json.loads((ROOT / "workbench.local.json").read_text(encoding="utf-8"))
-        self.workspace = Path(protocol.get("workspace_path", ROOT / config["workspace"])).resolve()
+        workspace = protocol.get("workspace_path")
+        if workspace is None:
+            config = json.loads((ROOT / "workbench.local.json").read_text(encoding="utf-8"))
+            workspace = ROOT / config["workspace"]
+        self.workspace = Path(workspace).resolve()
 
     def extension_source(self):
         path = Path(self.protocol["source_state_path"]).resolve()

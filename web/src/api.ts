@@ -1,6 +1,7 @@
 import type { InvestingModel, InvestingModelDetail, InvestingModelSummary, TrainingHistoryPage, TrainingHistoryQuery, InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage, PolicyBacktestSpec, PolicyTrainingSpec } from './investingTypes'
 import type { BacktestCatalogRow, ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
 import type { LearningArtifact, LearningBacktestSpec, LearningChart, LearningOverview, LearningTablePage, TrainingSpec } from './learningTypes'
+import type { AssetBinding, BasketCreateRequest, BasketDetail, BasketRevisionRequest, BasketSummary, CapabilityCheckRequest, CapabilityReport, DatasetBindingRequest, Definition, FrozenBasketRevision, ModelBindingRequest, ModelFrameworkBinding, FetchJobRequest } from './frameworkTypes'
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}, public status = 0) { super(message) }
@@ -63,6 +64,15 @@ const json = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'Cont
 const list = <T>(name: string, cursor?: string) => request<Page<T>>(`/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)
 
 export const api = {
+  listBaskets: (cursor?: string) => list<BasketSummary>('baskets', cursor),
+  getBasket: (id: string) => request<BasketDetail>(`/baskets/${encodeURIComponent(id)}`),
+  createBasket: (body: BasketCreateRequest) => request<FrozenBasketRevision>('/baskets', json(body)),
+  reviseBasket: (id: string, body: BasketRevisionRequest) => request<FrozenBasketRevision>(`/baskets/${encodeURIComponent(id)}/revisions`, json(body)),
+  getBasketRevision: (id: string, revision: number) => request<FrozenBasketRevision>(`/baskets/${encodeURIComponent(id)}/revisions/${revision}`),
+  listDefinitions: () => request<{ items: Definition[] }>('/definitions'),
+  checkCapabilities: (body: CapabilityCheckRequest) => request<CapabilityReport>('/capabilities/check', json(body)),
+  bindDataset: (id: string, body: DatasetBindingRequest) => request<AssetBinding>(`/datasets/${encodeURIComponent(id)}/asset-binding`, json(body)),
+  bindModel: (id: string, body: ModelBindingRequest) => request<ModelFrameworkBinding>(`/investing/models/${encodeURIComponent(id)}/framework-binding`, json(body)),
   investingModels: (cursor?: string, signal?: AbortSignal) => request<Page<InvestingModel>>(`/investing/models${queryString({ cursor })}`, { signal }),
   investingModel: (id: string, signal?: AbortSignal) => request<InvestingModelDetail>(`/investing/models/${encodeURIComponent(id)}`, { signal }),
   investingModelSummary: (id: string, signal?: AbortSignal) => request<InvestingModelSummary>(`/investing/models/${encodeURIComponent(id)}?include_history=false`, { signal }),
@@ -100,7 +110,7 @@ export const api = {
   saveExperiment: (id: string, expected_revision: number, payload: ExperimentPayload) => request<ExperimentDraft>(`/experiments/${encodeURIComponent(id)}`, { ...json({ expected_revision, payload }), method: 'PUT' }),
   jobs: (cursor?: string) => list<JobRecord>('jobs', cursor),
   job: (id: string) => request<JobRecord>(`/jobs/${encodeURIComponent(id)}`),
-  dataJob: (kind: 'fetch', payload: Record<string, unknown>) => request<JobRecord>('/jobs/data', json({ kind, payload })),
+  dataJob: (kind: 'fetch', payload: FetchJobRequest) => request<JobRecord>('/jobs/data', json({ kind, payload })),
   validateStrategy: (strategy_revision_id: string, params: Record<string, unknown>) => request<JobRecord>('/jobs/strategy-validation', json({ strategy_revision_id, params })),
   upload: (file: File) => { const body = new FormData(); body.append('file', file); return request<{ upload_id: string }>('/uploads', { method: 'POST', body }) },
   preflight: (upload_id: string) => request<Preflight>('/datasets/preflight', json({ upload_id })),

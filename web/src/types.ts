@@ -6,7 +6,8 @@ export type DatasetManifest = {
   event_coverage: 'complete' | 'partial' | 'unknown'; benchmark_type?: string; limitations: string[]
   auxiliary_tables?: Record<string, string>; universe_rule?: Record<string, unknown>
 }
-export type DatasetVersion = { id: string; content_hash: string; manifest: DatasetManifest; instruments?: { symbol: string; lot_size: number; settlement_sessions: number; listing_date: string; group: string }[] }
+import type { AssetBinding } from './frameworkTypes'
+export type DatasetVersion = { id: string; content_hash: string; manifest: DatasetManifest; instruments?: { symbol: string; lot_size: number; settlement_sessions: number; listing_date: string; group: string }[]; asset_binding?: AssetBinding | null; identity_evidence_ref?: string | null; identity_binding_issue?: { code: string; message: string } | null }
 export type StrategyManifest = { entrypoint: string; parameter_schema: ParameterSchema; auxiliary_sources: string[]; research_data: string[]; [key: string]: unknown }
 export type StrategyRevision = { id: string; content_hash: string; manifest: StrategyManifest; files?: Record<string, string> }
 export type ExecutionSpec = { commission_rate: number; minimum_commission: number; slippage_rate: number; max_stale_sessions: number; model: 'next_open' }

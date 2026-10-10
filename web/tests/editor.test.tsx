@@ -117,7 +117,7 @@ test('asks before leaving a dirty experiment form', async () => {
   await userEvent.selectOptions(await screen.findByLabelText('实验草稿'), 'e1')
   await userEvent.clear(screen.getByLabelText('初始资金'))
   await userEvent.type(screen.getByLabelText('初始资金'), '2000')
-  await userEvent.click(screen.getByRole('link', { name: '行情数据' }))
+  await userEvent.click(screen.getByRole('link', { name: '数据' }))
   expect(confirm).toHaveBeenCalled()
   expect(screen.getByLabelText('初始资金')).toHaveValue(2000)
   confirm.mockRestore()

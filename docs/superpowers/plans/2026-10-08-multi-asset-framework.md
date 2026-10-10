@@ -10,7 +10,7 @@
 
 **Spec:** [框架设计细则](../specs/2026-10-08-multi-asset-framework-design.md)，[设计审核记录](../../research/2026-10-08-multi-asset-framework-review.md)。设计提交 `9494ea9`；规划期间核查至 `d8a371a`。执行前重新核对 HEAD 与并行改动。
 
-状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T09 已完成；其余任务继续执行。尚未迁移实际工作区或运行研究训练。
+状态：开发计划工程审核完成，见[规划审核记录](../../research/2026-10-08-multi-asset-framework-plan-review.md)。2026-10-09 开始实施：T00–T09、T11 已完成；T10 与 T12 继续执行。尚未迁移实际工作区或运行研究训练。
 
 ## Global Constraints
 
@@ -332,7 +332,7 @@ T09 验证：18 个相关测试文件的综合回归 176 项通过，另 1 项�
 
 **Interfaces:** TypeScript 对应 T01/T07 JSON 类型；api 对象新增 `listBaskets()`、`createBasket(body)`、`reviseBasket(id, body)`、`getBasketRevision(id, revision)`、`listDefinitions()`、`checkCapabilities(request)`、`bindDataset(id, body)`、`bindModel(id, body)`，各返回严格对应类型并复用原 request<T>/认证。组件 `CapabilityReport({report}: {report: CapabilityReport})` 只渲染服务端结果；BasketEditor 保存规范身份和成员顺序。
 
-- [ ] 更新旧“行情数据”导航和裸代码请求测试；新增四域数量、股票篮子可保存、混合运行阻止、手动录入待核验、修订 CAS、证据绑定成功/无证据提示/超时重试：
+- [x] 更新旧“行情数据”导航和裸代码请求测试；新增四域数量、股票篮子可保存、混合运行阻止、手动录入待核验、修订 CAS、证据绑定成功/无证据提示/超时重试：
   ```typescript
   expect(mainNavigationItems).toEqual(['数据', '固定策略', '强化学习模型', '回测']);
   expect(createRequest.members).toEqual(orderedCanonicalMembers);
@@ -340,10 +340,12 @@ T09 验证：18 个相关测试文件的综合回归 176 项通过，另 1 项�
   expect(capabilityReport).toHaveTextContent('未接入');
   expect(bindRequest).toEqual({ evidence_ref: selectedEvidence, idempotency_key: requestKey });
   ```
-- [ ] 运行 `npm.cmd --prefix web run test -- --run tests/baskets.test.tsx tests/framework-api.test.ts tests/datasets.test.tsx`，确认新增流程失败。
-- [ ] 数据域内用 tabs/query 参数组织“标的篮子 / 数据版本”，复用当前路径；若确需深链同步更新静态 fallback。数据详情选择已有证据来源后 POST `/datasets/{id}/asset-binding`，只传 evidence_ref/idempotency_key；没有证据引导带身份资料重新导入，不提供任意映射编辑。股票保存只表达选择意图，不显示虚假的可运行方案；fetch 成功后重新检查具体配置。
-- [ ] 重跑测试和 `npm.cmd --prefix web run typecheck` 通过；若改静态路径再运行 `uv run --no-sync pytest tests/integration/test_serve_static.py -q`。检查窄屏下字段路径、原因和修复指引可读，不只靠禁用按钮解释。
-- [ ] 审核并提交：`feat: add basket and dataset identity workflows`。
+- [x] 运行 `npm.cmd --prefix web run test -- --run tests/baskets.test.tsx tests/framework-api.test.ts tests/datasets.test.tsx`，确认新增流程失败。
+- [x] 数据域内用 tabs/query 参数组织“标的篮子 / 数据版本”，复用当前路径；若确需深链同步更新静态 fallback。数据详情选择已有证据来源后 POST `/datasets/{id}/asset-binding`，只传 evidence_ref/idempotency_key；没有证据引导带身份资料重新导入，不提供任意映射编辑。股票保存只表达选择意图，不显示虚假的可运行方案；fetch 成功后重新检查具体配置。
+- [x] 重跑测试和 `npm.cmd --prefix web run typecheck` 通过；若改静态路径再运行 `uv run --no-sync pytest tests/integration/test_serve_static.py -q`。检查窄屏下字段路径、原因和修复指引可读，不只靠禁用按钮解释。
+- [x] 审核并提交：`feat: add basket and dataset identity workflows`。
+
+T11 验证（2026-10-11）：篮子、共享 API、数据页面及原导航回归 72 项通过，TypeScript 检查通过。创建成功后的刷新失败保持已保存身份，超时重试复用幂等键；表单编辑清除能力报告并抑制迟到响应。公共 TypeScript 请求逐项核对服务端，区分模型回测提交体与能力检查中的 model_id。路由仍使用原路径和查询参数，未修改静态 fallback；当前尚未发布，与 T09/T12 同版交付。
 
 ## T12 固定策略、模型、回测与比较页面接线
 

@@ -35,7 +35,7 @@ afterEach(() => vi.useRealTimers())
 
 test('has exactly four domain links and opens models before creation', async () => {
   app('/models')
-  expect(within(screen.getByRole('navigation', { name: '主导航' })).getAllByRole('link').map(link => link.textContent)).toEqual(['行情数据', '固定策略', '强化学习模型', '回测'])
+  expect(within(screen.getByRole('navigation', { name: '主导航' })).getAllByRole('link').map(link => link.textContent)).toEqual(['数据', '固定策略', '强化学习模型', '回测'])
   expect(await screen.findByRole('link', { name: '研究模型' })).toHaveAttribute('href', '/models/m1')
   expect(screen.queryByLabelText('模型名称')).toBeNull()
 })

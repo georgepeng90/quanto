@@ -11,6 +11,7 @@ beforeEach(() => {
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
     if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', content_hash: 'h', manifest: { source: 'demo', is_demo: true, price_mode: 'adjusted_research', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'unknown', limitations: ['示例数据'] } }], next_cursor: null })
     if (path === '/api/jobs') return Response.json({ items: [], next_cursor: null })
+    if (path === '/api/capabilities/check') return Response.json({ operation: 'fetch', status: 'ready', request_hash: 'h', dataset_version_id: null, input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
     if (path === '/api/jobs/data' && init?.method === 'POST') return Response.json({ code: 'INVALID_ARGUMENT', message: '请求参数无效', details: { reason: 'coverage incomplete' } }, { status: 422 })
     throw new Error(`unexpected ${init?.method || 'GET'} ${path}`)
   }))
@@ -49,14 +50,14 @@ test.each([false, true])('fetch submits requirements with explicit refresh=%s', 
   renderApp()
   await screen.findByText('演示数据')
   expect(screen.queryByLabelText('缓存版本（可选）')).not.toBeInTheDocument()
-  await userEvent.type(screen.getByLabelText('ETF 代码（逗号分隔）'), '512480')
+  await userEvent.type(screen.getByLabelText('标的代码'), '512480')
   fireEvent.change(screen.getByLabelText('起始日'), { target: { value: '2024-01-01' } })
   fireEvent.change(screen.getByLabelText('结束日'), { target: { value: '2024-01-05' } })
   if (refresh) await userEvent.click(screen.getByLabelText('更新已有行情'))
   await userEvent.click(screen.getByRole('button', { name: '发起获取' }))
   await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => url === '/api/jobs/data')).toBe(true))
   const [, init] = vi.mocked(fetch).mock.calls.find(([url]) => url === '/api/jobs/data')!
-  expect(JSON.parse(init!.body as string)).toEqual({ kind: 'fetch', payload: { symbols: ['512480'], start_date: '2024-01-01', end_date: '2024-01-05', refresh } })
+  expect(JSON.parse(init!.body as string)).toEqual({ kind: 'fetch', payload: { instruments: [{ exchange: 'SSE', instrument_type: 'etf', code: '512480' }], benchmark: { exchange: 'SSE', instrument_type: 'index', code: '000300' }, start_date: '2024-01-01', end_date: '2024-01-05', refresh } })
 })
 
 test.each([
@@ -145,6 +146,7 @@ test('polls a submitted 51st job by ID after the first job page is full', async 
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
     if (path === '/api/datasets') return Response.json({ items: [], next_cursor: null })
     if (path === '/api/jobs') { listReads += 1; return Response.json({ items: old, next_cursor: listReads === 1 ? null : '50' }) }
+    if (path === '/api/capabilities/check') return Response.json({ operation: 'fetch', status: 'ready', request_hash: 'h', dataset_version_id: null, input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
     if (path === '/api/jobs/data' && init?.method === 'POST') return Response.json({ id: 'j51', kind: 'fetch', state: 'queued', enqueue_seq: 51 })
     if (path === '/api/jobs/j51') { detailReads += 1; return Response.json({ id: 'j51', kind: 'fetch', state: 'succeeded', enqueue_seq: 51, result: { state: 'complete', market_prefetch_state: 'ready', dataset_version_id: 'd51', price_mode: 'adjusted_research' } }) }
     if (path.startsWith('/api/jobs/j')) return Response.json(old.find(job => `/api/jobs/${job.id}` === path))
@@ -160,4 +162,86 @@ test('polls a submitted 51st job by ID after the first job page is full', async 
     expect(screen.getByText(/已验证并登记数据版本 d51/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '加载更多数据任务' })).toBeInTheDocument()
   } finally { vi.useRealTimers() }
+})
+
+test('binding submits only the saved evidence reference and reuses its key after a timeout', async () => {
+  let detailReads = 0
+  let bindCalls = 0
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', content_hash: 'h', manifest: { source: 'import', is_demo: false, price_mode: 'raw_cash', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'complete', limitations: [] } }], next_cursor: null })
+    if (path === '/api/jobs') return Response.json({ items: [], next_cursor: null })
+    if (path === '/api/datasets/d1' && !init?.method) { detailReads += 1; return Response.json({ identity_evidence_ref: 'import:proof', identity_binding_issue: { code: 'IDENTITY_UNRESOLVED', message: '待绑定' }, asset_binding: detailReads > 1 ? { binding_hash: 'bound', assets: [{ instrument_id: { exchange: 'SSE', instrument_type: 'stock', code: '600000' } }] } : null }) }
+    if (path === '/api/datasets/d1/asset-binding') { bindCalls += 1; if (bindCalls === 1) throw new Error('timeout'); return Response.json({ binding_hash: 'bound' }) }
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '查看身份' }))
+  await userEvent.click(await screen.findByRole('button', { name: '检查并关联身份' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('timeout')
+  await userEvent.click(screen.getByRole('button', { name: '检查并关联身份' }))
+  expect(await screen.findByText(/已绑定 · bound/)).toBeInTheDocument()
+  const bodies = vi.mocked(fetch).mock.calls.filter(([url]) => url === '/api/datasets/d1/asset-binding').map(([, init]) => JSON.parse(init!.body as string))
+  expect(bodies).toHaveLength(2)
+  expect(bodies[0]).toEqual({ evidence_ref: 'import:proof', idempotency_key: bodies[1].idempotency_key })
+})
+
+test('missing evidence offers reimport without arbitrary mapping controls', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', content_hash: 'h', manifest: { source: 'legacy', is_demo: false, price_mode: 'raw_cash', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'unknown', limitations: [] } }], next_cursor: null })
+    if (path === '/api/jobs') return Response.json({ items: [], next_cursor: null })
+    if (path === '/api/datasets/d1') return Response.json({ identity_evidence_ref: null, identity_binding_issue: { code: 'IDENTITY_UNRESOLVED', message: '来源不明' }, asset_binding: null })
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '查看身份' }))
+  expect(await screen.findByText(/请重新导入包含 identity_evidence.json/)).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '检查并关联身份' })).not.toBeInTheDocument()
+})
+
+test('blocked fetch shows server reasons and does not queue a data job', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets' || path === '/api/jobs') return Response.json({ items: [], next_cursor: null })
+    if (path === '/api/capabilities/check') return Response.json({ operation: 'fetch', status: 'blocked', request_hash: null, dataset_version_id: null, input_hashes: {}, checks: [{ name: 'source', status: 'blocked', field_path: 'instruments.0', code: 'DEFINITION_UNAVAILABLE', message: '股票数据源未接入' }], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await screen.findByText(/尚无已验证数据版本/)
+  await userEvent.selectOptions(screen.getByLabelText('标的类型'), 'stock')
+  await userEvent.type(screen.getByLabelText('标的代码'), '600000')
+  await userEvent.click(screen.getByRole('button', { name: '发起获取' }))
+  expect(await screen.findByText(/股票数据源未接入/)).toBeInTheDocument()
+  expect(vi.mocked(fetch).mock.calls.some(([url]) => url === '/api/jobs/data')).toBe(false)
+})
+
+test('fetch report clears on edits and an old check cannot submit or restore it', async () => {
+  let checks = 0
+  let jobs = 0
+  let finishCheck: ((response: Response) => void) | undefined
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const path = String(input)
+    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
+    if (path === '/api/datasets' || path === '/api/jobs') return Response.json({ items: [], next_cursor: null })
+    if (path === '/api/capabilities/check') { checks += 1; if (checks === 2) return new Promise<Response>(resolve => { finishCheck = resolve }); return Response.json({ operation: 'fetch', status: 'ready', request_hash: 'h', dataset_version_id: null, input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null }) }
+    if (path === '/api/jobs/data') { jobs += 1; return Response.json({ id: 'j1', kind: 'fetch', state: 'succeeded', result: { state: 'complete', market_prefetch_state: 'ready', dataset_version_id: 'd1' } }) }
+    throw new Error(`unexpected ${path}`)
+  }))
+  renderApp()
+  await screen.findByText(/尚无已验证数据版本/)
+  await userEvent.type(screen.getByLabelText('标的代码'), '512480')
+  await userEvent.click(screen.getByRole('button', { name: '发起获取' }))
+  expect(await screen.findByText(/服务端检查：可执行/)).toBeInTheDocument()
+  await userEvent.type(screen.getByLabelText('标的代码'), '0')
+  expect(screen.queryByText(/服务端检查：可执行/)).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '发起获取' }))
+  await waitFor(() => expect(checks).toBe(2))
+  await userEvent.type(screen.getByLabelText('基准代码'), '1')
+  await act(async () => { finishCheck!(Response.json({ operation: 'fetch', status: 'ready', request_hash: 'stale', dataset_version_id: null, input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })); await Promise.resolve() })
+  expect(screen.queryByText(/服务端检查：可执行/)).not.toBeInTheDocument()
+  expect(jobs).toBe(1)
 })

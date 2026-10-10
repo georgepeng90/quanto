@@ -50,6 +50,8 @@ label input,label select,label textarea{margin-top:4px;font-weight:400}
 .callout{background:#f9fbfb;border:1px solid #d7e3e5;border-radius:6px;padding:11px 13px}
 .callout.error{background:#fff7f4;border-color:#edcbc2}
 .callout.success{background:#f0faf6;border-color:#c4dfd3}
+.framework-detail,.framework-detail .record,.framework-detail li{min-inline-size:0;overflow-wrap:anywhere}
+.framework-detail .record-list>button{text-align:left;width:100%}
 .record-list{display:grid;gap:10px}
 .record{border:1px solid #dfe7e9;border-radius:6px;padding:12px 13px}
 .record-head{justify-content:flex-start;align-items:center}

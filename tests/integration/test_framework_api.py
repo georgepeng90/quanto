@@ -52,13 +52,6 @@ def test_capability_check_accepts_discriminator_and_reports_blocking(tmp_path):
         assert checked.json()["status"] in {"ready", "blocked"}
         assert client.post("/api/capabilities/check", json={**body, "operation": "unknown"},
                            headers=headers).status_code == 422
-        assert client.post("/api/datasets/unknown/asset-binding", headers=headers,
-                           json={"evidence_ref": "x", "idempotency_key": "key", "assets": []}).status_code == 422
-        blocked = client.post("/api/investing/models/unknown/framework-binding", headers=headers,
-                              json={"idempotency_key": "bind-1"})
-        assert blocked.status_code == 422
-        assert blocked.json()["code"] == "FRAMEWORK_BLOCKED"
-        assert blocked.json()["details"]["report"]["status"] == "blocked"
         fetch = client.post("/api/jobs/data", headers=headers, json={"kind": "fetch", "payload": {
             key: value for key, value in {**body, "auxiliary": {"unknown": {"columns": ["x"]}}}.items()
             if key != "operation"}})
@@ -67,37 +60,16 @@ def test_capability_check_accepts_discriminator_and_reports_blocking(tmp_path):
         assert fetch.json()["details"]["report"]["status"] == "blocked"
 
 
-def test_fixed_request_preserves_source_experiment_revision_when_saved(tmp_path):
-    from tests.integration.test_snapshot_submission import _ready
-
-    store, original, _, _ = _ready(tmp_path)
-    app = create_app(store.root)
-    with TestClient(app, base_url="http://127.0.0.1:8765") as client:
-        token = client.get("/api/session").json()["token"]
-        headers = {"Authorization": f"Bearer {token}"}
-        payload = {**original.payload, "source_experiment_ref": {
-            "experiment_id": original.id, "revision": original.revision}}
-        created = client.post("/api/experiments", headers=headers, json={"payload": payload})
-        assert created.status_code == 200, created.text
-        saved = created.json()
-        assert saved["id"] != original.id
-        assert saved["payload"]["source_experiment_ref"] == payload["source_experiment_ref"]
-        assert client.get(f"/api/experiments/{original.id}", headers=headers).json()["payload"] == original.payload
-        invalid = client.post("/api/experiments", headers=headers, json={"payload": {
-            **payload, "source_experiment_ref": {"experiment_id": original.id, "revision": 0}}})
-        assert invalid.status_code == 422
-
-
-def test_legacy_writes_require_framework_migration(tmp_path):
+def test_retired_write_routes_are_absent(tmp_path):
     app = create_app(tmp_path / "workbench")
     with TestClient(app, base_url="http://127.0.0.1:8765") as client:
         token = client.get("/api/session").json()["token"]
         headers = {"Authorization": f"Bearer {token}"}
         for path in ("/api/learning/datasets", "/api/learning/train", "/api/learning/backtests",
-                     "/api/investing/train", "/api/investing/backtests"):
+                     "/api/investing/train", "/api/investing/backtests",
+                     "/api/datasets/unknown/asset-binding", "/api/models/unknown/bind"):
             response = client.post(path, json={}, headers=headers)
-            assert response.status_code == 422, (path, response.text)
-            assert response.json()["code"] == "MIGRATION_REQUIRED"
+            assert response.status_code in {404, 405}, (path, response.text)
 
 
 def test_submission_condition_change_is_conflict_with_current_report(tmp_path, monkeypatch):

@@ -6,7 +6,6 @@ from uuid import uuid4
 
 import pytest
 
-from quanto.backtest.dataset_identity import EVIDENCE_FILE, PublishedIdentityEvidence
 from quanto.objects import digest, json_bytes
 from quanto.learning.registry import hash_files
 from quanto.workbench.configuration import FrameworkResolver
@@ -21,18 +20,16 @@ FETCH = {"instruments": [{"exchange": "SZSE", "instrument_type": "etf", "code": 
          "start_date": "2024-01-01", "end_date": "2024-01-05"}
 
 
-def test_dataset_detail_exposes_only_published_identity_evidence(tmp_path):
+def test_dataset_detail_exposes_current_asset_identities(tmp_path):
     service = WorkbenchService(tmp_path / "workspace")
     source = dataset_case(tmp_path / "source")
     dataset = service.store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
     detail = service.dataset_detail(dataset.id)
-    published = PublishedIdentityEvidence.model_validate_json((dataset.path / EVIDENCE_FILE).read_bytes())
-    assert detail["identity_evidence_ref"] == published.ref
     assert detail["asset_binding"]["dataset_version_id"] == dataset.id
-    assert detail["identity_binding_issue"] is None
+    assert detail["instruments"][0]["instrument_id"]["instrument_type"] == "etf"
 
 
-def test_historical_dataset_without_evidence_remains_readable_with_reason(tmp_path):
+def test_dataset_without_current_binding_is_rejected(tmp_path):
     service = WorkbenchService(tmp_path / "workspace")
     source = dataset_case(tmp_path / "source")
     identity = str(uuid4())
@@ -43,11 +40,8 @@ def test_historical_dataset_without_evidence_remains_readable_with_reason(tmp_pa
     with service.store.transaction() as db:
         db.execute("INSERT INTO datasets VALUES (?,?,?,?)", (identity, str(target), digest(json_bytes(files)),
                    (target / "manifest.json").read_text(encoding="utf-8")))
-    detail = service.dataset_detail(identity)
-    assert detail["instruments"]
-    assert detail["asset_binding"] is None
-    assert detail["identity_evidence_ref"] is None
-    assert detail["identity_binding_issue"]["code"] == "IDENTITY_UNRESOLVED"
+    with pytest.raises(KeyError):
+        service.dataset_detail(identity)
 
 
 def test_clone_new_run_uses_frozen_public_request_with_source(tmp_path):

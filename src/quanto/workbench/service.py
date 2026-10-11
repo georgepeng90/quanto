@@ -158,66 +158,23 @@ class WorkbenchService:
         return result
 
     def dataset_detail(self, identity: str) -> dict:
-        from quanto.backtest.dataset_identity import (EVIDENCE_FILE, PublishedIdentityEvidence,
-                                                     declared_dataset_files, file_digests)
         from quanto.workbench.bindings import BindingStore
         from quanto.workbench.dataset_objects import verify_dataset_version
 
         dataset = self.store.get_dataset(identity)
+        binding = BindingStore(self.store).get_asset_binding(identity)
+        bundle = load_dataset(verify_dataset_version(dataset))
+        binding.validate_symbols(tuple(bundle.instruments.symbol))
+        by_local = {item.local_symbol: item.instrument_id for item in binding.assets}
         detail = self._record(dataset)
-        root = verify_dataset_version(dataset)
-        instruments = load_dataset(root).instruments
         detail["instruments"] = [
-            {"symbol": str(row.symbol), "lot_size": int(row.lot_size),
-             "settlement_sessions": int(row.settlement_sessions),
+            {"symbol": str(row.symbol), "instrument_id": by_local[str(row.symbol)].model_dump(mode="json"),
+             "lot_size": int(row.lot_size), "settlement_sessions": int(row.settlement_sessions),
              "listing_date": row.listing_date.date().isoformat() if hasattr(row.listing_date, "date") else str(row.listing_date),
              "group": str(row.group)}
-            for row in instruments.itertuples(index=False)
+            for row in bundle.instruments.itertuples(index=False)
         ]
-        evidence_ref = None
-        issue = None
-        published_path = root / EVIDENCE_FILE
-        if published_path.is_file() and not published_path.is_symlink():
-            try:
-                published = PublishedIdentityEvidence.model_validate_json(published_path.read_bytes())
-                if dict(published.output_files) != file_digests(declared_dataset_files(root)):
-                    raise ValueError("published import output hashes differ from dataset")
-                evidence_ref = published.ref
-            except ValueError as exc:
-                issue = {"code": "BINDING_MISMATCH", "message": str(exc)}
-        else:
-            source = self.store.dataset_market_source(identity)
-            if source is not None:
-                try:
-                    from quanto.data import MarketData, MarketDataError
-
-                    market_root = self.store.market_root
-                    try:
-                        job = self.store.get_job(identity)
-                    except KeyError:
-                        job = None
-                    if job is not None and job.input_path:
-                        market_root = Path(json.loads(Path(job.input_path).read_text(encoding="utf-8"))["input"]["market_root"])
-                    with MarketData(market_root, providers=()) as market:
-                        verified = market.resolve_snapshot(source["id"])
-                    if verified.manifest_digest != source["manifest_digest"]:
-                        raise ValueError("registered market snapshot digest differs")
-                    evidence_ref = f"market:{source['id']}"
-                except (KeyError, OSError, ValueError, MarketDataError) as exc:
-                    issue = {"code": "BINDING_MISMATCH", "message": str(exc)}
-            else:
-                issue = {"code": "IDENTITY_UNRESOLVED", "message": "Dataset has no published identity evidence or registered market source"}
-        try:
-            binding = BindingStore(self.store).get_asset_binding(identity)
-        except KeyError:
-            binding = None
-            issue = issue or {"code": "IDENTITY_UNRESOLVED", "message": "Identity evidence is available, but no asset binding is registered"}
-        except ValueError as exc:
-            binding = None
-            issue = {"code": "BINDING_MISMATCH", "message": str(exc)}
-        detail["asset_binding"] = binding.model_dump(mode="json") if binding is not None else None
-        detail["identity_evidence_ref"] = evidence_ref
-        detail["identity_binding_issue"] = issue
+        detail["asset_binding"] = binding.model_dump(mode="json")
         return detail
 
     def _run_provenance(self, run) -> dict:

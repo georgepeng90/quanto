@@ -66,10 +66,6 @@ def build_parser() -> argparse.ArgumentParser:
                 entry.add_argument("identity")
                 if action == "rerun":
                     entry.add_argument("--json", required=True)
-        if name == "datasets":
-            bind = actions.add_parser("bind")
-            bind.add_argument("identity")
-            bind.add_argument("--json", required=True)
     baskets = commands.add_parser("baskets", help="Manage versioned baskets")
     basket_actions = baskets.add_subparsers(dest="action", required=True)
     basket_actions.add_parser("list")
@@ -86,10 +82,6 @@ def build_parser() -> argparse.ArgumentParser:
     capabilities = commands.add_parser("capabilities", help="Check framework capabilities")
     check = capabilities.add_subparsers(dest="action", required=True).add_parser("check")
     check.add_argument("--json", required=True)
-    models = commands.add_parser("models", help="Manage framework model bindings")
-    bind = models.add_subparsers(dest="action", required=True).add_parser("bind")
-    bind.add_argument("identity")
-    bind.add_argument("--json", required=True)
     compare = commands.add_parser("compare", help="比较运行")
     compare.add_argument("run_ids", nargs="+")
     learning = commands.add_parser("learning", help="分钟数据训练、模型和回测")
@@ -175,12 +167,6 @@ def main(argv: list[str] | None = None) -> int:
             result = client.get("/definitions")
         elif args.command == "capabilities":
             result = client.post("/capabilities/check", json.loads(Path(args.json).read_text(encoding="utf-8")))
-        elif args.command == "models":
-            result = client.post(f"/investing/models/{args.identity}/framework-binding",
-                                 json.loads(Path(args.json).read_text(encoding="utf-8")))
-        elif args.command == "datasets" and args.action == "bind":
-            result = client.post(f"/datasets/{args.identity}/asset-binding",
-                                 json.loads(Path(args.json).read_text(encoding="utf-8")))
         elif args.command in {"learning", "investing"}:
             prefix = f"/{args.command}"
             if args.action == "overview":

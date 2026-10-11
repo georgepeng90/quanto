@@ -112,8 +112,7 @@ def test_legacy_learning_writes_are_closed(tmp_path):
     headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
     for path in ('/api/learning/datasets', '/api/learning/train', '/api/learning/backtests'):
         response = client.post(path, headers=headers, json={'spec': {}, 'path': 'C:/private'})
-        assert response.status_code == 422
-        assert response.json()['code'] == 'MIGRATION_REQUIRED'
+        assert response.status_code in {404, 405}
     assert app.state.service.store.list_jobs() == []
 
 

@@ -15,5 +15,3 @@ def test_framework_commands_and_legacy_write_removal():
     assert parser.parse_args(["baskets", "revise", "basket-id", "--json", "request.json"]).identity == "basket-id"
     assert parser.parse_args(["definitions", "list"]).action == "list"
     assert parser.parse_args(["capabilities", "check", "--json", "request.json"]).action == "check"
-    assert parser.parse_args(["datasets", "bind", "dataset-id", "--json", "request.json"]).identity == "dataset-id"
-    assert parser.parse_args(["models", "bind", "model-id", "--json", "request.json"]).identity == "model-id"

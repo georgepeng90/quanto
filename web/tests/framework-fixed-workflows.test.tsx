@@ -78,14 +78,3 @@ test('editing after capability check starts discards its late ready response', a
   expect(screen.queryByLabelText('能力检查报告')).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: '提交回测' })).toBeDisabled()
 })
-
-test('late run source read cannot overwrite later form edits', async () => {
-  let resolve!: (value: any) => void
-  vi.spyOn(api, 'run').mockReturnValue(new Promise(done => { resolve = done }))
-  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/new?source_run_id=r1'] })
-  render(<RouterProvider router={router} />)
-  await waitFor(() => expect(api.run).toHaveBeenCalledWith('r1'))
-  fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: '用户新输入' } })
-  await act(async () => resolve({ run_id: 'r1', provenance: { sample_purpose: '旧运行', backtest_spec: { start: '2024-02-01', end: '2024-03-01', symbols: ['512480'] } } }))
-  expect(screen.getByLabelText('样本用途')).toHaveValue('用户新输入')
-})

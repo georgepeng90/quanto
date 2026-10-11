@@ -13,7 +13,7 @@ const row = (id: string, kind: BacktestCatalogRow['kind'], total_return: number 
   start: '2024-01-01', end: '2024-12-31', symbols: ['510300'],
   metrics: total_return === null ? null : { total_return, annual_return: total_return / 2, max_drawdown: .2, sharpe: 1 },
   conditions, comparison_key: 'same-conditions', detail_url: kind === 'fixed' ? `/runs/${id}` : kind === 'policy' ? `/investing?backtest=${id}` : `/learning?backtest=${id}`,
-  group_id: kind === 'fixed' ? 'batch-1' : null, identity_status: 'proven', canonical_assets: ['SSE:etf:510300'], asset_types: ['etf'], ...changes,
+  canonical_assets: ['SSE:etf:510300'], asset_types: ['etf'], ...changes,
 })
 const fixed = row('fixed-1', 'fixed', .1)
 const policy = row('policy-1', 'policy', .3)
@@ -68,7 +68,7 @@ test('compares aligned metrics and identifies the changed execution assumption',
   const comparison = screen.getByRole('table', { name: '所选回测指标比较' })
   expect(within(comparison).getByRole('row', { name: /累计收益率/ })).toHaveTextContent('10.00%')
   expect(within(comparison).getByRole('row', { name: /累计收益率/ })).toHaveTextContent('90.00%')
-  expect(screen.getByRole('row', { name: /execution/ })).toHaveTextContent('0.001')
+  expect(screen.getByRole('row', { name: /成交与成本/ })).toHaveTextContent('0.001')
   await userEvent.click(screen.getByLabelText('比较 policy-2'))
   await userEvent.click(screen.getByLabelText('比较 policy-1'))
   expect(screen.getByText('条件一致，可直接比较这些结果。')).toBeVisible()

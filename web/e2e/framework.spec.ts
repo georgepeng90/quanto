@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('stock baskets keep revision identity and explain unavailable execution in the four-domain workspace', async ({ page }, testInfo) => {
+test('stock portfolios preserve edits and explain unavailable execution in the four-domain workspace', async ({ page }, testInfo) => {
   const errors: string[] = [], submittedJobs: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/jobs/data')) submittedJobs.push(request.url()) })
@@ -15,22 +15,22 @@ test('stock baskets keep revision identity and explain unavailable execution in 
   await page.getByLabel('选择说明').fill('仅保存公司选择，尚未定义个股策略')
   await expect(page.getByText(/已安装定义中没有股票运行方案/)).toBeVisible()
   const createResponse = page.waitForResponse(response => response.url().endsWith('/api/baskets') && response.request().method() === 'POST')
-  await page.getByRole('button', { name: '保存篮子', exact: true }).click()
+  await page.getByRole('button', { name: '保存组合', exact: true }).click()
   const response = await createResponse
   expect(response.ok()).toBeTruthy()
   const first = await response.json()
-  await expect(page.getByRole('heading', { name: '编辑 E2E 公司选择 · 当前修订 1' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '编辑 E2E 公司选择' })).toBeVisible()
   await page.getByLabel('选择说明').fill('保留同一公司，补充选择理由')
-  await page.getByRole('button', { name: '创建新修订', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '编辑 E2E 公司选择 · 当前修订 2' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'E2E 公司选择 · 修订 2', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '保存组合', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '编辑 E2E 公司选择' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'E2E 公司选择', exact: true })).toBeVisible()
   const preserved = await (await page.request.get(`/api/baskets/${first.basket_id}/revisions/1`, { headers })).json()
   expect(preserved).toEqual(first)
   const definitions = await (await page.request.get('/api/definitions', { headers })).json()
   expect(definitions.items.every((item: { supported_instrument_types: string[] }) => item.supported_instrument_types.every(type => type === 'etf'))).toBe(true)
 
   await page.setViewportSize({ width: 390, height: 844 })
-  await expect(page.getByText(/已保存修订 2/)).toBeVisible()
+  await expect(page.getByText(/已保存 · SZSE:stock:000001/)).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('stock-basket-mobile.png') })
   await page.goto('/datasets?tab=versions')

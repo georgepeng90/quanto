@@ -65,7 +65,7 @@ test('preserves unsaved experiment edits on revision conflict and shows server r
   await userEvent.click(screen.getByRole('button', { name: '保存配置' }))
   await waitFor(() => expect(screen.getByText(/保存冲突/)).toBeInTheDocument())
   expect(screen.getByLabelText('初始资金')).toHaveValue(2000)
-  expect(screen.getAllByText(/服务端修订 2/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/配置已在别处更新/).length).toBeGreaterThan(0)
   expect(screen.getByLabelText('服务端实验内容')).toHaveTextContent('server-only')
   expect(screen.getByLabelText('样本用途')).toHaveValue('exploration')
   fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '3000' } })
@@ -78,7 +78,7 @@ test('shows source file and line for server AST syntax errors', async () => {
     throw new Error(`unexpected ${input}`)
   }))
   render(<StrategyEditor revision={strategy} onSaved={vi.fn()} onDirtyChange={vi.fn()} />)
-  await userEvent.click(screen.getByRole('button', { name: '保存新修订' }))
+  await userEvent.click(screen.getByRole('button', { name: '保存策略源码' }))
   expect(await screen.findByText(/helper.py:3/)).toBeInTheDocument()
 })
 
@@ -94,7 +94,7 @@ test('registers edited auxiliary source with the complete manifest', async () =>
   const editor = document.querySelector('.cm-editor') as HTMLElement
   const view = EditorView.findFromDOM(editor)!
   view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: 'value = 2' } })
-  await userEvent.click(screen.getByRole('button', { name: '保存新修订' }))
+  await userEvent.click(screen.getByRole('button', { name: '保存策略源码' }))
   await waitFor(() => expect(submitted).not.toBeNull())
   expect(submitted!.files['helper.py']).toBe('value = 2')
   expect(submitted!.files['strategy.py']).toContain('create_strategy')
@@ -111,7 +111,7 @@ test('declares a newly added Python source in the registered manifest', async ()
   render(<StrategyEditor revision={strategy} onSaved={vi.fn()} onDirtyChange={vi.fn()} />)
   await userEvent.type(screen.getByLabelText('新增源码文件'), 'filter.py')
   await userEvent.click(screen.getByRole('button', { name: '添加文件' }))
-  await userEvent.click(screen.getByRole('button', { name: '保存新修订' }))
+  await userEvent.click(screen.getByRole('button', { name: '保存策略源码' }))
   await waitFor(() => expect(submitted).not.toBeNull())
   expect(submitted!.manifest.auxiliary_sources).toContain('filter.py')
   expect(submitted!.files).toHaveProperty('filter.py')
@@ -331,7 +331,7 @@ test.each([false, true])('late source registration preserves newer buffer or swi
   }))
   const props = { onSaved, onDirtyChange: vi.fn() }
   const view = render(<StrategyEditor revision={strategy} {...props} />)
-  await userEvent.click(screen.getByRole('button', { name: '保存新修订' }))
+  await userEvent.click(screen.getByRole('button', { name: '保存策略源码' }))
   await waitFor(() => expect(release).toBeDefined())
   if (switched) view.rerender(<StrategyEditor revision={{ ...strategy, id: 's3', files: { ...strategy.files, 'strategy.py': 'switched source' } }} {...props} />)
   const editor = EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!
@@ -450,7 +450,7 @@ test('current draft cloning preserves dirty source until saved and still clones 
   expect(screen.getByText('未保存', { exact: true })).toBeVisible()
   expect(screen.getByText(/请先保存策略源码，或切换配置并确认放弃源码修改，再复制/)).toBeVisible()
   expect(screen.getByLabelText('已保存配置')).toHaveValue('e1')
-  await userEvent.click(screen.getByRole('button', { name: '保存新修订' }))
+  await userEvent.click(screen.getByRole('button', { name: '保存策略源码' }))
   await waitFor(() => expect(savedFiles?.['strategy.py']).toBe(edited))
   await waitFor(() => expect(clone).toBeEnabled())
   fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: 'unsaved configuration to clone' } })

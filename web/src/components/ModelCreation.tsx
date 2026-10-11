@@ -110,11 +110,11 @@ export function ModelCreation({ overview, onCreated }: { overview: InvestingOver
   return <section className="panel"><h2>新建模型</h2><p>选择已保存的有序篮子和实际可用的学习、交易定义。创建仅保存模型，训练另行提交。</p>
     {error && <p role="alert" className="error">{error}</p>}
     <fieldset disabled={busy}><div className="form-grid">
-      <label>日线数据版本<select value={datasetId} onChange={event => setDatasetId(event.target.value)}><option value="">请选择数据版本</option>{overview.datasets.map(item => <option key={item.id} value={item.id}>{item.id} · {item.manifest.data_start}—{item.manifest.data_end}</option>)}</select></label>
-      <label>学习定义<select value={learningId} onChange={event => { setLearningId(event.target.value); setTradingId(''); setLearningParams({}) }}><option value="">请选择学习定义</option>{definitions.filter(item => item.ref.kind === 'learning').map(item => <option key={definitionKey(item.ref)} value={definitionKey(item.ref)}>{item.ref.id} · {item.ref.version}</option>)}</select></label>
-      <label>交易定义<select value={tradingId} onChange={event => setTradingId(event.target.value)}><option value="">请选择匹配的交易定义</option>{trading.map(item => <option key={definitionKey(item.ref)} value={definitionKey(item.ref)}>{item.ref.id} · {item.ref.version}</option>)}</select></label>
+      <label>日线数据版本<select value={datasetId} onChange={event => setDatasetId(event.target.value)}><option value="">请选择数据版本</option>{overview.datasets.map(item => <option key={item.id} value={item.id}>{item.manifest.source} · {item.manifest.data_start}—{item.manifest.data_end}</option>)}</select></label>
+      <label>学习定义<select value={learningId} onChange={event => { setLearningId(event.target.value); setTradingId(''); setLearningParams({}) }}><option value="">请选择学习定义</option>{definitions.filter(item => item.ref.kind === 'learning').map(item => <option key={definitionKey(item.ref)} value={definitionKey(item.ref)}>{item.ref.id}</option>)}</select></label>
+      <label>交易定义<select value={tradingId} onChange={event => setTradingId(event.target.value)}><option value="">请选择匹配的交易定义</option>{trading.map(item => <option key={definitionKey(item.ref)} value={definitionKey(item.ref)}>{item.ref.id}</option>)}</select></label>
     </div><BasketRevisionSelect value={basket} onChange={setBasket} disabled={busy} />
-      {learning && <><p>动作：{String(learning.action_version)} · 奖励：{String(learning.reward_version)}。奖励目标与实际净收益分别记录。</p>
+      {learning && <>
         <ParameterForm key={definitionKey(learning.ref)} schema={parameterSchema} value={learningParams} showJson={false}
           idPrefix="model-learning" onChange={setLearningParams} onValidityChange={setParamsValid} /></>}
       <div className="form-grid"><label>模型名称<input value={spec.name} onChange={event => setSpec({ ...spec, name: event.target.value })} /></label>

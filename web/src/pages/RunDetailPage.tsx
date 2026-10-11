@@ -109,7 +109,6 @@ export function RunDetailPage() {
   }
   const clone = async () => {
     if (cloneBusy) return
-    if (!run?.provenance?.framework) { navigate('/experiments/new?source_run_id=' + encodeURIComponent(id)); return }
     setCloneBusy(true)
     const signal = mountController.current?.signal
     try { const draft = await api.cloneRun(id); if (!signal?.aborted) navigate(`/experiments/${encodeURIComponent(draft.id)}`) }

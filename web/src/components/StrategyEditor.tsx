@@ -53,13 +53,13 @@ export function StrategyEditor({ revision, onSaved, onDirtyChange }: { revision:
       if (undeclared.length) throw new Error(`源码未列入 auxiliary_sources：${undeclared.join('、')}`)
       const saved = await api.registerStrategy(manifest, files)
       if (submittedIdentity !== identity.current) return
-      if (submittedGeneration !== generation.current) { setMessage(`已注册提交时的修订 ${saved.id}；后续源码修改仍未保存。`); return }
-      setDirty(false); onDirtyChange(false); setMessage(`已注册新修订 ${saved.id}`); onSaved({ ...saved, files })
+      if (submittedGeneration !== generation.current) { setMessage('提交时的策略源码已保存；后续修改仍未保存。'); return }
+      setDirty(false); onDirtyChange(false); setMessage('策略源码已保存'); onSaved({ ...saved, files })
     } catch (error) { if (submittedIdentity === identity.current) setMessage(describeError(error)) }
     finally { setSaving(false) }
   }
   return <section className="panel strategy-editor">
-    <div className="section-heading"><div><h2>策略源码</h2><p>保存会注册不可变新修订；服务端先做 AST 检查，运行验证需另行执行。</p></div><button type="button" onClick={save} disabled={saving}>保存新修订</button></div>
+    <div className="section-heading"><div><h2>策略源码</h2><p>服务端先检查源码，运行验证需另行执行。</p></div><button type="button" onClick={save} disabled={saving}>保存策略源码</button></div>
     <div className="editor-layout"><div className="file-list" aria-label="源码文件">{Object.keys(files).sort().map(name => <button type="button" className={active === name ? 'selected' : ''} key={name} onClick={() => setActive(name)}>{name}</button>)}
       <label htmlFor="new-source">新增源码文件</label><input id="new-source" value={newName} onChange={event => setNewName(event.target.value)} placeholder="helper.py" /><button type="button" onClick={add}>添加文件</button><button type="button" onClick={remove} disabled={active === 'strategy.json'}>移除当前文件</button></div>
       <div className="source-pane"><div className="source-heading"><strong>{active}</strong>{dirty && <span className="badge warn">未保存</span>}</div><CodeMirror key={active} aria-label={`${active} 源码`} value={files[active] || ''} height="310px" extensions={[active.endsWith('.json') ? json() : python()]} onChange={value => change(active, value)} /></div></div>

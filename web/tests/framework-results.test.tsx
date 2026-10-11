@@ -40,17 +40,16 @@ const catalogRow = (id: string, changes: Partial<BacktestCatalogRow> = {}): Back
   id, job_id: id, kind: 'fixed', name: id, method: 'fixed', state: 'succeeded', created_at: null,
   finished_at: null, error: null, start: '2024-01-01', end: '2024-12-31', symbols: ['000001'],
   metrics: { total_return: .1 }, conditions: {}, comparison_key: 'economic-key', detail_url: `/runs/${id}`,
-  identity_status: 'proven', asset_types: ['stock'], canonical_assets: ['SZSE:stock:000001'],
+  asset_types: ['stock'], canonical_assets: ['SZSE:stock:000001'],
   basket_revision_ref: { basket_id: 'companies', revision: 2 }, dataset_source: 'Source A', ...changes,
 })
 
 test('catalog filters by asset type without identity status', async () => {
   render(<MemoryRouter><BacktestCatalog rows={[catalogRow('company'), catalogRow('fund', {
     asset_types: ['etf'], canonical_assets: ['SSE:etf:000001'], basket_revision_ref: { basket_id: 'funds', revision: 1 }, dataset_source: 'Source B',
-  }), catalogRow('old', { identity_status: 'unknown', canonical_assets: [], comparison_key: null })]} complete busy={false} refresh={() => {}} /></MemoryRouter>)
+  })]} complete busy={false} refresh={() => {}} /></MemoryRouter>)
   await userEvent.selectOptions(screen.getByLabelText('资产类型筛选'), 'stock')
   expect(screen.getByRole('link', { name: 'company' })).toBeVisible()
-  expect(screen.getByRole('link', { name: 'old' })).toBeVisible()
   expect(screen.queryByRole('link', { name: 'fund' })).toBeNull()
   expect(screen.queryByLabelText('篮子修订筛选')).toBeNull()
   expect(screen.queryByLabelText('批次筛选')).toBeNull()

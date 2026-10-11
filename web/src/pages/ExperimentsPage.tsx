@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, ApiError, describeError } from '../api'
 import { BasketRevisionSelect } from '../components/BasketRevisionSelect'
 import { CapabilityReport } from '../components/CapabilityReport'
 import { ParameterForm } from '../components/ParameterForm'
 import { StrategyEditor } from '../components/StrategyEditor'
 import type { BacktestInput, CapabilityReport as Report, TradingDefinitionRef } from '../frameworkTypes'
-import type { DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, RunRecord, StrategyRevision } from '../types'
+import type { DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, StrategyRevision } from '../types'
 
 // Explicit input scaffold. These numbers are visible starting points, not recommended account settings.
 const inputSpec: BacktestInput = { start: '', end: '', initial_cash: 0, seed: 0, execution: { model: 'next_open', commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0 }, risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' }, metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } }
@@ -42,7 +42,6 @@ function JsonField({ label, value, onChange, onValidityChange }: { label: string
 export function ExperimentsPage({ onDirtyChange, allowNextNavigation }: { onDirtyChange: (dirty: boolean) => void; allowNextNavigation: () => void }) {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [search] = useSearchParams()
   const editorIdentity = useRef(0)
   const editorDraftId = useRef<string | null>(null)
   const requestedDraftId = useRef<string | null>(null)
@@ -101,22 +100,6 @@ export function ExperimentsPage({ onDirtyChange, allowNextNavigation }: { onDirt
     try { const selected = await api.experiment(id); if (identity !== editorIdentity.current) return; editorDraftId.current = id; setExperiments(old => appendUnique(old, [selected])); setDraft(selected); setPayload(structuredClone(selected.payload)); setDirtyDraft(false); setDirtySource(false) } catch (error) { if (identity === editorIdentity.current) setDraftError(describeError(error)) } finally { if (identity === editorIdentity.current) setLoadingDraft(false) }
   }
   useEffect(() => { if (id && editorDraftId.current !== id) void selectDraft(id); else if (!id && (requestedDraftId.current || editorDraftId.current || draftError)) void selectDraft('') }, [id])
-  useEffect(() => {
-    const sourceId = !id ? search.get('source_run_id') : null
-    if (!sourceId) return
-    let active = true
-    const generation = editGeneration.current
-    api.run(sourceId).then((run: RunRecord) => {
-      if (!active || generation !== editGeneration.current) return
-      const provenance = run.provenance || {}
-      const raw = provenance.backtest_spec
-      if (!raw || typeof raw !== 'object') { setMessage('来源运行缺少回测条件，请手动填写新草稿。'); return }
-      const { symbols: _symbols, ...spec } = raw as Record<string, unknown>
-      update({ ...emptyPayload(), source_run_id: sourceId, dataset_version_id: String(provenance.dataset_version_id || ''), strategy_revision_id: String(provenance.strategy_revision_id || ''), strategy_params: (provenance.effective_strategy_params && typeof provenance.effective_strategy_params === 'object' ? provenance.effective_strategy_params : {}) as Record<string, unknown>, sample_purpose: String(provenance.sample_purpose || ''), backtest_spec: { ...structuredClone(inputSpec), ...spec } })
-      setMessage('已载入回测条件。请选择标的组合和交易策略，再保存配置。')
-    }).catch(error => { if (active && generation === editGeneration.current) setMessage(describeError(error)) })
-    return () => { active = false }
-  }, [id, search.get('source_run_id')])
   useEffect(() => () => { editorIdentity.current += 1 }, [])
   const save = async () => {
     if (saving || loadingDraft || draftError) return
@@ -132,18 +115,18 @@ export function ExperimentsPage({ onDirtyChange, allowNextNavigation }: { onDirt
       runAttempt.current = null
       setExperiments(old => [...old.filter(item => item.id !== saved.id), saved])
       if (identity !== editorIdentity.current) return
-      setDraft(saved); if (generation === editGeneration.current) { setPayload(structuredClone(saved.payload)); setDirtyDraft(false) }; setConflictRevision(null); setConflictServer(null); setMessage(`已保存实验修订 ${saved.revision}`)
+      setDraft(saved); if (generation === editGeneration.current) { setPayload(structuredClone(saved.payload)); setDirtyDraft(false) }; setConflictRevision(null); setConflictServer(null); setMessage('配置已保存')
       editorDraftId.current = saved.id
       requestedDraftId.current = saved.id
       if (!id) { allowNextNavigation(); navigate(`/experiments/${encodeURIComponent(saved.id)}`, { replace: true }) }
       try { const checked = await api.checkCapabilities({ operation: 'fixed_backtest', ...saved.payload }); if (identity === editorIdentity.current && generation === editGeneration.current) setReport(checked) }
-      catch (error) { if (identity === editorIdentity.current && generation === editGeneration.current) { if (error instanceof ApiError && error.details.report) setReport(error.details.report as Report); else setMessage(`已保存实验修订 ${saved.revision}；能力检查失败：${describeError(error)}`) } }
+      catch (error) { if (identity === editorIdentity.current && generation === editGeneration.current) { if (error instanceof ApiError && error.details.report) setReport(error.details.report as Report); else setMessage(`配置已保存；能力检查失败：${describeError(error)}`) } }
     } catch (error) {
       if (identity !== editorIdentity.current) return
       if (error instanceof ApiError && error.details.report) setReport(error.details.report as Report)
       if (error instanceof ApiError && error.status === 409 && draft) {
         setConflictRevision(null); setConflictServer(null)
-        try { const server = await api.experiment(draft.id); if (identity !== editorIdentity.current) return; setConflictRevision(server.revision); setConflictServer(server); setMessage(`保存冲突：服务端修订 ${server.revision}。本地修改已保留；请复制需要的内容后重新载入。`) } catch { setMessage('保存冲突：无法读取服务端修订，本地修改已保留。') }
+        try { const server = await api.experiment(draft.id); if (identity !== editorIdentity.current) return; setConflictRevision(server.revision); setConflictServer(server); setMessage('保存冲突：配置已在别处更新。本地修改已保留；请复制需要的内容后重新载入。') } catch { setMessage('保存冲突：无法读取服务端配置，本地修改已保留。') }
       } else setMessage(describeError(error))
     } finally { setSaving(false) }
   }
@@ -166,7 +149,7 @@ export function ExperimentsPage({ onDirtyChange, allowNextNavigation }: { onDirt
   const savedStrategy = (saved: StrategyRevision) => { setStrategies(old => [...old, saved]); update({ ...payload, strategy_revision_id: saved.id, strategy_params: {} }); setStrategy(saved); setDirtySource(false); setValidation(null) }
   const reloadServerDraft = async () => {
     if (!draft || !window.confirm('重新载入将丢弃本地未保存修改。确定继续吗？')) return
-    try { const server = await api.experiment(draft.id); validationGeneration.current += 1; reportGeneration.current += 1; setReport(null); setValidation(null); setDraft(server); setPayload(structuredClone(server.payload)); setDirtyDraft(false); setConflictRevision(null); setConflictServer(null); setMessage(`已载入服务端修订 ${server.revision}`) } catch (error) { setMessage(describeError(error)) }
+    try { const server = await api.experiment(draft.id); validationGeneration.current += 1; reportGeneration.current += 1; setReport(null); setValidation(null); setDraft(server); setPayload(structuredClone(server.payload)); setDirtyDraft(false); setConflictRevision(null); setConflictServer(null); setMessage('已载入最新配置') } catch (error) { setMessage(describeError(error)) }
   }
   const validateStrategy = async () => { if (!paramsValid || dirtySource || !payload.strategy_revision_id) return; const generation = ++validationGeneration.current; setValidation(null); try { const job = await api.validateStrategy(payload.strategy_revision_id, payload.strategy_params); if (validationGeneration.current === generation) { setValidation(job); setMessage('策略验证已排队；有效性以独立工作进程结果为准。') } } catch (error) { if (validationGeneration.current === generation) setMessage(describeError(error)) } }
   const parameterValidityChanged = (valid: boolean) => { setParamsValid(valid); if (!valid) { editGeneration.current += 1; reportGeneration.current += 1; setReport(null); setDirtyDraft(true); validationGeneration.current += 1; setValidation(null) } }
@@ -179,9 +162,9 @@ export function ExperimentsPage({ onDirtyChange, allowNextNavigation }: { onDirt
     {report && <CapabilityReport report={report} />}
     <section className="panel"><div className="section-heading"><div><h2>固定策略配置</h2><p>保存配置后由服务端检查运行能力。</p></div></div><div className="inline-actions"><label>已保存配置<select value={draft?.id || ''} onChange={event => navigate(event.target.value ? `/experiments/${encodeURIComponent(event.target.value)}` : '/experiments/new')}><option value="">新建配置</option>{experiments.map(item => <option value={item.id} key={item.id}>{String(strategies.find(strategy => strategy.id === item.payload.strategy_revision_id)?.manifest.name || '固定策略')} · {item.payload.backtest_spec.start}—{item.payload.backtest_spec.end}</option>)}</select></label>{experimentCursor && <button type="button" onClick={loadMoreExperiments}>加载更多配置</button>}<button type="button" onClick={() => { if (dirtySource) return; if (!dirty || window.confirm('当前修改尚未保存，仍要克隆吗？')) { editorIdentity.current += 1; editorDraftId.current = null; requestedDraftId.current = null; setDraft(null); setDirtyDraft(true); setConflictRevision(null); setConflictServer(null); setMessage('已克隆到未保存的新配置，请保存以创建独立配置。'); allowNextNavigation(); navigate('/experiments/new') } }} disabled={!draft || dirtySource}>复制为新配置</button><button type="button" onClick={save} disabled={saving}>保存配置</button><button type="button" onClick={() => void checkCapabilities()} disabled={checking || dirtySource}>检查运行能力</button><button type="button" onClick={() => void submitRun()} disabled={!draft || dirty || saving || report?.status !== 'ready'}>提交回测</button></div>{dirtySource && <p className="callout">请先保存策略源码，或切换配置并确认放弃源码修改，再复制。</p>}{dirtyDraft && <p className="badge warn">配置未保存</p>}{conflictRevision !== null && <p>配置已在别处更新；本地输入保持原样。<button type="button" onClick={reloadServerDraft} disabled={saving}>重新载入</button></p>}</section>
     <section className="panel"><h2>标的组合与交易策略</h2><BasketRevisionSelect value={payload.basket_revision_ref.basket_id ? payload.basket_revision_ref : null} onChange={value => update({ ...payload, basket_revision_ref: value || { basket_id: '', revision: 0 } })} /><label>交易策略<select value={payload.trading_definition_ref.id ? `${payload.trading_definition_ref.id}:${payload.trading_definition_ref.version}` : ''} onChange={event => update({ ...payload, trading_definition_ref: tradingDefinitions.find(item => `${item.id}:${item.version}` === event.target.value) || { kind: 'trading', id: '', version: '' } })}><option value="">请选择交易策略</option>{tradingDefinitions.map(item => <option value={`${item.id}:${item.version}`} key={`${item.id}:${item.version}`}>{item.id}</option>)}</select></label></section>
-    <div className="two-column"><section className="panel"><h2>数据版本</h2><label>选择数据<select value={payload.dataset_version_id} onChange={event => update({ ...payload, dataset_version_id: event.target.value })}><option value="">请选择已验证版本</option>{datasets.map(item => <option value={item.id} key={item.id}>{item.manifest.source} · {item.id.slice(0, 8)}</option>)}</select></label>{datasetCursor && <button type="button" onClick={loadMoreDatasets}>加载更多数据版本</button>}{dataset ? <div className="record compact"><p>{dataset.manifest.is_demo ? '演示数据' : '真实来源声明'} · {dataset.manifest.price_mode === 'raw_cash' ? '原始价格现金账户' : '复权研究价'}</p><p>价格 {dataset.manifest.data_start} — {dataset.manifest.data_end}</p><p>日历 {dataset.manifest.calendar_start} — {dataset.manifest.calendar_end} · 事件 {dataset.manifest.event_coverage}</p>{dataset.manifest.limitations?.length > 0 && <p>限制：{dataset.manifest.limitations.join('；')}</p>}</div> : <p className="empty">请选择数据版本。</p>}</section>
+    <div className="two-column"><section className="panel"><h2>数据版本</h2><label>选择数据<select value={payload.dataset_version_id} onChange={event => update({ ...payload, dataset_version_id: event.target.value })}><option value="">请选择已验证版本</option>{datasets.map(item => <option value={item.id} key={item.id}>{item.manifest.source} · {item.manifest.data_start + ' - ' + item.manifest.data_end}</option>)}</select></label>{datasetCursor && <button type="button" onClick={loadMoreDatasets}>加载更多数据版本</button>}{dataset ? <div className="record compact"><p>{dataset.manifest.is_demo ? '演示数据' : '真实来源声明'} · {dataset.manifest.price_mode === 'raw_cash' ? '原始价格现金账户' : '复权研究价'}</p><p>价格 {dataset.manifest.data_start} — {dataset.manifest.data_end}</p><p>日历 {dataset.manifest.calendar_start} — {dataset.manifest.calendar_end} · 事件 {dataset.manifest.event_coverage}</p>{dataset.manifest.limitations?.length > 0 && <p>限制：{dataset.manifest.limitations.join('；')}</p>}</div> : <p className="empty">请选择数据版本。</p>}</section>
       <section className="panel"><h2>策略</h2><label>选择策略<select value={payload.strategy_revision_id} onChange={event => selectStrategy(event.target.value)}><option value="">新建策略</option>{strategies.map(item => <option value={item.id} key={item.id}>{String(item.manifest.name || item.manifest.entrypoint)}</option>)}</select></label>{strategyCursor && <button type="button" onClick={loadMoreStrategies}>加载更多策略</button>}<button disabled={!payload.strategy_revision_id || dirtySource || !paramsValid} onClick={validateStrategy}>验证当前策略与参数</button>{validation && <p>{validation.state === 'succeeded' && validation.result?.valid === true ? `策略有效 · 预热 ${validation.result.warmup_bars} 根` : validation.state === 'succeeded' ? '策略未通过验证' : `验证任务 ${validationStateLabel[validation.state] || validation.state}`}{validation.error ? ` · ${validation.error}` : ''}</p>}<p className="muted">{dataset && spec.start ? `数据从 ${dataset.manifest.data_start} 开始，回测从 ${spec.start} 开始。` : ''}起始日前所需日线由运行时核验。</p></section></div>
-    {conflictServer && <section className="panel"><h2>服务端实验内容（只读）· 修订 {conflictServer.revision}</h2><textarea aria-label="服务端实验内容" readOnly rows={16} value={JSON.stringify(conflictServer.payload, null, 2)} /></section>}
+    {conflictServer && <section className="panel"><h2>服务端配置（只读）</h2><textarea aria-label="服务端实验内容" readOnly rows={16} value={JSON.stringify(conflictServer.payload, null, 2)} /></section>}
     <StrategyEditor key={`${editorIdentity.current}:${payload.strategy_revision_id}`} revision={strategy} onSaved={savedStrategy} onDirtyChange={sourceDirtyChanged} />
     <section className="panel"><h2>策略参数</h2>{strategy ? <ParameterForm key={`${editorIdentity.current}:${strategy.id}`} schema={strategy.manifest.parameter_schema} value={payload.strategy_params} onChange={value => update({ ...payload, strategy_params: value })} onValidityChange={parameterValidityChanged} /> : <p className="empty">选择或保存策略后编辑参数。</p>}</section>
     <section className="panel"><h2>样本与回测范围</h2><div className="form-grid"><label>样本用途<input value={payload.sample_purpose} onChange={event => update({ ...payload, sample_purpose: event.target.value })} placeholder="例如：探索 / 验证" /></label><label>绩效起始日<input type="date" value={spec.start} onChange={event => setSpec({ ...spec, start: event.target.value })} /></label><label>结束日<input type="date" value={spec.end} onChange={event => setSpec({ ...spec, end: event.target.value })} /></label>{number('初始资金', spec.initial_cash, value => setSpec({ ...spec, initial_cash: value || 0 }), { min: 0 })}{number('随机种子', spec.seed, value => setSpec({ ...spec, seed: value || 0 }), { step: '1' })}</div></section>

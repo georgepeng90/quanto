@@ -32,9 +32,9 @@ function Comparison({ rows }: { rows: BacktestCatalogRow[] }) {
   const metricKeys = [...new Set(rows.flatMap(row => Object.keys(row.metrics || {}).map(key => key === 'annualized_return' ? 'annual_return' : key)))]
   return <section className="panel" aria-label="所选回测比较"><h2>所选回测比较</h2>
     <p role="status" className={comparable ? 'callout success' : 'callout warn'}>{comparable ? '条件一致，可直接比较这些结果。' : '条件不同或结果未完成，不可直接排名；先核对下方差异。'}</p>
-    <div className="table-wrap"><table aria-label="所选回测指标比较"><thead><tr><th>指标</th>{rows.map(row => <th key={row.id}><Link to={row.detail_url}>{row.name}</Link><small> {row.id}</small></th>)}</tr></thead><tbody>{metricKeys.map(key => <tr key={key}><th>{metricLabels[key] || learningMetricLabels[key] || key}</th>{rows.map(row => <td key={row.id}>{showMetric(row, key)}</td>)}</tr>)}</tbody></table></div>
+    <div className="table-wrap"><table aria-label="所选回测指标比较"><thead><tr><th>指标</th>{rows.map(row => <th key={row.id}><Link to={row.detail_url}>{row.name}</Link></th>)}</tr></thead><tbody>{metricKeys.map(key => <tr key={key}><th>{metricLabels[key] || learningMetricLabels[key] || key}</th>{rows.map(row => <td key={row.id}>{showMetric(row, key)}</td>)}</tr>)}</tbody></table></div>
     {!metricKeys.length && <p className="empty">所选回测尚无可用指标。</p>}
-    {differences.length > 0 && <><h3>条件差异</h3><div className="table-wrap"><table aria-label="回测条件差异"><thead><tr><th>条件</th>{rows.map(row => <th key={row.id}>{row.id}</th>)}</tr></thead><tbody>{differences.map(key => <tr key={key}><th>{conditionLabels[key] || key}<small> {key}</small></th>{rows.map(row => <td key={row.id}><code>{display(row.conditions?.[key])}</code></td>)}</tr>)}</tbody></table></div></>}
+    {differences.length > 0 && <><h3>条件差异</h3><div className="table-wrap"><table aria-label="回测条件差异"><thead><tr><th>条件</th>{rows.map(row => <th key={row.id}>{row.name}</th>)}</tr></thead><tbody>{differences.map(key => <tr key={key}><th>{conditionLabels[key] || key}</th>{rows.map(row => <td key={row.id}><code>{display(row.conditions?.[key])}</code></td>)}</tr>)}</tbody></table></div></>}
     {rows.map(row => <div key={row.id}><h3>{row.name}</h3><JsonDetails title={'完整条件 · ' + row.name} value={row.conditions} /></div>)}
   </section>
 }

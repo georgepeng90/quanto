@@ -26,7 +26,7 @@ export type BacktestCatalogRow = {
   start: string | null; end: string | null; symbols: string[]; metrics: Record<string, number | null> | null
   conditions: Record<string, unknown>; comparison_key: string | null; detail_url: string
   result_error?: string | null; group_id?: string | null
-  identity_status?: 'proven' | 'unknown'; canonical_assets?: string[]; asset_types?: string[]
+  canonical_assets?: string[]; asset_types?: string[]
   basket_revision_ref?: { basket_id: string; revision: number } | null; dataset_source?: string | null
   framework?: Record<string, unknown> | null; execution_provenance?: Record<string, unknown> | null
 }

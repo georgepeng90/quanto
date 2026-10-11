@@ -40,7 +40,7 @@ export function RunSummary({ run, provenance, result }: {
     </dl> : <p className="muted">{result ? '绩效摘要不可用。' : '正在读取绩效摘要…'}</p>
       : <p className="muted">已完成至 {run.completed_through || '尚无完整交易日'} · 尚无最终绩效</p>}
     {run.error && <p className="error">{run.error}</p>}
-    <div className="run-meta"><small>提交 {taskTime(run.created_at, '历史记录未知')}</small><small title={run.run_id}>编号 {run.run_id.slice(0, 8)}</small></div>
+    <div className="run-meta"><small>提交 {taskTime(run.created_at, '历史记录未知')}</small></div>
     <details className="run-source">
       <summary>参数与来源</summary>
       <p>运行 {run.run_id} · 实验 {run.experiment_id} · 修订 {run.experiment_revision}</p>

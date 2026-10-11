@@ -20,6 +20,7 @@ test('does not rank incompatible runs and displays supplied differences', async 
   render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/compare?run_ids=r1,r2'] })} />)
   await userEvent.click(await screen.findByRole('button', { name: '比较运行' }))
   expect(await screen.findByText(/口径不可直接比较/)).toBeVisible()
+  await userEvent.click(screen.getByText('技术诊断差异'))
   expect(screen.getByText('dataset_version_id')).toBeVisible()
   expect(screen.getByText(/d1/)).toBeVisible()
   expect(screen.getByText(/d2/)).toBeVisible()

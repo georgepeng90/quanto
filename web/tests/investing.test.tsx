@@ -7,7 +7,7 @@ import { api } from '../src/api'
 
 vi.mock('../src/api', () => ({ api: { investingOverview: vi.fn(), dataset: vi.fn(), trainInvesting: vi.fn(), backtestInvesting: vi.fn(), investingArtifact: vi.fn(), investingChart: vi.fn(), investingTable: vi.fn(), exportInvesting: vi.fn(), jobLogs: vi.fn(), cancelJob: vi.fn() }, describeError: (error: Error) => error.message }))
 const policy = { id: 'p1', kind: 'policy', manifest: { config: { name: '周度 PPO', validation_end: '2023-12-31' }, metrics: { validation: { total_return: .1 }, test: { total_return: .05 } } } }
-const backtest = { id: 'b1', kind: 'policy_backtest', manifest: { metrics: { total_return: .2 }, metadata: { baseline: 'policy', cost_multiplier: 1 } } }
+const backtest = { id: 'b1', kind: 'policy_backtest', manifest: { metrics: { total_return: .2 }, metadata: { baseline: 'policy', cost_multiplier: 1 } }, context: { name: '周度 PPO 回测', backtest_spec: { start: '2024-01-02', end: '2024-12-31' }, ordered_pairs: [{ instrument_id: 'SSE:etf:510300' }], benchmark_identity: { identity: 'benchmark-abcdef012345', return_basis: 'price_index' } } }
 const overview = { capabilities: { torch_available: true, cuda_available: false, device_name: 'CPU' }, datasets: [{ id: 'd1', manifest: { data_start: '2020-01-01', data_end: '2025-12-31', price_mode: 'adjusted_research', limitations: ['研究复权价格'] }, instruments: [{ symbol: 'ETF1' }] }], policies: [policy], backtests: [backtest], jobs: [] }
 const app = (path = '/investing') => render(<MemoryRouter initialEntries={[path]}><InvestingPage /></MemoryRouter>)
 beforeEach(() => {
@@ -34,6 +34,9 @@ test('historical daily deep links expose report detail only', async () => {
   app('/investing?backtest=b1')
   const panel = screen.getByRole('region', { name: '日线回测结果' })
   expect(await within(panel).findByRole('img', { name: '每日净值曲线' })).toBeInTheDocument()
+  expect(within(panel).getByRole('heading', { name: '日线回测结果 · 周度 PPO 回测 · 2024-01-02—2024-12-31' })).toBeVisible()
+  expect(within(panel).getByText('标的组合：SSE:510300')).toBeVisible()
+  expect(within(panel).getByText('基准 自定义基准 · 价格指数')).toBeVisible()
   fireEvent.change(within(panel).getByLabelText('结果明细'), { target: { value: 'positions' } })
   await waitFor(() => expect(api.investingTable).toHaveBeenLastCalledWith('b1', 'positions', 0, expect.any(AbortSignal)))
   expect(screen.getByRole('link', { name: '全部回测' })).toHaveAttribute('href', '/runs')

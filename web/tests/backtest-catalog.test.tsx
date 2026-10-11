@@ -8,7 +8,7 @@ import type { BacktestCatalogRow } from '../src/types'
 
 const conditions = { period: { start: '2024-01-01', end: '2024-12-31' }, dataset_content_hash: 'data-1', price_mode: 'raw_cash', execution: { commission_rate: .0002 }, risk: { max_total_weight: .8 }, initial_cash: 100000, metrics: { annual_sessions: 252 }, valuation_frequency: 'daily' }
 const row = (id: string, kind: BacktestCatalogRow['kind'], total_return: number | null, changes: Partial<BacktestCatalogRow> = {}): BacktestCatalogRow => ({
-  id, job_id: `job-${id}`, kind, name: `研究 ${id}`, method: kind === 'policy' ? 'PPO' : kind === 'model' ? 'GRU' : '固定策略',
+  id, job_id: `job-${id}`, kind, name: `研究 ${id}`, method: kind === 'policy' ? 'PPO' : '固定策略',
   state: 'succeeded', created_at: '2024-10-01T00:00:00+00:00', finished_at: '2024-10-01T00:01:00+00:00', error: null,
   start: '2024-01-01', end: '2024-12-31', symbols: ['510300'],
   metrics: total_return === null ? null : { total_return, annual_return: total_return / 2, max_drawdown: .2, sharpe: 1 },
@@ -17,7 +17,7 @@ const row = (id: string, kind: BacktestCatalogRow['kind'], total_return: number 
 })
 const fixed = row('fixed-1', 'fixed', .1)
 const policy = row('policy-1', 'policy', .3)
-const model = row('model-1', 'model', null, { state: 'running', comparison_key: null })
+const pending = row('pending-1', 'policy', null, { state: 'running', comparison_key: null })
 const different = row('policy-2', 'policy', .9, { conditions: { ...conditions, execution: { commission_rate: .001 } }, comparison_key: 'other-conditions' })
 const app = () => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/runs'] })} />)
 
@@ -27,14 +27,15 @@ beforeEach(() => {
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
     if (path === '/api/experiments') return Response.json({ items: [], next_cursor: null })
     if (path === '/api/backtests/catalog?limit=50') return Response.json({ items: [fixed, policy], next_cursor: 'opaque-page' })
-    if (path === '/api/backtests/catalog?cursor=opaque-page&limit=50') return Response.json({ items: [model, different], next_cursor: null })
+    if (path === '/api/backtests/catalog?cursor=opaque-page&limit=50') return Response.json({ items: [pending, different], next_cursor: null })
     throw new Error(`unexpected ${path}`)
   }))
 })
 
 test('loads every catalog page and links each backtest to its detail view', async () => {
   app()
-  expect(await screen.findByRole('link', { name: /研究 model-1/ })).toHaveAttribute('href', '/learning?backtest=model-1')
+  expect(screen.queryByRole('option', { name: '分钟模型' })).toBeNull()
+  expect(await screen.findByRole('link', { name: /研究 pending-1/ })).toHaveAttribute('href', '/investing?backtest=pending-1')
   const scrollArea = screen.getByRole('region', { name: '全部回测表格' })
   expect(scrollArea).toHaveAttribute('tabindex', '0')
   expect(within(scrollArea).getByRole('table', { name: '全部回测' })).toBeVisible()
@@ -53,9 +54,9 @@ test('filters across kinds and states, sorts metrics with missing values last', 
   await userEvent.selectOptions(screen.getByLabelText('类型筛选'), 'all')
   await userEvent.selectOptions(screen.getByLabelText('指标排序'), 'return')
   const links = within(screen.getByRole('table', { name: '全部回测' })).getAllByRole('link')
-  expect(links.map(link => link.textContent)).toEqual(['研究 policy-2', '研究 policy-1', '研究 fixed-1', '研究 model-1'])
+  expect(links.map(link => link.textContent)).toEqual(['研究 policy-2', '研究 policy-1', '研究 fixed-1', '研究 pending-1'])
   await userEvent.selectOptions(screen.getByLabelText('状态筛选'), 'running')
-  expect(screen.getByRole('link', { name: /研究 model-1/ })).toBeVisible()
+  expect(screen.getByRole('link', { name: /研究 pending-1/ })).toBeVisible()
   expect(screen.queryByRole('link', { name: /研究 policy-1/ })).toBeNull()
 })
 
@@ -105,7 +106,7 @@ test('refreshes the catalog from the first page after a new job is submitted els
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     if (String(input) === '/api/backtests/catalog?limit=50') {
       firstPageReads++
-      if (firstPageReads > 1) return Response.json({ items: [fixed, policy, row('new-1', 'model', .5)], next_cursor: null })
+      if (firstPageReads > 1) return Response.json({ items: [fixed, policy, row('new-1', 'policy', .5)], next_cursor: null })
     }
     return prior(input, init)
   }))
@@ -126,7 +127,7 @@ test('StrictMode remount loads after aborting the first catalog request', async 
     return prior(input, init)
   }))
   render(<StrictMode><RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/runs'] })} /></StrictMode>)
-  expect(await screen.findByRole('link', { name: /研究 model-1/ })).toBeVisible()
+  expect(await screen.findByRole('link', { name: /研究 pending-1/ })).toBeVisible()
   expect(reads).toBeGreaterThanOrEqual(1)
 })
 

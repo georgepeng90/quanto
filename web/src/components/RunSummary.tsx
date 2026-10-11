@@ -19,8 +19,8 @@ export function RunSummary({ run, provenance, result }: {
     <div className="record-head">
       <strong><Link to={run.detail_url}>{typeof name === 'string' && name ? name : run.run_id}</Link></strong>
       <span className="badge">{stateLabel[run.state]}</span>
-      {provenance && <span className={`badge${provenance.is_demo === true ? ' warn' : ''}`} title={provenance.is_demo === true ? '合成数据，不代表真实市场表现' : undefined}>
-        {provenance.is_demo === true ? '演示数据 · 合成绩效' : provenance.is_demo === false ? '非演示数据' : '数据标记未知'}
+      {typeof provenance?.is_demo === 'boolean' && <span className={`badge${provenance.is_demo ? ' warn' : ''}`} title={provenance.is_demo ? '合成数据，不代表真实市场表现' : undefined}>
+        {provenance.is_demo ? '演示数据 · 合成绩效' : '非演示数据'}
       </span>}
       {typeof provenance?.price_mode === 'string' && <span className="badge">{provenance.price_mode === 'raw_cash' ? '原始现金口径' : '复权研究口径'}</span>}
     </div>

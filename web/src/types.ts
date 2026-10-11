@@ -21,7 +21,7 @@ export type JobRecord = { id: string; kind: 'backtest' | 'demo' | 'fetch' | 'imp
 export type Preflight = Pick<DatasetManifest, 'price_mode' | 'is_demo' | 'event_coverage' | 'calendar_start' | 'calendar_end' | 'data_start' | 'data_end' | 'limitations'> & { missing_tables: string[]; validation: 'metadata_only' }
 export type RunState = 'queued' | 'running' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted'
 export type BacktestCatalogRow = {
-  id: string; job_id: string; kind: 'fixed' | 'policy' | 'model'; name: string; method: string
+  id: string; job_id: string; kind: 'fixed' | 'policy'; name: string; method: string
   state: RunState; created_at: string | null; finished_at: string | null; error: string | null
   start: string | null; end: string | null; symbols: string[]; metrics: Record<string, number | null> | null
   conditions: Record<string, unknown>; comparison_key: string | null; detail_url: string

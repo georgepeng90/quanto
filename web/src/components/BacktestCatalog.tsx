@@ -6,7 +6,7 @@ import { taskTime } from './timePresentation'
 import type { BacktestCatalogRow, RunState } from '../types'
 
 type Sort = 'date' | 'return' | 'cagr' | 'drawdown' | 'sharpe'
-const kinds = { fixed: '固定策略', policy: 'PPO 策略', model: '分钟模型' }
+const kinds = { fixed: '固定策略', policy: 'PPO 策略' }
 const conditionLabels: Record<string, string> = { period: '回测区间', symbols: '局部代码范围', canonical_assets: '规范证券集合', ordered_pairs: '输入顺序与局部映射', benchmark_binding: '基准与收益口径', trading_definition: '交易定义', evaluation_purpose: '评价用途', dataset_content_hash: '数据版本', price_mode: '价格口径', execution: '成交与成本', risk: '风险约束', initial_cash: '初始资金', metrics: '指标定义', valuation_frequency: '估值频率' }
 const metricLabels: Record<string, string> = { total_return: '累计收益率', annual_return: '年化收益率', annualized_return: '年化收益率', max_drawdown: '最大回撤', sharpe: 'Sharpe' }
 const value = (row: BacktestCatalogRow, sort: Sort): number | null => {
@@ -23,18 +23,22 @@ const display = (item: unknown) => item == null ? '—' : typeof item === 'strin
 const basket = (symbols: string[]) => symbols.length ? `${symbols.length} 只 · ${symbols.slice(0, 3).join('、')}${symbols.length > 3 ? '…' : ''}` : '—'
 const rowAssets = (row: BacktestCatalogRow) => row.canonical_assets?.length ? row.canonical_assets : row.symbols
 const canonical = (item: unknown): string => JSON.stringify(item, (_, value) => value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))) : value)
+const businessConditions = new Set(['period', 'symbols', 'canonical_assets', 'benchmark_binding', 'evaluation_purpose', 'price_mode', 'execution', 'risk', 'initial_cash', 'metrics', 'valuation_frequency'])
 
 function Comparison({ rows }: { rows: BacktestCatalogRow[] }) {
   if (rows.length < 2) return null
   const keys = [...new Set(rows.flatMap(row => Object.keys(row.conditions || {})))]
   const differences = keys.filter(key => new Set(rows.map(row => canonical(row.conditions?.[key]))).size > 1)
+  const businessDifferences = differences.filter(key => businessConditions.has(key))
+  const diagnosticDifferences = differences.filter(key => !businessConditions.has(key))
   const comparable = rows.every(row => row.state === 'succeeded' && !!row.metrics && !row.error && !row.result_error && !!row.comparison_key && row.comparison_key === rows[0].comparison_key)
   const metricKeys = [...new Set(rows.flatMap(row => Object.keys(row.metrics || {}).map(key => key === 'annualized_return' ? 'annual_return' : key)))]
   return <section className="panel" aria-label="所选回测比较"><h2>所选回测比较</h2>
     <p role="status" className={comparable ? 'callout success' : 'callout warn'}>{comparable ? '条件一致，可直接比较这些结果。' : '条件不同或结果未完成，不可直接排名；先核对下方差异。'}</p>
     <div className="table-wrap"><table aria-label="所选回测指标比较"><thead><tr><th>指标</th>{rows.map(row => <th key={row.id}><Link to={row.detail_url}>{row.name}</Link></th>)}</tr></thead><tbody>{metricKeys.map(key => <tr key={key}><th>{metricLabels[key] || learningMetricLabels[key] || key}</th>{rows.map(row => <td key={row.id}>{showMetric(row, key)}</td>)}</tr>)}</tbody></table></div>
     {!metricKeys.length && <p className="empty">所选回测尚无可用指标。</p>}
-    {differences.length > 0 && <><h3>条件差异</h3><div className="table-wrap"><table aria-label="回测条件差异"><thead><tr><th>条件</th>{rows.map(row => <th key={row.id}>{row.name}</th>)}</tr></thead><tbody>{differences.map(key => <tr key={key}><th>{conditionLabels[key] || key}</th>{rows.map(row => <td key={row.id}><code>{display(row.conditions?.[key])}</code></td>)}</tr>)}</tbody></table></div></>}
+    {businessDifferences.length > 0 && <><h3>条件差异</h3><div className="table-wrap"><table aria-label="回测条件差异"><thead><tr><th>条件</th>{rows.map(row => <th key={row.id}>{row.name}</th>)}</tr></thead><tbody>{businessDifferences.map(key => <tr key={key}><th>{conditionLabels[key] || key}</th>{rows.map(row => <td key={row.id}><code>{display(row.conditions?.[key])}</code></td>)}</tr>)}</tbody></table></div></>}
+    {diagnosticDifferences.length > 0 && <details><summary>技术诊断差异</summary><div className="table-wrap"><table><thead><tr><th>字段</th>{rows.map(row => <th key={row.id}>{row.name}</th>)}</tr></thead><tbody>{diagnosticDifferences.map(key => <tr key={key}><th>{conditionLabels[key] || key} <small>{key}</small></th>{rows.map(row => <td key={row.id}><code>{display(row.conditions?.[key])}</code></td>)}</tr>)}</tbody></table></div></details>}
     {rows.map(row => <div key={row.id}><h3>{row.name}</h3><JsonDetails title={'完整条件 · ' + row.name} value={row.conditions} /></div>)}
   </section>
 }

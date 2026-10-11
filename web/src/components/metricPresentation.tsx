@@ -11,5 +11,8 @@ export function metricValue(key: string, value: unknown, currency: unknown = '')
 }
 export function DataDisclosure({ provenance }: { provenance?: Record<string, unknown> }) {
   if (!provenance) return null
-  return <p className={provenance.is_demo === true ? 'callout warn' : 'muted'}>{provenance.is_demo === true ? '演示数据：合成绩效，不代表真实市场表现' : provenance.is_demo === false ? '非演示数据' : '演示标记未知'} · 来源 {String(provenance.source || '未知')}</p>
+  const source = provenance.dataset_source || provenance.source
+  const kind = provenance.is_demo === true ? '演示数据：合成绩效，不代表真实市场表现' : provenance.is_demo === false ? '非演示数据' : ''
+  if (!kind && !source) return null
+  return <p className={provenance.is_demo === true ? 'callout warn' : 'muted'}>{[kind, source ? `来源 ${String(source)}` : ''].filter(Boolean).join(' · ')}</p>
 }

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { FrameworkProvenance } from '../src/components/FrameworkProvenance'
 import { BacktestCatalog } from '../src/components/BacktestCatalog'
+import { DataDisclosure } from '../src/components/metricPresentation'
 import type { BacktestCatalogRow } from '../src/types'
 
 const framework = {
@@ -22,6 +23,22 @@ test('shows ordered assets, benchmark and evaluation purpose', () => {
   expect(screen.getByText('标的组合：SSE:000001 → SZSE:000001')).toBeVisible()
   expect(screen.getByText(/开发回放/)).toBeVisible()
   expect(screen.getByText(/价格指数/)).toBeVisible()
+})
+
+test('current run context shows the portfolio and source without technical identity warnings', () => {
+  render(<><FrameworkProvenance value={{ ordered_pairs: [{ instrument_id: 'SSE:etf:510300' }, { instrument_id: 'SZSE:etf:159915' }], benchmark_identity: { identity: 'SSE:index:000300', return_basis: 'price_index' }, sample_purpose: '探索' }} /><DataDisclosure provenance={{ dataset_source: 'ETF 行情' }} /></>)
+  expect(screen.getByText('标的组合：SSE:510300 → SZSE:159915')).toBeVisible()
+  expect(screen.getByText('基准 SSE:000300 · 价格指数')).toBeVisible()
+  expect(screen.getByText('研究用途：探索')).toBeVisible()
+  expect(screen.getByText('来源 ETF 行情')).toBeVisible()
+  expect(screen.queryByText(/未知/)).toBeNull()
+})
+
+test('custom benchmark keeps its technical identity in diagnostics', () => {
+  render(<FrameworkProvenance value={{ ordered_pairs: [{ instrument_id: 'SSE:etf:510300' }], benchmark_identity: { identity: 'benchmark-abcdef012345', return_basis: 'total_return' } }} />)
+  expect(screen.getByText('基准 自定义基准 · 全收益')).toBeVisible()
+  expect(screen.getByText(/benchmark-abcdef012345/)).not.toBeVisible()
+  expect(screen.getByText('诊断信息')).toBeVisible()
 })
 
 test('best weights and last checkpoint retain distinct sources and steps', () => {
@@ -60,7 +77,7 @@ test('catalog compares aligned results and discloses method differences', async 
   await userEvent.click(screen.getByLabelText('比较 fixed'))
   await userEvent.click(screen.getByLabelText('比较 policy'))
   expect(screen.getByText('条件一致，可直接比较这些结果。')).toBeVisible()
-  expect(screen.getByText('条件差异')).toBeVisible()
+  expect(screen.getByText('技术诊断差异')).toBeVisible()
   await userEvent.click(screen.getByLabelText('比较 different'))
   expect(screen.getByText(/不可直接排名/)).toBeVisible()
 })

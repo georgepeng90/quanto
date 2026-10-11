@@ -63,7 +63,7 @@ def _execution_provenance(resolved, payload, source_hashes, *, policy_version_id
             "source_content_id": ancestor or (policy_manifest["id"] if policy_version_id else None),
             "timesteps": policy_manifest["best_timesteps"],
         }
-        if "last.zip" in policy_manifest.get("files", {}):
+        if "last.zip" in policy_manifest["files"]:
             provenance["last_checkpoint"] = {
                 "source": "current_artifact", "source_content_id": policy_manifest["id"] if policy_version_id else None,
                 "cumulative_timesteps": policy_manifest["timesteps_completed"],

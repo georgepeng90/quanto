@@ -130,3 +130,14 @@ def test_selected_only_policy_does_not_claim_a_last_checkpoint():
     assert provenance["best_checkpoint"] == {"source": "current_artifact",
                                              "source_content_id": "selected-version", "timesteps": 64}
     assert provenance["last_checkpoint"] is None
+
+
+def test_policy_provenance_rejects_missing_checkpoint_metadata():
+    resolved = SimpleNamespace(internal_training_spec={}, basket=SimpleNamespace(selection_note="selected"))
+    payload = {"execution_environment": {}, "request": {"model_id": "model-1"}}
+    saved = {"id": "version-1", "best_timesteps": 8, "timesteps_completed": 16}
+    with pytest.raises(KeyError, match="files"):
+        _execution_provenance(resolved, payload, {}, policy_manifest=saved)
+    saved["files"] = {"last.zip": "digest"}
+    with pytest.raises(KeyError, match="session_timesteps"):
+        _execution_provenance(resolved, payload, {}, policy_manifest=saved)

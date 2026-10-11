@@ -92,6 +92,11 @@ def _convert_experiments(store):
     for row in _rows(store, 'SELECT * FROM experiments ORDER BY id'):
         payload = json.loads(row['payload_json'])
         if 'framework_contract_version' not in payload:
+            from quanto.config import validate_parameters
+            strategy = store.get_strategy(payload['strategy_revision_id'])
+            effective = validate_parameters(strategy.manifest['parameter_schema'], payload['strategy_params'])
+            if 'effective_strategy_params' in payload and payload['effective_strategy_params'] != effective:
+                raise ValueError('Saved effective strategy parameters differ from current request')
             dataset_id = payload['dataset_version_id']
             spec = json.loads(json.dumps(payload['backtest_spec']))
             symbols = spec.pop('symbols')
@@ -269,6 +274,18 @@ def _convert_contexts(store, workspace_root):
         context = _historical_policy_context(document, manifest, input_hash=saved[0]['input_hash'],
             asset_binding=binding, basket_revision_ref=basket.ref,
             dataset_source=store.get_dataset(dataset_id).manifest.get('source'))
+        if job['state'] == 'succeeded':
+            results = _rows(store, "SELECT manifest_json FROM learning_artifacts WHERE id=? AND kind='policy_backtest'",
+                            (job['id'],))
+            if len(results) != 1:
+                raise ValueError('Completed policy backtest result is absent')
+            summary = json.loads(results[0]['manifest_json'])
+            if (summary['period'] != context['conditions']['period']
+                    or summary['baseline'] != context['baseline']
+                    or summary['assumptions']['execution'] != context['backtest_spec']['execution']
+                    or summary['assumptions']['price_mode'] != context['conditions']['price_mode']
+                    or summary['policy_content_id'] != manifest['id']):
+                raise ValueError('Policy backtest context differs from saved economic conditions')
         sessions = _rows(store, 'SELECT model_id FROM investing_sessions WHERE job_id=?', (policy['id'],))
         if len(sessions) != 1:
             raise ValueError('Policy must belong to exactly one current model')

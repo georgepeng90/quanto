@@ -68,6 +68,18 @@ def test_missing_identity_aborts_without_partial_database_update(tmp_path):
     assert (store.db_path.read_bytes(), hash_files(source)) == before
 
 
+def test_migration_rejects_changed_effective_strategy_parameters(tmp_path):
+    store, draft, _ = old_workspace(tmp_path)
+    payload = store.get_experiment(draft.id).payload
+    payload['effective_strategy_params'] = {'unexpected_parameter': 42}
+    with store.transaction() as db:
+        db.execute('UPDATE experiments SET payload_json=? WHERE id=?', (json.dumps(payload), draft.id))
+    before = store.db_path.read_bytes()
+    with pytest.raises(ValueError, match='effective strategy parameters'):
+        migrate_etf_workspace(store.root, IDENTITIES, source_document='Declared ETF', apply=True)
+    assert store.db_path.read_bytes() == before
+
+
 def test_non_etf_declaration_is_rejected(tmp_path):
     store, _, _ = old_workspace(tmp_path)
     mapping = {'000001': {**IDENTITIES['000001'], 'instrument_type': 'stock'}}

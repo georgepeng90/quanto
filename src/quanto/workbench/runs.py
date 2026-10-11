@@ -24,30 +24,40 @@ class RunService:
         return self.store.get_run(run_id)
 
     def rerun(self, run_id: str, idempotency_key: str, source: str) -> RunRecord:
-        """Exact replay references original immutable inputs, never the workspace."""
+        """Submit a new run under the current framework using the recorded context."""
         if not idempotency_key or source not in ("web", "agent"):
             raise ValueError("invalid submission identity")
-        fingerprint = digest(json_bytes({"operation": "rerun", "source": source, "parent_run_id": run_id}))
+        fingerprint = digest(json_bytes({"operation": "rerun-current", "source": source, "parent_run_id": run_id}))
         with self.store.transaction() as db:
             existing = self._existing(db, idempotency_key, fingerprint)
             if existing is not None:
                 return existing[0]
-            original = self.store.get_run(run_id, db)
-        manifest = self.snapshots.verify(FrozenRun(run_id, original.manifest_path, original.manifest_hash), exact=True)
-        if manifest.get("schema_version") != 3:
-            raise ValueError("historical run lacks a framework contract and cannot be rerun")
-        with self.store.transaction() as db:
-            existing = self._existing(db, idempotency_key, fingerprint)
-            if existing is not None:
-                return existing[0]
-            identity, job_id = str(uuid4()), str(uuid4())
-            db.execute("INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (identity, job_id, original.experiment_id, original.experiment_revision,
-                str(original.manifest_path), original.manifest_hash, source, run_id, None))
-            next_seq = db.execute("SELECT COALESCE(MAX(enqueue_seq),0)+1 FROM jobs").fetchone()[0]
-            db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root,created_at) VALUES (?,'backtest','queued',?,?,?,?)", (job_id, identity, next_seq, str(self.store.artifact_root), utc_now()))
-            ContextStore(self.store).insert(db, job_id, ContextStore(self.store).get(original.job_id, db))
-            db.execute("INSERT INTO idempotency VALUES (?,?,?)", (idempotency_key, fingerprint, json_bytes([identity]).decode()))
-            return self.store.get_run(identity, db)
+        payload = self.clone_request(run_id)
+        draft = self.store.save_experiment(None, None, payload)
+        return self._submit([BatchItem(draft.id, draft.revision)], idempotency_key, source,
+                            "rerun-current", run_id, fingerprint_override=fingerprint)[0]
+
+    def clone_request(self, run_id: str) -> dict:
+        """Build a current request from verified original inputs and unified identity."""
+        from quanto.backtest.trading import ETF_TRADING_DEFINITION
+
+        run = self.store.get_run(run_id)
+        manifest = self.snapshots.verify(FrozenRun(run_id, run.manifest_path, run.manifest_hash), exact=False)
+        context = ContextStore(self.store).get(run.job_id)
+        pairs = {item["local_symbol"]: item["instrument_id"] for item in context["ordered_pairs"]}
+        spec = json.loads(json.dumps(context["backtest_spec"]))
+        del spec["symbols"]
+        for scenario in spec["risk"]["stress_scenarios"]:
+            scenario["symbol_shocks"] = {pairs[symbol]: value for symbol, value in scenario["symbol_shocks"].items()}
+        trading = context["definition_evidence"].get("trading", {}).get("ref") or ETF_TRADING_DEFINITION.ref.model_dump(mode="json")
+        return FixedRequest.model_validate({"framework_contract_version": "multi-asset-v1",
+            "basket_revision_ref": context["basket_revision_ref"],
+            "dataset_version_id": context["dataset_version_id"],
+            "strategy_revision_id": context["strategy_revision_id"],
+            "trading_definition_ref": trading,
+            "strategy_params": manifest["original_strategy_params"],
+            "backtest_spec": spec, "sample_purpose": context["sample_purpose"],
+            "source_run_id": run_id}).model_dump(mode="json")
 
     def _existing(self, db, key: str, fingerprint: str) -> list[RunRecord] | None:
         row = db.execute("SELECT * FROM idempotency WHERE key=?", (key,)).fetchone()
@@ -63,13 +73,14 @@ class RunService:
     def submit_batch(self, items: list[BatchItem], idempotency_key: str, source: str) -> list[RunRecord]:
         return self._submit(items, idempotency_key, source, "submit_batch", None)
 
-    def _submit(self, items: list[BatchItem], key: str, source: str, operation: str, parent_run_id: str | None) -> list[RunRecord]:
+    def _submit(self, items: list[BatchItem], key: str, source: str, operation: str, parent_run_id: str | None,
+                fingerprint_override: str | None = None) -> list[RunRecord]:
         if not key or source not in ("web", "agent"):
             raise ValueError("invalid submission identity")
         if not items or len(items) > 100:
             raise ValueError("batch size must be between 1 and 100")
         resolver = FrameworkResolver(self.store)
-        fingerprint = digest(json_bytes({"operation": operation, "source": source, "items": [[item.experiment_id, item.expected_revision] for item in items], "parent_run_id": parent_run_id}))
+        fingerprint = fingerprint_override or digest(json_bytes({"operation": operation, "source": source, "items": [[item.experiment_id, item.expected_revision] for item in items], "parent_run_id": parent_run_id}))
         with self.store.transaction() as db:
             existing = self._existing(db, key, fingerprint)
             if existing is not None:

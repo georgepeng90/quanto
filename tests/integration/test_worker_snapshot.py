@@ -103,21 +103,22 @@ def test_strategy_failure_preserves_only_completed_days(tmp_path):
     assert not (store.artifact_root / run.job_id / "final").exists()
 
 
-def test_exact_rerun_uses_original_inputs_and_same_canonical_hashes(tmp_path):
-    store, run, strategy = ready_run(tmp_path)
+def test_rerun_freezes_current_request_and_preserves_parent(tmp_path):
+    store, run, _ = ready_run(tmp_path)
     assert run_until_finished(store, run.job_id).state == "succeeded"
-    (strategy.path / "helper.py").write_text("value = 999")
     repeated = RunService(store).rerun(run.run_id, "rerun", "web")
     assert repeated.run_id != run.run_id and repeated.parent_run_id == run.run_id
-    assert repeated.manifest_path == run.manifest_path
+    assert repeated.manifest_path != run.manifest_path
+    assert store.get_experiment(repeated.experiment_id).payload["source_run_id"] == run.run_id
     assert RunService(store).rerun(run.run_id, "rerun", "web").run_id == repeated.run_id
     assert run_until_finished(store, repeated.job_id).state == "succeeded"
     first = json.loads((store.artifact_root / run.job_id / "final" / "manifest.json").read_text())
     second = json.loads((store.artifact_root / repeated.job_id / "final" / "manifest.json").read_text())
-    assert first == second
+    assert {name: value for name, value in first["files"].items() if name not in {"metadata.json", "report.html"}} == {
+        name: value for name, value in second["files"].items() if name not in {"metadata.json", "report.html"}}
 
 
-def test_v1_embedded_csv_snapshot_remains_readable_but_cannot_be_requeued(tmp_path):
+def test_changed_historical_manifest_cannot_be_requeued_with_stale_context(tmp_path):
     import shutil
     from quanto.workbench.revisions import digest, json_bytes, source_files
 
@@ -138,7 +139,7 @@ def test_v1_embedded_csv_snapshot_remains_readable_but_cannot_be_requeued(tmp_pa
         db.execute("UPDATE runs SET manifest_hash=? WHERE run_id=?", (digest(original), run.run_id))
 
     assert store.get_run(run.run_id).manifest_path.read_bytes() == original
-    with pytest.raises(ValueError, match="framework contract"):
+    with pytest.raises(ValueError, match="backtest context"):
         RunService(store).rerun(run.run_id, "legacy-replay", "web")
     assert run_until_finished(store, run.job_id).state == "failed"
     assert run.manifest_path.read_bytes() == original
@@ -174,12 +175,13 @@ def test_worker_rejects_environment_drift_even_for_non_exact_strategy(tmp_path, 
     assert not (control / "runtime.json").exists()
 
 
-def test_non_exact_run_executes_but_exact_rerun_is_rejected(tmp_path):
+def test_non_exact_run_can_start_a_current_backtest(tmp_path):
     source = STRATEGY + "\n# Explicit external-state provenance is conservatively detected.\nunused = lambda: open('external')\n"
     store, run, _ = ready_run(tmp_path, source)
     assert run_until_finished(store, run.job_id).state == "succeeded"
-    with pytest.raises(ValueError, match="not exact-reproducible"):
-        RunService(store).rerun(run.run_id, "exact", "web")
+    repeated = RunService(store).rerun(run.run_id, "current", "web")
+    assert repeated.parent_run_id == run.run_id
+    assert repeated.manifest_path != run.manifest_path
 
 
 def test_published_output_without_success_commit_remains_interrupted(tmp_path, monkeypatch):

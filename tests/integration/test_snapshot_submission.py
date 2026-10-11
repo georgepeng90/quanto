@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from quanto.workbench.models import BatchItem, FrozenRun
-from quanto.workbench.configuration import FrameworkConflict
+from quanto.workbench.configuration import FrameworkBlocked, FrameworkConflict
 from quanto.data.contracts import InstrumentId
 from quanto.workbench.baskets import BasketStore
 from quanto.workbench.bindings import BindingStore
@@ -77,7 +77,7 @@ def test_snapshot_ignores_later_workspace_edits(tmp_path):
     assert SnapshotBuilder(store).verify(FrozenRun(run.run_id, run.manifest_path, run.manifest_hash))["run_id"] == run.run_id
 
 
-def test_registered_definition_upgrade_does_not_change_frozen_rerun(tmp_path, monkeypatch):
+def test_current_rerun_requires_registered_definition(tmp_path, monkeypatch):
     from quanto.workbench.definitions import DefinitionRegistry
 
     store, draft, _, _ = _ready(tmp_path)
@@ -88,8 +88,9 @@ def test_registered_definition_upgrade_does_not_change_frozen_rerun(tmp_path, mo
 
     monkeypatch.setattr(DefinitionRegistry, "get", removed_definition)
     assert SnapshotBuilder(store).verify(FrozenRun(run.run_id, run.manifest_path, run.manifest_hash))["run_id"] == run.run_id
-    replay = RunService(store).rerun(run.run_id, "definition-upgraded", "web")
-    assert replay.manifest_path == run.manifest_path
+    with pytest.raises(FrameworkBlocked, match="DEFINITION_UNAVAILABLE"):
+        RunService(store).rerun(run.run_id, "definition-upgraded", "web")
+    assert len(store.list_jobs()) == 1
 
 
 def test_batch_preflight_and_ordered_retry(tmp_path):

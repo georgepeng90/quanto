@@ -265,28 +265,7 @@ class WorkbenchService:
                 "reproducibility": manifest["reproducibility"]}
 
     def clone_run(self, identity: str) -> dict:
-        run = self.store.get_run(identity)
-        manifest = self.runs.snapshots.verify(FrozenRun(identity, run.manifest_path, run.manifest_hash), exact=False)
-        from quanto.backtest.trading import ETF_TRADING_DEFINITION
-        from quanto.workbench.framework_requests import FixedRequest
-        from quanto.workbench.run_contexts import ContextStore
-
-        context = ContextStore(self.store).get(run.job_id)
-        pairs = {item["local_symbol"]: item["instrument_id"] for item in context["ordered_pairs"]}
-        spec = json.loads(json.dumps(context["backtest_spec"]))
-        del spec["symbols"]
-        for scenario in spec["risk"]["stress_scenarios"]:
-            scenario["symbol_shocks"] = {pairs[symbol]: value for symbol, value in scenario["symbol_shocks"].items()}
-        trading = context["definition_evidence"].get("trading", {}).get("ref") or ETF_TRADING_DEFINITION.ref.model_dump(mode="json")
-        payload = FixedRequest.model_validate({"framework_contract_version": "multi-asset-v1",
-            "basket_revision_ref": context["basket_revision_ref"],
-            "dataset_version_id": context["dataset_version_id"],
-            "strategy_revision_id": context["strategy_revision_id"],
-            "trading_definition_ref": trading,
-            "strategy_params": manifest["original_strategy_params"],
-            "backtest_spec": spec, "sample_purpose": context["sample_purpose"],
-            "source_run_id": identity}).model_dump(mode="json")
-        return self._record(self.store.save_experiment(None, None, payload))
+        return self._record(self.store.save_experiment(None, None, self.runs.clone_request(identity)))
 
     def submit(self, experiment_id: str, expected_revision: int, key: str, source: str = "web") -> dict:
         return self.get_resource("runs", self.runs.submit(experiment_id, expected_revision, key, source).run_id)

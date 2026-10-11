@@ -96,7 +96,7 @@ test('large fixed baskets stay compact in a row while the full list remains avai
   const tableRow = link.closest('tr')!
   expect(within(tableRow).getByText('314 只 · SSE:etf:000000、SSE:etf:000001、SSE:etf:000002…')).toHaveAttribute('title', symbols.join('、'))
   expect(tableRow).not.toHaveTextContent('SSE:etf:000313')
-  expect(within(tableRow).getByTitle('fixed-with-a-long-id')).toHaveTextContent('fixed-wi…')
+  expect(within(tableRow).getByRole('link', { name: '研究 fixed-with-a-long-id' })).toBeVisible()
 })
 
 test('refreshes the catalog from the first page after a new job is submitted elsewhere', async () => {
@@ -154,8 +154,8 @@ test('submission refresh overtakes an unfinished initial catalog read', async ()
   await userEvent.click(screen.getByRole('button', { name: '新建回测' }))
   await screen.findByRole('option', { name: /趋势轮动/ })
   await userEvent.selectOptions(screen.getByLabelText('策略'), 's1')
-  await userEvent.selectOptions(screen.getByLabelText('标的篮子'), 'b1')
-  await userEvent.selectOptions(screen.getByLabelText('交易定义'), 'etf-trading:v1')
+  await userEvent.selectOptions(screen.getByLabelText('标的组合'), 'b1')
+  await userEvent.selectOptions(screen.getByLabelText('交易策略'), 'etf-trading:v1')
   fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '100000' } })
   await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
   expect(await screen.findByRole('link', { name: /研究 submitted/ })).toBeVisible()

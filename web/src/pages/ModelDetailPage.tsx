@@ -180,13 +180,6 @@ function ModelDetailContent({ id }: { id: string }) {
     } catch (value) { setError(describeError(value)) }
     finally { setBusy(false) }
   }
-  const bindModel = async () => {
-    if (model?.framework_binding_check?.status !== 'ready') return
-    setBusy(true); setError('')
-    try { await api.bindModel(id, { idempotency_key: crypto.randomUUID() }); setRefresh(value => value + 1) }
-    catch (value) { setError(describeError(value)) }
-    finally { setBusy(false) }
-  }
   const submitTraining = async () => {
     if (!model || activeId || busy) return
     if (validTrainReport?.status !== 'ready') return
@@ -195,7 +188,7 @@ function ModelDetailContent({ id }: { id: string }) {
       if (!Number.isInteger(budget) || budget < 2 || budget > 10000000) throw new Error('追加决策步数必须是 2–10000000 的整数。')
       const job = await api.trainInvestingModel(id, { additional_timesteps: budget, device })
       setModel(old => old && ({ ...old, active_job_id: job.id }))
-      setNotice(`训练任务 ${job.id} 已提交。`); setRefresh(value => value + 1)
+      setNotice('训练已提交。'); setRefresh(value => value + 1)
     } catch (value) {
       const report = value instanceof ApiError ? value.details.report : null
       if (report && typeof report === 'object' && 'status' in report) { setTrainReport(report as CapabilityReport); setTrainCheckedKey(latestTrainKey.current) }
@@ -234,16 +227,11 @@ function ModelDetailContent({ id }: { id: string }) {
     {error && <p role="alert" className="error callout">{error}</p>}{notice && <p role="status" className="callout success">{notice}</p>}{!model && !error && <p>加载模型…</p>}
     {model && <>
       <CurrentModelSnapshot model={model} />
-      <section className="panel"><h2>框架身份</h2>
-        {model.framework_binding ? <><p>来源：{model.framework_binding.origin === 'new' ? '新建模型' : '旧模型审计关联'} · 篮子 {model.framework_binding.basket_revision_ref.basket_id} 修订 {model.framework_binding.basket_revision_ref.revision}</p>
-          <p className="model-basket">{model.framework_binding.ordered_pairs.map(pair => `${pair.instrument_id.exchange}:${pair.instrument_id.instrument_type}:${pair.instrument_id.code}（${pair.local_symbol}）`).join(' → ')}</p>
-          <p>关联哈希 {model.framework_binding.binding_hash}</p><JsonDetails title="定义与关联证据" value={{ definitions: model.framework_binding.definitions, evidence: model.framework_binding.evidence }} /></>
-          : <><p className="callout warn">此历史模型尚无可证明的框架身份。原配置和历史记录保持只读。</p>
-            {model.framework_binding_check && <CapabilityReportView report={model.framework_binding_check} />}
-            <button disabled={busy || model.framework_binding_check?.status !== 'ready'} onClick={() => void bindModel()}>核验并关联旧模型</button></>}
+      <section className="panel"><h2>标的组合</h2>
+        <p className="model-basket">{model.framework_binding?.ordered_pairs.map(pair => `${pair.instrument_id.exchange}:${pair.instrument_id.code}`).join(' → ')}</p>
       </section>
       <section className="panel"><h2>固定研究条件</h2><p className="model-basket">{model.framework_binding ? model.framework_binding.ordered_pairs.map(pair => pair.local_symbol).join(' → ') : model.spec.backtest.symbols.join(' → ')}</p>
-        <p>数据 {model.dataset_id} · {model.spec.frequency === 'weekly' ? '自然周' : '自然月'} 决策 · 已保存累计决策步数 {model.total_timesteps.toLocaleString('zh-CN')} 步</p>
+        <p>{model.spec.frequency === 'weekly' ? '自然周' : '自然月'} 决策 · 已训练 {model.total_timesteps.toLocaleString('zh-CN')} 步</p>
         <p>训练 {model.spec.train_start}–{model.spec.train_end} · 验证 {model.spec.validation_start}–{model.spec.validation_end} · 留出测试 {model.spec.test_start && model.spec.test_end ? `${model.spec.test_start}–${model.spec.test_end}` : '未设置留出测试期'}</p>
         <p>选模：{model.spec.selection_metric === 'validation_sharpe' ? '验证夏普率' : '验证净对数收益'}</p>
         <p>奖励目标：{rewardLabel(model.spec.reward_version)}；奖励值与回测净收益分别记录。</p>
@@ -281,7 +269,7 @@ function ModelDetailContent({ id }: { id: string }) {
               <p className="muted">以下指标的验证区间：{model.spec.validation_start}–{model.spec.validation_end}</p>
               <h3>本轮最终参数验证</h3><Metrics values={item.validation_latest || {}} /><h3>选定快照验证</h3><Metrics values={item.validation_best || {}} />
               <p>选定快照来源：{item.best_round_number ? `第${item.best_round_number}轮` : item.best_source_version_id || '—'} · 选定快照步数 {item.best_timesteps ?? '—'}</p>
-              <p className="muted">完整版本ID {item.id}</p>
+              <details><summary>版本诊断</summary><p>{item.id}</p></details>
               {artifactLoading === item.id && <p role="status">加载版本完整信息…</p>}
               {artifactErrors[item.id] && <p role="alert" className="error">{artifactErrors[item.id]} <button onClick={() => setArtifactRetry(value => value + 1)}>重试详情</button></p>}
               {artifact && <>

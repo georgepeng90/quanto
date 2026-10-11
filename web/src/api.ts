@@ -1,7 +1,7 @@
 import type { InvestingModel, InvestingModelDetail, InvestingModelSummary, TrainingHistoryPage, TrainingHistoryQuery, InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage } from './investingTypes'
 import type { BacktestCatalogRow, ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
 import type { LearningArtifact, LearningChart, LearningOverview, LearningTablePage } from './learningTypes'
-import type { AssetBinding, BasketCreateRequest, BasketDetail, BasketRevisionRequest, BasketSummary, CapabilityCheckRequest, CapabilityReport, DatasetBindingRequest, Definition, FrozenBasketRevision, ModelBindingRequest, ModelFrameworkBinding, FetchJobRequest, ModelCreateRequest, ResumeRequest, PolicyBacktestRequest } from './frameworkTypes'
+import type { BasketCreateRequest, BasketDetail, BasketRevisionRequest, BasketSummary, CapabilityCheckRequest, CapabilityReport, Definition, FrozenBasketRevision, FetchJobRequest, ModelCreateRequest, ResumeRequest, PolicyBacktestRequest } from './frameworkTypes'
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}, public status = 0) { super(message) }
@@ -71,8 +71,6 @@ export const api = {
   getBasketRevision: (id: string, revision: number) => request<FrozenBasketRevision>(`/baskets/${encodeURIComponent(id)}/revisions/${revision}`),
   listDefinitions: () => request<{ items: Definition[] }>('/definitions'),
   checkCapabilities: (body: CapabilityCheckRequest) => request<CapabilityReport>('/capabilities/check', json(body)),
-  bindDataset: (id: string, body: DatasetBindingRequest) => request<AssetBinding>(`/datasets/${encodeURIComponent(id)}/asset-binding`, json(body)),
-  bindModel: (id: string, body: ModelBindingRequest) => request<ModelFrameworkBinding>(`/investing/models/${encodeURIComponent(id)}/framework-binding`, json(body)),
   investingModels: (cursor?: string, signal?: AbortSignal) => request<Page<InvestingModel>>(`/investing/models${queryString({ cursor })}`, { signal }),
   investingModel: (id: string, signal?: AbortSignal) => request<InvestingModelDetail>(`/investing/models/${encodeURIComponent(id)}`, { signal }),
   investingModelSummary: (id: string, signal?: AbortSignal) => request<InvestingModelSummary>(`/investing/models/${encodeURIComponent(id)}?include_history=false`, { signal }),

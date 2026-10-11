@@ -65,7 +65,7 @@ test('creates a model from an ordered basket and selected installed definitions'
   app('/models')
   await userEvent.click(await screen.findByRole('button', { name: '新建模型' }))
   await userEvent.selectOptions(await screen.findByLabelText('日线数据版本'), 'd1')
-  await userEvent.selectOptions(await screen.findByLabelText('标的篮子'), 'b1')
+  await userEvent.selectOptions(await screen.findByLabelText('标的组合'), 'b1')
   await userEvent.selectOptions(await screen.findByLabelText('学习定义'), refKey(learningRef))
   await userEvent.selectOptions(screen.getByLabelText('交易定义'), refKey(tradingRef))
   fireEvent.change(screen.getByLabelText('lookback'), { target: { value: '30' } })
@@ -97,7 +97,7 @@ test('distinguishes learning and trading definitions with the same id across ver
   app('/models')
   await userEvent.click(await screen.findByRole('button', { name: '新建模型' }))
   await userEvent.selectOptions(await screen.findByLabelText('日线数据版本'), 'd1')
-  await userEvent.selectOptions(await screen.findByLabelText('标的篮子'), 'b1')
+  await userEvent.selectOptions(await screen.findByLabelText('标的组合'), 'b1')
   await userEvent.selectOptions(await screen.findByLabelText('学习定义'), refKey(laterLearning))
   expect(screen.getByRole('combobox', { name: '交易定义' }).querySelectorAll('option')).toHaveLength(2)
   await userEvent.selectOptions(screen.getByLabelText('交易定义'), refKey(laterTrading))
@@ -121,7 +121,7 @@ test('includes additional learning schema fields in the capability request', asy
   app('/models')
   await userEvent.click(await screen.findByRole('button', { name: '新建模型' }))
   await userEvent.selectOptions(await screen.findByLabelText('日线数据版本'), 'd1')
-  await userEvent.selectOptions(await screen.findByLabelText('标的篮子'), 'b1')
+  await userEvent.selectOptions(await screen.findByLabelText('标的组合'), 'b1')
   await userEvent.selectOptions(await screen.findByLabelText('学习定义'), refKey(learningRef))
   await userEvent.selectOptions(screen.getByLabelText('交易定义'), refKey(tradingRef))
   fireEvent.change(screen.getByLabelText('lookback'), { target: { value: '30' } })
@@ -137,7 +137,7 @@ test('includes additional learning schema fields in the capability request', asy
 
 test('model detail shows binding evidence and gates training on a ready capability report', async () => {
   app('/models/m1')
-  expect(await screen.findByText(/SZSE:etf:000001（LOCAL1）/)).toBeVisible()
+  expect(await screen.findByText(/SZSE:000001/)).toBeVisible()
   expect(screen.getByRole('button', { name: '继续训练' })).toBeDisabled()
   fireEvent.change(screen.getByLabelText('追加决策步数'), { target: { value: '8192' } })
   await userEvent.click(screen.getByRole('button', { name: '检查续训能力' }))
@@ -148,9 +148,9 @@ test('model detail shows binding evidence and gates training on a ready capabili
 
 test('backtest requires an explicit saved version and evaluation purpose', async () => {
   app('/runs?model=m1')
-  await screen.findByRole('option', { name: /v1/ })
-  expect(screen.getByLabelText('保存版本')).toHaveValue('')
-  await userEvent.selectOptions(screen.getByLabelText('保存版本'), 'v1')
+  await screen.findByRole('option', { name: /第 1 轮/ })
+  expect(screen.getByLabelText('训练轮次')).toHaveValue('')
+  await userEvent.selectOptions(screen.getByLabelText('训练轮次'), 'v1')
   fireEvent.change(screen.getByLabelText('回测开始'), { target: { value: '2023-01-01' } })
   fireEvent.change(screen.getByLabelText('回测结束'), { target: { value: '2023-12-31' } })
   await userEvent.selectOptions(screen.getByLabelText('评估用途'), 'development_replay')

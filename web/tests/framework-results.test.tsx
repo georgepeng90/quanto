@@ -17,21 +17,11 @@ const framework = {
   request_hash: 'frozen-request', definitions: [],
 }
 
-test('shows canonical identities in model order, selection context and explicit evaluation purpose', async () => {
+test('shows ordered assets, benchmark and evaluation purpose', () => {
   render(<FrameworkProvenance value={{ framework }} />)
-  await userEvent.click(screen.getByText(/证券身份与输入顺序/))
-  expect(screen.getByText('SSE:stock:000001 → A')).toBeVisible()
-  expect(screen.getByText('SZSE:stock:000001 → B')).toBeVisible()
-  expect(screen.getByText(/人工选择两只公司/)).toBeVisible()
+  expect(screen.getByText('标的组合：SSE:000001 → SZSE:000001')).toBeVisible()
   expect(screen.getByText(/开发回放/)).toBeVisible()
   expect(screen.getByText(/价格指数/)).toBeVisible()
-  expect(screen.queryByText('盲测')).toBeNull()
-})
-
-test('legacy reports do not gain proven identity from bare symbols', () => {
-  render(<FrameworkProvenance value={{ symbols: ['000001'], sample_purpose: '旧研究' }} />)
-  expect(screen.getByText(/证券身份未知/)).toBeVisible()
-  expect(screen.queryByText('SSE:stock:000001')).toBeNull()
 })
 
 test('best weights and last checkpoint retain distinct sources and steps', () => {
@@ -40,9 +30,10 @@ test('best weights and last checkpoint retain distinct sources and steps', () =>
     last_checkpoint: { source_content_id: 'current-2', source: 'current_artifact', cumulative_timesteps: 1024, session_timesteps: 256 },
     training_boundaries: { train_start: '2023-01-01', train_end: '2023-12-31', validation_start: '2024-01-01', validation_end: '2024-03-31', test_start: null, test_end: null },
   } }} />)
-  expect(screen.getByText(/最佳权重.*ancestor-1.*128/)).toBeVisible()
+  expect(screen.getByText(/选定快照.*128/)).toBeVisible()
   expect(screen.getByText(/末次检查点.*1024.*256/)).toBeVisible()
   expect(screen.getByText(/测试成绩未评估/)).toBeVisible()
+  expect(screen.queryByText('ancestor-1')).toBeNull()
 })
 
 const catalogRow = (id: string, changes: Partial<BacktestCatalogRow> = {}): BacktestCatalogRow => ({
@@ -53,27 +44,24 @@ const catalogRow = (id: string, changes: Partial<BacktestCatalogRow> = {}): Back
   basket_revision_ref: { basket_id: 'companies', revision: 2 }, dataset_source: 'Source A', ...changes,
 })
 
-test('catalog filters proven canonical assets, basket revisions and saved data sources', async () => {
+test('catalog filters by asset type without identity status', async () => {
   render(<MemoryRouter><BacktestCatalog rows={[catalogRow('company'), catalogRow('fund', {
     asset_types: ['etf'], canonical_assets: ['SSE:etf:000001'], basket_revision_ref: { basket_id: 'funds', revision: 1 }, dataset_source: 'Source B',
   }), catalogRow('old', { identity_status: 'unknown', canonical_assets: [], comparison_key: null })]} complete busy={false} refresh={() => {}} /></MemoryRouter>)
   await userEvent.selectOptions(screen.getByLabelText('资产类型筛选'), 'stock')
   expect(screen.getByRole('link', { name: 'company' })).toBeVisible()
-  expect(screen.queryByRole('link', { name: 'old' })).toBeNull()
+  expect(screen.getByRole('link', { name: 'old' })).toBeVisible()
   expect(screen.queryByRole('link', { name: 'fund' })).toBeNull()
-  await userEvent.selectOptions(screen.getByLabelText('资产类型筛选'), 'all')
-  await userEvent.selectOptions(screen.getByLabelText('篮子修订筛选'), 'funds@1')
-  expect(screen.getByRole('link', { name: 'fund' })).toBeVisible()
-  await userEvent.selectOptions(screen.getByLabelText('数据来源筛选'), 'Source A')
-  expect(screen.queryByRole('link', { name: 'fund' })).toBeNull()
+  expect(screen.queryByLabelText('篮子修订筛选')).toBeNull()
+  expect(screen.queryByLabelText('批次筛选')).toBeNull()
 })
 
-test('catalog trusts economic comparison key while disclosing method differences and excluding unknown identity', async () => {
-  render(<MemoryRouter><BacktestCatalog rows={[catalogRow('fixed'), catalogRow('policy', { kind: 'policy', conditions: { learning_definition: 'PPO' } }), catalogRow('old', { identity_status: 'unknown' })]} complete busy={false} refresh={() => {}} /></MemoryRouter>)
+test('catalog compares aligned results and discloses method differences', async () => {
+  render(<MemoryRouter><BacktestCatalog rows={[catalogRow('fixed'), catalogRow('policy', { kind: 'policy', conditions: { learning_definition: 'PPO' } }), catalogRow('different', { comparison_key: 'other' })]} complete busy={false} refresh={() => {}} /></MemoryRouter>)
   await userEvent.click(screen.getByLabelText('比较 fixed'))
   await userEvent.click(screen.getByLabelText('比较 policy'))
   expect(screen.getByText('条件一致，可直接比较这些结果。')).toBeVisible()
   expect(screen.getByText('条件差异')).toBeVisible()
-  await userEvent.click(screen.getByLabelText('比较 old'))
+  await userEvent.click(screen.getByLabelText('比较 different'))
   expect(screen.getByText(/不可直接排名/)).toBeVisible()
 })

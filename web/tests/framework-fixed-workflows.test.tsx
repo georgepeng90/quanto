@@ -34,8 +34,8 @@ beforeEach(() => {
 test('run form sends only ordered basket reference and strict fixed request', async () => {
   render(<MemoryRouter><FixedBacktestForm onSubmitted={vi.fn()} /></MemoryRouter>)
   await userEvent.selectOptions(await screen.findByLabelText('策略'), 's1')
-  await userEvent.selectOptions(screen.getByLabelText('标的篮子'), 'b1')
-  await userEvent.selectOptions(screen.getByLabelText('交易定义'), 'etf-trading:v1')
+  await userEvent.selectOptions(screen.getByLabelText('标的组合'), 'b1')
+  await userEvent.selectOptions(screen.getByLabelText('交易策略'), 'etf-trading:v1')
   fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '100000' } })
   await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
   await waitFor(() => expect(api.createExperiment).toHaveBeenCalledTimes(1))
@@ -51,16 +51,16 @@ test('incomplete fixed draft saves, while blocked service report prevents a run'
   render(<RouterProvider router={router} />)
   await userEvent.selectOptions(await screen.findByLabelText('选择策略'), 's1')
   await userEvent.selectOptions(screen.getByLabelText('选择数据'), 'd1')
-  await userEvent.selectOptions(screen.getByLabelText('标的篮子'), 'b1')
-  await userEvent.selectOptions(screen.getByLabelText('交易定义'), 'etf-trading:v1')
+  await userEvent.selectOptions(screen.getByLabelText('标的组合'), 'b1')
+  await userEvent.selectOptions(screen.getByLabelText('交易策略'), 'etf-trading:v1')
   fireEvent.change(screen.getByLabelText('绩效起始日'), { target: { value: '2024-02-01' } })
   fireEvent.change(screen.getByLabelText('结束日'), { target: { value: '2024-03-01' } })
   fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '100000' } })
   fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: '探索' } })
-  await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
+  await userEvent.click(screen.getByRole('button', { name: '保存配置' }))
   await waitFor(() => expect(api.createExperiment).toHaveBeenCalledTimes(1))
   expect(screen.getByRole('button', { name: '提交回测' })).toBeDisabled()
-  expect(await screen.findByText(/该方案未接入/)).toBeInTheDocument()
+  expect((await screen.findAllByText(/该方案未接入/)).length).toBeGreaterThan(0)
 })
 
 test('editing after capability check starts discards its late ready response', async () => {
@@ -70,79 +70,13 @@ test('editing after capability check starts discards its late ready response', a
   render(<RouterProvider router={router} />)
   await userEvent.selectOptions(await screen.findByLabelText('选择策略'), 's1')
   await userEvent.selectOptions(screen.getByLabelText('选择数据'), 'd1')
-  await userEvent.selectOptions(screen.getByLabelText('标的篮子'), 'b1')
-  await userEvent.selectOptions(screen.getByLabelText('交易定义'), 'etf-trading:v1')
+  await userEvent.selectOptions(screen.getByLabelText('标的组合'), 'b1')
+  await userEvent.selectOptions(screen.getByLabelText('交易策略'), 'etf-trading:v1')
   await userEvent.click(screen.getByRole('button', { name: '检查运行能力' }))
   fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: '新的用途' } })
   await act(async () => resolve(ready))
   expect(screen.queryByLabelText('能力检查报告')).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: '提交回测' })).toBeDisabled()
-})
-
-test('historical experiment is read only and offers an explicit framework draft', async () => {
-  vi.spyOn(api, 'experiment').mockResolvedValue({ id: 'old', revision: 1, payload: { strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: {}, backtest_spec: { start: '2024-02-01', end: '2024-03-01', symbols: ['512480'] }, sample_purpose: '探索', source_run_id: 'r-old' } } as any)
-  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/old'] })
-  render(<RouterProvider router={router} />)
-  expect(await screen.findByRole('heading', { name: '历史实验（只读）' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: '保存实验' })).not.toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '创建新的框架草稿' })).toHaveAttribute('href', '/experiments/new?source_experiment_id=old')
-})
-
-test.each([
-  { parentRun: undefined, currentWindow: 7 },
-  { parentRun: 'r-parent', currentWindow: 11 },
-])('upgrades the selected legacy revision with current parameters and parent run $parentRun', async ({ parentRun, currentWindow }) => {
-  const legacy = { id: 'old', revision: 4, payload: {
-    strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: currentWindow },
-    backtest_spec: { start: '2024-02-01', end: '2024-03-01', symbols: ['512480'], initial_cash: 100000, seed: 2,
-      execution: { model: 'next_open', commission_rate: 0, minimum_commission: 0, slippage_rate: 0, max_stale_sessions: 0 },
-      risk: { max_total_weight: 1, max_symbol_weight: 1, group_caps: {}, stress_scenarios: [], pause_action: 'block_new', recovery_mode: 'never' },
-      metrics: { annual_sessions: 252, risk_free_rate: 0, cash_rate: 0, definition_version: '1' } },
-    sample_purpose: '当前实验', ...(parentRun ? { source_run_id: parentRun } : {})
-  } }
-  vi.spyOn(api, 'experiment').mockResolvedValue(legacy as any)
-  const readRun = vi.spyOn(api, 'run')
-  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/old'] })
-  render(<RouterProvider router={router} />)
-  await userEvent.click(await screen.findByRole('link', { name: '创建新的框架草稿' }))
-  expect(await screen.findByRole('heading', { name: '新建固定策略' })).toBeInTheDocument()
-  expect(screen.getByLabelText('样本用途')).toHaveValue('当前实验')
-  expect(screen.getByLabelText('初始资金')).toHaveValue(100000)
-  expect(await screen.findByLabelText('观察窗口')).toHaveValue(currentWindow)
-  expect(screen.getByLabelText('标的篮子')).toHaveValue('')
-  expect(screen.getByLabelText('交易定义')).toHaveValue('')
-  await userEvent.selectOptions(screen.getByLabelText('标的篮子'), 'b1')
-  await userEvent.selectOptions(screen.getByLabelText('交易定义'), 'etf-trading:v1')
-  await userEvent.click(screen.getByRole('button', { name: '保存实验' }))
-  await waitFor(() => expect(api.createExperiment).toHaveBeenCalledOnce())
-  const payload = vi.mocked(api.createExperiment).mock.calls[0][0]
-  expect(payload).toMatchObject({ source_experiment_ref: { experiment_id: 'old', revision: 4 }, strategy_revision_id: 's1', dataset_version_id: 'd1', strategy_params: { window: currentWindow }, sample_purpose: '当前实验' })
-  expect(payload.source_run_id).toBe(parentRun)
-  expect(payload.backtest_spec).not.toHaveProperty('symbols')
-  expect(readRun).not.toHaveBeenCalled()
-})
-
-test('late legacy source read cannot overwrite later form edits', async () => {
-  let resolve!: (value: any) => void
-  vi.spyOn(api, 'experiment').mockReturnValue(new Promise(done => { resolve = done }))
-  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/new?source_experiment_id=old'] })
-  render(<RouterProvider router={router} />)
-  await waitFor(() => expect(api.experiment).toHaveBeenCalledWith('old'))
-  fireEvent.change(screen.getByLabelText('样本用途'), { target: { value: '用户新输入' } })
-  await act(async () => resolve({ id: 'old', revision: 2, payload: { sample_purpose: '旧值' } }))
-  expect(screen.getByLabelText('样本用途')).toHaveValue('用户新输入')
-  expect(screen.getByLabelText('标的篮子')).toHaveValue('')
-})
-
-test('legacy source failure after leaving its URL does not surface on the new page', async () => {
-  let reject!: (reason: Error) => void
-  vi.spyOn(api, 'experiment').mockReturnValue(new Promise((_done, fail) => { reject = fail }))
-  const router = createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: ['/experiments/new?source_experiment_id=old'] })
-  render(<RouterProvider router={router} />)
-  await waitFor(() => expect(api.experiment).toHaveBeenCalledWith('old'))
-  await act(async () => { await router.navigate('/experiments/new') })
-  await act(async () => reject(new Error('late source failure')))
-  expect(screen.queryByText(/late source failure/)).not.toBeInTheDocument()
 })
 
 test('late run source read cannot overwrite later form edits', async () => {

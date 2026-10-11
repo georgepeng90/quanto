@@ -6,7 +6,6 @@ export type TradableInstrumentId = InstrumentId & { instrument_type: 'etf' | 'st
 export type IndexInstrumentId = InstrumentId & { instrument_type: 'index' }
 export const instrumentKey = (instrument: InstrumentId) => `${instrument.exchange}:${instrument.instrument_type}:${instrument.code}`
 export type BasketRevisionRef = { basket_id: string; revision: number }
-export type SourceExperimentRef = { experiment_id: string; revision: number }
 export type FrozenBasketRevision = BasketRevisionRef & { members: TradableInstrumentId[]; created_at: string; selection_note: string; content_hash: string }
 export type BasketSummary = { basket_id: string; name: string; current_revision: number; created_at: string }
 export type BasketDetail = BasketSummary & { current: FrozenBasketRevision; revisions: { revision: number; content_hash: string; created_at: string }[] }
@@ -26,13 +25,10 @@ export type RequirementField = { name: string; dtype: 'float' | 'int' | 'bool' |
 export type RequirementItem = { requirement_id: string; table: string; semantic_version: string; fields: RequirementField[]; scope: 'basket' | 'reference'; reference_ids: InstrumentId[]; interval: ResearchInterval; warmup_sessions: number; availability_rule: string; price_modes: ('raw_cash' | 'adjusted_research')[]; required: boolean; missing_policy: 'reject' | 'mask'; accepted_limitations: string[] }
 export type ResolvedDefinition = { ref: DefinitionRef; implementation_hash: string; effective_params: Record<string, unknown>; declaration: Record<string, unknown> }
 export type ResolvedConfiguration = { framework_contract_version: 'multi-asset-v1'; operation: 'fixed_backtest' | 'train' | 'resume' | 'policy_backtest'; request: Record<string, unknown>; basket: FrozenBasketRevision; asset_binding: AssetBinding; ordered_pairs: AssetMapping[]; definitions: ResolvedDefinition[]; requirements: RequirementItem[]; internal_backtest_spec: Record<string, unknown>; internal_training_spec: Record<string, unknown> | null; request_hash: string; capability_report: CapabilityReport }
-export type DatasetBindingRequest = { evidence_ref: string; idempotency_key: string }
-export type ModelBindingRequest = { idempotency_key: string }
 export type FetchRequest = { instruments: TradableInstrumentId[]; start_date: string; end_date: string; historical_start?: string | null; price_mode?: 'raw_cash' | 'adjusted_research'; benchmark?: IndexInstrumentId; auxiliary?: Record<string, unknown> }
 export type FetchJobRequest = FetchRequest & { refresh?: boolean }
 export type BacktestInput = { start: string; end: string; initial_cash: number; seed: number; execution: ExecutionSpec; risk: RiskSpec; metrics: MetricSpec }
-export type FixedRequest = { framework_contract_version: 'multi-asset-v1'; basket_revision_ref: BasketRevisionRef; dataset_version_id: string; strategy_revision_id: string; trading_definition_ref: TradingDefinitionRef; strategy_params: Record<string, unknown>; backtest_spec: BacktestInput; sample_purpose: string; source_run_id?: string | null; source_experiment_ref?: SourceExperimentRef | null }
-export const isFixedRequest = (value: unknown): value is FixedRequest => typeof value === 'object' && value !== null && 'framework_contract_version' in value && value.framework_contract_version === 'multi-asset-v1'
+export type FixedRequest = { framework_contract_version: 'multi-asset-v1'; basket_revision_ref: BasketRevisionRef; dataset_version_id: string; strategy_revision_id: string; trading_definition_ref: TradingDefinitionRef; strategy_params: Record<string, unknown>; backtest_spec: BacktestInput; sample_purpose: string; source_run_id?: string | null }
 type TrainingRequired = 'name' | 'train_start' | 'train_end' | 'validation_start' | 'validation_end'
 export type TrainingInput = Pick<PolicyTrainingSpec, TrainingRequired> & Partial<Omit<PolicyTrainingSpec, TrainingRequired | 'backtest'>> & { backtest: BacktestInput }
 export type ModelCreateRequest = { framework_contract_version: 'multi-asset-v1'; basket_revision_ref: BasketRevisionRef; dataset_id: string; learning_definition_ref: LearningDefinitionRef; trading_definition_ref: TradingDefinitionRef; spec: TrainingInput }
@@ -45,4 +41,3 @@ export type CapabilityCheckRequest =
   | ({ operation: 'train' } & ModelCreateRequest)
   | ({ operation: 'resume' } & ResumeRequest)
   | ({ operation: 'policy_backtest'; model_id: string } & PolicyBacktestRequest)
-export type ModelFrameworkBinding = { schema_version: 1; model_id: string; origin: 'new' | 'legacy_audited'; original_spec: Record<string, unknown>; original_spec_hash: string; training_configuration: ResolvedConfiguration; semantic_identity: Record<string, unknown>; evidence: Record<string, unknown>; created_at: string; binding_hash: string }

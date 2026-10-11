@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import { api, describeError } from '../api'
 import type { DatasetVersion, JobRecord, Preflight } from '../types'
 import type { CapabilityReport as Report, FetchJobRequest, IndexInstrumentId, TradableInstrumentId } from '../frameworkTypes'
-import { instrumentKey } from '../frameworkTypes'
 import { BasketEditor } from '../components/BasketEditor'
 import { CapabilityReport } from '../components/CapabilityReport'
 
@@ -15,34 +14,10 @@ const marketState: Record<string, string> = { queued: '准备中', running: '准
 const usable = (job: JobRecord) => job.result?.state === 'complete' && job.result.dataset_version_id && (job.kind !== 'fetch' || job.result.market_prefetch_state === 'ready')
 const appendUnique = <T extends { id: string }>(old: T[], next: T[]) => [...old, ...next.filter(item => !old.some(existing => existing.id === item.id))]
 
-function DatasetIdentity({ id }: { id: string }) {
-  const [detail, setDetail] = useState<DatasetVersion | null>(null)
-  const [error, setError] = useState('')
-  const [binding, setBinding] = useState(false)
-  const [bindingKey, setBindingKey] = useState('')
-  const load = async () => { try { setDetail(await api.dataset(id)); setError('') } catch (value) { setError(describeError(value)) } }
-  useEffect(() => { void load() }, [id])
-  const bind = async () => {
-    if (!detail?.identity_evidence_ref) return
-    const key = bindingKey || crypto.randomUUID()
-    setBindingKey(key); setBinding(true); setError('')
-    try { await api.bindDataset(id, { evidence_ref: detail.identity_evidence_ref, idempotency_key: key }); setBindingKey(''); await load() }
-    catch (value) { setError(describeError(value)) }
-    finally { setBinding(false) }
-  }
-  return <div className="callout framework-detail"><strong>身份核验</strong>
-    {error && <p role="alert" className="error">{error}</p>}
-    {!detail ? <p>读取身份资料…</p> : detail.asset_binding ? <><p className="success">已绑定 · {detail.asset_binding.binding_hash}</p><p>标的：{detail.asset_binding.assets.map(item => instrumentKey(item.instrument_id)).join('、')}</p></> : <>
-      {detail.identity_binding_issue && <p>{detail.identity_binding_issue.code}：{detail.identity_binding_issue.message}</p>}
-      {detail.identity_evidence_ref ? <><p>已有来源证据：{detail.identity_evidence_ref}</p><button type="button" disabled={binding} onClick={bind}>{binding ? '关联中…' : '检查并关联身份'}</button></> : <p>缺少可核验的身份来源。请重新导入包含 identity_evidence.json 证券身份资料的数据包。</p>}
-    </>}
-  </div>
-}
-
 export function DatasetsPage() {
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') === 'baskets' ? 'baskets' : 'versions'
-  return <div className="page-stack"><header className="page-heading"><h1>数据</h1><p>标的选择、数据版本和身份来源。</p></header>
+  return <div className="page-stack"><header className="page-heading"><h1>数据</h1><p>选择标的组合，查看行情覆盖并准备数据。</p></header>
     <nav aria-label="数据页面" className="inline-actions"><button type="button" aria-current={tab === 'baskets' ? 'page' : undefined} onClick={() => setParams({ tab: 'baskets' })}>标的篮子</button><button type="button" aria-current={tab === 'versions' ? 'page' : undefined} onClick={() => setParams({ tab: 'versions' })}>数据版本</button></nav>
     {tab === 'baskets' ? <BasketEditor /> : <DataVersions />}
   </div>
@@ -60,7 +35,6 @@ function DataVersions() {
   const [benchmark, setBenchmark] = useState<IndexInstrumentId>({ exchange: 'SSE', instrument_type: 'index', code: '000300' })
   const [fetchReport, setFetchReport] = useState<Report | null>(null)
   const fetchVersion = useRef(0)
-  const [openDataset, setOpenDataset] = useState<string | null>(null)
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
   const [updateMarket, setUpdateMarket] = useState(false)
@@ -80,7 +54,7 @@ function DataVersions() {
   return <div className="page-stack"><header className="page-heading"><h2>数据版本</h2><p>数据导入与获取先经过任务验证。版本及覆盖以服务端登记结果为准。</p></header>
     {error && <p role="alert" className="error callout">{error}</p>}
     <section className="panel"><div className="section-heading"><div><h2>已登记数据</h2><p>选择实验时将冻结其中一个版本。</p></div><button onClick={() => refresh().catch(value => setError(describeError(value)))}>刷新</button></div>
-      {loading ? <p>加载中…</p> : loadFailed ? <p className="empty">无法读取数据版本，请检查上方错误并刷新。</p> : datasets.length === 0 ? <p className="empty">尚无已验证数据版本。可获取行情或上传 ZIP。</p> : <div className="record-list">{datasets.map(data => <article key={data.id} className="record"><div className="record-head"><strong>{data.manifest.source}</strong><span className="badge">{data.manifest.is_demo ? '演示数据' : '真实来源声明'}</span><span className="badge">{mode(data.manifest.price_mode)}</span></div><small>版本 {data.id}</small><p>价格覆盖 {data.manifest.data_start} — {data.manifest.data_end} · 日历 {data.manifest.calendar_start} — {data.manifest.calendar_end}</p><p>事件覆盖：{data.manifest.event_coverage} · 基准：{data.manifest.benchmark_type || '未声明'}</p>{data.manifest.limitations?.length > 0 && <p className="muted">限制：{data.manifest.limitations.join('；')}</p>}<button type="button" onClick={() => setOpenDataset(old => old === data.id ? null : data.id)}>{openDataset === data.id ? '收起身份' : '查看身份'}</button>{openDataset === data.id && <DatasetIdentity id={data.id} />}</article>)}</div>}{datasetCursor && <button type="button" onClick={loadMoreDatasets}>加载更多数据版本</button>}</section>
+      {loading ? <p>加载中…</p> : loadFailed ? <p className="empty">无法读取数据版本，请检查上方错误并刷新。</p> : datasets.length === 0 ? <p className="empty">尚无已验证数据版本。可获取行情或上传 ZIP。</p> : <div className="record-list">{datasets.map(data => <article key={data.id} className="record"><div className="record-head"><strong>{data.manifest.source}</strong><span className="badge">{data.manifest.is_demo ? '演示数据' : '真实来源声明'}</span><span className="badge">{mode(data.manifest.price_mode)}</span></div><p>价格覆盖 {data.manifest.data_start} — {data.manifest.data_end} · 日历 {data.manifest.calendar_start} — {data.manifest.calendar_end}</p>{data.manifest.limitations?.length > 0 && <p className="muted">限制：{data.manifest.limitations.join('；')}</p>}</article>)}</div>}{datasetCursor && <button type="button" onClick={loadMoreDatasets}>加载更多数据版本</button>}</section>
     <section className="panel"><h2>获取数据</h2><p className="muted">明确填写规范身份。实际覆盖由任务返回；获取成功后仍须对具体策略或模型配置重新检查能力。</p>
       {instruments.map((item, index) => <div key={index} className="form-grid">
         <label>标的交易所<input value={item.exchange} onChange={event => { invalidateFetch(); setInstruments(old => old.map((value, position) => position === index ? { ...value, exchange: event.target.value } : value)) }} /></label>
@@ -99,6 +73,6 @@ function DataVersions() {
       </div><button type="button" onClick={submit}>发起获取</button>{fetchReport && <CapabilityReport report={fetchReport} />}
     </section>
     <section className="panel"><h2>导入 ZIP 数据包</h2><p className="muted">ZIP 包含 manifest.json 与六张基础表。预检只检查声明元数据，任务完成后才确认实际数据。</p><div className="inline-actions"><label>ZIP 文件<input type="file" accept=".zip,application/zip" onChange={event => { setFile(event.target.files?.[0] || null); setPreflight(null); setUploadId('') }} /></label><button disabled={!file} onClick={upload}>上传并预检</button></div>{preflight && <div className="callout"><strong>声明检查 · {preflight.validation}</strong><p>{preflight.is_demo ? '演示数据' : '真实来源声明'} · {mode(preflight.price_mode)} · 事件覆盖 {preflight.event_coverage}</p><p>价格覆盖 {preflight.data_start} — {preflight.data_end} · 日历 {preflight.calendar_start} — {preflight.calendar_end}</p><p>缺失表：{preflight.missing_tables.length ? preflight.missing_tables.join('、') : '声明中未发现'}</p>{preflight.limitations.length > 0 && <p>限制：{preflight.limitations.join('；')}</p>}<button onClick={importFile}>提交导入验证</button></div>}</section>
-    <section className="panel"><h2>数据任务</h2>{jobs.length === 0 ? <p className="empty">暂无数据任务。</p> : <div className="record-list">{[...jobs].reverse().map(job => <article className="record" key={job.id}><div className="record-head"><strong>{kindLabel[job.kind] || job.kind}</strong><span className="badge">{stateLabel[job.state] || job.state}</span></div><small>{job.id}</small>{job.heartbeat && <p>心跳 {job.heartbeat}</p>}{job.error && <p className="error">{job.error}</p>}{usable(job) && <p className="success">已验证并登记数据版本 {job.result!.dataset_version_id} · {mode(job.result!.price_mode || '')}</p>}{job.kind === 'fetch' && <p>行情：{marketState[job.result?.market_prefetch_state || (terminal.has(job.state) ? job.state : 'running')] || '未就绪'}</p>}{job.result?.limitations?.length ? <p className="muted">限制：{job.result.limitations.join('；')}</p> : null}{job.result && !usable(job) && terminal.has(job.state) && <div className="error"><p>获取已结束，覆盖不完整（{job.result.reason || '未知原因'}），没有登记数据版本。</p><pre>{JSON.stringify({ coverage: job.result.coverage, failed_symbols: job.result.failed_symbols }, null, 2)}</pre></div>}</article>)}</div>}{jobCursor && <button type="button" onClick={loadMoreJobs}>加载更多数据任务</button>}</section>
+    <section className="panel"><h2>数据任务</h2>{jobs.length === 0 ? <p className="empty">暂无数据任务。</p> : <div className="record-list">{[...jobs].reverse().map(job => <article className="record" key={job.id}><div className="record-head"><strong>{kindLabel[job.kind] || job.kind}</strong><span className="badge">{stateLabel[job.state] || job.state}</span></div>{job.error && <p className="error">{job.error}</p>}{usable(job) && <p className="success">数据已就绪 · {mode(job.result!.price_mode || '')}</p>}{job.kind === 'fetch' && <p>行情：{marketState[job.result?.market_prefetch_state || (terminal.has(job.state) ? job.state : 'running')] || '未就绪'}</p>}{job.result?.limitations?.length ? <p className="muted">限制：{job.result.limitations.join('；')}</p> : null}{job.result && !usable(job) && terminal.has(job.state) && <div className="error"><p>获取已结束，覆盖不完整（{job.result.reason || '未知原因'}），没有登记数据版本。</p><pre>{JSON.stringify({ coverage: job.result.coverage, failed_symbols: job.result.failed_symbols }, null, 2)}</pre></div>}<details><summary>任务诊断</summary><p>{job.id}</p><p>数据 {job.result?.dataset_version_id || '—'}</p>{job.heartbeat && <p>心跳 {job.heartbeat}</p>}</details></article>)}</div>}{jobCursor && <button type="button" onClick={loadMoreJobs}>加载更多数据任务</button>}</section>
   </div>
 }

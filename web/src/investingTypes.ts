@@ -1,6 +1,6 @@
 import type { BacktestSpec, DatasetVersion, JobRecord } from './types'
 import type { LearningChart, LearningOverview, LearningTablePage } from './learningTypes'
-import type { AssetMapping, BasketRevisionRef, CapabilityReport, ResolvedDefinition } from './frameworkTypes'
+import type { AssetMapping, BasketRevisionRef, ResolvedDefinition } from './frameworkTypes'
 
 export type InvestingArtifact = { id: string; kind: 'policy' | 'policy_backtest'; created_at: string; job_id: string; state: 'succeeded'; manifest: Record<string, unknown> }
 export type InvestingOverview = { capabilities: LearningOverview['capabilities'] & { ppo_available?: boolean; gymnasium_available?: boolean }; datasets: DatasetVersion[]; policies: InvestingArtifact[]; backtests: InvestingArtifact[]; jobs: JobRecord[] }
@@ -10,8 +10,8 @@ export type PolicyBacktestSpec = { start: string; end: string; baseline: 'policy
 export type InvestingChart = LearningChart
 export type InvestingTablePage = LearningTablePage
 
-export type ModelFrameworkSummary = { model_id: string; origin: 'new' | 'legacy_audited'; binding_hash: string; original_spec_hash: string; basket_revision_ref: BasketRevisionRef; ordered_pairs: AssetMapping[]; definitions: ResolvedDefinition[]; evidence: Record<string, unknown> }
-export type InvestingModel = { id: string; name: string; dataset_id: string; spec: PolicyTrainingSpec; created_at: string; state: string; active_job_id: string | null; session_count: number; version_count: number; total_timesteps: number; latest_version_id: string | null; framework_binding?: ModelFrameworkSummary | null; framework_binding_check?: CapabilityReport | null }
+export type ModelFrameworkSummary = { model_id: string; origin: 'new'; binding_hash: string; original_spec_hash: string; basket_revision_ref: BasketRevisionRef; ordered_pairs: AssetMapping[]; definitions: ResolvedDefinition[]; evidence: Record<string, unknown> }
+export type InvestingModel = { id: string; name: string; dataset_id: string; spec: PolicyTrainingSpec; created_at: string; state: string; active_job_id: string | null; session_count: number; version_count: number; total_timesteps: number; latest_version_id: string | null; framework_binding?: ModelFrameworkSummary | null }
 export type InvestingModelDetail = InvestingModel & { sessions: (JobRecord & { base_version_id: string | null })[]; versions: InvestingArtifact[] }
 export type TrainingSampling = { start: string; end: string; episode_count: number }
 export type TrainingHistoryItem = {

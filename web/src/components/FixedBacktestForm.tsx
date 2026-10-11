@@ -4,7 +4,7 @@ import { api, ApiError, describeError } from '../api'
 import { BasketRevisionSelect } from './BasketRevisionSelect'
 import { CapabilityReport } from './CapabilityReport'
 import { ParameterForm } from './ParameterForm'
-import { isFixedRequest, type BacktestInput, type BasketRevisionRef, type CapabilityReport as Report, type SourceExperimentRef, type TradingDefinitionRef } from '../frameworkTypes'
+import type { BacktestInput, BasketRevisionRef, CapabilityReport as Report, TradingDefinitionRef } from '../frameworkTypes'
 import type { DatasetVersion, ExperimentDraft, ExperimentPayload, Page, ParameterSchema, StrategyRevision } from '../types'
 
 type ParameterGroup = { id: string; params: Record<string, unknown>; valid: boolean }
@@ -29,7 +29,6 @@ export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) 
   const [strategyId, setStrategyId] = useState(''), [datasetId, setDatasetId] = useState('')
   const [basketRef, setBasketRef] = useState<BasketRevisionRef | null>(null), [tradingRef, setTradingRef] = useState<TradingDefinitionRef | null>(null)
   const [sourceRunId, setSourceRunId] = useState<string | null>(null)
-  const [sourceExperimentRef, setSourceExperimentRef] = useState<SourceExperimentRef | null>(null)
   const [tradingDefinitions, setTradingDefinitions] = useState<TradingDefinitionRef[]>([])
   const [report, setReport] = useState<Report | null>(null)
   const [spec, setSpec] = useState<BacktestInput>(() => structuredClone(emptySpec)), [purpose, setPurpose] = useState('探索')
@@ -38,7 +37,7 @@ export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) 
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
   const prepared = useRef<Prepared | null>(null), locked = useRef(false), mounted = useRef(false)
   const strategy = strategies.find(item => item.id === strategyId), dataset = datasets.find(item => item.id === datasetId)
-  const saved = drafts.find(item => isFixedRequest(item.payload) && item.payload.strategy_revision_id === strategyId)
+  const saved = drafts.find(item => item.payload.strategy_revision_id === strategyId)
 
   useEffect(() => {
     mounted.current = true
@@ -52,12 +51,12 @@ export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) 
   const edited = () => { prepared.current = null; setRetry(false); setReport(null); setError(''); setNotice('') }
   const chooseStrategy = (id: string) => {
     edited(); setStrategyId(id)
-    const source = strategies.find(item => item.id === id), config = drafts.find(item => isFixedRequest(item.payload) && item.payload.strategy_revision_id === id)
+    const source = strategies.find(item => item.id === id), config = drafts.find(item => item.payload.strategy_revision_id === id)
     const data = datasets.find(item => item.id === config?.payload.dataset_version_id) || datasets[0]
     setDatasetId(config?.payload.dataset_version_id || data?.id || '')
     setSpec(config ? structuredClone(config.payload.backtest_spec) : { ...structuredClone(emptySpec), start: data?.manifest.data_start || '', end: data?.manifest.data_end || '' })
     setPurpose(config?.payload.sample_purpose || '探索')
-    setBasketRef(config?.payload.basket_revision_ref || null); setTradingRef(config?.payload.trading_definition_ref || null); setSourceRunId(config?.payload.source_run_id || null); setSourceExperimentRef(config?.payload.source_experiment_ref || null)
+    setBasketRef(config?.payload.basket_revision_ref || null); setTradingRef(config?.payload.trading_definition_ref || null); setSourceRunId(config?.payload.source_run_id || null)
     const defaults = Object.fromEntries(Object.entries(source?.manifest.parameter_schema.properties || {}).filter(([, field]) => field.default !== undefined).map(([key, field]) => [key, field.default]))
     setGroups(source ? [group({ ...defaults, ...config?.payload.strategy_params })] : [])
   }
@@ -86,7 +85,7 @@ export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) 
         const payloads = groups.map((item, index) => {
           const params = structuredClone(item.params)
           if (!item.valid || !validate(params)) throw new Error(`第${index + 1}组参数无效：${validate.errors?.[0]?.message || '请检查字段'}`)
-          return { framework_contract_version: 'multi-asset-v1' as const, basket_revision_ref: basketRef, trading_definition_ref: tradingRef, strategy_revision_id: strategyId, dataset_version_id: datasetId, strategy_params: params, backtest_spec: structuredClone(spec), sample_purpose: purpose.trim(), ...(sourceRunId ? { source_run_id: sourceRunId } : {}), ...(sourceExperimentRef ? { source_experiment_ref: sourceExperimentRef } : {}) }
+          return { framework_contract_version: 'multi-asset-v1' as const, basket_revision_ref: basketRef, trading_definition_ref: tradingRef, strategy_revision_id: strategyId, dataset_version_id: datasetId, strategy_params: params, backtest_spec: structuredClone(spec), sample_purpose: purpose.trim(), ...(sourceRunId ? { source_run_id: sourceRunId } : {}) }
         })
         for (const payload of payloads) {
           const checked = await api.checkCapabilities({ operation: 'fixed_backtest', ...payload })
@@ -125,9 +124,9 @@ export function FixedBacktestForm({ onSubmitted }: { onSubmitted: () => void }) 
       {strategy && <>
         {saved && <p className="muted">已带入此策略最近保存的配置，可直接修改。</p>}
         <BasketRevisionSelect value={basketRef} onChange={value => { edited(); setBasketRef(value) }} disabled={busy} />
-        <label>交易定义<select value={tradingRef ? `${tradingRef.id}:${tradingRef.version}` : ''} onChange={event => { edited(); setTradingRef(tradingDefinitions.find(item => `${item.id}:${item.version}` === event.target.value) || null) }}><option value="">请选择交易定义</option>{tradingDefinitions.map(item => <option key={`${item.id}:${item.version}`} value={`${item.id}:${item.version}`}>{item.id} · {item.version}</option>)}</select></label>
+        <label>交易策略<select value={tradingRef ? `${tradingRef.id}:${tradingRef.version}` : ''} onChange={event => { edited(); setTradingRef(tradingDefinitions.find(item => `${item.id}:${item.version}` === event.target.value) || null) }}><option value="">请选择交易策略</option>{tradingDefinitions.map(item => <option key={`${item.id}:${item.version}`} value={`${item.id}:${item.version}`}>{item.id}</option>)}</select></label>
         <details open={!saved}><summary>回测条件 · 初始资金 {spec.initial_cash}</summary><div className="form-grid">
-          <label>日线数据<select value={datasetId} onChange={event => { edited(); setDatasetId(event.target.value) }}><option value="">请选择数据</option>{datasets.map(item => <option key={item.id} value={item.id}>{item.manifest.source} · {item.manifest.data_start}–{item.manifest.data_end} · {item.id.slice(0, 8)}</option>)}</select></label>
+          <label>日线数据<select value={datasetId} onChange={event => { edited(); setDatasetId(event.target.value) }}><option value="">请选择数据</option>{datasets.map(item => <option key={item.id} value={item.id}>{item.manifest.source} · {item.manifest.data_start}–{item.manifest.data_end}</option>)}</select></label>
           <label>初始资金<input type="number" min={0} value={spec.initial_cash || ''} onChange={event => updateSpec({ ...spec, initial_cash: Number(event.target.value) })} /></label>
           <label>样本用途<input value={purpose} onChange={event => { edited(); setPurpose(event.target.value) }} /></label>
           <label>随机种子<input type="number" step={1} value={spec.seed} onChange={event => updateSpec({ ...spec, seed: Number(event.target.value) })} /></label>

@@ -43,7 +43,7 @@ test('never presents an incomplete finished fetch as a usable data version', asy
   expect(screen.queryByText(/可生成演示数据/)).not.toBeInTheDocument()
   expect(screen.getByText(/覆盖不完整/)).toBeInTheDocument()
   expect(screen.getByText(/2024-01-03/)).toBeInTheDocument()
-  expect(screen.queryByText(/已验证并登记数据版本/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/数据已就绪/)).not.toBeInTheDocument()
 })
 
 test.each([false, true])('fetch submits requirements with explicit refresh=%s', async refresh => {
@@ -74,7 +74,7 @@ test.each([
   }))
   renderApp()
   await screen.findByText('j-ready')
-  expect(Boolean(screen.queryByText(/已验证并登记数据版本/))).toBe(usable)
+  expect(Boolean(screen.queryByText(/数据已就绪/))).toBe(usable)
   expect(screen.getByText(/source limitation/)).toBeInTheDocument()
 })
 
@@ -94,7 +94,7 @@ test('labels ZIP preflight as metadata-only before queuing import', async () => 
   await userEvent.upload(screen.getByLabelText('ZIP 文件'), new File(['zip'], 'bundle.zip', { type: 'application/zip' }))
   await userEvent.click(screen.getByRole('button', { name: '上传并预检' }))
   expect(await screen.findByText(/声明检查 · metadata_only/)).toBeInTheDocument()
-  expect(screen.queryByText(/已验证并登记数据版本/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/数据已就绪/)).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '提交导入验证' }))
   expect(await screen.findByText('排队中')).toBeInTheDocument()
 })
@@ -159,47 +159,9 @@ test('polls a submitted 51st job by ID after the first job page is full', async 
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: '发起获取' })); await Promise.resolve() })
     await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
     expect(detailReads).toBeGreaterThan(0)
-    expect(screen.getByText(/已验证并登记数据版本 d51/)).toBeInTheDocument()
+    expect(screen.getByText(/数据已就绪/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '加载更多数据任务' })).toBeInTheDocument()
   } finally { vi.useRealTimers() }
-})
-
-test('binding submits only the saved evidence reference and reuses its key after a timeout', async () => {
-  let detailReads = 0
-  let bindCalls = 0
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input)
-    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
-    if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', content_hash: 'h', manifest: { source: 'import', is_demo: false, price_mode: 'raw_cash', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'complete', limitations: [] } }], next_cursor: null })
-    if (path === '/api/jobs') return Response.json({ items: [], next_cursor: null })
-    if (path === '/api/datasets/d1' && !init?.method) { detailReads += 1; return Response.json({ identity_evidence_ref: 'import:proof', identity_binding_issue: { code: 'IDENTITY_UNRESOLVED', message: '待绑定' }, asset_binding: detailReads > 1 ? { binding_hash: 'bound', assets: [{ instrument_id: { exchange: 'SSE', instrument_type: 'stock', code: '600000' } }] } : null }) }
-    if (path === '/api/datasets/d1/asset-binding') { bindCalls += 1; if (bindCalls === 1) throw new Error('timeout'); return Response.json({ binding_hash: 'bound' }) }
-    throw new Error(`unexpected ${path}`)
-  }))
-  renderApp()
-  await userEvent.click(await screen.findByRole('button', { name: '查看身份' }))
-  await userEvent.click(await screen.findByRole('button', { name: '检查并关联身份' }))
-  expect(await screen.findByRole('alert')).toHaveTextContent('timeout')
-  await userEvent.click(screen.getByRole('button', { name: '检查并关联身份' }))
-  expect(await screen.findByText(/已绑定 · bound/)).toBeInTheDocument()
-  const bodies = vi.mocked(fetch).mock.calls.filter(([url]) => url === '/api/datasets/d1/asset-binding').map(([, init]) => JSON.parse(init!.body as string))
-  expect(bodies).toHaveLength(2)
-  expect(bodies[0]).toEqual({ evidence_ref: 'import:proof', idempotency_key: bodies[1].idempotency_key })
-})
-
-test('missing evidence offers reimport without arbitrary mapping controls', async () => {
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-    const path = String(input)
-    if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api', timezone: 'Asia/Shanghai' })
-    if (path === '/api/datasets') return Response.json({ items: [{ id: 'd1', content_hash: 'h', manifest: { source: 'legacy', is_demo: false, price_mode: 'raw_cash', calendar_start: '2024-01-01', calendar_end: '2024-12-31', data_start: '2024-02-01', data_end: '2024-11-30', event_coverage: 'unknown', limitations: [] } }], next_cursor: null })
-    if (path === '/api/jobs') return Response.json({ items: [], next_cursor: null })
-    if (path === '/api/datasets/d1') return Response.json({ identity_evidence_ref: null, identity_binding_issue: { code: 'IDENTITY_UNRESOLVED', message: '来源不明' }, asset_binding: null })
-    throw new Error(`unexpected ${path}`)
-  }))
-  renderApp()
-  await userEvent.click(await screen.findByRole('button', { name: '查看身份' }))
-  expect(await screen.findByText(/请重新导入包含 identity_evidence.json/)).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: '检查并关联身份' })).not.toBeInTheDocument()
 })
 
 test('blocked fetch shows server reasons and does not queue a data job', async () => {
@@ -215,7 +177,7 @@ test('blocked fetch shows server reasons and does not queue a data job', async (
   await userEvent.selectOptions(screen.getByLabelText('标的类型'), 'stock')
   await userEvent.type(screen.getByLabelText('标的代码'), '600000')
   await userEvent.click(screen.getByRole('button', { name: '发起获取' }))
-  expect(await screen.findByText(/股票数据源未接入/)).toBeInTheDocument()
+  expect((await screen.findAllByText(/股票数据源未接入/)).length).toBeGreaterThan(0)
   expect(vi.mocked(fetch).mock.calls.some(([url]) => url === '/api/jobs/data')).toBe(false)
 })
 

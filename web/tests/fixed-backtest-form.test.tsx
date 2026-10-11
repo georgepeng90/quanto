@@ -36,7 +36,7 @@ async function open() {
 
 test('selects a named strategy, edits dates and parameters, and saves the submitted configuration internally', async () => {
   await open()
-  expect(screen.queryByLabelText('实验草稿')).toBeNull()
+  expect(screen.queryByLabelText('已保存配置')).toBeNull()
   expect(screen.queryByRole('textbox', { name: /JSON/ })).toBeNull()
   expect(screen.getByLabelText('回测开始')).toHaveValue('2024-01-01')
   fireEvent.change(screen.getByLabelText('回测开始'), { target: { value: '2024-06-01' } })
@@ -90,8 +90,8 @@ test('can run a registered strategy without any saved experiment', async () => {
   vi.mocked(api.experiments).mockResolvedValue({ items: [], next_cursor: null })
   await open()
   expect(screen.getByLabelText('观察窗口')).toHaveValue(20)
-  await userEvent.selectOptions(screen.getByLabelText('标的篮子'), 'b1')
-  await userEvent.selectOptions(screen.getByLabelText('交易定义'), 'etf-trading:v1')
+  await userEvent.selectOptions(screen.getByLabelText('标的组合'), 'b1')
+  await userEvent.selectOptions(screen.getByLabelText('交易策略'), 'etf-trading:v1')
   fireEvent.change(screen.getByLabelText('初始资金'), { target: { value: '100000' } })
   await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
   await waitFor(() => expect(api.submitRun).toHaveBeenCalledTimes(1))
@@ -149,13 +149,4 @@ test('uses the most recent saved configuration and distinguishes same-name revis
   expect(screen.getByLabelText('观察窗口')).toHaveValue(8)
   expect(screen.getByRole('option', { name: '趋势轮动 · 版本2' })).toHaveValue('s2')
   expect(screen.getByRole('option', { name: '趋势轮动 · 版本1' })).toHaveValue('s1')
-})
-
-test('running a saved upgraded draft retains both actual source references', async () => {
-  const source_experiment_ref = { experiment_id: 'legacy-e1', revision: 4 }
-  vi.mocked(api.experiments).mockResolvedValue({ items: [{ ...draft, payload: { ...draft.payload, source_run_id: 'parent-r1', source_experiment_ref } }] as any, next_cursor: null })
-  await open()
-  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
-  await waitFor(() => expect(api.createExperiment).toHaveBeenCalledOnce())
-  expect(vi.mocked(api.createExperiment).mock.calls[0][0]).toMatchObject({ source_run_id: 'parent-r1', source_experiment_ref })
 })

@@ -41,8 +41,8 @@ test('lists each saved framework configuration with requested parameters and bas
   expect(screen.getAllByText('均线策略')).toHaveLength(2)
   expect(screen.getAllByText('窗口：4')).toHaveLength(2)
   expect(screen.getAllByText(/SSE:etf:512480/)).toHaveLength(2)
-  expect(screen.getAllByRole('article')[0]).toHaveTextContent('配置 e1 · 修订 2')
-  expect(screen.getAllByRole('article')[1]).toHaveTextContent('配置 e2 · 修订 2')
+  expect(screen.getAllByRole('article')[0]).toHaveTextContent('ETF 篮子')
+  expect(screen.getAllByRole('article')[1]).toHaveTextContent('ETF 篮子')
   expect(screen.getAllByText(/2024-02-01.*2024-03-01/)).toHaveLength(2)
   await userEvent.click(rows[1])
   expect(router.state.location.pathname).toBe('/experiments/e2')
@@ -65,7 +65,7 @@ test('keeps a saved configuration visible when its strategy metadata fails', asy
     return previous(input, init)
   }))
   renderAt()
-  expect(await screen.findAllByText(/策略修订 s1/)).toHaveLength(2)
+  expect(await screen.findAllByText('已保存策略')).toHaveLength(2)
   expect(screen.getAllByText('window：4')).toHaveLength(2)
   expect(screen.getAllByRole('link', { name: '编辑配置' })).toHaveLength(2)
 })
@@ -118,19 +118,4 @@ test('shows an empty state without exposing unsaved strategy templates', async (
   renderAt()
   expect(await screen.findByText(/暂无固定策略配置/)).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: '编辑配置' })).not.toBeInTheDocument()
-})
-
-test('lists an upgraded legacy experiment as sourced even without a parent run', async () => {
-  const previous = globalThis.fetch
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    if (String(input) === '/api/experiments') return Response.json({ items: [draft('direct'), {
-      ...draft('upgraded'), payload: { ...draft('upgraded').payload, source_experiment_ref: { experiment_id: 'legacy-e1', revision: 4 } }
-    }], next_cursor: null })
-    return previous(input, init)
-  }))
-  renderAt()
-  expect(await screen.findAllByRole('article')).toHaveLength(2)
-  await userEvent.selectOptions(screen.getByLabelText('来源'), 'upgrade')
-  expect(screen.getAllByRole('article')).toHaveLength(1)
-  expect(screen.getByRole('article')).toHaveTextContent('来源实验 legacy-e1 · 修订 4')
 })

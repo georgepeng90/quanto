@@ -88,7 +88,7 @@ export function ModelBacktestForm({ initialModel, initialVersion, onSubmitted }:
     try {
       const payload = request()
       const job = await api.backtestInvestingModel(modelId, payload)
-      setNotice(`回测任务 ${job.id} 已提交，使用保存版本 ${versionId}。`); onSubmitted()
+      setNotice('模型回测已提交。'); onSubmitted()
     } catch (value) { const next = serverReport(value); if (next) { setReport(next); setCheckedKey(latestKey.current) }; setError(describeError(value)) }
     finally { setBusy(false) }
   }
@@ -97,16 +97,15 @@ export function ModelBacktestForm({ initialModel, initialVersion, onSubmitted }:
   return <section className="panel"><h2>保存版本回测</h2>
     {error && <p role="alert" className="error">{error}</p>}{notice && <p role="status" className="success">{notice}</p>}
     <fieldset disabled={busy}><div className="form-grid">
-      <label>强化学习模型<select value={modelId} onChange={event => { setModelId(event.target.value); setVersionId('') }}><option value="">请选择模型</option>{models.map(model => <option key={model.id} value={model.id}>{model.name} · {model.id}</option>)}</select></label>
-      <label>保存版本<select value={versionId} onChange={event => setVersionId(event.target.value)}><option value="">请选择保存版本</option>{versions.map(version => <option key={version.id} value={version.id}>第 {version.round_number} 轮 · {version.id}{version.id === currentBest ? '（当前选优来源）' : ''}</option>)}</select></label>
-      <label>回测数据版本<select value={datasetId} onChange={event => setDatasetId(event.target.value)}><option value="">请选择数据版本</option>{detail && !overview?.datasets.some(item => item.id === detail.dataset_id) && <option value={detail.dataset_id}>{detail.dataset_id}</option>}{overview?.datasets.map(dataset => <option key={dataset.id} value={dataset.id}>{dataset.id} · {dataset.manifest.data_start}—{dataset.manifest.data_end}</option>)}</select></label>
+      <label>强化学习模型<select value={modelId} onChange={event => { setModelId(event.target.value); setVersionId('') }}><option value="">请选择模型</option>{models.map(model => <option key={model.id} value={model.id}>{model.name}</option>)}</select></label>
+      <label>训练轮次<select value={versionId} onChange={event => setVersionId(event.target.value)}><option value="">请选择训练轮次</option>{versions.map(version => <option key={version.id} value={version.id}>第 {version.round_number} 轮{version.id === currentBest ? '（当前选优来源）' : ''}</option>)}</select></label>
+      <label>回测数据<select value={datasetId} onChange={event => setDatasetId(event.target.value)}><option value="">请选择数据</option>{detail && !overview?.datasets.some(item => item.id === detail.dataset_id) && <option value={detail.dataset_id}>训练所用数据</option>}{overview?.datasets.map(dataset => <option key={dataset.id} value={dataset.id}>{dataset.manifest.source} · {dataset.manifest.data_start}—{dataset.manifest.data_end}</option>)}</select></label>
       <label>评估用途<select value={purpose} onChange={event => setPurpose(event.target.value as typeof purpose)}><option value="">请选择评估用途</option><option value="development_replay">开发回放</option><option value="post_selection_backtest">选模后回测</option></select></label>
       <label>回测方法<select value={spec.baseline} onChange={event => setSpec({ ...spec, baseline: event.target.value as typeof spec.baseline })}><option value="policy">PPO 保存策略</option><option value="cash">现金基准</option><option value="equal_weight">等权基准</option><option value="buy_hold">买入持有基准</option></select></label>
       <label>回测开始<input type="date" value={spec.start} onChange={event => setSpec({ ...spec, start: event.target.value })} /></label>
       <label>回测结束<input type="date" value={spec.end} onChange={event => setSpec({ ...spec, end: event.target.value })} /></label>
       <label>成本倍数<input type="number" min={0} max={100} step={.1} value={spec.cost_multiplier} onChange={event => setSpec({ ...spec, cost_multiplier: Number(event.target.value) })} /></label>
-    </div>{detail?.framework_binding ? <p>固定资产顺序：{detail.framework_binding.ordered_pairs.map(pair => `${pair.instrument_id.exchange}:${pair.instrument_id.instrument_type}:${pair.instrument_id.code}`).join(' → ')}</p>
-      : detail && <p className="callout warn">此模型尚无可验证的框架关联，暂不可提交回测。</p>}
+    </div>{detail?.framework_binding && <p>标的组合：{detail.framework_binding.ordered_pairs.map(pair => `${pair.instrument_id.exchange}:${pair.instrument_id.code}`).join(' → ')}</p>}
       <p className="muted">开发回放可用于验证区间；选模后回测须由服务端核对时间边界。选择保存版本不会改变续训所用的最近状态。</p>
       <div className="inline-actions"><button type="button" onClick={() => void check()}>检查运行能力</button><button type="button" disabled={visibleReport?.status !== 'ready'} onClick={() => void submit()}>提交模型回测</button></div>
     </fieldset>{visibleReport && <CapabilityReportView report={visibleReport} />}

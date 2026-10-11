@@ -112,8 +112,21 @@ def test_training_best_ancestor_is_distinct_from_last_checkpoint():
                                basket=SimpleNamespace(selection_note="hand selected"))
     payload = {"execution_environment": {"python": "3.12"}, "request": {"model_id": "model-1"}}
     saved = {"id": "new-version", "best_source_content_id": "earlier-version", "best_timesteps": 8,
-             "timesteps_completed": 24, "session_timesteps": 8}
+             "timesteps_completed": 24, "session_timesteps": 8, "files": {"last.zip": "digest"}}
     provenance = _execution_provenance(resolved, payload, {"source.py": "digest"}, policy_manifest=saved)
     assert provenance["best_checkpoint"] == {"source": "ancestor", "source_content_id": "earlier-version", "timesteps": 8}
     assert provenance["last_checkpoint"] == {"source": "current_artifact", "source_content_id": None,
                                              "cumulative_timesteps": 24, "session_timesteps": 8}
+
+
+def test_selected_only_policy_does_not_claim_a_last_checkpoint():
+    resolved = SimpleNamespace(internal_training_spec={"train_start": "2019-01-01"},
+                               basket=SimpleNamespace(selection_note="hand selected"))
+    payload = {"execution_environment": {"python": "3.12"}, "request": {"model_id": "model-1"}}
+    saved = {"id": "selected-version", "best_timesteps": 64, "timesteps_completed": 128,
+             "files": {"policy.zip": "digest"}, "history": [{"updates": 8}]}
+    provenance = _execution_provenance(resolved, payload, {"source.py": "digest"},
+                                       policy_version_id="selected-version", policy_manifest=saved)
+    assert provenance["best_checkpoint"] == {"source": "current_artifact",
+                                             "source_content_id": "selected-version", "timesteps": 64}
+    assert provenance["last_checkpoint"] is None

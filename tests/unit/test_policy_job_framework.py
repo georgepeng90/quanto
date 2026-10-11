@@ -31,7 +31,7 @@ def test_policy_job_injects_frozen_model_identity(tmp_path, monkeypatch):
         execute_policy_job("train_policy", payload, tmp_path / "artifact", lambda event: None, lambda: False,
                            source_hashes=source_hashes)
     runtime = called[0]["learning_runtime"]
-    assert runtime.model_binding.model_id == payload["request"]["model_id"]
+    assert called[0]["model_id"] == payload["request"]["model_id"]
     assert runtime.binding.binding_hash == payload["model_binding"]["training_configuration"]["asset_binding"]["binding_hash"]
 
 

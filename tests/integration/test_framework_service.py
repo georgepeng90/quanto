@@ -73,7 +73,8 @@ def test_clone_rejects_replaced_frozen_input_when_context_still_points_to_origin
 
 def test_migrated_historical_run_clones_as_current_draft_without_rewriting_results(tmp_path):
     from quanto.workbench.bindings import BindingStore
-    from quanto.workbench.run_contexts import ContextStore, fixed_context_from_manifest
+    from quanto.workbench.run_contexts import ContextStore
+    from quanto.workbench.etf_workspace_migration import _historical_fixed_context
 
     store, draft, _, _ = _ready(tmp_path)
     service = WorkbenchService(store.root)
@@ -86,7 +87,7 @@ def test_migrated_historical_run_clones_as_current_draft_without_rewriting_resul
     run.manifest_path.write_bytes(raw)
     manifest_hash = digest(raw)
     binding = BindingStore(store).get_asset_binding(manifest["dataset_version_id"])
-    context = fixed_context_from_manifest(manifest, input_hash=manifest_hash,
+    context = _historical_fixed_context(manifest, input_hash=manifest_hash,
         asset_binding=binding, basket_revision_ref=draft.payload["basket_revision_ref"])
     with store.transaction() as db:
         db.execute("UPDATE runs SET manifest_hash=? WHERE run_id=?", (manifest_hash, run.run_id))

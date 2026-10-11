@@ -199,7 +199,7 @@ class WorkbenchService:
         engine_prefixes = ("src/quanto/backtest/", "src/quanto/risk/", "src/quanto/factors/",
                            "src/quanto/data/", "src/quanto/reports/", "src/quanto/strategies/")
         engine_names = {"src/quanto/config.py", "src/quanto/universe.py", "src/quanto/workbench/worker.py"}
-        return {**context, "identity_status": "proven", "method": "fixed",
+        return {**context, "method": "fixed",
                 "strategy_name": context["name"],
                 "strategy_source_hashes": {name: value for name, value in manifest["files"].items() if name.startswith("strategy/")},
                 "engine_source_hashes": {name: value for name, value in manifest["files"].items()

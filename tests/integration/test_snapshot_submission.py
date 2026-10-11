@@ -11,7 +11,7 @@ from quanto.data.contracts import InstrumentId
 from quanto.workbench.baskets import BasketStore
 from quanto.workbench.bindings import BindingStore
 from quanto.workbench.runs import RunService
-from quanto.workbench.run_contexts import fixed_context_from_manifest
+from quanto.workbench.etf_workspace_migration import _historical_fixed_context
 from quanto.workbench.snapshots import SnapshotBuilder
 from quanto.workbench.revisions import digest, json_bytes
 from quanto.framework import canonical_hash
@@ -107,7 +107,7 @@ def test_migrated_schema_2_run_reruns_under_current_framework(tmp_path):
     original.manifest_path.write_bytes(raw)
     input_hash = digest(raw)
     binding = BindingStore(store).get_asset_binding(dataset.id)
-    context = fixed_context_from_manifest(manifest, input_hash=input_hash,
+    context = _historical_fixed_context(manifest, input_hash=input_hash,
         asset_binding=binding, basket_revision_ref=draft.payload["basket_revision_ref"])
     with store.transaction() as db:
         db.execute("UPDATE runs SET manifest_hash=? WHERE run_id=?", (input_hash, original.run_id))

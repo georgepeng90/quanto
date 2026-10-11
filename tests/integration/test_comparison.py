@@ -13,7 +13,7 @@ def test_comparison_reports_all_material_differences():
 
 
 def test_method_specific_metric_does_not_erase_shared_economic_comparison():
-    shared = {"state": "succeeded", "identity_status": "proven", "comparison_key": "same-conditions"}
+    shared = {"state": "succeeded", "comparison_key": "same-conditions"}
     fixed = {**shared, "method": "fixed", "metric_definitions": {"total_return": {"formula": "equity/end"}}}
     policy = {**shared, "method": "PPO", "metric_definitions": {
         "total_return": {"formula": "equity/end"}, "average_cash_ratio": {"formula": "mean(cash/equity)"}}}

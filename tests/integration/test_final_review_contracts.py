@@ -235,7 +235,6 @@ def test_schema_one_historical_results_exports_and_mixed_comparison_remain_reada
     assert service.results(fresh.run_id)["metadata"]["schema_version"] == "3"
     mixed = service.comparison([run.run_id, fresh.run_id])
     assert [item["is_demo"] for item in mixed["runs"]] == [False, False]
-    assert [item["identity_status"] for item in mixed["runs"]] == ["proven", "proven"]
     assert mixed["directly_comparable"] is False
     assert {path.name: path.read_bytes() for path in root.iterdir()} == before
 

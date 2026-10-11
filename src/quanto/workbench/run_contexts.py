@@ -88,18 +88,12 @@ def create_context(*, kind: str, dataset_id: str, asset_binding: AssetBinding,
 def fixed_context_from_manifest(manifest: dict, *, input_hash: str,
                                 asset_binding: AssetBinding,
                                 basket_revision_ref: BasketRevisionRef | dict) -> dict:
-    """Build a fixed run context from its immutable manifest, old or new."""
-    resolved = manifest.get("resolved_configuration")
+    """Build a fixed run context from a current frozen framework manifest."""
+    resolved = manifest["resolved_configuration"]
     spec = manifest["backtest_spec"]
-    if isinstance(resolved, dict):
-        definitions = {item["ref"]["kind"]: {key: item[key] for key in
-                       ("ref", "implementation_hash", "effective_params")}
-                       for item in resolved["definitions"]}
-    else:
-        definitions = {"strategy_content_hash": manifest["strategy_content_hash"],
-                       "execution_definition_version": manifest["execution_definition_version"],
-                       "risk_definition_version": manifest["risk_definition_version"],
-                       "metric_definition_version": manifest["metric_definition_version"]}
+    definitions = {item["ref"]["kind"]: {key: item[key] for key in
+                   ("ref", "implementation_hash", "effective_params")}
+                   for item in resolved["definitions"]}
     strategy = manifest["strategy_manifest"]
     name = strategy.get("name") or strategy["entrypoint"]
     from quanto.framework import canonical_hash
@@ -114,44 +108,6 @@ def fixed_context_from_manifest(manifest: dict, *, input_hash: str,
                           sample_purpose=manifest.get("sample_purpose"),
                           definition_evidence=definitions,
                           strategy_revision_id=manifest["strategy_revision_id"])
-
-
-def policy_context_from_frozen_input(document: dict, policy_manifest: dict, *,
-                                     input_hash: str, asset_binding: AssetBinding,
-                                     basket_revision_ref: BasketRevisionRef | dict,
-                                     dataset_source: str | None = None) -> dict:
-    """Recover the actual historical policy backtest conditions from frozen evidence."""
-    payload = document["input"]
-    request = payload["request"]
-    if payload["dataset_ref"]["content_hash"] != asset_binding.dataset_content_hash:
-        raise ValueError("policy backtest dataset hash differs from binding")
-    if request["policy_id"] != payload["policy_ref"]["id"]:
-        raise ValueError("policy backtest version differs from frozen reference")
-    training = policy_manifest["config"]
-    spec = json.loads(json.dumps(training["backtest"]))
-    backtest = request["spec"]
-    spec["start"], spec["end"] = backtest["start"], backtest["end"]
-    spec["execution"] = dict(spec["execution"])
-    for key in ("commission_rate", "minimum_commission", "slippage_rate"):
-        spec["execution"][key] *= backtest.get("cost_multiplier", 1)
-    baseline = backtest.get("baseline", "policy")
-    name = str(training.get("name") or "PPO") if baseline == "policy" else baseline
-    actual_definitions = {key: policy_manifest[key] for key in
-                          ("action_version", "reward_version", "feature_version", "execution_version",
-                           "environment_version") if key in policy_manifest}
-    actual_definitions["policy_content_id"] = policy_manifest["id"]
-    environment = payload.get("execution_environment", payload.get("environment"))
-    if not isinstance(environment, dict):
-        raise ValueError("policy backtest frozen environment missing")
-    return create_context(kind="policy", dataset_id=request["dataset_id"],
-        asset_binding=asset_binding, ordered_symbols=spec["symbols"], backtest_spec=spec,
-        execution_provenance={"source_hashes": document["source_hashes"],
-                              "environment_fingerprint": canonical_hash(environment)},
-        input_hash=input_hash, basket_revision_ref=basket_revision_ref,
-        name=name, method="PPO" if baseline == "policy" else baseline,
-        dataset_source=dataset_source, evaluation_purpose=backtest.get("evaluation_purpose"),
-        definition_evidence=actual_definitions, model_id=policy_manifest.get("model_id"),
-        policy_version_id=request["policy_id"], baseline=baseline)
 
 
 class ContextStore:

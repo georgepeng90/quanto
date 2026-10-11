@@ -306,21 +306,27 @@ def check_requirements(
                                          "DATA_REQUIREMENT_UNSATISFIED", f"Warmup field {field.name} has invalid or unavailable values."))
         stable_daily = rule == "session_close" and reader.rules.revision_policy == "none" and not reader.rules.effective_from_column
         daily_view = None
+        daily_groups = {}
+        empty_daily = None
         if stable_daily and days:
             try:
                 daily_view = _visible_at(selected, reader, days[-1], sessions, binding.dataset_version_id)
             except (ValueError, KeyError, TypeError) as exc:
                 checks.append(_check("temporal_visibility", False, f"{path}.table", _error_code(exc, "TEMPORAL_EVIDENCE_MISSING"), str(exc)))
                 continue
+            daily_dates = pd.to_datetime(daily_view[reader.rules.date_column], errors="coerce").dt.date
+            daily_groups = {day: group for day, group in daily_view.groupby(daily_dates, sort=False)}
+            empty_daily = daily_view.iloc[:0]
         missing_reported = False
         invalid_reported: set[int] = set()
         for day in days:
             try:
-                visible = daily_view if daily_view is not None else _visible_at(selected, reader, day, sessions, binding.dataset_version_id)
+                visible = (daily_groups.get(day, empty_daily) if daily_view is not None else
+                           _visible_at(selected, reader, day, sessions, binding.dataset_version_id))
             except (ValueError, KeyError, TypeError) as exc:
                 checks.append(_check("temporal_visibility", False, f"{path}.table", _error_code(exc, "TEMPORAL_EVIDENCE_MISSING"), str(exc)))
                 break
-            if reader.rules.date_column and reader.rules.availability_rule == "session_close":
+            if daily_view is None and reader.rules.date_column and reader.rules.availability_rule == "session_close":
                 visible = visible.loc[pd.to_datetime(visible[reader.rules.date_column], errors="coerce").dt.date == day]
             for field_index, field in enumerate(requirement.fields):
                 if field.name in visible and not visible.empty and field_index not in invalid_reported:
@@ -339,7 +345,8 @@ def check_requirements(
                 elif requirement.table == "status":
                     expected = tuple(symbol for symbol in requirement_symbols
                                      if day >= listings.get(symbol, date.max))
-                present = all(symbol in set(visible[reader.rules.symbol_column]) for symbol in expected)
+                visible_symbols = set(visible[reader.rules.symbol_column])
+                present = all(symbol in visible_symbols for symbol in expected)
             if not present:
                 if not missing_reported:
                     checks.append(_check("observation_coverage", may_mask, f"{path}.table",

@@ -11,7 +11,10 @@ from quanto.data.contracts import InstrumentId
 from quanto.workbench.baskets import BasketStore
 from quanto.workbench.bindings import BindingStore
 from quanto.workbench.runs import RunService
+from quanto.workbench.run_contexts import fixed_context_from_manifest
 from quanto.workbench.snapshots import SnapshotBuilder
+from quanto.workbench.revisions import digest, json_bytes
+from quanto.framework import canonical_hash
 import quanto.workbench.snapshots as snapshots
 from quanto.workbench.store import WorkbenchStore
 from tests.fixtures.backtest_cases import dataset_case
@@ -91,6 +94,31 @@ def test_current_rerun_requires_registered_definition(tmp_path, monkeypatch):
     with pytest.raises(FrameworkBlocked, match="DEFINITION_UNAVAILABLE"):
         RunService(store).rerun(run.run_id, "definition-upgraded", "web")
     assert len(store.list_jobs()) == 1
+
+
+def test_migrated_schema_2_run_reruns_under_current_framework(tmp_path):
+    store, draft, dataset, _ = _ready(tmp_path)
+    original = RunService(store).submit(draft.id, draft.revision, "historical", "web")
+    manifest = json.loads(original.manifest_path.read_bytes())
+    manifest["schema_version"] = 2
+    del manifest["framework_contract_version"]
+    del manifest["resolved_configuration"]
+    raw = json_bytes(manifest)
+    original.manifest_path.write_bytes(raw)
+    input_hash = digest(raw)
+    binding = BindingStore(store).get_asset_binding(dataset.id)
+    context = fixed_context_from_manifest(manifest, input_hash=input_hash,
+        asset_binding=binding, basket_revision_ref=draft.payload["basket_revision_ref"])
+    with store.transaction() as db:
+        db.execute("UPDATE runs SET manifest_hash=? WHERE run_id=?", (input_hash, original.run_id))
+        db.execute("UPDATE run_contexts SET context_json=?,context_hash=? WHERE job_id=?",
+                   (json_bytes(context).decode(), canonical_hash(context), original.job_id))
+
+    repeated = RunService(store).rerun(original.run_id, "current-rerun", "web")
+    assert repeated.parent_run_id == original.run_id
+    assert repeated.manifest_path != original.manifest_path
+    assert json.loads(repeated.manifest_path.read_bytes())["schema_version"] == 3
+    assert RunService(store).rerun(original.run_id, "current-rerun", "web").run_id == repeated.run_id
 
 
 def test_batch_preflight_and_ordered_retry(tmp_path):

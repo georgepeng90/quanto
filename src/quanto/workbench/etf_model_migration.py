@@ -48,15 +48,19 @@ class ModelMigrator(BindingStore):
         from quanto.learning.registry import verify_ref
 
         versions = PolicyVersionStore(self.store)
-        rows = db.execute("""SELECT s.job_id,a.path,a.files_json FROM investing_sessions s
+        rows = db.execute("""SELECT s.job_id,a.path,a.content_hash,a.files_json,a.manifest_json FROM investing_sessions s
             JOIN jobs j ON j.id=s.job_id JOIN learning_artifacts a ON a.id=s.job_id
             WHERE s.model_id=? AND j.state='succeeded' AND a.kind='policy'""",
                           (binding.model_id,)).fetchall()
         for row in rows:
             files = json.loads(row["files_json"])
+            if digest(json_bytes(files)) != row["content_hash"]:
+                raise ValueError("MODEL_IDENTITY_MISMATCH: policy artifact registry hash differs")
             manifest = read_manifest(verify_ref({"path": row["path"], "files": files}), "policy")
-            versions.insert(db, row["job_id"], versions.context_for(binding, manifest, row["job_id"]),
-                            allow_unstamped=True)
+            if manifest != json.loads(row["manifest_json"]):
+                raise ValueError("MODEL_IDENTITY_MISMATCH: policy artifact registry differs from files")
+            context = versions.context_for(binding, manifest, row["job_id"])
+            versions._persist_verified_context(db, row["job_id"], context, row["content_hash"])
 
     def _verify_persisted_artifacts(self, binding: ModelFrameworkBinding, db=None) -> None:
         from quanto.investing.contracts import PolicyTrainingSpec

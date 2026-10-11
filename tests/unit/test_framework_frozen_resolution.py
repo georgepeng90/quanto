@@ -120,6 +120,21 @@ def test_frozen_policy_rechecks_successful_version_and_purpose(tmp_path):
                                spec.model_dump(mode="json"), "old-model")
     binding = ModelMigrator(store).migrate_model("old-model")
     policy_context = PolicyVersionStore(store).get("version-one")
+    with store.transaction() as db:
+        with pytest.raises(ValueError, match="current policy manifest lacks framework identity"):
+            PolicyVersionStore(store).insert(db, "version-one", policy_context)
+        db.execute("UPDATE learning_artifacts SET files_json='{}' WHERE id='version-one'")
+    with pytest.raises(ValueError, match="registry hash differs"):
+        ModelMigrator(store).migrate_model("old-model")
+    with store.transaction() as db:
+        db.execute("UPDATE learning_artifacts SET files_json=? WHERE id='version-one'",
+                   (json_bytes(files).decode(),))
+        db.execute("UPDATE learning_artifacts SET manifest_json='{}' WHERE id='version-one'")
+    with pytest.raises(ValueError, match="registry differs from files"):
+        ModelMigrator(store).migrate_model("old-model")
+    with store.transaction() as db:
+        db.execute("UPDATE learning_artifacts SET manifest_json=? WHERE id='version-one'",
+                   (json_bytes(manifest).decode(),))
     request = PolicyBacktestRequest(version_id="version-one", dataset_id=dataset.id,
                                     spec={"start": spec.validation_end, "end": spec.backtest.end,
                                           "evaluation_purpose": "development_replay"})
@@ -153,4 +168,6 @@ def test_frozen_policy_rechecks_successful_version_and_purpose(tmp_path):
                    ("0" * 64, "version-one"))
     with pytest.raises(ValueError, match="context hash differs"):
         PolicyVersionStore(store).get("version-one")
+    with pytest.raises(ValueError, match="policy version context conflict"):
+        ModelMigrator(store).migrate_model("old-model")
     assert FrameworkResolver(store).check(request).status == "blocked"

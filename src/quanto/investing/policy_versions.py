@@ -70,7 +70,7 @@ class PolicyVersionStore:
         verified_policy_manifest(manifest, context)
         return context
 
-    def insert(self, db, version_id: str, context: dict, *, allow_unstamped: bool = False) -> dict:
+    def insert(self, db, version_id: str, context: dict) -> dict:
         row = db.execute("SELECT kind,path,content_hash,files_json,manifest_json FROM learning_artifacts WHERE id=?",
                          (version_id,)).fetchone()
         if row is None or row["kind"] != "policy":
@@ -84,20 +84,23 @@ class PolicyVersionStore:
         binding = BindingStore(self.store).get_model_binding(context["model_id"], db)
         if self.context_for(binding, manifest, version_id) != context:
             raise ValueError("MODEL_IDENTITY_MISMATCH: policy context differs from bound model")
-        if not allow_unstamped and (manifest.get("framework_learning") is None
-                                    or manifest.get("price_mode") is None):
+        if manifest.get("framework_learning") is None or manifest.get("price_mode") is None:
             raise ValueError("MODEL_IDENTITY_MISMATCH: current policy manifest lacks framework identity")
+        return self._persist_verified_context(db, version_id, context, row["content_hash"])
+
+    def _persist_verified_context(self, db, version_id: str, context: dict,
+                                  artifact_content_hash: str) -> dict:
         serialized = json_bytes(context).decode()
         identity_hash = canonical_hash(context)
         previous = db.execute("SELECT context_json,context_hash,artifact_content_hash FROM policy_version_contexts "
                               "WHERE version_id=?", (version_id,)).fetchone()
         if previous is not None:
             if (json.loads(previous["context_json"]) != context or previous["context_hash"] != identity_hash
-                    or previous["artifact_content_hash"] != row["content_hash"]):
+                    or previous["artifact_content_hash"] != artifact_content_hash):
                 raise ValueError("MODEL_IDENTITY_MISMATCH: policy version context conflict")
             return context
         db.execute("INSERT INTO policy_version_contexts VALUES (?,?,?,?)",
-                   (version_id, serialized, identity_hash, row["content_hash"]))
+                   (version_id, serialized, identity_hash, artifact_content_hash))
         return context
 
     def get(self, version_id: str, db=None) -> dict:

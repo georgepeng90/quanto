@@ -81,10 +81,10 @@ def _etf_feature_requirements(params: Mapping[str, object], basket: FrozenBasket
                                  fields=tuple(RequirementField(name=name, dtype=dtype, unit=unit,
                                               currency="CNY" if table == "prices" and dtype == "float" else None)
                                               for name, dtype, unit in fields), scope="basket", interval=interval,
-                                 # Longer return horizons use all available bars in the original ETF encoder.
-                                 warmup_sessions=params["lookback"] if table == "prices" else 0,
+                                 # The encoder uses available bars and masks members with no price history.
+                                 warmup_sessions=0,
                                  availability_rule=availability, price_modes=("raw_cash", "adjusted_research"),
-                                 required=True, missing_policy="reject")
+                                 required=table != "prices", missing_policy="mask" if table == "prices" else "reject")
                  for table, availability, fields in requirements)
 
 

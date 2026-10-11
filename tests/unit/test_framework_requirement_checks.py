@@ -62,6 +62,29 @@ def test_all_trading_tables_are_ready_with_synthetic_daily_facts():
     assert not [item for item in _checks(bundle, binding, pairs, spec, requirements) if item.status == "blocked"]
 
 
+def test_prelisting_etf_needs_no_price_or_status_but_listed_gaps_block():
+    from datetime import datetime, timezone
+    from quanto.framework import FrozenBasketRevision
+
+    bundle, binding, pairs, spec, interval = _case()
+    listed = pd.Timestamp("2024-01-03")
+    instruments = bundle.instruments.copy()
+    instruments.loc[instruments.symbol == "B", "listing_date"] = listed
+    prices = bundle.prices.loc[~((bundle.prices.symbol == "B") & (bundle.prices.date < listed))]
+    status = bundle.status.loc[~((bundle.status.symbol == "B") & (bundle.status.date < listed))]
+    bundle = replace(bundle, instruments=instruments, prices=prices, status=status)
+    basket = FrozenBasketRevision(basket_id="fixture", revision=1,
+        members=tuple(pair.instrument_id for pair in pairs),
+        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc), selection_note="fixture")
+    requirements = ETF_TRADING_DEFINITION.resolve_requirements({}, basket, interval)
+    assert not [item for item in _checks(bundle, binding, pairs, spec, requirements) if item.status == "blocked"]
+
+    missing_price = replace(bundle, prices=prices.loc[~((prices.symbol == "B") & (prices.date == listed))])
+    assert _blocked(_checks(missing_price, binding, pairs, spec, requirements), "DATA_REQUIREMENT_UNSATISFIED")
+    missing_status = replace(bundle, status=status.loc[~((status.symbol == "B") & (status.date == listed))])
+    assert _blocked(_checks(missing_status, binding, pairs, spec, requirements), "EXECUTION_CAPABILITY_MISSING")
+
+
 def test_suspension_can_lack_price_but_still_needs_status():
     bundle, binding, pairs, spec, interval = _case()
     suspended = pd.Timestamp("2024-01-03")

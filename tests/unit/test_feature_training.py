@@ -11,6 +11,7 @@ from quanto.data.contracts import InstrumentId
 from quanto.framework import AssetBinding, AssetMapping, BenchmarkBinding
 from quanto.investing.contracts import PolicyTrainingSpec
 from quanto.investing.definitions import etf_learning_definitions
+from quanto.investing.evaluation import policy_identity
 from quanto.learning.registry import hash_files
 from quanto.objects import digest, json_bytes
 from tests.fixtures.investing_training_cases import investing_case
@@ -48,6 +49,15 @@ def _case(tmp_path):
     return dataset_dir, spec, config, bundle, runtime, fit_dates
 
 
+def _policy_context(manifest, config):
+    return {"schema_version": 1, "model_id": manifest["model_id"],
+            "artifact_model_id": manifest["model_id"],
+            "dataset_content_hash": manifest["dataset_content_hash"],
+            "basket": manifest["basket"], "price_mode": manifest["price_mode"],
+            "semantic_identity": policy_identity(config),
+            "framework_learning": manifest["framework_learning"]}
+
+
 def test_first_fit_reads_only_declared_training_dates(tmp_path):
     dataset_dir, spec, config, bundle, runtime, fit_dates = _case(tmp_path)
     transform = runtime.fit_transform(bundle, config)
@@ -72,13 +82,15 @@ def test_training_resume_and_backtest_reuse_one_frozen_transform(tmp_path):
 
     dataset_dir, spec, config, bundle, runtime, fit_dates = _case(tmp_path)
     first = train_policy(spec, dataset_dir, tmp_path / "first", lambda event: None, lambda: False,
-                         runtime.binding.dataset_content_hash, learning_runtime=runtime)
+                         runtime.binding.dataset_content_hash, model_id="fixture-model", learning_runtime=runtime)
+    context = _policy_context(first, config)
     assert first["framework_learning"] == runtime.identity(config)
     assert first["feature_transform"]["transform_hash"]
     assert len(fit_dates) == 1
     resumed = train_policy({**spec, "total_timesteps": 4}, dataset_dir, tmp_path / "resumed",
                            lambda event: None, lambda: False, runtime.binding.dataset_content_hash,
-                           resume_dir=tmp_path / "first", learning_runtime=runtime)
+                           resume_dir=tmp_path / "first", resume_context=context,
+                           model_id="fixture-model", learning_runtime=runtime)
     assert resumed["feature_transform"] == first["feature_transform"]
     assert (tmp_path / "first" / "transform.json").read_bytes() == (tmp_path / "resumed" / "transform.json").read_bytes()
     assert len(fit_dates) == 1
@@ -86,7 +98,7 @@ def test_training_resume_and_backtest_reuse_one_frozen_transform(tmp_path):
                     {"start": str(config.validation_start), "end": str(config.validation_end),
                      "evaluation_purpose": "development_replay"},
                     tmp_path / "report", lambda event: None, lambda: False,
-                    learning_runtime=runtime)
+                    learning_runtime=runtime, policy_context=context)
     assert len(fit_dates) == 1
 
 
@@ -95,8 +107,9 @@ def test_framework_manifest_requires_matching_runtime_and_verified_transform(tmp
     from quanto.investing.evaluation import backtest_policy
 
     dataset_dir, spec, config, bundle, runtime, fit_dates = _case(tmp_path)
-    train_policy(spec, dataset_dir, tmp_path / "first", lambda event: None, lambda: False,
-                 runtime.binding.dataset_content_hash, learning_runtime=runtime)
+    first = train_policy(spec, dataset_dir, tmp_path / "first", lambda event: None, lambda: False,
+                         runtime.binding.dataset_content_hash, model_id="fixture-model", learning_runtime=runtime)
+    context = _policy_context(first, config)
     request = {"start": str(config.validation_start), "end": str(config.validation_end),
                "evaluation_purpose": "development_replay"}
     with pytest.raises(ValueError, match="runtime|framework"):
@@ -105,11 +118,13 @@ def test_framework_manifest_requires_matching_runtime_and_verified_transform(tmp
     different = replace(runtime, definition=replace(runtime.definition, implementation_hash="f" * 64))
     with pytest.raises(ValueError, match="identity|binding"):
         backtest_policy(tmp_path / "first", dataset_dir, request, tmp_path / "wrong-runtime",
-                        lambda event: None, lambda: False, learning_runtime=different)
+                        lambda event: None, lambda: False, learning_runtime=different,
+                        policy_context=context)
     (tmp_path / "first" / "transform.json").write_text("{}")
     with pytest.raises(ValueError, match="hash|integrity"):
         backtest_policy(tmp_path / "first", dataset_dir, request, tmp_path / "tampered",
-                        lambda event: None, lambda: False, learning_runtime=runtime)
+                        lambda event: None, lambda: False, learning_runtime=runtime,
+                        policy_context=context)
 
 
 def test_new_evaluation_dataset_uses_saved_training_transform(tmp_path):
@@ -118,7 +133,8 @@ def test_new_evaluation_dataset_uses_saved_training_transform(tmp_path):
 
     dataset_dir, spec, config, bundle, runtime, fit_dates = _case(tmp_path)
     first = train_policy(spec, dataset_dir, tmp_path / "first", lambda event: None, lambda: False,
-                         runtime.binding.dataset_content_hash, learning_runtime=runtime)
+                         runtime.binding.dataset_content_hash, model_id="fixture-model", learning_runtime=runtime)
+    context = _policy_context(first, config)
     changed_dir = tmp_path / "changed-data"
     shutil.copytree(dataset_dir, changed_dir)
     prices = pd.read_csv(changed_dir / "prices.csv", dtype={"symbol": str})
@@ -132,7 +148,8 @@ def test_new_evaluation_dataset_uses_saved_training_transform(tmp_path):
     request = {"start": str(config.validation_start), "end": str(config.validation_end),
                "evaluation_purpose": "development_replay"}
     report = backtest_policy(tmp_path / "first", changed_dir, request, tmp_path / "report",
-                             lambda event: None, lambda: False, learning_runtime=changed_runtime)
+                             lambda event: None, lambda: False, learning_runtime=changed_runtime,
+                             policy_context=context)
     assert report["policy_content_id"] == first["id"]
     assert len(fit_dates) == 1
 

@@ -119,6 +119,12 @@ def _training_schedule_checks(bundle, learning: LearningDefinition, training) ->
         if not executable:
             checks.append(_blocked("learning_schedule", f"spec.{split}", "DATA_REQUIREMENT_UNSATISFIED",
                                    f"{split} partition has no natural decision with a following execution session"))
+        if len(decisions):
+            history = bundle.prices.loc[pd.to_datetime(bundle.prices.date) <= decisions[0]]
+            counts = history.groupby("symbol").size()
+            if not any(counts.get(symbol, 0) >= training.lookback for symbol in training.backtest.symbols):
+                checks.append(_blocked("learning_history", f"spec.{split}", "DATA_REQUIREMENT_UNSATISFIED",
+                                       f"{split} partition has no basket member with sufficient lookback history"))
         if split != "train":
             continue
         if training.episode_sessions > len(sessions):

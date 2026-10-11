@@ -9,21 +9,21 @@ from __future__ import annotations
 
 FROZEN_ETF_BASELINE_SHA256 = "753d687e104686fc4948de72475489a1c88379ace1d78cfe18689b08e1d462ca"
 FROZEN_ETF_SOURCE_COMMIT = "2985bd099ecfe9dd53abc0dcbe727b7cff8c1d03"
-_VALIDATED_FEATURE_HASH = "f2158b7514536b857a73eb34e86cbf7a6c61e770844bea36aff9e3bd638f893d"
+_VALIDATED_FEATURE_HASH = "0654b64f097672c2611aa146159a9ac626e8b20a5935633ba6e6ac667b23a969"
 _VALIDATED_TRADING_HASH = "450cadecaf15b97f1dfa9dfbe0c914aecc6b22229d8ddfaa42ae8c81da094f47"
 _VALIDATED_LEARNING_HASHES = {
     ("hold-target-quartiles-v1", "net-log-return-v1"):
-        "dcc1b45e3d0d5495a58638fafac7ea5092b5ef9a108546db30086eff3475dc4e",
+        "174e5266a4e5bf7370ceb988bfd3e8cefcafb5bbc544367c28b7a012c1ec07f6",
     ("hold-target-quartiles-v1", "net-log-return-with-state-v1"):
-        "31620893f19c411f6f729c3931dc5bdc0a6b963c85e8ce101c4bdf64e41cd634",
+        "efada7cb4dabe5699b36722c6bf528f2f880c9f465b793bfec2b6758e8065302",
     ("hold-target-quartiles-v1", "differential-sharpe-v1"):
-        "1176c533687d803779aba2e1ebe03ec4a1c82ec987b23ef178f778e68171fc7e",
+        "a1be1066666e89fce4968842307046d825dd975861eae45ee03310001376fcd5",
     ("hold-target-cash-quartiles-v2", "net-log-return-v1"):
-        "ecabea649be75b950da5558ffc858826d31a6263c64c65805ff609ee6819f3f4",
+        "21c75cf46c91642fd8a028ededdf03c0c2c4fabd77fc6f4be6e7a6f06a4ed473",
     ("hold-target-cash-quartiles-v2", "net-log-return-with-state-v1"):
-        "628fb18fae9a5275d3e93f0e394b01f98ac9d6c25d2fab69d3c6f93d05a836c8",
+        "42c99a77e74c2bd88d7a4f55af405200071b680e85621aeb211c69362c979f3d",
     ("hold-target-cash-quartiles-v2", "differential-sharpe-v1"):
-        "a5176164daf96ec6c62f037dc4ee362055a5b35c3fc5bdd976b86a82c93b5dbd",
+        "c48cbeae4865525c739b880596a0311312e334eac6fb023ddc17eefc677bab7f",
 }
 
 

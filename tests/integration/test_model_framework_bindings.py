@@ -25,6 +25,7 @@ from quanto.workbench.bindings import BindingStore
 from quanto.workbench.etf_model_migration import ModelMigrator
 from quanto.workbench.store import WorkbenchStore, utc_now
 from tests.fixtures.framework_imports import fixture_identity_evidence
+from tests.fixtures.frozen_policy_source import attach_frozen_policy_input
 from tests.fixtures.investing_training_cases import investing_case
 from tests.integration.test_framework_capabilities import _training_case
 
@@ -279,12 +280,17 @@ def test_old_policy_files_and_manifest_are_audited_before_binding(tmp_path):
         original_row = db.execute("SELECT spec_json FROM investing_models WHERE id='old-model'").fetchone()[0]
     original_artifact = {path.name: path.read_bytes() for path in artifact.iterdir()}
     bindings = ModelMigrator(store)
+    with pytest.raises(ValueError, match="original source snapshot unavailable"):
+        bindings._prepare_model_binding("old-model")
+    input_path = attach_frozen_policy_input(store, tmp_path, "version-one", request.dataset_id,
+                                            spec.model_dump(mode="json"), "old-model")
     with store.transaction() as db:
         assert db.execute("SELECT spec_json FROM investing_models WHERE id='old-model'").fetchone()[0] == original_row
     assert {path.name: path.read_bytes() for path in artifact.iterdir()} == original_artifact
     candidate = bindings._prepare_model_binding("old-model")
     assert candidate.evidence["policy_artifacts"]["version-one"]["manifest_id"] == manifest["id"]
-    assert "Original source snapshot unavailable" in candidate.evidence["limitations"][0]
+    assert candidate.evidence["policy_artifacts"]["version-one"]["source_snapshot"] == digest(input_path.read_bytes())
+    assert candidate.evidence["limitations"] == ()
     (artifact / "policy.zip").write_bytes(b"altered")
     with pytest.raises(ValueError, match="ARTIFACT|BINDING_MISMATCH"):
         bindings.migrate_model("old-model")

@@ -1,16 +1,15 @@
-from dataclasses import replace
 import json
 
 import pandas as pd
 import pytest
 
 from quanto.backtest.dataset_loaders import load_dataset
-from quanto.backtest.dataset_storage import write_parquet_dataset
 from quanto.data.contracts import InstrumentId
 from quanto.backtest.dataset_identity import make_import_evidence, standard_table_semantics
 from quanto.framework import AssetMapping, BenchmarkBinding
-from quanto.objects import digest, json_bytes
+from quanto.objects import digest
 from quanto.workbench.bindings import BindingStore
+from quanto.workbench.dataset_objects import verify_dataset_version
 from quanto.workbench.revisions import source_files
 from quanto.workbench.store import WorkbenchStore
 from tests.fixtures.backtest_cases import dataset_case
@@ -40,7 +39,7 @@ def test_new_registration_publishes_canonical_symbols_and_binding_together(tmp_p
     assert {item.table for item in binding.table_semantics} == {"prices", "benchmark", "calendar", "instruments", "status", "events"}
     assert (version.path / "identity_evidence.json").is_file()
     assert source_files(source) == before
-    assert BindingStore(store).bind_dataset(version.id, binding.assets[0].evidence_ref, "bind-again") == binding
+    assert BindingStore(store).get_asset_binding(version.id) == binding
 
 
 @pytest.mark.parametrize("damage", ["mapping", "hash", "benchmark", "semantics"])
@@ -91,35 +90,18 @@ def test_publication_failure_leaves_no_registered_dataset_or_binding(tmp_path, m
         assert db.execute("SELECT count(*) FROM dataset_asset_bindings").fetchone()[0] == 0
 
 
-def register_historical(store, root):
-    """Old persisted row; intentionally bypasses the new creation contract."""
-    content_hash = digest(json_bytes({name: digest(data) for name, data in source_files(root).items()}))
-    with store.transaction() as db:
-        db.execute("INSERT INTO datasets VALUES (?,?,?,?)", ("historical", str(root), content_hash, (root / "manifest.json").read_text(encoding="utf-8")))
-    return store.get_dataset("historical")
-
-
-def test_legacy_without_registered_evidence_cannot_guess_identity(tmp_path):
-    source = dataset_case(tmp_path / "source")
-    store = WorkbenchStore(tmp_path / "workspace")
-    version = register_historical(store, source)
-    before = source_files(source)
-    with pytest.raises(ValueError, match="IDENTITY_UNRESOLVED"):
-        BindingStore(store).bind_dataset(version.id, "market:" + "a" * 64, "fake")
-    assert source_files(source) == before
-    assert store.get_dataset(version.id).content_hash == version.content_hash
-
-
-def test_binding_rejects_evidence_from_another_object_and_tampered_sidecar(tmp_path):
+def test_published_binding_and_dataset_reject_tampering(tmp_path):
     source = dataset_case(tmp_path / "source")
     store = WorkbenchStore(tmp_path / "workspace")
     version = store.register_dataset(source, identity_evidence=evidence_for(source))
-    binding = BindingStore(store).get_asset_binding(version.id)
-    with pytest.raises(ValueError, match="IDENTITY_UNRESOLVED"):
-        BindingStore(store).bind_dataset(version.id, "import:" + "0" * 64, "forged")
+    with store.transaction() as db:
+        db.execute("UPDATE dataset_asset_bindings SET binding_hash=? WHERE dataset_version_id=?",
+                   ("0" * 64, version.id))
+    with pytest.raises(ValueError, match="BINDING_MISMATCH"):
+        BindingStore(store).get_asset_binding(version.id)
     (version.path / "identity_evidence.json").write_text("{}")
     with pytest.raises(ValueError, match="hash mismatch"):
-        BindingStore(store).bind_dataset(version.id, binding.assets[0].evidence_ref, "changed")
+        verify_dataset_version(version)
 
 
 def test_superset_and_same_code_different_types_remain_distinct(tmp_path):
@@ -141,31 +123,6 @@ def test_superset_and_same_code_different_types_remain_distinct(tmp_path):
     assert set(load_dataset(version.path).prices.symbol) == {fund.key, company.key}
     assert [item.local_symbol for item in binding.resolve((company,))] == [company.key]
     assert len(binding.assets) == 2
-
-
-def test_historical_market_binding_keeps_local_keys_and_exact_original_files(tmp_path, monkeypatch):
-    from tests.integration.test_market_workbench import prepared_job
-    service, _, output, result = prepared_job(tmp_path, monkeypatch)
-    bundle = load_dataset(output)
-    changes = {}
-    for name in ("prices", "instruments", "status", "events"):
-        frame = getattr(bundle, name).copy()
-        frame["symbol"] = frame.symbol.map({"SZSE:etf:000001": "000001"})
-        changes[name] = frame
-    legacy_root = tmp_path / "old-local-dataset"
-    write_parquet_dataset(replace(bundle, **changes), legacy_root)
-    version = register_historical(service.store, legacy_root)
-    snapshot = result["market_snapshot_ref"]
-    with service.store.transaction() as db:
-        db.execute("INSERT INTO dataset_market_sources VALUES (?,?,?)", (version.id, snapshot["id"], snapshot["manifest_digest"]))
-    before = source_files(legacy_root)
-    binding = BindingStore(service.store).bind_dataset(version.id, f"market:{snapshot['id']}", "legacy-bind")
-    assert binding.assets[0].local_symbol == "000001"
-    assert binding.assets[0].instrument_id.key == "SZSE:etf:000001"
-    assert binding.benchmark.instrument_id.key == "SSE:index:000300"
-    assert binding.dataset_content_hash == version.content_hash
-    assert source_files(legacy_root) == before
-    assert service.store.get_dataset(version.id).content_hash == version.content_hash
 
 
 def test_market_binding_failure_cannot_publish_partial_dataset(tmp_path, monkeypatch):
@@ -196,7 +153,7 @@ def test_import_preserves_leading_zero_auxiliary_instrument_id(tmp_path):
     assert load_dataset(version.path).auxiliary["signals"].instrument_id.tolist() == ["SZSE:etf:000001"]
 
 
-def test_repeated_binding_keeps_frozen_semantics_instead_of_reinterpreting(tmp_path, monkeypatch):
+def test_reading_published_binding_keeps_frozen_semantics(tmp_path, monkeypatch):
     from tests.integration.test_market_workbench import prepared_job
     import quanto.backtest.dataset_identity as identity
     service, dataset_id, output, result = prepared_job(tmp_path, monkeypatch)
@@ -206,7 +163,7 @@ def test_repeated_binding_keeps_frozen_semantics_instead_of_reinterpreting(tmp_p
     def future_schema(*args):
         raise AssertionError("must not replace frozen table semantics")
     monkeypatch.setattr(identity, "standard_table_semantics", future_schema)
-    assert store.bind_dataset(dataset_id, binding.assets[0].evidence_ref, "repeat") == binding
+    assert store.get_asset_binding(dataset_id) == binding
 
 
 def test_identity_domain_keeps_suspended_asset_without_prices(tmp_path):

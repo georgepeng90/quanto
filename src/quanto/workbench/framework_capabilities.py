@@ -124,27 +124,36 @@ def check_requirements(
     checks.append(_check("instrument_reference", len(listings) == len(symbols), "dataset.instruments",
                          "EXECUTION_CAPABILITY_MISSING", "Each selected member needs one known listing date."))
 
+    status_rows: dict[tuple[str, date], list[dict]] = {}
+    if {"symbol", "date"}.issubset(bundle.status.columns):
+        selected_status = bundle.status.loc[bundle.status.symbol.isin(symbols)]
+        for row in selected_status.to_dict("records"):
+            stamp = pd.to_datetime(row["date"], errors="coerce")
+            if not pd.isna(stamp):
+                status_rows.setdefault((row["symbol"], stamp.date()), []).append(row)
+    price_days: dict[str, set[date]] = {}
+    if {"symbol", "date"}.issubset(bundle.prices.columns):
+        price_days = {symbol: _days(group, "date") for symbol, group in
+                      bundle.prices.loc[bundle.prices.symbol.isin(symbols)].groupby("symbol")}
     daily_state: dict[tuple[str, date], str] = {}
     for day in run_days:
         for symbol in symbols:
             if symbol not in listings or day < listings[symbol]:
                 continue
-            status = bundle.status.loc[(bundle.status.symbol == symbol) &
-                                       (pd.to_datetime(bundle.status.date, errors="coerce").dt.date == day)] if {"symbol", "date"}.issubset(bundle.status) else pd.DataFrame()
+            status = status_rows.get((symbol, day), [])
             path = f"dataset.status[{symbol},{day.isoformat()}]"
             if len(status) != 1:
                 checks.append(_check("trading_status", False, path, "EXECUTION_CAPABILITY_MISSING",
                                      "Listed member must have exactly one daily trading state."))
                 continue
             try:
-                trading_definition.eligibility(status.iloc[0].to_dict())
+                trading_definition.eligibility(status[0])
             except (ValueError, KeyError) as exc:
                 checks.append(_check("trading_status", False, path, "EXECUTION_CAPABILITY_MISSING", str(exc)))
                 continue
-            daily_state[symbol, day] = status.iloc[0]["status"]
-            if status.iloc[0]["status"] == "trading":
-                price_days = _days(bundle.prices.loc[bundle.prices.symbol == symbol], "date") if {"symbol", "date"}.issubset(bundle.prices) else set()
-                if day not in price_days:
+            daily_state[symbol, day] = status[0]["status"]
+            if status[0]["status"] == "trading":
+                if day not in price_days.get(symbol, set()):
                     checks.append(_check("price_observation", False, f"dataset.prices[{symbol},{day.isoformat()}]",
                                          "DATA_REQUIREMENT_UNSATISFIED", "Trading session has no observed price."))
 
@@ -327,6 +336,9 @@ def check_requirements(
                 if requirement.table == "prices":
                     expected = tuple(symbol for symbol in requirement_symbols
                                      if day >= listings.get(symbol, date.max) and daily_state.get((symbol, day)) == "trading")
+                elif requirement.table == "status":
+                    expected = tuple(symbol for symbol in requirement_symbols
+                                     if day >= listings.get(symbol, date.max))
                 present = all(symbol in set(visible[reader.rules.symbol_column]) for symbol in expected)
             if not present:
                 if not missing_reported:

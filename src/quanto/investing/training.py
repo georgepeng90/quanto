@@ -45,9 +45,8 @@ def validate_training_data(config, bundle, *, learning_runtime=None, transform=N
         history = bundle.prices[pd.to_datetime(bundle.prices.date) <= decisions[0]]
         counts = history.groupby("symbol").size()
         coverage = (counts.get(symbol, 0) >= config.lookback for symbol in spec.symbols)
-        has_history = all(coverage) if learning_runtime is not None else any(coverage)
-        if not has_history:
-            raise ValueError(f"{split} partition has insufficient lookback history for all basket symbols")
+        if not any(coverage):
+            raise ValueError(f"{split} partition has no basket member with sufficient lookback history")
         if learning_runtime is None:
             env = DailyETFEnv(bundle, spec, frequency=config.frequency, lookback=config.lookback,
                               episode_sessions=config.episode_sessions, training=split == "train",

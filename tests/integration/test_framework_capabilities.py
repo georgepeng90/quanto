@@ -3,6 +3,7 @@ from dataclasses import replace
 import json
 import socket
 
+import pandas as pd
 import pytest
 
 from quanto.backtest.trading import ETF_TRADING_DEFINITION
@@ -31,9 +32,17 @@ def _fixed_case(tmp_path):
     return store, request
 
 
-def _training_case(tmp_path):
+def _training_case(tmp_path, *, late_listing=None):
     source = tmp_path / "source"
     spec, dates = investing_case(source)
+    if late_listing is not None:
+        instruments = pd.read_csv(source / "instruments.csv", dtype={"symbol": str})
+        pd.concat([instruments, instruments.assign(symbol="000002", listing_date=str(dates[late_listing].date()))]
+                  ).to_csv(source / "instruments.csv", index=False)
+        for table in ("prices", "status"):
+            frame = pd.read_csv(source / f"{table}.csv", dtype={"symbol": str})
+            additional = frame.loc[pd.to_datetime(frame.date) >= dates[late_listing]].assign(symbol="000002")
+            pd.concat([frame, additional]).to_csv(source / f"{table}.csv", index=False)
     spec["backtest"].update(start=str(dates[65].date()), end=str(dates[99].date()))
     del spec["backtest"]["symbols"]
     spec.update(train_start=str(dates[65].date()), train_end=str(dates[79].date()),
@@ -132,7 +141,25 @@ def test_training_rejects_short_history_before_any_model_or_job_is_created(tmp_p
     assert store.list_jobs() == []
 
 
-def test_etf_short_lookback_keeps_its_declared_adaptive_horizons(tmp_path):
+def test_training_accepts_late_listed_etf_with_other_mature_member(tmp_path):
+    from quanto.backtest.dataset_loaders import load_dataset
+    from quanto.framework import thaw_json
+    from quanto.investing.contracts import PolicyTrainingSpec
+    from quanto.investing.feature_runtime import LearningRuntime
+    from quanto.investing.training import validate_training_data
+    from quanto.workbench.configuration import FrameworkResolver
+
+    store, request, definition = _training_case(tmp_path, late_listing=67)
+    resolved = FrameworkResolver(store).resolve(request)
+    assert len(resolved.ordered_pairs) == 2
+    assert resolved.capability_report.status == "ready"
+    bundle = load_dataset(store.get_dataset(request.dataset_id).path)
+    config = PolicyTrainingSpec.model_validate(thaw_json(resolved.internal_training_spec))
+    runtime = LearningRuntime(definition, resolved.asset_binding, ETF_TRADING_DEFINITION)
+    validate_training_data(config, bundle, learning_runtime=runtime)
+
+
+def test_etf_short_lookback_declares_masked_adaptive_horizons(tmp_path):
     from quanto.workbench.configuration import FrameworkResolver
 
     store, request, _ = _training_case(tmp_path)
@@ -143,7 +170,8 @@ def test_etf_short_lookback_keeps_its_declared_adaptive_horizons(tmp_path):
     price_requirements = [item for item in resolved.requirements
                           if item.table == "prices" and "etf-learning" in item.requirement_id]
     assert price_requirements
-    assert all(item.warmup_sessions == values["spec"]["lookback"] for item in price_requirements)
+    assert all(item.warmup_sessions == 0 and not item.required and item.missing_policy == "mask"
+               for item in price_requirements)
 
 
 def test_same_registered_dataset_can_support_prices_but_block_missing_financial_facts(tmp_path):

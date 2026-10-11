@@ -153,7 +153,6 @@ class ModelMigrator(BindingStore):
             rows = self._policy_rows(db, model_id)
         artifacts: dict[str, dict] = {}
         content_ids: dict[str, str] = {}
-        limitations = []
         standalone_adoptions = {}
         with self.store.transaction() if db is None else nullcontext(db) as connection:
             source = connection.execute("SELECT dataset_id FROM investing_models WHERE id=?", (model_id,)).fetchone()
@@ -213,16 +212,12 @@ class ModelMigrator(BindingStore):
             content_ids[row["job_id"]] = manifest["id"]
             artifacts[row["job_id"]] = {"manifest_id": manifest["id"],
                                          "content_hash": row["content_hash"], "files": files}
-            if row["input_path"]:
-                path = Path(row["input_path"])
-                if path.is_file():
-                    self._verify_job_input(path, row["input_hash"])
-                    artifacts[row["job_id"]]["source_snapshot"] = digest(path.read_bytes())
-                else:
-                    limitations.append(f"Original source snapshot unavailable for {row['job_id']}")
-            else:
-                limitations.append(f"Original source snapshot unavailable for {row['job_id']}")
-        return {"policy_artifacts": artifacts, "limitations": limitations,
+            path = Path(row["input_path"]) if row["input_path"] else None
+            if path is None or not path.is_file():
+                raise ValueError(f"BINDING_MISMATCH: original source snapshot unavailable for {row['job_id']}")
+            self._verify_job_input(path, row["input_hash"])
+            artifacts[row["job_id"]]["source_snapshot"] = digest(path.read_bytes())
+        return {"policy_artifacts": artifacts, "limitations": [],
                 "standalone_adoptions": standalone_adoptions,
                 "audit_kind": "original_object_and_current_semantic_equivalence"}
 

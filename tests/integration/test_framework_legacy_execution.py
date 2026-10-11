@@ -20,6 +20,7 @@ from quanto.workbench.bindings import BindingStore
 from quanto.workbench.etf_model_migration import ModelMigrator
 from quanto.workbench.store import utc_now
 from tests.fixtures.framework_imports import fixture_identity_evidence
+from tests.fixtures.frozen_policy_source import attach_frozen_policy_input
 from tests.fixtures.investing_training_cases import investing_case
 from tests.integration.test_framework_capabilities import _training_case
 from tests.integration.test_model_framework_bindings import _old_model
@@ -62,6 +63,7 @@ def test_audited_legacy_checkpoint_continues_and_backtests_on_later_coverage(tmp
                    ("old-version", "policy", str(artifact), digest(json_bytes(files)),
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
         old_spec_bytes = db.execute("SELECT spec_json FROM investing_models WHERE id='old-model'").fetchone()[0]
+    attach_frozen_policy_input(store, tmp_path, "old-version", create.dataset_id, original_spec, "old-model")
     original_hashes = {path.name: sha256(path.read_bytes()).hexdigest() for path in artifact.iterdir() if path.is_file()}
     linked = ModelMigrator(store).migrate_model("old-model")
     assert linked.evidence["policy_artifacts"]["old-version"]["manifest_id"] == manifest["id"]

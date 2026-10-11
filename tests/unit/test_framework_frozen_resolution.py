@@ -17,6 +17,7 @@ from quanto.learning.artifacts import write_manifest
 from quanto.objects import digest, json_bytes
 from quanto.workbench.store import utc_now
 from tests.integration.test_framework_capabilities import _training_case
+from tests.fixtures.frozen_policy_source import attach_frozen_policy_input
 from tests.integration.test_model_framework_bindings import _old_model
 from tests.integration.test_snapshot_submission import _ready
 
@@ -115,6 +116,8 @@ def test_frozen_policy_rechecks_successful_version_and_purpose(tmp_path):
         db.execute("INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)",
                    ("version-one", "policy", str(artifact), digest(json_bytes(files)),
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
+    attach_frozen_policy_input(store, tmp_path, "version-one", create.dataset_id,
+                               spec.model_dump(mode="json"), "old-model")
     binding = ModelMigrator(store).migrate_model("old-model")
     policy_context = PolicyVersionStore(store).get("version-one")
     request = PolicyBacktestRequest(version_id="version-one", dataset_id=dataset.id,

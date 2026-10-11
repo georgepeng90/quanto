@@ -2,13 +2,14 @@ from dataclasses import replace
 from datetime import date
 
 import pandas as pd
+import pytest
 
 from quanto.backtest.dataset_identity import standard_table_semantics
 from quanto.backtest.trading import ETF_TRADING_DEFINITION
 from quanto.data.point_in_time import TableSemantics
 from quanto.framework import (AssetBinding, AssetMapping, BenchmarkBinding, RequirementField,
                               RequirementItem, ResearchInterval)
-from quanto.workbench.framework_capabilities import check_requirements
+from quanto.workbench.framework_capabilities import _stable_daily_at, _visible_at, check_requirements
 from tests.fixtures.engine_cases import bundle_case, spec_case
 from tests.fixtures.framework_cases import facts_bundle
 from quanto.data.contracts import InstrumentId
@@ -193,6 +194,58 @@ def test_check_is_repeatable_and_does_not_mutate_source_frames():
     assert _checks(bundle, binding, pairs, spec, (requirement,)) == first
     for name, expected in original.items():
         pd.testing.assert_frame_equal(getattr(bundle, name), expected)
+
+
+def test_stable_daily_fast_check_matches_generic_temporal_check():
+    bundle, binding, pairs, spec, interval = _case()
+    requirement = _requirement("prices", interval, (("close", "float", "price"),))
+    prices = bundle.prices
+    future = prices.loc[(prices.symbol == "A") & (prices.date == pd.Timestamp("2024-01-05"))].copy()
+    future["date"] = pd.Timestamp("2024-01-08")
+    invalid_future = future.copy()
+    invalid_future["date"] = pd.Timestamp("2024-01-20")
+    bad_value = future.copy()
+    bad_value["close"] = "INVALID"
+    missing_date = future.copy()
+    missing_date["date"] = pd.NaT
+    cases = (
+        prices,
+        prices.loc[~((prices.symbol == "B") & (prices.date == pd.Timestamp("2024-01-03")))],
+        pd.concat((prices, prices.iloc[[0]]), ignore_index=True),
+        pd.concat((prices, future, future), ignore_index=True),
+        pd.concat((prices, invalid_future), ignore_index=True),
+        pd.concat((prices, bad_value), ignore_index=True),
+        pd.concat((prices, missing_date), ignore_index=True),
+    )
+    for frame in cases:
+        fast = _checks(replace(bundle, prices=frame), binding, pairs, spec, (requirement,))
+        generic = frame.copy()
+        generic["date"] = generic["date"].astype(object)
+        slow = _checks(replace(bundle, prices=generic), binding, pairs, spec, (requirement,))
+        assert fast == slow
+    undeclared = prices.assign(extra="INVALID")
+    extra_requirement = _requirement("prices", interval, (("extra", "float", "score"),))
+    generic = undeclared.copy()
+    generic["date"] = generic["date"].astype(object)
+    assert _checks(replace(bundle, prices=undeclared), binding, pairs, spec, (extra_requirement,)) == \
+           _checks(replace(bundle, prices=generic), binding, pairs, spec, (extra_requirement,))
+    source_ref_requirement = _requirement("prices", interval, (("source_ref", "string", "reference"),))
+    generic = prices.copy()
+    generic["date"] = generic["date"].astype(object)
+    assert _checks(bundle, binding, pairs, spec, (source_ref_requirement,)) == \
+           _checks(replace(bundle, prices=generic), binding, pairs, spec, (source_ref_requirement,))
+
+
+def test_stable_daily_fast_check_rejects_visible_missing_business_key():
+    bundle, binding, _, _, _ = _case()
+    reader = TableSemantics.from_binding(next(item for item in binding.table_semantics if item.table == "prices"))
+    frame = bundle.prices.copy()
+    frame.loc[0, "symbol"] = None
+    sessions = tuple(pd.to_datetime(bundle.calendar.date).dt.date)
+    for check in (_stable_daily_at, lambda data, semantics, day, days:
+                  _visible_at(data, semantics, day, days, binding.dataset_version_id)):
+        with pytest.raises(ValueError, match="missing business identity"):
+            check(frame, reader, sessions[-1], sessions)
 
 
 def _known_fact(value=10., *, available_at="2024-01-01T06:00:00Z", revision_id="r1", revision_sequence=1):

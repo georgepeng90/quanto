@@ -51,6 +51,30 @@ def _visible_at(frame: pd.DataFrame, semantics: TableSemantics, day: date,
     return _visible(frame, semantics, session_cutoff(day), sessions, dataset_id)
 
 
+def _stable_daily_at(frame: pd.DataFrame, semantics: TableSemantics, day: date,
+                     sessions: tuple[date, ...]) -> pd.DataFrame:
+    """Check canonical daily facts without computing unused row provenance hashes."""
+    rules = semantics.rules
+    required = {*rules.business_keys, *semantics.binding.schema_definition}
+    required.update(value for value in (rules.symbol_column, rules.date_column,
+        rules.available_column, rules.revision_id_column, rules.revision_order_column,
+        rules.effective_from_column, rules.effective_to_column) if value)
+    if not required.issubset(frame.columns):
+        raise ValueError(f"TEMPORAL_EVIDENCE_MISSING: missing declared fields in {semantics.binding.table}")
+    frame = frame.loc[:, sorted(required)]
+    dates = frame[rules.date_column].dt.date
+    if dates.isna().any() or not dates.isin(sessions).all():
+        raise ValueError("TEMPORAL_EVIDENCE_MISSING: observation date absent from trading calendar")
+    visible = frame.loc[dates <= day]
+    if not visible.empty:
+        keys = list(rules.business_keys)
+        if visible[keys].isna().any().any():
+            raise ValueError("TEMPORAL_EVIDENCE_MISSING: missing business identity")
+        if visible.duplicated(keys).any():
+            raise ValueError("TEMPORAL_EVIDENCE_MISSING: duplicate facts without revision ordering")
+    return visible
+
+
 def _invalid_values(series: pd.Series, dtype: str) -> bool:
     if series.isna().any():
         return True
@@ -310,12 +334,21 @@ def check_requirements(
         empty_daily = None
         if stable_daily and days:
             try:
-                daily_view = _visible_at(selected, reader, days[-1], sessions, binding.dataset_version_id)
+                date_values = selected[reader.rules.date_column]
+                derived_fields = {'source_available_at', 'source_ref'}
+                uses_derived = bool(derived_fields & (temporal_columns | set(declaration.schema_definition) |
+                    {field.name for field in requirement.fields}))
+                canonical_dates = (isinstance(date_values, pd.Series) and
+                    selected.columns.is_unique and pd.api.types.is_datetime64_any_dtype(date_values.dtype) and
+                    date_values.dt.tz is None)
+                daily_view = (_stable_daily_at(selected, reader, days[-1], sessions)
+                    if canonical_dates and not uses_derived else
+                    _visible_at(selected, reader, days[-1], sessions, binding.dataset_version_id))
             except (ValueError, KeyError, TypeError) as exc:
                 checks.append(_check("temporal_visibility", False, f"{path}.table", _error_code(exc, "TEMPORAL_EVIDENCE_MISSING"), str(exc)))
                 continue
             daily_dates = pd.to_datetime(daily_view[reader.rules.date_column], errors="coerce").dt.date
-            daily_groups = {day: group for day, group in daily_view.groupby(daily_dates, sort=False)}
+            daily_groups = {day: group for day, group in daily_view.groupby(daily_dates.to_numpy(), sort=False)}
             empty_daily = daily_view.iloc[:0]
         missing_reported = False
         invalid_reported: set[int] = set()

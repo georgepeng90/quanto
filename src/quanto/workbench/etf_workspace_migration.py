@@ -367,7 +367,7 @@ def migrate_etf_workspace(root: Path, identities: dict, *, source_document: str,
         _convert_contexts(store, root)
         counts = _verify(store)
         report = {**counts, 'adopted_models': adopted, 'already_current': already_current,
-                  'applied': apply, 'source_document': source_document, 'dataset_evidence': evidence,
+                  'applied': apply and not already_current, 'source_document': source_document, 'dataset_evidence': evidence,
                   'source_database_sha256': digest(original), 'created_at': utc_now()}
         if source.read_bytes() != original:
             raise ValueError('Original workspace changed during migration')

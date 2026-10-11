@@ -49,6 +49,7 @@ def test_migration_converts_all_drafts_without_rewriting_prices(tmp_path):
     snapshot = store.db_path.read_bytes()
     repeated = migrate_etf_workspace(store.root, IDENTITIES, source_document='Explicit test ETF identities', apply=True)
     assert repeated['already_current'] is True
+    assert repeated['applied'] is False
     assert store.db_path.read_bytes() == snapshot
 
 

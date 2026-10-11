@@ -61,30 +61,29 @@ def test_dsr_evaluation_reconciles_cash_prefix_independently_of_reward(tmp_path)
     assert metrics["reward_daily_count"] == len(result.equity)
 
 
-def test_legacy_manifest_without_reward_fields_loads_and_continues_unchanged(tmp_path):
+def test_incomplete_policy_identity_is_rejected_without_implicit_defaults(tmp_path):
     from quanto.investing.training import train_policy
     from quanto.investing.evaluation import backtest_policy
     from quanto.learning.artifacts import write_manifest
 
     spec, dates = investing_case(tmp_path / "data")
-    manifest = train_policy(spec, tmp_path / "data", tmp_path / "old", lambda _: None,
-                            lambda: False, data_hash(tmp_path / "data"), model_id="legacy", evaluate_test=False)
+    manifest = train_policy(spec, tmp_path / "data", tmp_path / "policy", lambda _: None,
+                            lambda: False, data_hash(tmp_path / "data"), model_id="model", evaluate_test=False)
     manifest.pop("id")
-    manifest.pop("reward_version", None)
-    manifest.pop("reward_parameters", None)
-    manifest["config"].pop("reward_version", None)
-    write_manifest(tmp_path / "old", manifest)
-    old_files = hash_files(tmp_path / "old")
-    summary = backtest_policy(tmp_path / "old", tmp_path / "data",
-        dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="cash",
-             evaluation_purpose="post_selection_backtest"),
-        tmp_path / "backtest", lambda _: None, lambda: False)
-    assert summary["metadata"]["reward_version"] == "net-log-return-v1"
-    resumed = train_policy(spec, tmp_path / "data", tmp_path / "new", lambda _: None,
-                           lambda: False, data_hash(tmp_path / "data"), model_id="legacy",
-                           resume_dir=tmp_path / "old", evaluate_test=False)
-    assert resumed["timesteps_started"] == manifest["timesteps_completed"]
-    assert hash_files(tmp_path / "old") == old_files
+    manifest.pop("reward_version")
+    manifest.pop("reward_parameters")
+    write_manifest(tmp_path / "policy", manifest)
+    original_files = hash_files(tmp_path / "policy")
+    with pytest.raises(ValueError, match="identity mismatch"):
+        backtest_policy(tmp_path / "policy", tmp_path / "data",
+            dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="cash",
+                 evaluation_purpose="post_selection_backtest"),
+            tmp_path / "backtest", lambda _: None, lambda: False)
+    with pytest.raises(ValueError, match="identity mismatch"):
+        train_policy(spec, tmp_path / "data", tmp_path / "continued", lambda _: None,
+                     lambda: False, data_hash(tmp_path / "data"), model_id="model",
+                     resume_dir=tmp_path / "policy", evaluate_test=False)
+    assert hash_files(tmp_path / "policy") == original_files
 
 
 def test_validation_report_uses_selected_policy_and_checks_dataset(tmp_path, monkeypatch):

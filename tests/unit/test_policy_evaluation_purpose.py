@@ -9,7 +9,6 @@ from stable_baselines3 import PPO
 
 from quanto.investing import evaluation
 from quanto.investing.contracts import PolicyBacktestSpec, PolicyTrainingSpec
-from quanto.investing.environment import ACTION_VERSION, ENVIRONMENT_VERSION, EXECUTION_VERSION, feature_version
 from tests.fixtures.investing_training_cases import investing_case
 
 
@@ -19,8 +18,7 @@ def _case(tmp_path, monkeypatch):
     manifest = dict(id="policy-content", config=config.model_dump(mode="json"),
                     basket=config.backtest.symbols, dataset_content_hash="a" * 64,
                     price_mode="raw_cash", cutoff=config.validation_end.isoformat(),
-                    feature_version=feature_version(config.lookback), action_version=ACTION_VERSION,
-                    environment_version=ENVIRONMENT_VERSION, execution_version=EXECUTION_VERSION)
+                    **evaluation.policy_identity(config))
     monkeypatch.setattr(evaluation, "read_manifest", lambda *_: manifest)
     request = dict(start=str(dates[60].date()), end=str(dates[89].date()),
                    baseline="cash", evaluation_purpose="post_selection_backtest")
@@ -93,7 +91,11 @@ def test_cost_multiplier_uses_only_trading_declaration(tmp_path, monkeypatch):
         raise CapturedBacktest
 
     monkeypatch.setattr(evaluation, "evaluate_policy", capture)
+    context = {"schema_version": 1, "model_id": "model", "artifact_model_id": None,
+               "dataset_content_hash": manifest["dataset_content_hash"], "basket": manifest["basket"],
+               "price_mode": manifest["price_mode"], "semantic_identity": evaluation.policy_identity(config),
+               "framework_learning": manifest["framework_learning"]}
     with pytest.raises(CapturedBacktest):
         evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", request,
                                    tmp_path / "result", lambda _: None, lambda: False,
-                                   learning_runtime=runtime)
+                                   learning_runtime=runtime, policy_context=context)

@@ -11,7 +11,6 @@ from quanto.framework import DefinitionRef
 from quanto.investing.models import InvestingModels
 from quanto.learning.artifacts import read_frozen_transform, read_manifest, write_frozen_transform, write_manifest
 from quanto.learning.registry import finish_learning_job, hash_files
-from quanto.workbench.store import WorkbenchStore
 
 
 def fitted_transform():
@@ -24,15 +23,30 @@ def fitted_transform():
 
 
 def staged_policy(tmp_path, *, state="running"):
-    store = WorkbenchStore(tmp_path / "workspace")
+    from quanto.investing.contracts import PolicyTrainingSpec
+    from quanto.investing.evaluation import policy_identity
+    from quanto.investing.feature_runtime import learning_runtime_for
+    from quanto.workbench.bindings import BindingStore
+    from quanto.workbench.service import WorkbenchService
+    from tests.integration.test_framework_capabilities import _training_case
+
+    store, request, _ = _training_case(tmp_path)
+    model = InvestingModels(WorkbenchService(store.root)).create_model(request.model_dump(mode="json"))
+    binding = BindingStore(store).get_model_binding(model["id"])
+    spec = PolicyTrainingSpec.model_validate(model["spec"])
+    runtime = learning_runtime_for(binding, binding.training_configuration)
     with store.transaction() as db:
         db.execute("INSERT INTO jobs(id,kind,state,enqueue_seq,artifact_root) VALUES ('session','train_policy',?,1,?)",
                    (state, str(tmp_path)))
-        db.execute("INSERT INTO investing_sessions VALUES ('session','model',NULL)")
+        db.execute("INSERT INTO investing_sessions VALUES ('session',?,NULL)", (model["id"],))
     root = tmp_path / "final" / "artifact"
     root.mkdir(parents=True)
     descriptor = write_frozen_transform(root, fitted_transform())
-    write_manifest(root, {"kind": "policy", "feature_transform": descriptor})
+    write_manifest(root, {"kind": "policy", "feature_transform": descriptor,
+                         "model_id": model["id"], "config": spec.model_dump(mode="json"),
+                         "dataset_content_hash": binding.asset_binding.dataset_content_hash,
+                         "basket": spec.backtest.symbols, "price_mode": "raw_cash",
+                         "framework_learning": runtime.identity(spec), **policy_identity(spec)})
     hashes = {f"artifact/{name}": value for name, value in hash_files(root).items()}
     return store, root, descriptor, {"artifact_kind": "policy", "hashes": hashes}
 
@@ -72,7 +86,7 @@ def test_policy_and_transform_publish_in_one_success_transaction(tmp_path):
     assert finish_learning_job(store, "session", root.parent, result)
     with store.transaction() as db:
         assert db.execute("SELECT state FROM jobs WHERE id='session'").fetchone()[0] == "succeeded"
-        assert InvestingModels._head(db, "model") == "session"
+        assert InvestingModels._head(db, db.execute("SELECT model_id FROM investing_sessions").fetchone()[0]) == "session"
         row = db.execute("SELECT manifest_json,files_json FROM learning_artifacts WHERE id='session'").fetchone()
     assert json.loads(row[0])["feature_transform"] == descriptor
     assert "transform.json" in json.loads(row[1])
@@ -84,7 +98,7 @@ def test_unsuccessful_session_cannot_publish_staged_transform(tmp_path, state):
     store, root, _, result = staged_policy(tmp_path, state=state)
     assert not finish_learning_job(store, "session", root.parent, result)
     with store.transaction() as db:
-        assert InvestingModels._head(db, "model") is None
+        assert InvestingModels._head(db, db.execute("SELECT model_id FROM investing_sessions").fetchone()[0]) is None
         assert db.execute("SELECT count(*) FROM learning_artifacts").fetchone()[0] == 0
 
 
@@ -99,7 +113,7 @@ def test_db_publication_failure_rolls_back_artifact_and_success_state(tmp_path, 
         finish_learning_job(store, "session", root.parent, result)
     with store.transaction() as db:
         assert db.execute("SELECT state FROM jobs WHERE id='session'").fetchone()[0] == "running"
-        assert InvestingModels._head(db, "model") is None
+        assert InvestingModels._head(db, db.execute("SELECT model_id FROM investing_sessions").fetchone()[0]) is None
         assert db.execute("SELECT count(*) FROM learning_artifacts").fetchone()[0] == 0
 
 
@@ -115,4 +129,4 @@ def test_publication_rejects_unpaired_transform_file_and_descriptor(tmp_path, or
     with pytest.raises(ValueError, match="transform"):
         finish_learning_job(store, "session", root.parent, result)
     with store.transaction() as db:
-        assert InvestingModels._head(db, "model") is None
+        assert InvestingModels._head(db, db.execute("SELECT model_id FROM investing_sessions").fetchone()[0]) is None

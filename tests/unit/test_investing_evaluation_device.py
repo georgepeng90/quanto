@@ -7,7 +7,6 @@ from stable_baselines3 import PPO
 
 from quanto.investing import evaluation
 from quanto.investing.contracts import PolicyTrainingSpec
-from quanto.investing.environment import ACTION_VERSION, ENVIRONMENT_VERSION, EXECUTION_VERSION, feature_version
 from tests.fixtures.investing_training_cases import investing_case
 
 
@@ -16,8 +15,7 @@ def case(tmp_path, monkeypatch, device):
     config = PolicyTrainingSpec.model_validate({**spec, "device": device})
     manifest = dict(id="policy-content", config=config.model_dump(mode="json"),
         basket=config.backtest.symbols, dataset_content_hash="a" * 64, price_mode="raw_cash",
-        cutoff=config.validation_end.isoformat(), feature_version=feature_version(config.lookback),
-        action_version=ACTION_VERSION, environment_version=ENVIRONMENT_VERSION, execution_version=EXECUTION_VERSION)
+        cutoff=config.validation_end.isoformat(), **evaluation.policy_identity(config))
     monkeypatch.setattr(evaluation, "read_manifest", lambda *_: manifest)
     request = dict(start=str(dates[60].date()), end=str(dates[89].date()), baseline="policy",
                    evaluation_purpose="post_selection_backtest")

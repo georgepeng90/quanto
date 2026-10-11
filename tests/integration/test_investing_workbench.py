@@ -53,7 +53,7 @@ def test_policy_overview_auth_and_separate_resources(tmp_path):
     assert client.get('/api/investing/policies/missing', headers=headers).status_code == 404
     for route in ('train', 'backtests'):
         response = client.post(f'/api/investing/{route}', headers=headers, json={'dataset_id': 'missing', 'spec': {}, 'path': 'C:/private'})
-        assert response.status_code == 422
+        assert response.status_code in {404, 405}
     assert app.state.service.store.list_jobs() == []
 
 
@@ -89,7 +89,7 @@ def test_standalone_policy_training_requires_model_identity(tmp_path):
     client = TestClient(app, base_url='http://127.0.0.1')
     headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
     response = client.post('/api/investing/train', headers=headers, json={'dataset_id': dataset.id, 'spec': spec})
-    assert response.status_code == 422
+    assert response.status_code in {404, 405}
     assert app.state.service.store.list_jobs() == []
 
 

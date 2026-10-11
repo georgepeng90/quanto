@@ -14,10 +14,12 @@ def history_workspace(tmp_path, monkeypatch):
     config = tmp_path / 'market.json'
     config.write_text(json.dumps({'root': str(tmp_path / 'market')}))
     monkeypatch.setenv('QUANTO_MARKET_CONFIG', str(config))
-    app = create_app(tmp_path / 'workspace')
-    with app.state.service.store.transaction() as db:
-        db.execute('INSERT INTO investing_models VALUES (?,?,?,?)',
-                   ('m1', 'dataset', json.dumps({'name': 'History model'}), '2026-01-01'))
+    from quanto.investing.models import InvestingModels
+    from tests.integration.test_framework_capabilities import _training_case
+    store, request, _ = _training_case(tmp_path)
+    app = create_app(store.root)
+    monkeypatch.setattr('quanto.investing.models.uuid4', lambda: 'm1')
+    InvestingModels(app.state.service).create_model(request.model_dump(mode='json'))
     client = TestClient(app, base_url='http://127.0.0.1')
     headers = {'Authorization': f'Bearer {client.get("/api/session").json()["token"]}'}
     return app.state.service.store, client, headers

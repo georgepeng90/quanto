@@ -14,6 +14,13 @@ from quanto.workbench.dataset_objects import ensure_dataset_object
 class InvestingService(LearningService):
     resources = {'policies': 'policy', 'backtests': 'policy_backtest'}
 
+    def detail(self, resource, identity):
+        artifact = super().detail(resource, identity)
+        if resource == 'backtests':
+            from quanto.workbench.run_contexts import ContextStore
+            artifact['context'] = ContextStore(self.store).get(identity)
+        return artifact
+
     def overview(self):
         with self.store.transaction() as db:
             identities = [row[0] for row in db.execute("SELECT id FROM jobs WHERE kind IN ('train_policy','policy_backtest') ORDER BY enqueue_seq DESC LIMIT 50")]

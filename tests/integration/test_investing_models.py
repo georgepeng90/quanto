@@ -233,13 +233,25 @@ def test_model_continues_and_backtests_explicit_immutable_version(model_workspac
         assert client.post(f'/api/investing/models/{model["id"]}/backtests', headers=headers,
                            json={key: value for key, value in backtest.items() if key != 'version_id'}).status_code == 422
         run = wait_job(client.post(f'/api/investing/models/{model["id"]}/backtests', headers=headers, json=backtest))
-        summary = client.get(f'/api/investing/backtests/{run}', headers=headers).json()['manifest']
+        backtest_detail = client.get(f'/api/investing/backtests/{run}', headers=headers).json()
+        summary = backtest_detail['manifest']
+        with app.state.service.store.transaction() as db:
+            saved = db.execute('SELECT manifest_json FROM learning_artifacts WHERE id=?', (run,)).fetchone()[0]
+        assert summary == json.loads(saved)
+        assert backtest_detail['context']['kind'] == 'policy'
+        assert backtest_detail['context']['model_id'] == model['id']
+        assert backtest_detail['context']['policy_version_id'] == first
         assert summary['policy_id'] == first and summary['model_id'] == model['id']
         assert summary['period'] == {'start': request['spec']['validation_start'], 'end': request['spec']['validation_end']}
         assert summary['counts']['equity'] == 20 and 'sharpe' in summary['metrics']
         catalog = client.get('/api/backtests/catalog', headers=headers).json()['items']
         assert len(catalog) == 1 and catalog[0]['job_id'] == run
         assert client.get(f'/api/investing/backtests/{run}/export', headers=headers).content[:2] == b'PK'
+        with app.state.service.store.transaction() as db:
+            db.execute('DELETE FROM run_contexts WHERE job_id=?', (run,))
+        from quanto.investing.service import InvestingService
+        with pytest.raises(ValueError, match='backtest context missing'):
+            InvestingService(app.state.service).detail('backtests', run)
 
 
 def test_agent_model_commands_share_http_contract(monkeypatch, tmp_path, capsys):

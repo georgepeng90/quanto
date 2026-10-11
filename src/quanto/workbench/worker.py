@@ -401,6 +401,7 @@ def run_learning_job(descriptor: dict, control_dir: Path, emit, cancelled) -> di
         binding = ModelFrameworkBinding.model_validate(payload["model_binding"])
         verify_frozen_configuration(resolved, dataset_ref=payload["dataset_ref"],
             model_binding=binding, policy_ref=payload.get("policy_ref") or payload.get("policy_resume_ref"),
+            policy_context=payload.get("policy_context") or payload.get("policy_resume_context"),
             training_dataset_ref=payload.get("training_dataset_ref"))
     from quanto.learning.jobs import execute_learning_job
     return execute_learning_job(descriptor, control_dir, emit, cancelled)

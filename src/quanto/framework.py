@@ -18,7 +18,7 @@ Name = Annotated[StrictStr, Field(min_length=1)]
 Hash = Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
 PositiveRevision = Annotated[StrictInt, Field(ge=1)]
 PriceMode = Literal["raw_cash", "adjusted_research"]
-Operation = Literal["fetch", "fixed_backtest", "train", "resume", "policy_backtest", "bind_model"]
+Operation = Literal["fetch", "fixed_backtest", "train", "resume", "policy_backtest"]
 ErrorCode = Literal["IDENTITY_UNRESOLVED", "BINDING_MISMATCH", "MIXED_BASKET_UNSUPPORTED",
                     "DEFINITION_UNAVAILABLE", "DATA_REQUIREMENT_UNSATISFIED", "TEMPORAL_EVIDENCE_MISSING",
                     "EXECUTION_CAPABILITY_MISSING", "MODEL_IDENTITY_MISMATCH"]
@@ -305,7 +305,6 @@ class ResolvedConfiguration(FrozenContract):
 class ModelFrameworkBinding(FrozenContract):
     schema_version: Literal[1] = 1
     model_id: Name
-    origin: Literal["new", "legacy_audited"]
     original_spec: JsonMap
     original_spec_hash: str = ""
     training_configuration: ResolvedConfiguration

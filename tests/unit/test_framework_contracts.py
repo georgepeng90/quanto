@@ -174,11 +174,8 @@ def test_fetch_requires_explicit_typed_members_and_no_existing_dataset():
         FetchRequest(**(values | {"benchmark": instrument_values(instrument_type="stock")}))
 
 
-def test_model_and_binding_requests_do_not_offer_editable_research_identity():
-    from quanto.workbench.framework_requests import ModelBindingRequest, DatasetBindingRequest, PolicyBacktestRequest, ResumeRequest
-    assert ModelBindingRequest(idempotency_key="retry").model_dump() == {"idempotency_key": "retry"}
-    with pytest.raises(ValidationError):
-        DatasetBindingRequest(evidence_ref="recorded-source", idempotency_key="retry", mapping={})
+def test_model_requests_do_not_offer_editable_research_identity():
+    from quanto.workbench.framework_requests import PolicyBacktestRequest, ResumeRequest
     with pytest.raises(ValidationError):
         ResumeRequest(model_id="model-1", additional_timesteps=8, dataset_id="new")
     values = dict(version_id="version-1", dataset_id="dataset-1", spec=dict(start="2024-07-01", end="2024-08-01"))

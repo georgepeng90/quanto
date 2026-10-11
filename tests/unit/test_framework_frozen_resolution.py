@@ -7,10 +7,12 @@ import pytest
 from quanto.workbench.configuration import FrameworkResolver, assert_unchanged
 from quanto.workbench.frozen_configuration import verify_frozen_configuration
 from quanto.workbench.bindings import BindingStore
+from quanto.workbench.etf_model_migration import ModelMigrator
 from quanto.workbench.framework_requests import ResumeRequest
 from quanto.workbench.framework_requests import FixedRequest, PolicyBacktestRequest
 from quanto.investing.contracts import PolicyTrainingSpec
 from quanto.investing.evaluation import policy_identity
+from quanto.investing.policy_versions import PolicyVersionStore
 from quanto.learning.artifacts import write_manifest
 from quanto.objects import digest, json_bytes
 from quanto.workbench.store import utc_now
@@ -75,7 +77,7 @@ def test_semantic_comparison_ignores_generation_time_only(tmp_path):
 def test_frozen_first_resume_rechecks_training_without_live_database(tmp_path):
     store, create, _ = _training_case(tmp_path)
     _old_model(store, create)
-    binding = BindingStore(store).bind_model("old-model", "audit")
+    binding = ModelMigrator(store).migrate_model("old-model")
     request = ResumeRequest(model_id="old-model", additional_timesteps=16)
     resolved = FrameworkResolver(store).resolve(request)
     with store.transaction() as db:
@@ -113,7 +115,8 @@ def test_frozen_policy_rechecks_successful_version_and_purpose(tmp_path):
         db.execute("INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)",
                    ("version-one", "policy", str(artifact), digest(json_bytes(files)),
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
-    binding = BindingStore(store).bind_model("old-model", "audit")
+    binding = ModelMigrator(store).migrate_model("old-model")
+    policy_context = PolicyVersionStore(store).get("version-one")
     request = PolicyBacktestRequest(version_id="version-one", dataset_id=dataset.id,
                                     spec={"start": spec.validation_end, "end": spec.backtest.end,
                                           "evaluation_purpose": "development_replay"})
@@ -126,12 +129,25 @@ def test_frozen_policy_rechecks_successful_version_and_purpose(tmp_path):
                   "files": files}
     verified = verify_frozen_configuration(resolved, dataset_ref=dataset_ref,
                                            model_binding=binding, policy_ref=policy_ref,
+                                           policy_context=policy_context,
                                            training_dataset_ref=dataset_ref)
     assert_unchanged(resolved, verified)
     resume = FrameworkResolver(store).resolve(ResumeRequest(model_id="old-model", additional_timesteps=16))
     assert_unchanged(resume, verify_frozen_configuration(
-        resume, dataset_ref=dataset_ref, model_binding=binding, policy_ref=policy_ref))
+        resume, dataset_ref=dataset_ref, model_binding=binding, policy_ref=policy_ref,
+        policy_context=policy_context))
     with pytest.raises(ValueError, match="policy version reference"):
         verify_frozen_configuration(resolved, dataset_ref=dataset_ref,
                                     model_binding=binding, policy_ref={**policy_ref, "id": "other"},
+                                    policy_context=policy_context,
                                     training_dataset_ref=dataset_ref)
+    with pytest.raises(ValueError, match="context missing"):
+        verify_frozen_configuration(resolved, dataset_ref=dataset_ref,
+                                    model_binding=binding, policy_ref=policy_ref,
+                                    training_dataset_ref=dataset_ref)
+    with store.transaction() as db:
+        db.execute("UPDATE policy_version_contexts SET context_hash=? WHERE version_id=?",
+                   ("0" * 64, "version-one"))
+    with pytest.raises(ValueError, match="context hash differs"):
+        PolicyVersionStore(store).get("version-one")
+    assert FrameworkResolver(store).check(request).status == "blocked"

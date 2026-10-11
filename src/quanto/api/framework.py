@@ -6,12 +6,10 @@ from pydantic import TypeAdapter
 
 from quanto.framework import BasketRevisionRef
 from quanto.workbench.baskets import BasketStore
-from quanto.workbench.bindings import BindingStore
-from quanto.workbench.configuration import FrameworkBlocked, FrameworkResolver
+from quanto.workbench.configuration import FrameworkResolver
 from quanto.workbench.definitions import DefinitionRegistry
 from quanto.workbench.framework_requests import (BasketCreateRequest, BasketRevisionRequest,
-                                                  CapabilityCheckRequest, DatasetBindingRequest,
-                                                  ModelBindingRequest)
+                                                  CapabilityCheckRequest)
 
 
 router = APIRouter()
@@ -89,26 +87,3 @@ def definitions(request: Request):
 def check_capabilities(request: Request, body: dict):
     value = _capability_request.validate_python(body)
     return FrameworkResolver(_store(request)).check(value).model_dump(mode="json")
-
-
-@router.post("/datasets/{identity}/asset-binding")
-def bind_dataset(request: Request, identity: str, body: dict):
-    value = DatasetBindingRequest.model_validate(body)
-    return BindingStore(_store(request)).bind_dataset(identity, value.evidence_ref,
-                                                     value.idempotency_key).model_dump(mode="json")
-
-
-@router.post("/investing/models/{identity}/framework-binding")
-def bind_model(request: Request, identity: str, body: dict):
-    value = ModelBindingRequest.model_validate(body)
-    bindings = BindingStore(_store(request))
-    report = bindings.inspect_model_binding(identity)
-    if report.status == "blocked":
-        raise FrameworkBlocked(report)
-    try:
-        return bindings.bind_model(identity, value.idempotency_key).model_dump(mode="json")
-    except (KeyError, ValueError, OSError):
-        report = bindings.inspect_model_binding(identity)
-        if report.status == "blocked":
-            raise FrameworkBlocked(report)
-        raise

@@ -112,5 +112,12 @@ def finish_learning_job(store, identity: str, final: Path, result: dict) -> bool
         db.execute('INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)',
                    (identity, kind, str(root), hashlib.sha256(json_bytes(files)).hexdigest(),
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
+        if kind == 'policy':
+            from quanto.investing.policy_versions import PolicyVersionStore
+            from quanto.workbench.bindings import BindingStore
+
+            binding = BindingStore(store).get_model_binding(manifest['model_id'], db)
+            versions = PolicyVersionStore(store)
+            versions.insert(db, identity, versions.context_for(binding, manifest, identity))
         db.execute("UPDATE jobs SET state='succeeded',finished_at=? WHERE id=?", (utc_now(), identity))
     return True

@@ -59,6 +59,9 @@ def test_policy_artifacts_preserve_frozen_framework_and_selected_checkpoint(mode
         finished(train_id)
         policy_root = app.state.service.store.artifact_root / train_id / "final" / "artifact"
         trained = read_manifest(policy_root, "policy")
+        from quanto.investing.policy_versions import PolicyVersionStore
+        version_context = PolicyVersionStore(app.state.service.store).get(train_id)
+        assert version_context["framework_learning"] == trained["framework_learning"]
         assert trained["framework"] == frozen_train["input"]["resolved_configuration"]
         assert trained["execution_provenance"]["source_hashes"] == frozen_train["source_hashes"]
         assert trained["execution_provenance"]["best_checkpoint"]["timesteps"] == trained["best_timesteps"]
@@ -72,6 +75,7 @@ def test_policy_artifacts_preserve_frozen_framework_and_selected_checkpoint(mode
                      "baseline": "policy", "evaluation_purpose": "development_replay"}})
         backtest_id = backtest["id"]
         frozen_backtest = json.loads(Path(app.state.service.store.get_job(backtest_id).input_path).read_bytes())
+        assert frozen_backtest["input"]["policy_context"] == version_context
         finished(backtest_id)
         summary_root = app.state.service.store.artifact_root / backtest_id / "final" / "artifact"
         summary = json.loads((summary_root / "summary.json").read_bytes())

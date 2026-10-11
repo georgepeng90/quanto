@@ -35,9 +35,7 @@ def policy_identity(config):
 
 def check_policy_identity(manifest, config):
     expected = policy_identity(config)
-    # Old immutable artifacts predate explicit reward metadata.
-    actual = {"reward_version": LEGACY_REWARD_VERSION, "reward_parameters": {}, **manifest}
-    if any(actual.get(name) != value for name, value in expected.items()) or manifest["basket"] != config.backtest.symbols:
+    if any(manifest.get(name) != value for name, value in expected.items()) or manifest["basket"] != config.backtest.symbols:
         raise ValueError("policy observation, action, reward, execution version or basket identity mismatch")
     return expected
 
@@ -112,29 +110,35 @@ def evaluate_policy(model, bundle, spec, frequency="weekly", lookback=120,
 
 
 def backtest_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled, *,
-                    learning_runtime: LearningRuntime | None = None):
+                    learning_runtime: LearningRuntime | None = None, policy_context: dict | None = None):
     return _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled,
-                                  validation=False, learning_runtime=learning_runtime)
+                                  validation=False, learning_runtime=learning_runtime,
+                                  policy_context=policy_context)
 
 
 def evaluate_validation_policy(policy_dir, dataset_dir, output_dir, emit, cancelled, *,
                                learning_runtime: LearningRuntime | None = None):
     """Report the selected snapshot on its original model-selection data."""
     return _evaluate_saved_policy(policy_dir, dataset_dir, None, output_dir, emit, cancelled,
-                                  validation=True, learning_runtime=learning_runtime)
+                                  validation=True, learning_runtime=learning_runtime,
+                                  policy_context=None)
 
 
 def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, cancelled, *, validation,
-                           learning_runtime: LearningRuntime | None):
+                           learning_runtime: LearningRuntime | None, policy_context: dict | None):
     from stable_baselines3 import PPO
 
     check_cancelled(cancelled)
     policy_dir, output_dir = Path(policy_dir), Path(output_dir)
     manifest = read_manifest(policy_dir, "policy")
+    if policy_context is not None:
+        from quanto.investing.policy_versions import verified_policy_manifest
+
+        manifest = verified_policy_manifest(manifest, policy_context)
+    elif learning_runtime is not None and not validation:
+        raise ValueError("MODEL_IDENTITY_MISMATCH: saved policy context missing")
     config = PolicyTrainingSpec.model_validate(manifest["config"])
     framework_learning = manifest.get("framework_learning")
-    if framework_learning is None and learning_runtime is not None:
-        framework_learning = learning_runtime.audited_legacy_identity(manifest)
     if (framework_learning is None) != (learning_runtime is None):
         raise ValueError("MODEL_IDENTITY_MISMATCH: framework model requires matching learning runtime")
     if validation:

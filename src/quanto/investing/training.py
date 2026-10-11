@@ -59,7 +59,7 @@ def validate_training_data(config, bundle, *, learning_runtime=None, transform=N
 
 
 def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content_hash, *,
-                 resume_dir=None, model_id=None, evaluate_test=True,
+                 resume_dir=None, resume_context=None, model_id=None, evaluate_test=True,
                  learning_runtime: LearningRuntime | None = None):
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     import torch
@@ -97,13 +97,17 @@ def train_policy(spec, dataset_dir, output_dir, emit, cancelled, dataset_content
         fixed = config.model_dump(mode="json", exclude={"total_timesteps", "device"})
         if fixed != previous.model_dump(mode="json", exclude={"total_timesteps", "device"}):
             raise ValueError("resume configuration must match the fixed model identity")
+        if learning_runtime is not None:
+            from quanto.investing.policy_versions import verified_policy_manifest
+
+            if resume_context is None:
+                raise ValueError("MODEL_IDENTITY_MISMATCH: saved continuation context missing")
+            parent = verified_policy_manifest(parent, resume_context)
         check_policy_identity(parent, config)
         if (parent["dataset_content_hash"] != dataset_content_hash or parent.get("model_id") != model_id
                 or parent["basket"] != config.backtest.symbols or parent.get("price_mode") != bundle.price_mode):
             raise ValueError("resume dataset, model, basket or environment identity mismatch")
         parent_learning = parent.get("framework_learning")
-        if parent_learning is None and learning_runtime is not None:
-            parent_learning = learning_runtime.audited_legacy_identity(parent)
         if parent_learning != framework_learning:
             raise ValueError("MODEL_IDENTITY_MISMATCH: resume framework learning identity differs")
         parent_transform_descriptor = parent.get("feature_transform")

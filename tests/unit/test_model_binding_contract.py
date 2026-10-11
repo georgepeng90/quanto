@@ -13,7 +13,7 @@ def test_model_binding_freezes_one_training_identity(tmp_path):
     store, request, _ = _training_case(tmp_path)
     resolved = FrameworkResolver(store).resolve(request)
     spec = dict(resolved.internal_training_spec)
-    binding = ModelFrameworkBinding(model_id="model", origin="new", original_spec=spec,
+    binding = ModelFrameworkBinding(model_id="model", original_spec=spec,
         training_configuration=resolved, semantic_identity={"action_version": request.spec.action_version},
         evidence={"method": "resolved-new-model"}, created_at=datetime.now(timezone.utc))
     assert binding.original_spec_hash == canonical_hash(spec)

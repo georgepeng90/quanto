@@ -41,7 +41,8 @@ def _strategy(ref: Mapping, identity: str) -> StrategyRevision:
 def verify_frozen_configuration(
     resolved: ResolvedConfiguration, *, dataset_ref: Mapping,
     strategy_ref: Mapping | None = None, model_binding: ModelFrameworkBinding | None = None,
-    policy_ref: Mapping | None = None, training_dataset_ref: Mapping | None = None,
+    policy_ref: Mapping | None = None, policy_context: Mapping | None = None,
+    training_dataset_ref: Mapping | None = None,
 ) -> ResolvedConfiguration:
     """Recompute capability with frozen code and data, without a workspace database."""
     resolver = FrameworkResolver(None)
@@ -79,7 +80,7 @@ def verify_frozen_configuration(
                 request, binding, original, definitions,
                 original_dataset_override=original_dataset,
                 parent_id_override=resolved.capability_report.input_hashes.get("parent_version"),
-                policy_ref_override=policy_ref)
+                policy_ref_override=policy_ref, policy_context_override=policy_context)
         else:
             request = PolicyBacktestRequest.model_validate(resolved.request)
             if policy_ref is None:
@@ -88,7 +89,7 @@ def verify_frozen_configuration(
                 request, binding, original, definitions,
                 dataset_override=_dataset(dataset_ref, request.dataset_id),
                 binding_override=resolved.asset_binding,
-                policy_ref_override=policy_ref)
+                policy_ref_override=policy_ref, policy_context_override=policy_context)
     else:
         raise ValueError("unsupported frozen framework operation")
     if current is None:

@@ -514,9 +514,12 @@ class FrameworkResolver:
         ref = {"id": version_id, "path": row["path"], "content_hash": row["content_hash"],
                "files": json.loads(row["files_json"])}
         return self._validate_policy_version_ref(binding, version_id, original, definitions,
-                                                 ref, json.loads(row["manifest_json"]))
+                                                 ref, json.loads(row["manifest_json"]), db=db)
 
-    def _validate_policy_version_ref(self, binding, version_id, original, definitions, ref, saved_manifest):
+    def _validate_policy_version_ref(self, binding, version_id, original, definitions, ref, saved_manifest, *,
+                                     db=None, context_override=None):
+        from quanto.investing.policy_versions import PolicyVersionStore, verified_policy_manifest
+
         if ref["id"] != version_id:
             raise ValueError("MODEL_IDENTITY_MISMATCH: policy version reference differs")
         if digest(json_bytes(ref["files"])) != ref["content_hash"]:
@@ -527,17 +530,19 @@ class FrameworkResolver:
             raise ValueError("MODEL_IDENTITY_MISMATCH: policy artifact differs from saved version")
         if "policy.zip" not in manifest["files"]:
             raise ValueError("MODEL_IDENTITY_MISMATCH: saved policy weights are missing")
-        if manifest.get("model_id") != binding.model_id:
-            raise ValueError("MODEL_IDENTITY_MISMATCH: policy manifest belongs to another model")
         if (manifest.get("dataset_content_hash") != binding.asset_binding.dataset_content_hash or
                 tuple(manifest.get("basket", ())) != tuple(original.backtest.symbols)):
             raise ValueError("MODEL_IDENTITY_MISMATCH: policy training data or basket differs")
-        from quanto.investing.rewards import LEGACY_REWARD_VERSION
-
-        actual_semantics = dict(manifest)
-        if binding.origin == "legacy_audited":
-            actual_semantics = {"reward_version": LEGACY_REWARD_VERSION,
-                                "reward_parameters": {}, **actual_semantics}
+        if context_override is None and self.store is None:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: frozen policy version context missing")
+        context = (context_override if context_override is not None
+                   else PolicyVersionStore(self.store).get(version_id, db))
+        if context_override is not None and PolicyVersionStore(None).context_for(binding, manifest, version_id) != context:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: frozen policy context differs from model")
+        actual_semantics = verified_policy_manifest(manifest, context)
+        manifest = actual_semantics
+        if actual_semantics["model_id"] != binding.model_id:
+            raise ValueError("MODEL_IDENTITY_MISMATCH: policy manifest belongs to another model")
         for key, value in binding.semantic_identity.items():
             if actual_semantics.get(key) != value:
                 raise ValueError("MODEL_IDENTITY_MISMATCH: saved policy semantic version differs")
@@ -549,15 +554,7 @@ class FrameworkResolver:
 
         runtime = LearningRuntime(definitions["learning"], binding.asset_binding, definitions["trading"])
         expected_learning = runtime.identity(previous)
-        framework_learning = manifest.get("framework_learning")
-        if framework_learning is None:
-            artifacts = binding.evidence.get("policy_artifacts", ())
-            entries = artifacts.values() if isinstance(artifacts, Mapping) else artifacts
-            known = any(isinstance(item, Mapping) and item.get("manifest_id") == manifest["id"]
-                        for item in entries)
-            if binding.origin != "legacy_audited" or not known:
-                raise ValueError("MODEL_IDENTITY_MISMATCH: unbound legacy policy version")
-        elif framework_learning != expected_learning:
+        if context["framework_learning"] != expected_learning:
             raise ValueError("MODEL_IDENTITY_MISMATCH: saved policy framework identity differs")
         descriptor = manifest.get("feature_transform")
         feature = definitions["feature"]
@@ -596,7 +593,8 @@ class FrameworkResolver:
             return None, _report(operation, [_blocked("model_operation", path, code, str(exc))])
 
     def _resolve_resume(self, request, binding, original, definitions, *, db=None,
-                        original_dataset_override=None, parent_id_override=_UNSET, policy_ref_override=None):
+                        original_dataset_override=None, parent_id_override=_UNSET, policy_ref_override=None,
+                        policy_context_override=None):
         frozen = binding.training_configuration
         create = model_request_from_spec(original, binding.basket, binding.asset_binding,
                                          definitions["learning"].ref, definitions["trading"].ref)
@@ -631,7 +629,7 @@ class FrameworkResolver:
                     raise ValueError("MODEL_IDENTITY_MISMATCH: frozen continuation version is missing")
                 manifest, _ = self._validate_policy_version_ref(
                     binding, parent_id, original, definitions, policy_ref_override,
-                    None)
+                    None, db=db, context_override=policy_context_override)
             if "last.zip" not in manifest["files"]:
                 raise ValueError("MODEL_IDENTITY_MISMATCH: saved policy lacks continuation state")
         elif policy_ref_override is not None:
@@ -660,7 +658,8 @@ class FrameworkResolver:
         return resolved, report
 
     def _resolve_policy_backtest(self, request, binding, original, definitions, *, db=None,
-                                 dataset_override=None, binding_override=None, policy_ref_override=None):
+                                 dataset_override=None, binding_override=None, policy_ref_override=None,
+                                 policy_context_override=None):
         from quanto.config import BacktestSpec
         from quanto.workbench.framework_capabilities import check_requirements
 
@@ -670,7 +669,7 @@ class FrameworkResolver:
         else:
             manifest, artifact_ref = self._validate_policy_version_ref(
                 binding, request.version_id, original, definitions, policy_ref_override,
-                None)
+                None, db=db, context_override=policy_context_override)
         checks: list[CapabilityCheck] = []
         try:
             dataset = (dataset_override if dataset_override is not None

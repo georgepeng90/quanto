@@ -12,6 +12,7 @@ from quanto.learning.artifacts import write_manifest
 from quanto.learning.registry import hash_files
 from quanto.objects import digest, json_bytes
 from quanto.workbench.bindings import BindingStore
+from quanto.workbench.etf_model_migration import ModelMigrator
 from quanto.workbench.configuration import FrameworkResolver
 from quanto.workbench.framework_requests import PolicyBacktestRequest, ResumeRequest
 from quanto.workbench.store import utc_now
@@ -24,7 +25,7 @@ def frozen_model(tmp_path):
     store, request, _ = _training_case(tmp_path)
     resolved = FrameworkResolver(store).resolve(request)
     spec = PolicyTrainingSpec.model_validate(resolved.internal_training_spec)
-    binding = ModelFrameworkBinding(model_id="model", origin="new",
+    binding = ModelFrameworkBinding(model_id="model",
                                     original_spec=spec.model_dump(mode="json"),
                                     training_configuration=resolved,
                                     semantic_identity=policy_identity(spec),
@@ -109,7 +110,7 @@ def test_first_model_session_resolves_without_parent_version(tmp_path, monkeypat
     store, request, _ = _training_case(tmp_path)
     resolved = FrameworkResolver(store).resolve(request)
     spec = PolicyTrainingSpec.model_validate(resolved.internal_training_spec)
-    binding = ModelFrameworkBinding(model_id="model", origin="new",
+    binding = ModelFrameworkBinding(model_id="model",
                                     original_spec=spec.model_dump(mode="json"),
                                     training_configuration=resolved,
                                     semantic_identity=policy_identity(spec),
@@ -131,7 +132,7 @@ def test_model_row_keeps_original_spec_hash_when_default_was_omitted(tmp_path, m
     spec = PolicyTrainingSpec.model_validate(resolved.internal_training_spec)
     original = spec.model_dump(mode="json")
     del original["selection_metric"]
-    binding = ModelFrameworkBinding(model_id="model", origin="legacy_audited",
+    binding = ModelFrameworkBinding(model_id="model",
                                     original_spec=original, training_configuration=resolved,
                                     semantic_identity=policy_identity(spec),
                                     evidence={"method": "audited-original-spec"},
@@ -149,7 +150,7 @@ def test_model_row_keeps_original_spec_hash_when_default_was_omitted(tmp_path, m
 def test_audited_model_first_session_uses_registered_binding(tmp_path):
     store, create, _ = _training_case(tmp_path)
     _old_model(store, create)
-    BindingStore(store).bind_model("old-model", "audit")
+    ModelMigrator(store).migrate_model("old-model")
     resolved = FrameworkResolver(store).resolve(ResumeRequest(model_id="old-model", additional_timesteps=16))
     assert resolved.operation == "resume"
     assert resolved.internal_training_spec["total_timesteps"] == 16
@@ -183,7 +184,7 @@ def test_policy_version_rejects_registry_hash_that_disagrees_with_file_list(tmp_
         db.execute("INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)",
                    ("version-one", "policy", str(artifact), digest(json_bytes(files)),
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
-    binding = BindingStore(store).bind_model("old-model", "audit")
+    binding = ModelMigrator(store).migrate_model("old-model")
     with store.transaction() as db:
         db.execute("UPDATE learning_artifacts SET content_hash=? WHERE id=?", ("0" * 64, "version-one"))
     with pytest.raises(ValueError, match="registry hash"):
@@ -196,7 +197,7 @@ def test_policy_backtest_checks_new_dataset_without_requiring_train_dates(tmp_pa
     resolver = FrameworkResolver(store)
     training = resolver.resolve(create)
     spec = PolicyTrainingSpec.model_validate(training.internal_training_spec)
-    binding = ModelFrameworkBinding(model_id="model", origin="new",
+    binding = ModelFrameworkBinding(model_id="model",
                                     original_spec=spec.model_dump(mode="json"),
                                     training_configuration=training,
                                     semantic_identity=policy_identity(spec),
@@ -222,7 +223,7 @@ def test_policy_backtest_rejects_changed_training_semantics(tmp_path, monkeypatc
     resolver = FrameworkResolver(store)
     training = resolver.resolve(create)
     spec = PolicyTrainingSpec.model_validate(training.internal_training_spec)
-    binding = ModelFrameworkBinding(model_id="model", origin="new",
+    binding = ModelFrameworkBinding(model_id="model",
                                     original_spec=spec.model_dump(mode="json"),
                                     training_configuration=training,
                                     semantic_identity=policy_identity(spec),

@@ -12,10 +12,12 @@ from fastapi.testclient import TestClient
 
 from quanto.api.app import create_app
 from quanto.investing.training import train_policy
+from quanto.investing.policy_versions import PolicyVersionStore
 from quanto.learning.artifacts import read_manifest
 from quanto.learning.registry import hash_files
 from quanto.objects import digest, json_bytes
 from quanto.workbench.bindings import BindingStore
+from quanto.workbench.etf_model_migration import ModelMigrator
 from quanto.workbench.store import utc_now
 from tests.fixtures.framework_imports import fixture_identity_evidence
 from tests.fixtures.investing_training_cases import investing_case
@@ -61,9 +63,12 @@ def test_audited_legacy_checkpoint_continues_and_backtests_on_later_coverage(tmp
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
         old_spec_bytes = db.execute("SELECT spec_json FROM investing_models WHERE id='old-model'").fetchone()[0]
     original_hashes = {path.name: sha256(path.read_bytes()).hexdigest() for path in artifact.iterdir() if path.is_file()}
-    linked = BindingStore(store).bind_model("old-model", "audit-real-policy")
-    assert linked.origin == "legacy_audited"
+    linked = ModelMigrator(store).migrate_model("old-model")
     assert linked.evidence["policy_artifacts"]["old-version"]["manifest_id"] == manifest["id"]
+    migrated_context = PolicyVersionStore(store).get("old-version")
+    assert migrated_context["framework_learning"]["ordered_assets"] == [
+        {"local_symbol": item.local_symbol, "instrument_id": item.instrument_id.model_dump(mode="json")}
+        for item in linked.ordered_pairs]
 
     # Later evidence adds another ETF, but keeps the selected canonical and local key unchanged.
     source = tmp_path / "later-source"

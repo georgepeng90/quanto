@@ -9,6 +9,7 @@ from quanto.learning.artifacts import write_manifest
 from quanto.learning.registry import hash_files
 from quanto.objects import digest, json_bytes
 from quanto.workbench.bindings import BindingStore
+from quanto.workbench.etf_model_migration import ModelMigrator
 from quanto.workbench.configuration import FrameworkResolver
 from quanto.workbench.framework_requests import PolicyBacktestRequest
 from quanto.workbench.store import utc_now
@@ -47,7 +48,7 @@ def test_policy_backtest_uses_new_dataset_without_training_dates_or_extra_member
         db.execute("INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)",
                    ("version-one", "policy", str(artifact), digest(json_bytes(files)),
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
-    model_binding = BindingStore(store).bind_model("old-model", "audit")
+    model_binding = ModelMigrator(store).migrate_model("old-model")
 
     source = tmp_path / "later-source"
     _, dates = investing_case(source)

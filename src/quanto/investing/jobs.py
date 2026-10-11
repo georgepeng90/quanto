@@ -101,9 +101,12 @@ def execute_policy_job(kind, payload, artifact: Path, emit, cancelled, *, source
     if kind == 'train_policy':
         from quanto.investing.training import train_policy
         resume = verify_ref(payload['policy_resume_ref']) if payload.get('policy_resume_ref') else None
+        if resume is not None and 'policy_resume_context' not in payload:
+            raise ValueError('MODEL_IDENTITY_MISMATCH: saved continuation context missing')
         train_policy(request['spec'], dataset, artifact, emit, cancelled,
                      dataset_content_hash=payload['dataset_ref']['content_hash'], resume_dir=resume,
-                     model_id=request['model_id'], evaluate_test=False, learning_runtime=runtime)
+                     resume_context=payload.get('policy_resume_context'), model_id=request['model_id'],
+                     evaluate_test=False, learning_runtime=runtime)
         saved = read_manifest(artifact, 'policy')
         # The first manifest is still staging. Recompute its identity once with
         # provenance included; the returned ID must not enter its own hash input.
@@ -116,9 +119,11 @@ def execute_policy_job(kind, payload, artifact: Path, emit, cancelled, *, source
         from quanto.investing.evaluation import backtest_policy
         from quanto.learning.results import build_index
         policy = verify_ref(payload['policy_ref'])
+        if 'policy_context' not in payload:
+            raise ValueError('MODEL_IDENTITY_MISMATCH: saved policy context missing')
         policy_manifest = read_manifest(policy, 'policy')
         summary = backtest_policy(policy, dataset, request['spec'], artifact, emit, cancelled,
-                                  learning_runtime=runtime)
+                                  learning_runtime=runtime, policy_context=payload['policy_context'])
         summary.update(dataset_id=request['dataset_id'], policy_id=request['policy_id'],
                        dataset_content_hash=payload['dataset_ref']['content_hash'])
         if request.get('model_id'):

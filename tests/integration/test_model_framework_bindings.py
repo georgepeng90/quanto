@@ -22,6 +22,7 @@ from quanto.learning.artifacts import write_manifest
 from quanto.learning.registry import hash_files
 from quanto.objects import digest, json_bytes
 from quanto.workbench.bindings import BindingStore
+from quanto.workbench.etf_model_migration import ModelMigrator
 from quanto.workbench.store import WorkbenchStore, utc_now
 from tests.fixtures.framework_imports import fixture_identity_evidence
 from tests.fixtures.investing_training_cases import investing_case
@@ -41,21 +42,17 @@ def _old_model(store, request, *, model_id="old-model"):
 def test_old_model_binding_is_ordered_immutable_and_idempotent(tmp_path):
     store, request, _ = _training_case(tmp_path)
     spec = _old_model(store, request)
-    bindings = BindingStore(store)
-    checked = bindings.inspect_model_binding("old-model")
-    assert checked.status == "ready", checked.model_dump(mode="json")
-    linked = bindings.bind_model("old-model", "first")
+    bindings = ModelMigrator(store)
+    linked = bindings.migrate_model("old-model")
     assert linked.original_spec_hash == canonical_hash(spec)
     assert linked.basket.members == tuple(pair.instrument_id for pair in linked.ordered_pairs)
     assert linked.training_configuration.operation == "train"
-    assert linked.origin == "legacy_audited"
-    assert bindings.bind_model("old-model", "first") == linked
-    assert bindings.bind_model("old-model", "second") == linked
+    assert bindings.migrate_model("old-model") == linked
+    assert bindings.migrate_model("old-model") == linked
     assert bindings.get_model_binding("old-model") == linked
     with store.transaction() as db:
         assert db.execute("SELECT count(*) FROM baskets").fetchone()[0] == 2
         assert db.execute("SELECT count(*) FROM model_framework_bindings").fetchone()[0] == 1
-        assert db.execute("SELECT count(*) FROM framework_idempotency WHERE scope='model.bind'").fetchone()[0] == 2
 
 
 def test_old_model_binding_rejects_unproven_local_identity(tmp_path):
@@ -64,11 +61,9 @@ def test_old_model_binding_rejects_unproven_local_identity(tmp_path):
     spec["backtest"]["symbols"] = ["missing-local-key"]
     with store.transaction() as db:
         db.execute("UPDATE investing_models SET spec_json=? WHERE id='old-model'", (json.dumps(spec),))
-    bindings = BindingStore(store)
-    report = bindings.inspect_model_binding("old-model")
-    assert report.status == "blocked" and "IDENTITY_UNRESOLVED" in report.error_codes
+    bindings = ModelMigrator(store)
     with pytest.raises(ValueError, match="IDENTITY_UNRESOLVED"):
-        bindings.bind_model("old-model", "attempt")
+        bindings.migrate_model("old-model")
     with store.transaction() as db:
         assert db.execute("SELECT count(*) FROM model_framework_bindings").fetchone()[0] == 0
         assert db.execute("SELECT count(*) FROM baskets").fetchone()[0] == 1
@@ -92,7 +87,7 @@ def test_old_model_preserves_original_local_order_in_canonical_basket(tmp_path):
     with store.transaction() as db:
         db.execute("INSERT INTO investing_models VALUES (?,?,?,?)",
                    ("reverse-order", dataset.id, json.dumps(spec), utc_now()))
-    linked = BindingStore(store).bind_model("reverse-order", "reverse")
+    linked = ModelMigrator(store).migrate_model("reverse-order")
     assert [pair.local_symbol for pair in linked.ordered_pairs] == ["SZSE:etf:000002", "SZSE:etf:000001"]
     assert [member.key for member in linked.basket.members] == ["SZSE:etf:000002", "SZSE:etf:000001"]
 
@@ -125,7 +120,7 @@ def test_old_etf_model_can_select_from_dataset_with_extra_stock(tmp_path):
     with store.transaction() as db:
         db.execute("INSERT INTO investing_models VALUES (?,?,?,?)",
                    ("selected-etf", dataset.id, json.dumps(spec), utc_now()))
-    linked = BindingStore(store).bind_model("selected-etf", "selected")
+    linked = ModelMigrator(store).migrate_model("selected-etf")
     assert [pair.instrument_id.instrument_type for pair in linked.ordered_pairs] == ["etf"]
     assert {pair.instrument_id.instrument_type for pair in linked.asset_binding.assets} == {"etf", "stock"}
 
@@ -133,8 +128,8 @@ def test_old_etf_model_can_select_from_dataset_with_extra_stock(tmp_path):
 def test_inspecting_bound_model_does_not_reaudit_later_framework_versions(tmp_path):
     store, request, _ = _training_case(tmp_path)
     _old_model(store, request)
-    bindings = BindingStore(store)
-    linked = bindings.bind_model("old-model", "first")
+    bindings = ModelMigrator(store)
+    linked = bindings.migrate_model("old-model")
     with store.transaction() as db:
         db.execute("""INSERT INTO jobs (id,kind,state,enqueue_seq,artifact_root,created_at)
                       VALUES (?,'train_policy','succeeded',1,?,?)""", ("later-version", str(tmp_path), utc_now()))
@@ -142,7 +137,6 @@ def test_inspecting_bound_model_does_not_reaudit_later_framework_versions(tmp_pa
         db.execute("INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)",
                    ("later-version", "policy", str(tmp_path), "a" * 64,
                     json.dumps({"framework_learning": {"new": True}}), "{}", utc_now()))
-    assert bindings.inspect_model_binding("old-model").status == "ready"
     assert bindings.get_model_binding("old-model") == linked
 
 
@@ -202,7 +196,7 @@ def test_legacy_binding_needs_no_test_fixture_at_runtime(tmp_path, monkeypatch):
 
     monkeypatch.setattr(Path, "read_bytes", read_without_tests)
     monkeypatch.setattr(Path, "is_file", is_file_without_tests)
-    linked = BindingStore(store).bind_model("old-model", "packaged-proof")
+    linked = ModelMigrator(store).migrate_model("old-model")
     assert linked.evidence["equivalence_reference"]["baseline_sha256"] == FROZEN_ETF_BASELINE_SHA256
 
 
@@ -210,21 +204,20 @@ def test_legacy_binding_needs_no_test_fixture_at_runtime(tmp_path, monkeypatch):
 def test_concurrent_legacy_binding_publishes_one_model_basket(tmp_path, keys):
     store, request, _ = _training_case(tmp_path)
     _old_model(store, request)
-    bindings = BindingStore(store)
+    bindings = ModelMigrator(store)
     with ThreadPoolExecutor(max_workers=2) as pool:
-        first, second = list(pool.map(lambda key: bindings.bind_model("old-model", key), keys))
+        first, second = list(pool.map(lambda key: bindings.migrate_model("old-model"), keys))
     assert first == second
     with store.transaction() as db:
         assert db.execute("SELECT count(*) FROM baskets WHERE basket_id='model-old-model'").fetchone()[0] == 1
         assert db.execute("SELECT count(*) FROM basket_revisions WHERE basket_id='model-old-model'").fetchone()[0] == 1
         assert db.execute("SELECT count(*) FROM model_framework_bindings WHERE model_id='old-model'").fetchone()[0] == 1
-        assert db.execute("SELECT count(*) FROM framework_idempotency WHERE scope='model.bind'").fetchone()[0] == len(set(keys))
 
 
 def test_legacy_binding_rolls_back_basket_and_idempotency_after_insert_failure(tmp_path, monkeypatch):
     store, request, _ = _training_case(tmp_path)
     original = _old_model(store, request)
-    bindings = BindingStore(store)
+    bindings = ModelMigrator(store)
     with store.transaction() as db:
         before = db.execute("SELECT spec_json FROM investing_models WHERE id='old-model'").fetchone()[0]
 
@@ -234,20 +227,19 @@ def test_legacy_binding_rolls_back_basket_and_idempotency_after_insert_failure(t
 
     monkeypatch.setattr(bindings, "_insert_model_binding", fail_after_basket)
     with pytest.raises(RuntimeError, match="injected binding insert failure"):
-        bindings.bind_model("old-model", "failed-at-insert")
+        bindings.migrate_model("old-model")
     with store.transaction() as db:
         assert db.execute("SELECT spec_json FROM investing_models WHERE id='old-model'").fetchone()[0] == before
         assert json.loads(before) == original
         assert db.execute("SELECT count(*) FROM baskets WHERE basket_id='model-old-model'").fetchone()[0] == 0
         assert db.execute("SELECT count(*) FROM basket_revisions WHERE basket_id='model-old-model'").fetchone()[0] == 0
         assert db.execute("SELECT count(*) FROM model_framework_bindings").fetchone()[0] == 0
-        assert db.execute("SELECT count(*) FROM framework_idempotency WHERE scope='model.bind'").fetchone()[0] == 0
 
 
 def test_model_binding_insert_and_model_row_roll_back_together(tmp_path):
     store, request, _ = _training_case(tmp_path)
     _old_model(store, request)
-    linked = BindingStore(store).bind_model("old-model", "first")
+    linked = ModelMigrator(store).migrate_model("old-model")
     with pytest.raises(RuntimeError, match="rollback"):
         with store.transaction() as db:
             db.execute("INSERT INTO investing_models VALUES (?,?,?,?)",
@@ -286,8 +278,7 @@ def test_old_policy_files_and_manifest_are_audited_before_binding(tmp_path):
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
         original_row = db.execute("SELECT spec_json FROM investing_models WHERE id='old-model'").fetchone()[0]
     original_artifact = {path.name: path.read_bytes() for path in artifact.iterdir()}
-    bindings = BindingStore(store)
-    assert bindings.inspect_model_binding("old-model").status == "ready"
+    bindings = ModelMigrator(store)
     with store.transaction() as db:
         assert db.execute("SELECT spec_json FROM investing_models WHERE id='old-model'").fetchone()[0] == original_row
     assert {path.name: path.read_bytes() for path in artifact.iterdir()} == original_artifact
@@ -295,10 +286,8 @@ def test_old_policy_files_and_manifest_are_audited_before_binding(tmp_path):
     assert candidate.evidence["policy_artifacts"]["version-one"]["manifest_id"] == manifest["id"]
     assert "Original source snapshot unavailable" in candidate.evidence["limitations"][0]
     (artifact / "policy.zip").write_bytes(b"altered")
-    report = bindings.inspect_model_binding("old-model")
-    assert report.status == "blocked" and "BINDING_MISMATCH" in report.error_codes
     with pytest.raises(ValueError, match="ARTIFACT|BINDING_MISMATCH"):
-        bindings.bind_model("old-model", "tampered")
+        bindings.migrate_model("old-model")
     with store.transaction() as db:
         assert db.execute("SELECT count(*) FROM model_framework_bindings").fetchone()[0] == 0
         assert db.execute("SELECT count(*) FROM baskets").fetchone()[0] == 1

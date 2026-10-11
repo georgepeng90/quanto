@@ -66,7 +66,7 @@ def test_model_creation_persists_without_training_and_keeps_order(model_workspac
     assert client.get('/api/investing/models', headers=headers).json()['items'][0]['id'] == model['id']
     detail = client.get(f'/api/investing/models/{model["id"]}', headers=headers).json()
     assert detail['sessions'] == detail['versions'] == []
-    assert detail['framework_binding']['origin'] == 'new'
+    assert detail['framework_binding']['model_id'] == model['id']
     assert detail['framework_binding']['ordered_pairs'][0]['local_symbol'] == 'SZSE:etf:000002'
     reopened = create_app(app.state.service.store.root)
     with reopened.state.service.store.transaction() as db:
@@ -99,7 +99,8 @@ def test_existing_model_without_action_version_requires_audited_binding(model_wo
                    ('legacy-model', request['dataset_id'], json.dumps(historical_spec), utc_now()))
     assert client.post('/api/investing/models/legacy-model/train', headers=headers,
                        json={'additional_timesteps': 8}).status_code == 422
-    BindingStore(app.state.service.store).bind_model('legacy-model', 'audited-legacy')
+    from quanto.workbench.etf_model_migration import ModelMigrator
+    ModelMigrator(app.state.service.store).migrate_model('legacy-model')
     response = client.post('/api/investing/models/legacy-model/train', headers=headers,
                            json={'additional_timesteps': 8})
     assert response.status_code == 200, response.text

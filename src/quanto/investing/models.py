@@ -62,7 +62,7 @@ class InvestingModels(InvestingService):
             raise ValueError('invalid cursor')
         with self.store.transaction() as db:
             rows = db.execute('SELECT * FROM investing_models ORDER BY rowid DESC LIMIT ? OFFSET ?', (limit + 1, offset)).fetchall()
-        return {'items': [self._with_framework(self._summary(row, self._sessions(row['id'])), inspect_legacy=False)
+        return {'items': [self._with_framework(self._summary(row, self._sessions(row['id'])))
                           for row in rows[:limit]],
                 'next_cursor': str(offset + limit) if len(rows) > limit else None}
 
@@ -148,22 +148,14 @@ class InvestingModels(InvestingService):
                               if item['state'] == 'succeeded' and item['manifest_json']]
         return self._with_framework(result)
 
-    def _with_framework(self, result, *, inspect_legacy=True):
-        bindings = BindingStore(self.store)
-        try:
-            binding = bindings.get_model_binding(result['id'])
-        except (KeyError, ValueError):
-            result['framework_binding'] = None
-            result['framework_binding_check'] = (bindings.inspect_model_binding(result['id']).model_dump(mode='json')
-                                                 if inspect_legacy else None)
-        else:
-            result['framework_binding'] = dict(model_id=binding.model_id, origin=binding.origin,
-                binding_hash=binding.binding_hash, original_spec_hash=binding.original_spec_hash,
-                basket_revision_ref=binding.basket.ref.model_dump(mode='json'),
-                ordered_pairs=[item.model_dump(mode='json') for item in binding.ordered_pairs],
-                definitions=[item.model_dump(mode='json') for item in binding.training_configuration.definitions],
-                evidence=thaw_json(binding.evidence))
-            result['framework_binding_check'] = None
+    def _with_framework(self, result):
+        binding = BindingStore(self.store).get_model_binding(result['id'])
+        result['framework_binding'] = dict(model_id=binding.model_id,
+            binding_hash=binding.binding_hash, original_spec_hash=binding.original_spec_hash,
+            basket_revision_ref=binding.basket.ref.model_dump(mode='json'),
+            ordered_pairs=[item.model_dump(mode='json') for item in binding.ordered_pairs],
+            definitions=[item.model_dump(mode='json') for item in binding.training_configuration.definitions],
+            evidence=thaw_json(binding.evidence))
         return result
 
     def history(self, identity, kind='versions', page=1, page_size=10, anchor=None,
@@ -206,7 +198,7 @@ class InvestingModels(InvestingService):
         if not spec.name.strip():
             raise ValueError('model name must not be blank')
         identity = str(uuid4())
-        binding = ModelFrameworkBinding(model_id=identity, origin='new', original_spec=spec.model_dump(mode='json'),
+        binding = ModelFrameworkBinding(model_id=identity, original_spec=spec.model_dump(mode='json'),
             training_configuration=resolved, semantic_identity=policy_identity(spec),
             evidence={'method': 'resolved-new-model', 'request_hash': resolved.request_hash},
             created_at=datetime.now(timezone.utc))
@@ -231,7 +223,10 @@ class InvestingModels(InvestingService):
                    'model_binding': binding.model_dump(mode='json')}
         trusted['training_dataset_ref'] = trusted['dataset_ref']
         if base_version:
+            from quanto.investing.policy_versions import PolicyVersionStore
+
             trusted['policy_resume_ref'] = self.reference(base_version, 'policy')
+            trusted['policy_resume_context'] = PolicyVersionStore(self.store).get(base_version)
 
         def register(db, job_id):
             active = db.execute('''SELECT j.id FROM investing_sessions s JOIN jobs j ON j.id=s.job_id
@@ -262,9 +257,12 @@ class InvestingModels(InvestingService):
         daily = BacktestSpec.model_validate(thaw_json(resolved.internal_backtest_spec))
         dataset = self._dataset(request.dataset_id, daily)
         original = PolicyTrainingSpec.model_validate(thaw_json(binding.original_spec))
+        from quanto.investing.policy_versions import PolicyVersionStore
+
         return self._submit('policy_backtest', {'dataset_id': request.dataset_id, 'policy_id': request.version_id,
             'model_id': identity, 'spec': request.spec.model_dump(mode='json')},
             {'dataset_ref': dataset, 'policy_ref': self.reference(request.version_id, 'policy'),
+             'policy_context': PolicyVersionStore(self.store).get(request.version_id),
              'training_dataset_ref': self._dataset(binding.dataset_version_id, original.backtest),
              'resolved_configuration': resolved.model_dump(mode='json'), 'model_binding': binding.model_dump(mode='json')},
             resolved=resolved, recheck=lambda db: FrameworkResolver(self.store).resolve(request, db=db))

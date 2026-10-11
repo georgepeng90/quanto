@@ -23,6 +23,7 @@ from quanto.workbench.baskets import BasketStore
 from quanto.workbench.bindings import BindingStore
 from quanto.workbench.dataset_objects import verify_dataset_version
 from quanto.workbench.framework_requests import FixedRequest
+from quanto.workbench.revisions import publish_files, source_files
 from quanto.workbench.scheduler import Scheduler
 from quanto.workbench.store import WorkbenchStore, utc_now
 
@@ -87,6 +88,90 @@ def _basket(store, dataset_id, symbols):
         '保留原配置的标的顺序', f'etf-unification:{key}')
 
 
+def _convert_strategies(store):
+    """Publish current declarations in the stage; preserve every original package."""
+    from quanto.strategies.base import FixedStrategyDefinition
+
+    evidence = []
+    all_datasets = [row['id'] for row in _rows(store, 'SELECT id FROM datasets ORDER BY id')]
+    for row in _rows(store, 'SELECT * FROM strategies ORDER BY id'):
+        manifest = json.loads(row['manifest_json'])
+        original_files = source_files(Path(row['path']))
+        original_hashes = {name: digest(data) for name, data in sorted(original_files.items())}
+        if (digest(json_bytes(original_hashes)) != row['content_hash']
+                or json.loads(original_files['strategy.json']) != manifest):
+            raise ValueError('Registered strategy package differs from its original declaration')
+        if 'supported_instrument_types' in manifest:
+            FixedStrategyDefinition(manifest, manifest['entrypoint'], row['content_hash'])
+            continue
+        if set(manifest) != {'auxiliary_sources', 'entrypoint', 'name', 'parameter_schema',
+                             'required_data_columns', 'research_data'} or manifest['research_data']:
+            raise ValueError('Historical strategy declaration needs explicit offline review')
+        datasets = [item['dataset_id'] for item in _rows(store, '''SELECT DISTINCT
+            json_extract(payload_json,'$.dataset_version_id') AS dataset_id FROM experiments
+            WHERE json_extract(payload_json,'$.strategy_revision_id')=?''', (row['id'],))] or all_datasets
+        if not datasets:
+            raise ValueError('Historical strategy has no registered ETF dataset evidence')
+        declarations = []
+        for dataset_id in datasets:
+            binding = BindingStore(store).get_asset_binding(dataset_id)
+            prices = next((item for item in binding.table_semantics if item.table == 'prices'), None)
+            if prices is None or {asset.instrument_id.instrument_type for asset in binding.assets} != {'etf'}:
+                raise ValueError('Historical strategy needs verified ETF price semantics')
+            fields = []
+            for name in manifest['required_data_columns']:
+                if name not in prices.schema_definition:
+                    raise ValueError('Historical strategy required price field is not declared')
+                fields.append({'name': name, **prices.schema_definition[name]})
+            declarations.append({'requirement_id': 'etf-strategy-prices', 'table': 'prices',
+                'semantic_version': prices.version, 'fields': fields, 'scope': 'basket',
+                'availability_rule': prices.temporal_rules['availability_rule'],
+                'price_modes': [prices.temporal_rules['price_mode']], 'required': True,
+                'missing_policy': 'reject'})
+        if any(item != declarations[0] for item in declarations[1:]):
+            raise ValueError('Historical strategy ETF price declarations differ across datasets')
+        current = {**manifest, 'supported_instrument_types': ['etf'], 'feature_set_ref': None,
+                   'feature_param_map': {},
+                   'allowed_trading_refs': [ETF_TRADING_DEFINITION.ref.model_dump(mode='json')],
+                   'data_requirements': [declarations[0]]}
+        files = {**original_files, 'strategy.json': json_bytes(current)}
+        hashes = {name: digest(data) for name, data in sorted(files.items())}
+        content_hash = digest(json_bytes(hashes))
+        FixedStrategyDefinition(current, current['entrypoint'], content_hash)
+        staged, written = publish_files(store.root / 'strategy-packages', row['id'], files)
+        if written != hashes or any(files[name] != original_files[name] for name in files if name != 'strategy.json'):
+            raise ValueError('Historical strategy code changed while declaring ETF capabilities')
+        with store.transaction() as db:
+            db.execute('UPDATE strategies SET path=?,content_hash=?,manifest_json=? WHERE id=?',
+                       (str(staged), content_hash, json_bytes(current).decode(), row['id']))
+        evidence.append({'id': row['id'], 'original_content_hash': row['content_hash'],
+                         'current_content_hash': content_hash, 'original_path': row['path']})
+    return evidence
+
+
+def _publish_strategies(store, workspace_root, evidence):
+    """Publish verified packages before the sole database replacement."""
+    for item in evidence:
+        row = _rows(store, 'SELECT path,content_hash FROM strategies WHERE id=?', (item['id'],))[0]
+        files = source_files(Path(row['path']))
+        hashes = {name: digest(data) for name, data in sorted(files.items())}
+        if digest(json_bytes(hashes)) != item['current_content_hash']:
+            raise ValueError('Staged strategy package changed before publication')
+        final = workspace_root / 'strategies' / 'etf-current' / item['id'] / item['current_content_hash']
+        if final.exists():
+            if source_files(final) != files:
+                raise ValueError('Published strategy path conflicts with staged content')
+        else:
+            published, written = publish_files(final.parent, item['current_content_hash'], files)
+            if published != final or written != hashes:
+                raise ValueError('Published strategy package differs from staged content')
+        with store.transaction() as db:
+            updated = db.execute('UPDATE strategies SET path=? WHERE id=? AND content_hash=?',
+                                 (str(final), item['id'], item['current_content_hash']))
+            if updated.rowcount != 1:
+                raise ValueError('Published strategy registry row changed before replacement')
+
+
 def _convert_experiments(store):
     from quanto.workbench.configuration import FrameworkResolver
     for row in _rows(store, 'SELECT * FROM experiments ORDER BY id'):
@@ -114,7 +199,12 @@ def _convert_experiments(store):
         request = FixedRequest.model_validate(payload)
         # Drafts may have genuine data/warmup restrictions; preserve those rather
         # than changing their economic configuration to manufacture readiness.
-        FrameworkResolver(store).check(request)
+        report = FrameworkResolver(store).check(request)
+        invalid = [check for check in report.checks if check.status == 'blocked' and
+                   check.code in {'IDENTITY_UNRESOLVED', 'BINDING_MISMATCH', 'DEFINITION_UNAVAILABLE'}]
+        if invalid:
+            raise ValueError(f'Saved experiment has no current executable definition: {row["id"]}: '
+                             + '; '.join(f'{item.field_path}: {item.message}' for item in invalid))
         normalized = request.model_dump_json()
         with store.transaction() as db:
             db.execute('UPDATE experiments SET payload_json=? WHERE id=?', (normalized, row['id']))
@@ -358,7 +448,9 @@ def migrate_etf_workspace(root: Path, identities: dict, *, source_document: str,
         already_current = already_current and not _rows(store, "SELECT 1 FROM experiments WHERE json_extract(payload_json,'$.framework_contract_version') IS NULL")
         already_current = already_current and _rows(store, 'SELECT count(*) n FROM run_contexts')[0]['n'] == _rows(store, "SELECT count(*) n FROM jobs WHERE kind IN ('backtest','policy_backtest')")[0]['n']
         already_current = already_current and _rows(store, 'SELECT count(*) n FROM policy_version_contexts')[0]['n'] == _rows(store, "SELECT count(*) n FROM learning_artifacts WHERE kind='policy'")[0]['n']
+        already_current = already_current and not _rows(store, "SELECT 1 FROM strategies WHERE json_type(manifest_json,'$.supported_instrument_types') IS NULL")
         evidence = _bind_datasets(store, identities, source_document)
+        strategy_evidence = _convert_strategies(store)
         _convert_experiments(store)
         adopted = _adopt_policies(store)
         from quanto.workbench.etf_model_migration import ModelMigrator
@@ -366,15 +458,21 @@ def migrate_etf_workspace(root: Path, identities: dict, *, source_document: str,
             ModelMigrator(store).migrate_model(model['id'])
         _convert_contexts(store, root)
         counts = _verify(store)
-        report = {**counts, 'adopted_models': adopted, 'already_current': already_current,
-                  'applied': apply and not already_current, 'source_document': source_document, 'dataset_evidence': evidence,
+        report = {**counts, 'adopted_models': adopted, 'converted_strategies': len(strategy_evidence),
+                  'strategy_evidence': strategy_evidence, 'already_current': already_current,
+                  'applied': False, 'source_document': source_document, 'dataset_evidence': evidence,
                   'source_database_sha256': digest(original), 'created_at': utc_now()}
         if source.read_bytes() != original:
             raise ValueError('Original workspace changed during migration')
         (stage / 'migration-report.json').write_bytes(json_bytes(report))
         if apply and not already_current:
+            _publish_strategies(store, root, strategy_evidence)
+            if source.read_bytes() != original:
+                raise ValueError('Original workspace changed during strategy publication')
             (stage / 'original.sqlite3').write_bytes(original)
             os.replace(stage / source.name, source)
+            report['applied'] = True
+            (stage / 'migration-report.json').write_bytes(json_bytes(report))
         return report
     finally:
         lock._release()

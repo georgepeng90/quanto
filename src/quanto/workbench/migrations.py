@@ -67,9 +67,11 @@ def migrate_schema(db: sqlite3.Connection) -> None:
         versions = [row[0] for row in db.execute("SELECT version FROM schema_version")]
         if len(versions) != 1 or versions[0] not in (1, 2, SCHEMA_VERSION):
             raise ValueError("unsupported workbench schema version")
-        if versions[0] == SCHEMA_VERSION:
+        version = versions[0]
+        if version == SCHEMA_VERSION:
             return
     else:
+        version = 1
         db.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
         db.execute("INSERT INTO schema_version VALUES (1)")
     for statement in BASE_TABLES:
@@ -80,8 +82,9 @@ def migrate_schema(db: sqlite3.Connection) -> None:
             db.execute(f"ALTER TABLE jobs ADD COLUMN {column} TEXT")
     from quanto.learning.registry import migrate_learning_schema
     migrate_learning_schema(db)
-    for statement in FRAMEWORK_TABLES:
-        db.execute(statement)
+    if version == 1:
+        for statement in FRAMEWORK_TABLES:
+            db.execute(statement)
     for statement in CONTEXT_TABLES:
         db.execute(statement)
     db.execute("UPDATE schema_version SET version=?", (SCHEMA_VERSION,))

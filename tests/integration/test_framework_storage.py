@@ -71,6 +71,26 @@ def test_v1_upgrade_keeps_existing_data_and_is_repeatable(tmp_path):
     assert {name: (root / name).read_bytes() for name in files} == files
 
 
+def test_v2_upgrade_keeps_framework_records_and_is_repeatable(tmp_path):
+    root = tmp_path / "workspace"
+    store = WorkbenchStore(root)
+    basket = BasketStore(store).create("watchlist", MEMBERS, "selected", "schema-2")
+    with store.transaction() as db:
+        db.execute("DROP TABLE policy_version_contexts")
+        db.execute("DROP TABLE run_contexts")
+        db.execute("UPDATE schema_version SET version=2")
+
+    upgraded = WorkbenchStore(root)
+    assert BasketStore(upgraded).get(basket.ref) == basket
+    with upgraded.transaction() as db:
+        assert db.execute("SELECT version FROM schema_version").fetchone()[0] == 3
+        assert db.execute("SELECT name FROM sqlite_master WHERE name='run_contexts'").fetchone()
+        assert db.execute("SELECT name FROM sqlite_master WHERE name='policy_version_contexts'").fetchone()
+    before = dump(upgraded.db_path)
+    WorkbenchStore(root)
+    assert dump(upgraded.db_path) == before
+
+
 @pytest.mark.parametrize("after_statement", ["DROP TABLE jobs", "CREATE TABLE basket_revisions", "UPDATE schema_version"])
 def test_failed_migration_rolls_back_ddl_rows_and_version(tmp_path, monkeypatch, after_statement):
     root = legacy_workspace(tmp_path / "legacy")

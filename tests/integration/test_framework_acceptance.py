@@ -22,7 +22,7 @@ def test_migration_rehearsal_on_copy_preserves_source_files_and_historical_rows(
         counts = {table: db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
                   for table in ("datasets", "experiments", "jobs", "investing_models", "baskets", "model_framework_bindings")}
         assert not db.execute("PRAGMA foreign_key_check").fetchall()
-        assert db.execute("SELECT version FROM schema_version").fetchone()[0] == 2
+        assert db.execute("SELECT version FROM schema_version").fetchone()[0] == 3
     assert counts == {"datasets": 1, "experiments": 1, "jobs": 1, "investing_models": 1, "baskets": 0, "model_framework_bindings": 0}
     upgraded = dump(store.db_path)
     WorkbenchStore(copied)

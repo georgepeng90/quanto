@@ -24,13 +24,12 @@ def test_catalog_exposes_canonical_identity_from_frozen_run(tmp_path):
     assert response.status_code == 200, response.text
     item = response.json()["items"][0]
     assert item["id"] == run.run_id
-    assert item["identity_status"] == "proven"
     assert item["canonical_assets"] == ["SZSE:etf:000001"]
     assert item["ordered_pairs"][0]["local_symbol"] == "SZSE:etf:000001"
     assert item["asset_types"] == ["etf"]
     assert item["basket_revision_ref"] == draft.payload["basket_revision_ref"]
     assert item["dataset_source"] == dataset.manifest["source"]
-    assert item["framework"]["request_hash"]
+    assert item["definition_evidence"]["trading"]["ref"]
     assert item["execution_provenance"]["source_hashes"]
     assert item["comparison_key"]
 
@@ -46,28 +45,23 @@ def test_identical_framework_runs_remain_directly_comparable(tmp_path):
     assert compared["runs"][0]["comparison_key"] == compared["runs"][1]["comparison_key"]
     assert compared["runs"][0]["canonical_assets"] == ["SZSE:etf:000001"]
     rows = catalog(WorkbenchService(store.root))
-    assert all(item["identity_status"] == "proven" and item["comparison_key"]
-               and item["framework"] and item["execution_provenance"]
+    assert all(item["comparison_key"] and item["definition_evidence"] and item["execution_provenance"]
                and item["result_error"] is None for item in rows["items"])
     frozen_input = json.loads(first.manifest_path.read_text(encoding="utf-8"))
     frozen_input["files"]["src/quanto/backtest/engine.py"] = "0" * 64
     first.manifest_path.write_text(json.dumps(frozen_input), encoding="utf-8")
-    with pytest.raises(ValueError, match="frozen manifest changed"):
+    with pytest.raises(ValueError, match="frozen input changed"):
         WorkbenchService(store.root)._run_provenance(store.get_run(first.run_id))
     service = WorkbenchService(store.root)
-    assert service.results(first.run_id)["metadata"]["framework"] == rows["items"][0]["framework"]
+    assert service.results(first.run_id)["metadata"]["framework"]["asset_binding"]["binding_hash"]
     with store.transaction() as db:
         viewed = db.execute("SELECT interval_start,interval_end FROM result_views WHERE run_id=? ORDER BY viewed_at DESC LIMIT 1",
                             (first.run_id,)).fetchone()
     assert tuple(viewed) == ("2024-01-01", "2024-01-03")
-    after_tamper = service.comparison([run.run_id for run in runs])
-    assert after_tamper["directly_comparable"] is True
-    assert after_tamper["runs"][0]["input_error"].startswith("Frozen input unavailable")
-    assert after_tamper["runs"][0]["comparison_key"] == compared["runs"][0]["comparison_key"]
-    recovered = next(item for item in catalog(WorkbenchService(store.root))["items"] if item["id"] == first.run_id)
-    assert recovered["error"].startswith("Frozen input unavailable")
-    assert recovered["identity_status"] == "proven"
-    assert recovered["comparison_key"] == rows["items"][0]["comparison_key"]
+    with pytest.raises(ValueError, match="frozen input changed"):
+        service.comparison([run.run_id for run in runs])
+    with pytest.raises(ValueError, match="frozen input changed"):
+        catalog(WorkbenchService(store.root))
 
     draft = store.get_experiment(first.experiment_id)
     changed = store.save_experiment(None, None, {**draft.payload, "sample_purpose": "independent-research"})
@@ -75,7 +69,7 @@ def test_identical_framework_runs_remain_directly_comparable(tmp_path):
     with store.transaction() as db:
         db.execute("UPDATE runs SET manifest_path=?, manifest_hash=? WHERE run_id=?",
                    (str(other_input.manifest_path), other_input.manifest_hash, first.run_id))
-    with pytest.raises(ValueError, match="saved result framework differs from frozen input"):
+    with pytest.raises(ValueError, match="frozen input reference differs"):
         service.comparison([run.run_id for run in runs])
 
 

@@ -214,6 +214,28 @@ class LearningService:
                            (identity, kind, seq, str(self.store.artifact_root), str(root / 'input.json'), utc_now()))
                 db.execute('INSERT INTO learning_submissions VALUES (?,?)',
                            (identity, input_hash))
+                if kind == 'policy_backtest':
+                    from quanto.framework import canonical_hash, thaw_json
+                    from quanto.workbench.run_contexts import ContextStore, create_context
+
+                    baseline = request['spec'].get('baseline', 'policy')
+                    original = trusted['model_binding']['original_spec']
+                    name = str(original.get('name') or 'PPO') if baseline == 'policy' else baseline
+                    definitions = {item.ref.kind: {'ref': item.ref.model_dump(mode='json'),
+                        'implementation_hash': item.implementation_hash,
+                        'effective_params': thaw_json(item.effective_params)} for item in resolved.definitions}
+                    context = create_context(kind='policy', dataset_id=request['dataset_id'],
+                        asset_binding=resolved.asset_binding,
+                        ordered_symbols=tuple(item.local_symbol for item in resolved.ordered_pairs),
+                        backtest_spec=thaw_json(resolved.internal_backtest_spec),
+                        execution_provenance={'source_hashes': hashes,
+                                              'environment_fingerprint': canonical_hash(payload['execution_environment'])},
+                        input_hash=input_hash, basket_revision_ref=resolved.basket.ref,
+                        name=name, method='PPO' if baseline == 'policy' else baseline,
+                        evaluation_purpose=request['spec'].get('evaluation_purpose'),
+                        definition_evidence=definitions, model_id=request.get('model_id'),
+                        policy_version_id=request.get('policy_id'), baseline=baseline)
+                    ContextStore(self.store).insert(db, identity, context)
                 if register is not None:
                     register(db, identity)
         except BaseException:

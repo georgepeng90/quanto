@@ -8,6 +8,7 @@ from quanto.workbench.models import BatchItem, FrozenRun, RunRecord
 from quanto.workbench.configuration import FrameworkConflict, FrameworkResolver, recheck_unchanged
 from quanto.workbench.framework_requests import FixedRequest
 from quanto.workbench.revisions import digest, json_bytes
+from quanto.workbench.run_contexts import ContextStore, fixed_context_from_manifest
 from quanto.workbench.snapshots import SnapshotBuilder
 from quanto.workbench.store import WorkbenchStore, utc_now
 
@@ -44,6 +45,7 @@ class RunService:
                 str(original.manifest_path), original.manifest_hash, source, run_id, None))
             next_seq = db.execute("SELECT COALESCE(MAX(enqueue_seq),0)+1 FROM jobs").fetchone()[0]
             db.execute("INSERT INTO jobs (id,kind,state,run_id,enqueue_seq,artifact_root,created_at) VALUES (?,'backtest','queued',?,?,?,?)", (job_id, identity, next_seq, str(self.store.artifact_root), utc_now()))
+            ContextStore(self.store).insert(db, job_id, ContextStore(self.store).get(original.job_id, db))
             db.execute("INSERT INTO idempotency VALUES (?,?,?)", (idempotency_key, fingerprint, json_bytes([identity]).decode()))
             return self.store.get_run(identity, db)
 
@@ -117,6 +119,11 @@ class RunService:
                 db.execute("INSERT INTO idempotency VALUES (?, ?, ?)", (key, fingerprint, json_bytes([record.run_id for record in records]).decode()))
                 for offset, record in enumerate(records):
                     db.execute("INSERT INTO jobs (id, kind, state, run_id, enqueue_seq, artifact_root, created_at) VALUES (?, 'backtest', 'queued', ?, ?, ?, ?)", (record.job_id, record.run_id, next_seq + offset, str(self.store.artifact_root), utc_now()))
+                    manifest = json.loads(record.manifest_path.read_bytes())
+                    context = fixed_context_from_manifest(manifest, input_hash=record.manifest_hash,
+                        asset_binding=resolved[offset].asset_binding,
+                        basket_revision_ref=resolved[offset].basket.ref)
+                    ContextStore(self.store).insert(db, record.job_id, context)
                 return [self.store.get_run(record.run_id, db) for record in records]
         finally:
             # Never remove a published run or a shared dataset object.

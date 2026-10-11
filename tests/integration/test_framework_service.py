@@ -61,7 +61,7 @@ def test_clone_new_run_uses_frozen_public_request_with_source(tmp_path):
     assert request.strategy_params == FixedRequest.model_validate(draft.payload).strategy_params
 
 
-def test_clone_historical_run_without_framework_requires_explicit_upgrade(tmp_path):
+def test_clone_rejects_replaced_frozen_input_when_context_still_points_to_original(tmp_path):
     store, draft, _, _ = _ready(tmp_path)
     service = WorkbenchService(store.root)
     run = service.runs.submit(draft.id, draft.revision, "source", "web")
@@ -73,8 +73,39 @@ def test_clone_historical_run_without_framework_requires_explicit_upgrade(tmp_pa
     run.manifest_path.write_bytes(content)
     with store.transaction() as db:
         db.execute("UPDATE runs SET manifest_hash=? WHERE run_id=?", (digest(content), run.run_id))
-    with pytest.raises(ValueError, match="historical run lacks a framework contract"):
+    with pytest.raises(ValueError, match="frozen input reference differs"):
         service.clone_run(run.run_id)
+
+
+def test_migrated_historical_run_clones_as_current_draft_without_rewriting_results(tmp_path):
+    from quanto.workbench.bindings import BindingStore
+    from quanto.workbench.run_contexts import ContextStore, fixed_context_from_manifest
+
+    store, draft, _, _ = _ready(tmp_path)
+    service = WorkbenchService(store.root)
+    run = service.runs.submit(draft.id, draft.revision, "historical-source", "web")
+    manifest = json.loads(run.manifest_path.read_bytes())
+    manifest["schema_version"] = 2
+    manifest.pop("resolved_configuration")
+    manifest.pop("framework_contract_version")
+    raw = json_bytes(manifest)
+    run.manifest_path.write_bytes(raw)
+    manifest_hash = digest(raw)
+    binding = BindingStore(store).get_asset_binding(manifest["dataset_version_id"])
+    context = fixed_context_from_manifest(manifest, input_hash=manifest_hash,
+        asset_binding=binding, basket_revision_ref=draft.payload["basket_revision_ref"])
+    with store.transaction() as db:
+        db.execute("UPDATE runs SET manifest_hash=? WHERE run_id=?", (manifest_hash, run.run_id))
+        db.execute("DELETE FROM run_contexts WHERE job_id=?", (run.job_id,))
+        ContextStore(store).insert(db, run.job_id, context)
+
+    cloned = service.clone_run(run.run_id)
+    request = FixedRequest.model_validate(cloned["payload"])
+    assert request.source_run_id == run.run_id
+    assert request.basket_revision_ref.model_dump(mode="json") == draft.payload["basket_revision_ref"]
+    assert request.backtest_spec.to_spec(binding.resolve(tuple(
+        item.instrument_id for item in binding.assets))).model_dump(mode="json")["symbols"] == manifest["backtest_spec"]["symbols"]
+    assert run.manifest_path.read_bytes() == raw
 
 
 def test_fetch_freezes_normalized_request_and_capability_report(tmp_path):

@@ -220,32 +220,35 @@ class WorkbenchService:
         detail["identity_binding_issue"] = issue
         return detail
 
-    @staticmethod
-    def _run_provenance(run) -> dict:
+    def _run_provenance(self, run) -> dict:
         from quanto.framework import canonical_hash
-        from quanto.workbench.results import framework_metadata
+        from quanto.workbench.run_contexts import ContextStore
 
+        context = ContextStore(self.store).get(run.job_id)
+        if context["kind"] != "fixed" or context["input_hash"] != run.manifest_hash:
+            raise ValueError("run context differs from frozen run")
         raw = run.manifest_path.read_bytes()
         if hashlib.sha256(raw).hexdigest() != run.manifest_hash:
             raise ValueError("frozen manifest changed")
         manifest = json.loads(raw)
         environment = manifest["environment"]
-        execution_provenance = {"source_hashes": manifest["files"],
-                                "environment_fingerprint": canonical_hash(environment)}
-        framework = framework_metadata(manifest.get("resolved_configuration"), execution_provenance)
-        spec = (framework["framework"]["internal_backtest_spec"] if framework["identity_status"] == "proven"
-                else manifest["backtest_spec"])
+        execution_provenance = context["execution_provenance"]
+        if (execution_provenance["source_hashes"] != manifest["files"] or
+                execution_provenance["environment_fingerprint"] != canonical_hash(environment) or
+                context["backtest_spec"] != manifest["backtest_spec"] or
+                context["dataset_version_id"] != manifest["dataset_version_id"]):
+            raise ValueError("run context differs from frozen input")
+        spec = context["backtest_spec"]
         engine_prefixes = ("src/quanto/backtest/", "src/quanto/risk/", "src/quanto/factors/",
                            "src/quanto/data/", "src/quanto/reports/", "src/quanto/strategies/")
         engine_names = {"src/quanto/config.py", "src/quanto/universe.py", "src/quanto/workbench/worker.py"}
-        return {**framework, "method": "fixed", "dataset_version_id": manifest["dataset_version_id"],
-                "strategy_revision_id": manifest["strategy_revision_id"],
-                "strategy_name": manifest["strategy_manifest"].get("name") or manifest["strategy_manifest"]["entrypoint"],
+        return {**context, "identity_status": "proven", "method": "fixed",
+                "strategy_name": context["name"],
                 "strategy_source_hashes": {name: value for name, value in manifest["files"].items() if name.startswith("strategy/")},
                 "engine_source_hashes": {name: value for name, value in manifest["files"].items()
                                          if name.startswith(engine_prefixes) or name in engine_names},
                 "effective_strategy_params": manifest["effective_strategy_params"],
-                "backtest_spec": spec, "symbols": spec["symbols"], "evaluation": spec["metrics"],
+                "symbols": spec["symbols"], "evaluation": spec["metrics"],
                 "is_demo": manifest["dataset_manifest"]["is_demo"], "source": manifest["dataset_manifest"]["source"],
                 "currency": manifest["dataset_manifest"]["currency"],
                 "source_run_id": run.parent_run_id,
@@ -259,20 +262,30 @@ class WorkbenchService:
                 "environment_fingerprint": execution_provenance["environment_fingerprint"],
                  "environment": {key: environment[key] for key in ("python", "platform", "declared_requirements",
                      "declared_optional_requirements", "installed_distributions", "lock_hashes") if key in environment},
-                 "reproducibility": manifest["reproducibility"], "sample_purpose": manifest["sample_purpose"],
-                 "dataset_source": manifest["dataset_manifest"].get("source"),
-                 "execution_provenance": {**execution_provenance,
-                     "basket_selection_note": framework["basket_selection_note"]}}
+                "reproducibility": manifest["reproducibility"]}
 
     def clone_run(self, identity: str) -> dict:
         run = self.store.get_run(identity)
         manifest = self.runs.snapshots.verify(FrozenRun(identity, run.manifest_path, run.manifest_hash), exact=False)
-        if manifest.get("schema_version") != 3 or "resolved_configuration" not in manifest:
-            raise ValueError("historical run lacks a framework contract; upgrade it to a new draft")
+        from quanto.backtest.trading import ETF_TRADING_DEFINITION
         from quanto.workbench.framework_requests import FixedRequest
+        from quanto.workbench.run_contexts import ContextStore
 
-        payload = FixedRequest.model_validate({**manifest["resolved_configuration"]["request"],
-                                               "source_run_id": identity}).model_dump(mode="json")
+        context = ContextStore(self.store).get(run.job_id)
+        pairs = {item["local_symbol"]: item["instrument_id"] for item in context["ordered_pairs"]}
+        spec = json.loads(json.dumps(context["backtest_spec"]))
+        del spec["symbols"]
+        for scenario in spec["risk"]["stress_scenarios"]:
+            scenario["symbol_shocks"] = {pairs[symbol]: value for symbol, value in scenario["symbol_shocks"].items()}
+        trading = context["definition_evidence"].get("trading", {}).get("ref") or ETF_TRADING_DEFINITION.ref.model_dump(mode="json")
+        payload = FixedRequest.model_validate({"framework_contract_version": "multi-asset-v1",
+            "basket_revision_ref": context["basket_revision_ref"],
+            "dataset_version_id": context["dataset_version_id"],
+            "strategy_revision_id": context["strategy_revision_id"],
+            "trading_definition_ref": trading,
+            "strategy_params": manifest["original_strategy_params"],
+            "backtest_spec": spec, "sample_purpose": context["sample_purpose"],
+            "source_run_id": identity}).model_dump(mode="json")
         return self._record(self.store.save_experiment(None, None, payload))
 
     def submit(self, experiment_id: str, expected_revision: int, key: str, source: str = "web") -> dict:
@@ -440,41 +453,25 @@ class WorkbenchService:
         return stream.getvalue(), "zip"
 
     def comparison(self, run_ids: list[str]) -> dict:
-        from quanto.workbench.results import framework_metadata, frozen_result_matches
-
         summaries = []
         for run_id in run_ids:
             run = self.store.get_run(run_id)
-            input_error = None
-            try:
-                input_summary = self._run_provenance(run)
-            except (OSError, KeyError, TypeError, ValueError) as exc:
-                input_summary = {}
-                input_error = f"Frozen input unavailable or invalid: {exc}"
+            input_summary = self._run_provenance(run)
             summary = {"run_id": run_id, "state": run.state, **input_summary,
-                       "metric_definitions": None, "metrics": None, "input_error": input_error}
+                       "metric_definitions": None, "metrics": None, "input_error": None}
             if run.state == "succeeded":
                 result = self.results(run_id)
                 metadata = result["metadata"]
                 saved_provenance = metadata.get("execution_provenance")
-                saved = framework_metadata(metadata.get("framework"), saved_provenance)
-                if input_summary.get("identity_status") == "proven" and saved["identity_status"] == "proven":
-                    if not frozen_result_matches(input_summary, saved,
-                                                 input_summary["execution_provenance"], saved_provenance):
-                        raise ValueError("saved result framework differs from frozen input")
-                summary.update(saved)
-                summary["execution_provenance"] = saved_provenance
-                spec = saved["framework"]["internal_backtest_spec"] if saved["identity_status"] == "proven" else None
-                if spec is not None:
-                    summary.update(backtest_spec=spec, symbols=spec["symbols"], evaluation=spec["metrics"],
-                                   start=spec["start"], end=spec["end"], costs=spec["execution"], risk=spec["risk"],
-                                   initial_cash=spec["initial_cash"], seed=spec["seed"])
+                if saved_provenance is not None and any(
+                    saved_provenance.get(key) != input_summary["execution_provenance"].get(key)
+                    for key in ("source_hashes", "environment_fingerprint")):
+                    raise ValueError("saved result execution provenance differs from frozen input")
                 summary.update(is_demo=metadata.get("is_demo", summary.get("is_demo")),
                                source=metadata.get("source", summary.get("source")),
                                dataset_source=metadata.get("source", summary.get("dataset_source")),
                                benchmark=metadata.get("benchmark_type", summary.get("benchmark")),
-                               price_mode=metadata.get("price_mode", summary.get("price_mode")),
-                               environment_fingerprint=(saved_provenance or {}).get("environment_fingerprint"))
+                               price_mode=metadata.get("price_mode", summary.get("price_mode")))
                 summary["metric_definitions"] = result["metric_definitions"]
                 summary["metrics"] = result["metrics"]
             summaries.append(summary)

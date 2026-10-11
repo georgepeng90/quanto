@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 BASE_TABLES = (
     'CREATE TABLE IF NOT EXISTS datasets (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL)',
 
@@ -47,6 +47,15 @@ FRAMEWORK_TABLES = (
         scope TEXT NOT NULL, key TEXT NOT NULL, fingerprint TEXT NOT NULL, response_json TEXT NOT NULL,
         PRIMARY KEY (scope, key))""",
 )
+CONTEXT_TABLES = (
+    """CREATE TABLE IF NOT EXISTS run_contexts (
+        job_id TEXT PRIMARY KEY REFERENCES jobs(id),
+        context_json TEXT NOT NULL, context_hash TEXT NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS policy_version_contexts (
+        version_id TEXT PRIMARY KEY REFERENCES learning_artifacts(id),
+        context_json TEXT NOT NULL, context_hash TEXT NOT NULL,
+        artifact_content_hash TEXT NOT NULL)""",
+)
 
 
 def migrate_schema(db: sqlite3.Connection) -> None:
@@ -56,7 +65,7 @@ def migrate_schema(db: sqlite3.Connection) -> None:
     existing = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='schema_version'").fetchone()
     if existing:
         versions = [row[0] for row in db.execute("SELECT version FROM schema_version")]
-        if len(versions) != 1 or versions[0] not in (1, SCHEMA_VERSION):
+        if len(versions) != 1 or versions[0] not in (1, 2, SCHEMA_VERSION):
             raise ValueError("unsupported workbench schema version")
         if versions[0] == SCHEMA_VERSION:
             return
@@ -72,5 +81,7 @@ def migrate_schema(db: sqlite3.Connection) -> None:
     from quanto.learning.registry import migrate_learning_schema
     migrate_learning_schema(db)
     for statement in FRAMEWORK_TABLES:
+        db.execute(statement)
+    for statement in CONTEXT_TABLES:
         db.execute(statement)
     db.execute("UPDATE schema_version SET version=?", (SCHEMA_VERSION,))

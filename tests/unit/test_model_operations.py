@@ -18,6 +18,7 @@ from quanto.workbench.framework_requests import PolicyBacktestRequest, ResumeReq
 from quanto.workbench.store import utc_now
 from tests.integration.test_framework_capabilities import _training_case
 from tests.integration.test_model_framework_bindings import _old_model
+from tests.fixtures.frozen_policy_source import attach_frozen_policy_input
 
 
 @pytest.fixture
@@ -184,6 +185,8 @@ def test_policy_version_rejects_registry_hash_that_disagrees_with_file_list(tmp_
         db.execute("INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)",
                    ("version-one", "policy", str(artifact), digest(json_bytes(files)),
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
+    attach_frozen_policy_input(store, tmp_path, "version-one", create.dataset_id,
+                               spec.model_dump(mode="json"), "old-model")
     binding = ModelMigrator(store).migrate_model("old-model")
     with store.transaction() as db:
         db.execute("UPDATE learning_artifacts SET content_hash=? WHERE id=?", ("0" * 64, "version-one"))

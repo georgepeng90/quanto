@@ -14,6 +14,7 @@ from quanto.workbench.configuration import FrameworkResolver
 from quanto.workbench.framework_requests import PolicyBacktestRequest
 from quanto.workbench.store import utc_now
 from tests.fixtures.framework_imports import fixture_identity_evidence
+from tests.fixtures.frozen_policy_source import attach_frozen_policy_input
 from tests.fixtures.investing_training_cases import investing_case
 from tests.integration.test_framework_capabilities import _training_case
 from tests.integration.test_model_framework_bindings import _old_model
@@ -48,6 +49,7 @@ def test_policy_backtest_uses_new_dataset_without_training_dates_or_extra_member
         db.execute("INSERT INTO learning_artifacts VALUES (?,?,?,?,?,?,?)",
                    ("version-one", "policy", str(artifact), digest(json_bytes(files)),
                     json_bytes(manifest).decode(), json_bytes(files).decode(), utc_now()))
+    attach_frozen_policy_input(store, tmp_path, "version-one", original_dataset_id, original_spec, "old-model")
     model_binding = ModelMigrator(store).migrate_model("old-model")
 
     source = tmp_path / "later-source"

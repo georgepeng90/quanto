@@ -56,6 +56,9 @@ def _execution_provenance(resolved, payload, source_hashes, *, policy_version_id
         "training_updates": (policy_manifest["history"][-1]["updates"]
                              if policy_manifest and policy_manifest.get("history") else None),
     }
+    if resolved.basket.selection_origin is not None:
+        provenance['selection_origin'] = resolved.basket.selection_origin.model_dump(mode='json')
+        provenance['selection_evaluation'] = 'development_research_not_historical_selection_validation'
     if policy_manifest is not None:
         ancestor = policy_manifest.get("best_source_content_id")
         provenance["best_checkpoint"] = {
@@ -109,6 +112,8 @@ def execute_policy_job(kind, payload, artifact: Path, emit, cancelled, *, source
                      resume_context=payload.get('policy_resume_context'), model_id=request['model_id'],
                      evaluate_test=False, learning_runtime=runtime)
         saved = read_manifest(artifact, 'policy')
+        if resolved.basket.selection_origin is not None:
+            (artifact / 'screening.json').write_bytes(json_bytes(payload['screening_record']))
         # The first manifest is still staging. Recompute its identity once with
         # provenance included; the returned ID must not enter its own hash input.
         content = {key: value for key, value in saved.items() if key not in {'id', 'files'}}
@@ -130,6 +135,11 @@ def execute_policy_job(kind, payload, artifact: Path, emit, cancelled, *, source
         if request.get('model_id'):
             summary['model_id'] = request['model_id']
         summary['framework'] = payload['resolved_configuration']
+        if resolved.basket.selection_origin is not None:
+            (artifact / 'screening.json').write_bytes(json_bytes(payload['screening_record']))
+            summary['assumptions']['limitations'].append(
+                f"Screening as of {resolved.basket.selection_origin.as_of.isoformat()}; "
+                "this development backtest does not validate historical stock selection.")
         summary['execution_provenance'] = _execution_provenance(
             resolved, payload, source_hashes, policy_version_id=request['policy_id'],
             policy_manifest=policy_manifest)

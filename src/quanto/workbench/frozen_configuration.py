@@ -43,8 +43,13 @@ def verify_frozen_configuration(
     strategy_ref: Mapping | None = None, model_binding: ModelFrameworkBinding | None = None,
     policy_ref: Mapping | None = None, policy_context: Mapping | None = None,
     training_dataset_ref: Mapping | None = None,
+    screening_record: Mapping | None = None,
 ) -> ResolvedConfiguration:
     """Recompute capability with frozen code and data, without a workspace database."""
+    from quanto.screening.store import validate_selection
+    validate_selection(resolved.basket, screening_record)
+    if model_binding is not None:
+        validate_selection(model_binding.basket, screening_record)
     resolver = FrameworkResolver(None)
     if resolved.operation == "fixed_backtest":
         request = FixedRequest.model_validate(resolved.request)

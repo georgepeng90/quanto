@@ -57,6 +57,13 @@ def test_stock_capability_blocks_missing_evidence_without_queueing(tmp_path, mon
 
 def test_stock_model_trains_resumes_and_backtests_registered_versions(tmp_path, monkeypatch):
     app, client, headers, request = stock_workspace(tmp_path, monkeypatch)
+    from quanto.screening.contracts import ScreeningRequest
+    from quanto.screening.store import ScreeningStore
+    from tests.fixtures.screening_cases import screening_request
+    screenings = ScreeningStore(app.state.service.store)
+    selection = screenings.submit(ScreeningRequest.model_validate(screening_request()))
+    basket = screenings.create_basket(selection.id, "Screened stocks", "stock-screening")
+    request["basket_revision_ref"] = basket.ref.model_dump(mode="json")
     report = client.post("/api/capabilities/check", headers=headers, json={"operation": "train", **request})
     assert report.json()["status"] == "ready", report.text
     created = client.post("/api/investing/models", headers=headers, json=request)
@@ -93,6 +100,13 @@ def test_stock_model_trains_resumes_and_backtests_registered_versions(tmp_path, 
         assert summaries["cash", 1]["metrics"]["execution_cost"] == 0
         assert summaries["buy_hold", 2]["metrics"]["transfer_fee_paid"] > summaries["buy_hold", 1]["metrics"]["transfer_fee_paid"]
         assert any("dividend tax" in warning for warning in summaries["buy_hold", 1]["assumptions"]["limitations"])
+        for summary in summaries.values():
+            assert summary["execution_provenance"]["selection_origin"]["screening_id"] == selection.id
+            assert "not_historical_selection_validation" in summary["execution_provenance"]["selection_evaluation"]
+        with app.state.service.store.transaction() as db:
+            row = db.execute("SELECT path FROM learning_artifacts WHERE id=?", (first,)).fetchone()
+        from pathlib import Path
+        assert json.loads((Path(row["path"]) / "screening.json").read_text(encoding="utf-8"))["id"] == selection.id
         assert STOCK_TRADING_DEFINITION.cost_multiplier == 1
         # Resume cannot accept replacements for the frozen data or member order.
         for override in ({"dataset_id": "other"}, {"symbols": ["SSE:stock:600000"]}, {"spec": request["spec"]}):

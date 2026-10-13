@@ -182,6 +182,9 @@ class SnapshotBuilder:
             "reproducibility": {"mode": "non_exact" if non_exact_reasons else "exact_inputs", "reasons": sorted(set(non_exact_reasons))},
         }
         market_source = self.store.dataset_market_source(dataset.id, db)
+        if resolved.basket.selection_origin is not None:
+            from quanto.screening.store import ScreeningStore
+            manifest["screening_record"] = ScreeningStore(self.store).validate_basket(resolved.basket, db).model_dump(mode="json")
         if market_source is not None:
             manifest["market_snapshot_ref"] = market_source
         files["manifest.json"] = json_bytes(manifest)
@@ -233,7 +236,7 @@ def verify_framework_snapshot(snapshot_dir: Path) -> ResolvedConfiguration:
         raise ValueError("framework snapshot contract missing")
     resolved = ResolvedConfiguration.model_validate(manifest["resolved_configuration"])
     checked = verify_frozen_configuration(resolved, dataset_ref=manifest["dataset_ref"],
-                                          strategy_ref=manifest["strategy_ref"])
+                                          strategy_ref=manifest["strategy_ref"], screening_record=manifest.get("screening_record"))
     if (manifest["dataset_version_id"] != checked.asset_binding.dataset_version_id or
             manifest["dataset_content_hash"] != checked.asset_binding.dataset_content_hash or
             manifest["strategy_revision_id"] != checked.request["strategy_revision_id"] or

@@ -79,6 +79,10 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("identity")
     export.add_argument("--output", type=Path, required=True)
     export.add_argument("--overwrite", action="store_true")
+    use = screening_actions.add_parser("use")
+    use.add_argument("identity")
+    use.add_argument("--name", required=True)
+    use.add_argument("--key", required=True)
     basket_actions = baskets.add_subparsers(dest="action", required=True)
     basket_actions.add_parser("list")
     create = basket_actions.add_parser("create")
@@ -170,6 +174,8 @@ def main(argv: list[str] | None = None) -> int:
                 result = client.get("/screenings?" + urlencode({"limit": args.limit, "cursor": args.cursor}))
             elif args.action == "show":
                 result = client.get(f"/screenings/{args.identity}")
+            elif args.action == "use":
+                result = client.post(f"/screenings/{args.identity}/basket", {"name": args.name, "idempotency_key": args.key})
             else:
                 result = client.get(f"/screenings/{args.identity}/export")
                 with args.output.open("w" if args.overwrite else "x", encoding="utf-8") as output:

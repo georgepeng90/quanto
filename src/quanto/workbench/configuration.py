@@ -220,6 +220,12 @@ class FrameworkResolver:
                 basket = None
                 checks.append(_blocked("basket_reference", "basket_revision_ref", "IDENTITY_UNRESOLVED",
                                        "Basket revision does not exist"))
+        if basket is not None and basket.selection_origin is not None and self.store is not None:
+            from quanto.screening.store import ScreeningStore
+            try:
+                ScreeningStore(self.store).validate_basket(basket, db)
+            except (ValueError, KeyError) as exc:
+                checks.append(_blocked("screening_origin", "basket_revision_ref", "BINDING_MISMATCH", str(exc)))
         try:
             dataset = (dataset_override if dataset_override is not None
                        else _db_call(self.store.get_dataset, dataset_id, db=db))

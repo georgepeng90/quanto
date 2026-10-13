@@ -196,6 +196,9 @@ class LearningService:
             if _execution_files(source_root) != execution_files:
                 raise ValueError('engine or environment files changed during freeze')
             trusted = dict(trusted)
+            if resolved.basket.selection_origin is not None:
+                from quanto.screening.store import ScreeningStore
+                trusted['screening_record'] = ScreeningStore(self.store).validate_basket(resolved.basket).model_dump(mode='json')
             trusted['resolved_configuration'] = resolved.model_dump(mode='json')
             trusted['resolved_configuration']['capability_report']['generated_at'] = None
             payload = {'request': request, 'environment': runtime_versions(),

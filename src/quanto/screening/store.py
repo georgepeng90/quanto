@@ -6,7 +6,7 @@ from uuid import uuid4
 from pydantic import field_validator, model_validator
 
 from quanto.data.contracts import utc
-from quanto.framework import FrozenContract, Hash, canonical_hash
+from quanto.framework import FrozenContract, Hash, SelectionOrigin, canonical_hash
 from quanto.objects import digest, json_bytes, verified_files
 from quanto.screening.contracts import Key, ScreeningRequest, ScreeningResult
 from quanto.screening.engine import screen
@@ -87,3 +87,37 @@ class ScreeningStore:
 
     def export(self, identity: str) -> bytes:
         return json_bytes(self.get(identity).model_dump(mode="json"))
+
+    def validate_basket(self, basket, db=None) -> ScreeningRecord | None:
+        if basket.selection_origin is None:
+            return None
+        record = self.get(basket.selection_origin.screening_id, db)
+        validate_selection(basket, record.model_dump(mode="json"))
+        return record
+
+    def create_basket(self, identity: str, name: str, key: str):
+        from quanto.workbench.baskets import BasketStore
+        with self.store.transaction() as db:
+            record = self.get(identity, db)
+            if not record.result.members:
+                raise ValueError("screening has no selected members")
+            origin = SelectionOrigin(screening_id=record.id, result_hash=record.result_hash, as_of=record.request.as_of)
+            return BasketStore(self.store).create(name, record.result.members, record.request.purpose, key,
+                                                   selection_origin=origin, db=db)
+
+
+def validate_selection(basket, frozen_record):
+    """Prove origin and ordered members using only the archived record."""
+    origin = basket.selection_origin
+    if origin is None:
+        if frozen_record is not None:
+            raise ValueError("unexpected screening record")
+        return None
+    if frozen_record is None:
+        raise ValueError("screening archive is required")
+    record = ScreeningRecord.model_validate(frozen_record)
+    if (origin.screening_id, origin.result_hash, origin.as_of) != (record.id, record.result_hash, record.request.as_of):
+        raise ValueError("screening origin mismatch")
+    if basket.members != record.result.members:
+        raise ValueError("screening members differ from basket")
+    return record

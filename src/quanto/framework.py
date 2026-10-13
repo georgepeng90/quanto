@@ -81,10 +81,19 @@ class BasketRevisionRef(FrozenContract):
     revision: PositiveRevision
 
 
+class SelectionOrigin(FrozenContract):
+    screening_id: Name
+    result_hash: Hash
+    as_of: datetime
+
+    _timestamp = field_validator("as_of")(utc)
+
+
 class FrozenBasketRevision(BasketRevisionRef):
     members: tuple[InstrumentId, ...]
     created_at: datetime
     selection_note: str
+    selection_origin: SelectionOrigin | None = Field(default=None, exclude_if=lambda value: value is None)
     content_hash: str = ""
 
     _members = field_validator("members")(validate_members)

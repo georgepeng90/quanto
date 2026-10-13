@@ -347,6 +347,12 @@ def run_frozen_backtest(descriptor: dict, control_dir: Path, emit, cancelled) ->
         "best_checkpoint": None, "last_checkpoint": None,
         "feature_transform": None, "training_updates": None,
     }
+    if resolved.basket.selection_origin is not None:
+        report.metadata["screening_record"] = manifest["screening_record"]
+        report.metadata["execution_provenance"]["selection_origin"] = resolved.basket.selection_origin.model_dump(mode="json")
+        report.metadata["execution_provenance"]["selection_evaluation"] = "development_research_not_historical_selection_validation"
+        report.warnings.append(f"Screening as of {resolved.basket.selection_origin.as_of.isoformat()}; "
+                               "this development backtest does not validate historical stock selection.")
     stage = control_dir.parent / "staging"
     hashes = write_backtest_outputs(stage, result, report)
     validate_backtest_output(stage, hashes)
@@ -402,7 +408,7 @@ def run_learning_job(descriptor: dict, control_dir: Path, emit, cancelled) -> di
         verify_frozen_configuration(resolved, dataset_ref=payload["dataset_ref"],
             model_binding=binding, policy_ref=payload.get("policy_ref") or payload.get("policy_resume_ref"),
             policy_context=payload.get("policy_context") or payload.get("policy_resume_context"),
-            training_dataset_ref=payload.get("training_dataset_ref"))
+            training_dataset_ref=payload.get("training_dataset_ref"), screening_record=payload.get("screening_record"))
     from quanto.learning.jobs import execute_learning_job
     return execute_learning_job(descriptor, control_dir, emit, cancelled)
 

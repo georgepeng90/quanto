@@ -23,7 +23,17 @@ test.each([true, false])('detail explains evidence and preserves handoff (select
   const Destination = () => <p>模型入口 {useLocation().search}</p>
   render(<MemoryRouter initialEntries={['/screenings/r1']}><Routes><Route path="/screenings/:id" element={<ScreeningDetailPage />} /><Route path="/models" element={<Destination />} /></Routes></MemoryRouter>)
   await screen.findByRole('heading', { name: '银行研究' })
+  expect(screen.getByRole('button', { name: `选中（${selected ? 1 : 0}）` })).toHaveAttribute('aria-pressed', 'true')
+  if (!selected) {
+    expect(screen.queryByRole('heading', { name: '示例银行' })).not.toBeInTheDocument()
+    expect(screen.getByText('本轮没有选中的标的')).toBeVisible()
+    await userEvent.click(screen.getByRole('button', { name: '排除（1）' }))
+  }
   expect(screen.getByText('信用风险')).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: '未研究（0）' }))
+  expect(screen.queryByRole('heading', { name: '示例银行' })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '全部（1）' }))
+  expect(screen.getByRole('heading', { name: '示例银行' })).toBeVisible()
   expect(screen.getByRole('link', { name: '公司公告' })).toHaveAttribute('href', 'https://example.org/report')
   expect(screen.getByText(/摘录.*有限证据/)).toBeVisible()
   const button = screen.getByRole('button', { name: '用于创建个股模型' })

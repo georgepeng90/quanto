@@ -5,6 +5,9 @@ import { taskTime } from '../components/timePresentation'
 import { instrumentKey } from '../frameworkTypes'
 import type { ScreeningRecord } from '../types'
 
+const resultFilters = [['selected', '选中'], ['excluded', '排除'], ['not_researched', '未研究'], ['all', '全部']] as const
+type ResultFilter = typeof resultFilters[number][0]
+
 const reasons: Record<string, string> = {
   missing_status: '缺少交易状态证据', missing_industry: '缺少行业证据', missing_listing_date: '缺少上市日期证据', missing_name: '缺少公司名称',
   missing_board: '缺少板块证据', missing_business_summary: '缺少业务说明', missing_calendar: '缺少已完成交易日日历',
@@ -26,12 +29,16 @@ function reasonText(value: string) {
 export function ScreeningDetailPage() {
   const { id = '' } = useParams(), navigate = useNavigate()
   const [record, setRecord] = useState<ScreeningRecord | null>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false)
+  const [filter, setFilter] = useState<ResultFilter>('selected')
   useEffect(() => {
     const controller = new AbortController()
-    setRecord(null); setError('')
+    setRecord(null); setError(''); setFilter('selected')
     api.screening(id, controller.signal).then(value => { if (!controller.signal.aborted) setRecord(value) }).catch(value => { if (!controller.signal.aborted) setError(describeError(value)) })
     return () => controller.abort()
   }, [id])
+  const outcomes = new Map(record?.result.candidates.map(outcome => [instrumentKey(outcome.instrument_id), outcome]))
+  const candidates = record?.request.candidates || []
+  const filteredCandidates = candidates.filter(candidate => filter === 'all' || outcomes.get(instrumentKey(candidate.instrument_id))?.decision === filter)
   const use = async () => {
     if (!record) return
     setBusy(true); setError('')
@@ -47,7 +54,9 @@ export function ScreeningDetailPage() {
     <header className="page-heading"><h1>{record.request.name}</h1><p>{record.request.purpose} · 截至 {taskTime(record.request.as_of)}</p><p>{record.request.universe_description} · 入选 {record.result.members.length} 只</p></header>
     <section className="panel"><p>资料及事实由 Agent 提交，引用可核对；数值未经过独立核实。当前选股配合历史行情回测仅用于开发研究，不能证明历史选股有效。</p>{record.result.shortfall > 0 && <p>证据与规则条件下比目标少 {record.result.shortfall} 只。</p>}
       <div className="inline-actions"><button disabled={busy || !record.result.members.length} onClick={() => void use()}>用于创建个股模型</button><button disabled={busy} onClick={() => void download()}>导出研究与证据</button></div><p className="muted">下一步保存股票组合并检查训练数据；创建组合不会启动训练。</p></section>
-    {record.request.candidates.map(candidate => { const key = instrumentKey(candidate.instrument_id), outcome = record.result.candidates.find(item => instrumentKey(item.instrument_id) === key); return <section className="panel" key={key}><div className="record-head"><h2>{candidate.name}</h2><span className="badge">{outcome?.decision === 'selected' ? '入选' : outcome?.decision === 'not_researched' ? '未研究' : '排除'}</span></div><p>{key} · {candidate.business_summary}</p>
+    <section className="panel"><h2>个股结果</h2><div className="result-tabs" role="group" aria-label="按筛选结果查看">{resultFilters.map(([value, label]) => <button key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}（{value === 'all' ? candidates.length : candidates.filter(candidate => outcomes.get(instrumentKey(candidate.instrument_id))?.decision === value).length}）</button>)}</div><p className="muted" role="status">当前显示 {filteredCandidates.length} 只 · 切换列表不影响组合和完整证据导出</p></section>
+    {!filteredCandidates.length && <p className="muted">{filter === 'selected' ? '本轮没有选中的标的' : '该分类暂无标的'}</p>}
+    {filteredCandidates.map(candidate => { const key = instrumentKey(candidate.instrument_id), outcome = outcomes.get(key); return <section className="panel" key={key}><div className="record-head"><h2>{candidate.name}</h2><span className="badge">{outcome?.decision === 'selected' ? '入选' : outcome?.decision === 'not_researched' ? '未研究' : '排除'}</span></div><p>{key} · {candidate.business_summary}</p>
       {!!outcome?.reasons.length && <ul>{outcome.reasons.map((reason, i) => <li key={i}>{reasonText(reason)}</li>)}</ul>}
       {([['研究理由', candidate.reasons], ['风险', candidate.risks], ['反面证据', candidate.counter_evidence], ['未知项', candidate.unknowns]] as const).map(([label, items]) => <div key={label}><h3>{label}</h3>{items.length ? <ul>{items.map((value, i) => <li key={i}>{value}</li>)}</ul> : <p className="muted">未提供</p>}</div>)}
       <details><summary>事实引用</summary>{Object.entries(candidate.citations).map(([field, cites]) => <p key={field}>{field}：{cites.map(cite => `“${cite.quote}” (${cite.evidence_id})`).join('；')}</p>)}</details>

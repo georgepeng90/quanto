@@ -22,6 +22,7 @@ _ENGINE_VIEW_TOKEN = object()
 _BUILTIN_KEYS = {"prices": ("symbol", "date"), "benchmark": ("date",), "calendar": ("date",),
                  "instruments": ("symbol",), "status": ("symbol", "date"), "events": ("symbol", "event_type", "ex_date")}
 CORE_TABLES = tuple(_BUILTIN_KEYS)
+STOCK_TABLE_VERSIONS = (("stock-fee-rules", "1"), ("stock-open-status", "1"), ("stock-sources", "1"))
 _BUILTIN_MODES = {"prices": "session_close", "benchmark": "session_close", "calendar": "declared_calendar",
                   "instruments": "declared_static_reference", "status": "session_close", "events": "execution_event"}
 
@@ -96,7 +97,6 @@ class TableSemantics(FrozenContract):
 
     @classmethod
     def from_binding(cls, binding: TableSemanticBinding, *, supported_versions: Collection[tuple[str, str]] = ()) -> TableSemantics:
-        from quanto.backtest.stock_data import STOCK_TABLE_VERSIONS
         # Non-builtins are enabled only by a trusted, explicitly registered definition.
         builtin = binding.table in CORE_TABLES and (binding.semantic_id, binding.version) == (f"daily-{binding.table}", "1")
         if not builtin and (binding.semantic_id, binding.version) not in (*supported_versions, *STOCK_TABLE_VERSIONS):

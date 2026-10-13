@@ -14,9 +14,9 @@ import numpy as np
 import pandas as pd
 
 from quanto.framework import ResearchInterval
+from quanto.data.point_in_time import STOCK_TABLE_VERSIONS
 
 
-STOCK_TABLE_VERSIONS = (("stock-fee-rules", "1"), ("stock-open-status", "1"), ("stock-sources", "1"))
 STOCK_DIVIDEND_LIMITATION = "Stock dividends are recorded before personal dividend tax; after-tax dividend returns are not modeled."
 _TABLES = dict(zip(("fee_rules", "stock_open_status", "stock_sources"), STOCK_TABLE_VERSIONS))
 _SHANGHAI = ZoneInfo("Asia/Shanghai")

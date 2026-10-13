@@ -13,7 +13,7 @@ test('stock portfolios preserve edits and explain unavailable execution in the f
   await page.getByRole('combobox', { name: '类型', exact: true }).selectOption('stock')
   await page.getByLabel('代码', { exact: true }).fill('000001')
   await page.getByLabel('选择说明').fill('仅保存公司选择，尚未定义个股策略')
-  await expect(page.getByText(/已安装定义中没有股票运行方案/)).toBeVisible()
+  await expect(page.getByText(/已安装定义中没有股票运行方案/)).toHaveCount(0)
   const createResponse = page.waitForResponse(response => response.url().endsWith('/api/baskets') && response.request().method() === 'POST')
   await page.getByRole('button', { name: '保存组合', exact: true }).click()
   const response = await createResponse
@@ -27,7 +27,7 @@ test('stock portfolios preserve edits and explain unavailable execution in the f
   const preserved = await (await page.request.get(`/api/baskets/${first.basket_id}/revisions/1`, { headers })).json()
   expect(preserved).toEqual(first)
   const definitions = await (await page.request.get('/api/definitions', { headers })).json()
-  expect(definitions.items.every((item: { supported_instrument_types: string[] }) => item.supported_instrument_types.every(type => type === 'etf'))).toBe(true)
+  expect(definitions.items.filter((item: { supported_instrument_types: string[] }) => item.supported_instrument_types.includes('stock'))).toHaveLength(3)
 
   await page.setViewportSize({ width: 390, height: 844 })
   await expect(page.getByText(/已保存 · SZSE:stock:000001/)).toBeVisible()

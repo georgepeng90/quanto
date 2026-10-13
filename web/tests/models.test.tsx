@@ -18,13 +18,14 @@ const dataset = { id: 'd1', manifest: { data_start: '2020-01-01', data_end: '202
 const tradingRef = { kind: 'trading', id: 'etf-daily', version: '1' }
 const learningRef = { kind: 'learning', id: 'etf-ppo-cash-dsr', version: '1' }
 type TestDefinition = { ref: { kind: string; id: string; version: string }; parameter_schema: { type: string; properties: Record<string, unknown> };
+  supported_instrument_types: string[];
   action_version?: string; reward_version?: string; allowed_trading_refs?: { kind: string; id: string; version: string }[] }
 let definitionItems: TestDefinition[] = [
-  { ref: learningRef, action_version: 'hold-target-cash-quartiles-v2', reward_version: 'differential-sharpe-v1',
+  { ref: learningRef, supported_instrument_types: ['etf'], action_version: 'hold-target-cash-quartiles-v2', reward_version: 'differential-sharpe-v1',
     allowed_trading_refs: [tradingRef], parameter_schema: { type: 'object', properties: { lookback: { type: 'integer', minimum: 3 },
       frequency: { type: 'string', enum: ['weekly', 'monthly'] }, action_version: { type: 'string', const: 'hold-target-cash-quartiles-v2' },
       reward_version: { type: 'string', const: 'differential-sharpe-v1' } } } },
-  { ref: tradingRef, parameter_schema: { type: 'object', properties: {} } },
+  { ref: tradingRef, supported_instrument_types: ['etf'], parameter_schema: { type: 'object', properties: {} } },
 ]
 const definitions = definitionItems
 const refKey = (ref: typeof learningRef | typeof tradingRef) => JSON.stringify([ref.kind, ref.id, ref.version])

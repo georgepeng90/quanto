@@ -3,7 +3,7 @@ import { ApiError, api, describeError } from '../api'
 import { BasketRevisionSelect } from './BasketRevisionSelect'
 import { CapabilityReport as CapabilityReportView } from './CapabilityReport'
 import { ParameterForm } from './ParameterForm'
-import type { BasketRevisionRef, CapabilityReport, Definition, ModelCreateRequest } from '../frameworkTypes'
+import type { BasketRevisionRef, CapabilityReport, Definition, FrozenBasketRevision, ModelCreateRequest } from '../frameworkTypes'
 import type { InvestingModel, InvestingOverview } from '../investingTypes'
 import type { ParameterSchema } from '../types'
 
@@ -45,6 +45,7 @@ function serverReport(error: unknown): CapabilityReport | null {
 export function ModelCreation({ overview, onCreated }: { overview: InvestingOverview; onCreated: (model: InvestingModel) => void }) {
   const [definitions, setDefinitions] = useState<Definition[]>([])
   const [datasetId, setDatasetId] = useState(''), [basket, setBasket] = useState<BasketRevisionRef | null>(null)
+  const [basketRevision, setBasketRevision] = useState<FrozenBasketRevision | null>(null)
   const [learningId, setLearningId] = useState(''), [tradingId, setTradingId] = useState('')
   const [spec, setSpec] = useState(initialSpec), [learningParams, setLearningParams] = useState<Record<string, unknown>>({})
   const [paramsValid, setParamsValid] = useState(true), [report, setReport] = useState<CapabilityReport | null>(null)
@@ -56,7 +57,10 @@ export function ModelCreation({ overview, onCreated }: { overview: InvestingOver
   useEffect(() => { let active = true; api.listDefinitions().then(value => { if (active) setDefinitions(value.items) })
     .catch(value => { if (active) setError(describeError(value)) }); return () => { active = false } }, [])
 
-  const learning = definitions.find(item => item.ref.kind === 'learning' && definitionKey(item.ref) === learningId)
+  const learningOptions = definitions.filter(item => item.ref.kind === 'learning' && (!basket || (
+    basketRevision?.basket_id === basket.basket_id && basketRevision.revision === basket.revision
+    && basketRevision.members.every(member => item.supported_instrument_types.includes(member.instrument_type)))))
+  const learning = learningOptions.find(item => definitionKey(item.ref) === learningId)
   const trading = definitions.filter(item => item.ref.kind === 'trading' && matchingTrading(learning, item))
   const selectedTrading = trading.find(item => definitionKey(item.ref) === tradingId)
   const rawSchema = learning?.parameter_schema as ParameterSchema | undefined
@@ -111,9 +115,10 @@ export function ModelCreation({ overview, onCreated }: { overview: InvestingOver
     {error && <p role="alert" className="error">{error}</p>}
     <fieldset disabled={busy}><div className="form-grid">
       <label>日线数据版本<select value={datasetId} onChange={event => setDatasetId(event.target.value)}><option value="">请选择数据版本</option>{overview.datasets.map(item => <option key={item.id} value={item.id}>{item.manifest.source} · {item.manifest.data_start}—{item.manifest.data_end}</option>)}</select></label>
-      <label>学习定义<select value={learningId} onChange={event => { setLearningId(event.target.value); setTradingId(''); setLearningParams({}) }}><option value="">请选择学习定义</option>{definitions.filter(item => item.ref.kind === 'learning').map(item => <option key={definitionKey(item.ref)} value={definitionKey(item.ref)}>{item.ref.id}</option>)}</select></label>
-      <label>交易定义<select value={tradingId} onChange={event => setTradingId(event.target.value)}><option value="">请选择匹配的交易定义</option>{trading.map(item => <option key={definitionKey(item.ref)} value={definitionKey(item.ref)}>{item.ref.id}</option>)}</select></label>
-    </div><BasketRevisionSelect value={basket} onChange={setBasket} disabled={busy} />
+      <label>学习定义<select value={learningId} onChange={event => { setLearningId(event.target.value); setTradingId(''); setLearningParams({}) }}><option value="">请选择学习定义</option>{learningOptions.map(item => <option key={definitionKey(item.ref)} value={definitionKey(item.ref)}>{item.ref.id === 'stock-ppo-cash-log' ? '个股量价 PPO' : item.ref.id}</option>)}</select></label>
+      <label>交易定义<select value={tradingId} onChange={event => setTradingId(event.target.value)}><option value="">请选择匹配的交易定义</option>{trading.map(item => <option key={definitionKey(item.ref)} value={definitionKey(item.ref)}>{item.ref.id === 'stock-daily' ? '沪深主板股票日线交易' : item.ref.id}</option>)}</select></label>
+    </div><BasketRevisionSelect value={basket} onChange={ref => { setBasket(ref); setLearningId(''); setTradingId(''); setLearningParams({}) }} onResolved={setBasketRevision} disabled={busy} />
+      {basketRevision?.members.some(member => member.instrument_type === 'stock') && <p>个股训练需要已归档的未复权行情、开盘状态、历史税费规则及公司行动覆盖证据。股息按个人股息税前计算。</p>}
       {learning && <>
         <ParameterForm key={definitionKey(learning.ref)} schema={parameterSchema} value={learningParams} showJson={false}
           idPrefix="model-learning" onChange={setLearningParams} onValidityChange={setParamsValid} /></>}

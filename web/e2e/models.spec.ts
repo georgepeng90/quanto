@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { resolve } from 'node:path'
 
-test('creates an untrained model, continues it, and backtests the chosen saved version', async ({ page }, testInfo) => {
+for (const assetType of ['etf', 'stock']) test(`${assetType}: creates an untrained model, continues it, and backtests the chosen saved version`, async ({ page }, testInfo) => {
   const root = resolve(import.meta.dirname, '../..')
   const python = resolve(root, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python')
   const fixture = JSON.parse(execFileSync(python, ['-c', `
@@ -13,16 +13,18 @@ from quanto.workbench.baskets import BasketStore
 from quanto.workbench.bindings import BindingStore
 from tests.fixtures.investing_training_cases import investing_case
 from tests.fixtures.framework_imports import fixture_identity_evidence
+from tests.fixtures.stock_training_cases import stock_case, stock_identity_evidence
 workspace = Path(sys.argv[1])
+is_stock = sys.argv[2] == 'stock'
 assert workspace.resolve() != (Path.cwd() / 'workspace').resolve()
-spec, _ = investing_case(workspace / 'model-e2e-data')
+source = workspace / ('stock-e2e-data' if is_stock else 'model-e2e-data')
+spec, _ = (stock_case if is_stock else investing_case)(source)
 store = WorkbenchStore(workspace)
-source = workspace / 'model-e2e-data'
-dataset = store.register_dataset(source, identity_evidence=fixture_identity_evidence(source))
+dataset = store.register_dataset(source, identity_evidence=(stock_identity_evidence if is_stock else fixture_identity_evidence)(source))
 asset = BindingStore(store).get_asset_binding(dataset.id).assets[0].instrument_id
-basket = BasketStore(store).create('Model E2E basket', (asset,), 'Synthetic training fixture', 'model-e2e-basket')
+basket = BasketStore(store).create('Model E2E ' + sys.argv[2], (asset,), 'Synthetic training fixture', 'model-e2e-' + sys.argv[2])
 print(json.dumps({'dataset_id': dataset.id, 'basket_id': basket.basket_id, 'spec': spec}))
-`, process.env.QUANTO_E2E_WORKSPACE!], { cwd: root, encoding: 'utf8' }))
+`, process.env.QUANTO_E2E_WORKSPACE!, assetType], { cwd: root, encoding: 'utf8' }))
   const posts: { path: string; body: any }[] = []
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
@@ -31,6 +33,7 @@ print(json.dumps({'dataset_id': dataset.id, 'basket_id': basket.basket_id, 'spec
   const headers = { Authorization: `Bearer ${session.token}` }
   const definitions = (await (await page.request.get('/api/definitions', { headers })).json()).items
   const learning = definitions.find((item: any) => item.ref.kind === 'learning' &&
+    item.supported_instrument_types.includes(assetType) &&
     item.action_version === 'hold-target-cash-quartiles-v2' && item.reward_version === 'net-log-return-v1')
   expect(learning).toBeTruthy()
   const tradingRef = learning.allowed_trading_refs[0]
@@ -121,7 +124,7 @@ print(json.dumps({'dataset_id': dataset.id, 'basket_id': basket.basket_id, 'spec
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath('model-mobile.png') })
   await page.goto('/models')
-  await expect(page.getByRole('combobox', { name: '组合' })).toContainText('Model E2E basket')
+  await expect(page.getByRole('combobox', { name: '组合' })).toContainText(`Model E2E ${assetType}`)
   await expect(page.getByRole('combobox', { name: '组合' })).not.toContainText(fixture.basket_id)
   expect(errors).toEqual([])
 })

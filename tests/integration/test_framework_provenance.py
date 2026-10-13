@@ -22,7 +22,7 @@ def test_fixed_report_exports_frozen_framework_and_canonical_instruments(tmp_pat
     assert run_until_finished(store, run.job_id).state == "succeeded"
     final = store.artifact_root / run.job_id / "final"
     metadata = json.loads((final / "metadata.json").read_bytes())
-    assert metadata["schema_version"] == "3"
+    assert metadata["schema_version"] == "5"
     assert metadata["framework"] == frozen["resolved_configuration"]
     assert metadata["execution_provenance"]["source_hashes"] == frozen["files"]
     assert metadata["execution_provenance"]["basket_selection_note"] == "fixture selection"
@@ -109,7 +109,7 @@ def test_canonical_rows_distinguish_same_code_across_exchanges_and_reject_unknow
 
 def test_training_best_ancestor_is_distinct_from_last_checkpoint():
     resolved = SimpleNamespace(internal_training_spec={"train_start": "2024-01-01", "validation_end": "2024-02-01"},
-                               basket=SimpleNamespace(selection_note="hand selected"))
+                               basket=SimpleNamespace(selection_note="hand selected", selection_origin=None))
     payload = {"execution_environment": {"python": "3.12"}, "request": {"model_id": "model-1"}}
     saved = {"id": "new-version", "best_source_content_id": "earlier-version", "best_timesteps": 8,
              "timesteps_completed": 24, "session_timesteps": 8, "files": {"last.zip": "digest"}}
@@ -121,7 +121,7 @@ def test_training_best_ancestor_is_distinct_from_last_checkpoint():
 
 def test_selected_only_policy_does_not_claim_a_last_checkpoint():
     resolved = SimpleNamespace(internal_training_spec={"train_start": "2019-01-01"},
-                               basket=SimpleNamespace(selection_note="hand selected"))
+                               basket=SimpleNamespace(selection_note="hand selected", selection_origin=None))
     payload = {"execution_environment": {"python": "3.12"}, "request": {"model_id": "model-1"}}
     saved = {"id": "selected-version", "best_timesteps": 64, "timesteps_completed": 128,
              "files": {"policy.zip": "digest"}, "history": [{"updates": 8}]}
@@ -133,7 +133,7 @@ def test_selected_only_policy_does_not_claim_a_last_checkpoint():
 
 
 def test_policy_provenance_rejects_missing_checkpoint_metadata():
-    resolved = SimpleNamespace(internal_training_spec={}, basket=SimpleNamespace(selection_note="selected"))
+    resolved = SimpleNamespace(internal_training_spec={}, basket=SimpleNamespace(selection_note="selected", selection_origin=None))
     payload = {"execution_environment": {}, "request": {"model_id": "model-1"}}
     saved = {"id": "version-1", "best_timesteps": 8, "timesteps_completed": 16}
     with pytest.raises(KeyError, match="files"):

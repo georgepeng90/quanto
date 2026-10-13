@@ -18,7 +18,7 @@ def test_both_templates_write_standalone_reports(tmp_path):
         report = build_report(result, bundle, spec)
         output = tmp_path / str(index)
         manifest = write_backtest_outputs(output, result, report)
-        assert json.loads((output / "metadata.json").read_bytes())["schema_version"] == "2"
+        assert json.loads((output / "metadata.json").read_bytes())["schema_version"] == "4"
         validate_backtest_output(output, manifest)
         assert "report.html" in manifest
         assert (output / "report.html").read_text(encoding="utf-8").startswith("<!doctype html>")

@@ -178,20 +178,24 @@ def test_cli_historical_clone_uses_same_endpoint(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"id": "new-draft"}
 
 
-def test_schema_one_historical_results_exports_and_mixed_comparison_remain_readable(tmp_path):
+@pytest.mark.parametrize("version", ["1", "2", "3"])
+def test_historical_results_exports_and_mixed_comparison_remain_readable(tmp_path, version):
     import io
     import zipfile
     from tests.integration.test_worker_snapshot import ready_run, run_until_finished
     store, run, _ = ready_run(tmp_path)
     assert run_until_finished(store, run.job_id).state == "succeeded"
     root = store.artifact_root / run.job_id / "final"
-    # Construct a schema-1 historical artifact in this test's temporary workspace only.
+    # Historical reports precede stock tax columns; only schema 3 has canonical IDs.
+    removed_columns = {"stamp_duty", "transfer_fee"}
+    if version != "3":
+        removed_columns.add("instrument_id")
     old_columns = ["date", "intent", "weights", "reasons", "diagnostics"]
     for path in root.glob("*.csv"):
         with path.open(newline="", encoding="utf-8") as stream:
             reader = csv.DictReader(stream)
-            columns = [name for name in reader.fieldnames or [] if name != "instrument_id"]
-            if path.name == "signals.csv":
+            columns = [name for name in reader.fieldnames or [] if name not in removed_columns]
+            if path.name == "signals.csv" and version == "1":
                 columns = old_columns
             rows = list(reader)
         with path.open("w", newline="", encoding="utf-8") as stream:
@@ -200,20 +204,22 @@ def test_schema_one_historical_results_exports_and_mixed_comparison_remain_reada
             writer.writerows(rows)
     for name in ("metadata.json", "metrics.json"):
         value = json.loads((root / name).read_text(encoding="utf-8"))
-        value["schema_version"] = "1"
+        value["schema_version"] = version
         if name == "metadata.json":
-            value["table_columns"] = {table: [column for column in columns if column != "instrument_id"]
+            value["table_columns"] = {table: [column for column in columns if column not in removed_columns]
                                       for table, columns in value["table_columns"].items()}
-            value["table_columns"]["signals"] = old_columns
-            value.pop("is_demo", None)
-            value.pop("source", None)
-            value.pop("framework", None)
-            value.pop("execution_provenance", None)
+            if version == "1":
+                value["table_columns"]["signals"] = old_columns
+                value.pop("is_demo", None)
+                value.pop("source", None)
+            if version != "3":
+                value.pop("framework", None)
+                value.pop("execution_provenance", None)
         else:
-            value["metric_definitions"]["schema_version"]["value"] = "1"
+            value["metric_definitions"]["schema_version"]["value"] = version
         (root / name).write_text(json.dumps(value))
     hashes = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in root.iterdir() if path.name != "manifest.json"}
-    (root / "manifest.json").write_text(json.dumps({"schema_version": "1", "files": hashes}))
+    (root / "manifest.json").write_text(json.dumps({"schema_version": version, "files": hashes}))
     hashes["manifest.json"] = hashlib.sha256((root / "manifest.json").read_bytes()).hexdigest()
     receipt_path = root.parent / "control/receipt.json"
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
@@ -222,24 +228,27 @@ def test_schema_one_historical_results_exports_and_mixed_comparison_remain_reada
     before = {path.name: path.read_bytes() for path in root.iterdir()}
     service = WorkbenchService(store.root)
     historical = service.results(run.run_id)
-    assert historical["metadata"]["schema_version"] == "1"
-    assert "is_demo" not in historical["metadata"]
-    assert "approved_weights" not in service.table(run.run_id, "signals").items[0]
+    assert historical["metadata"]["schema_version"] == version
+    assert "stamp_duty" not in historical["metadata"]["table_columns"]["fills"]
+    if version == "1":
+        assert "is_demo" not in historical["metadata"]
+        assert "approved_weights" not in service.table(run.run_id, "signals").items[0]
     for kind in ("csv", "json"):
         data, _ = service.export(run.run_id, kind)
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             assert archive.read("metadata.json") == before["metadata.json"]
     assert service.export(run.run_id, "html")[0] == before["report.html"]
-    fresh = service.runs.submit(run.experiment_id, run.experiment_revision, "fresh-schema", "web")
-    assert run_until_finished(store, fresh.job_id).state == "succeeded"
-    assert service.results(fresh.run_id)["metadata"]["schema_version"] == "3"
-    mixed = service.comparison([run.run_id, fresh.run_id])
-    assert [item["is_demo"] for item in mixed["runs"]] == [False, False]
-    assert mixed["directly_comparable"] is False
+    if version == "1":
+        fresh = service.runs.submit(run.experiment_id, run.experiment_revision, "fresh-schema", "web")
+        assert run_until_finished(store, fresh.job_id).state == "succeeded"
+        assert service.results(fresh.run_id)["metadata"]["schema_version"] == "5"
+        mixed = service.comparison([run.run_id, fresh.run_id])
+        assert [item["is_demo"] for item in mixed["runs"]] == [False, False]
+        assert mixed["directly_comparable"] is False
     assert {path.name: path.read_bytes() for path in root.iterdir()} == before
 
 
-@pytest.mark.parametrize("version", ["0", "3"])
+@pytest.mark.parametrize("version", ["0", "6"])
 def test_output_unknown_schema_versions_are_rejected(tmp_path, version):
     from quanto.workbench.worker import validate_backtest_output
     bundle = bundle_case()

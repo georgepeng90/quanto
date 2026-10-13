@@ -16,8 +16,8 @@ from quanto.config import BacktestSpec
 from quanto.backtest.dataset_schemas import DatasetBundle
 
 
-SCHEMA_VERSION = "2"
-FRAMEWORK_SCHEMA_VERSION = "3"
+SCHEMA_VERSION = "4"
+FRAMEWORK_SCHEMA_VERSION = "5"
 REPORT_TABLE_COLUMNS = {"curves": ["date", "equity", "return", "drawdown", "benchmark_equity", "benchmark_return"],
     "monthly_returns": ["period", "return"], "annual_returns": ["period", "return"],
     "matched_trades": MATCH_COLUMNS, "open_lots": OPEN_COLUMNS}
@@ -57,7 +57,7 @@ def _definitions(spec: BacktestSpec, bundle: DatasetBundle) -> dict[str, dict]:
         "final_equity": {"description": "最后一个已完成交易日的现金、应收和持仓市值之和"},
         "round_trip_count": {"description": "每个代码从空仓到持仓再回到空仓算一次完整往返；多笔建仓或部分卖出不增加次数；拆分延续同一持仓阶段"},
         "open_lot_count": {"description": "期末未平仓 FIFO 批次数，按每笔买入留存数量计"},
-        "realized_pnl": {"description": "按 FIFO 匹配的已平仓价差，成交价已包含滑点；买卖佣金分别计入成本和扣减收入；不包含现金分红"},
+        "realized_pnl": {"description": "按 FIFO 匹配的已平仓价差，成交价已包含滑点；买卖费用（佣金、印花税、过户费）分别计入成本和扣减收入；不包含现金分红"},
         "unrealized_pnl": {"description": "最终已完成绩效日 positions 的未实现盈亏之和；当天没有持仓则为零，与已实现盈亏分列", "period": "final observed session", "formula": "sum(final_positions.unrealized_pnl)"},
         "turnover": {"description": "观察区间内买卖成交额之和除以日均权益；没有成交为零", "period": "all observed sessions", "denominator": "arithmetic mean of daily equity", "formula": "sum(fill.quantity * fill.price) / mean(daily_equity)"},
         "commission_paid": {"description": "观察区间内所有成交佣金之和；无成交为零", "period": "all observed sessions", "unit": bundle.manifest.currency},

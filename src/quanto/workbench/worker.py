@@ -254,16 +254,18 @@ def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
             raise ValueError("INVALID_OUTPUT: 产物哈希不一致")
     manifest = read_json(directory / "manifest.json")
     version = manifest.get("schema_version")
-    if version not in {"1", "2", "3"}:
+    if version not in {"1", "2", "3", "4", "5"}:
         raise ValueError("INVALID_OUTPUT: 不支持的报告结构版本")
     if manifest != {"schema_version": version, "files": {name: value for name, value in hashes.items() if name != "manifest.json"}}:
         raise ValueError("INVALID_OUTPUT: 产物清单不一致")
     # Historical schema 1 stored the approved target in signals; never invent its original intent.
     table_columns = dict(TABLE_COLUMNS)
+    if version in {"1", "2", "3"}:
+        table_columns["fills"] = [name for name in table_columns["fills"] if name not in {"stamp_duty", "transfer_fee"}]
     if version == "1":
         table_columns["signals"] = ["date", "intent", "weights", "reasons", "diagnostics"]
     columns = {**table_columns, **REPORT_TABLE_COLUMNS}
-    if version == "3":
+    if version in {"3", "5"}:
         columns = {name: ([*expected[:expected.index("symbol") + 1], "instrument_id", *expected[expected.index("symbol") + 1:]]
                   if "symbol" in expected else expected) for name, expected in columns.items()}
         table_columns = {name: columns[name] for name in table_columns}
@@ -280,9 +282,9 @@ def validate_backtest_output(directory: Path, hashes: dict[str, str]) -> None:
         raise ValueError("INVALID_OUTPUT: 指标结构无效")
     if metadata.get("table_columns") != table_columns or metadata.get("schema_version") != version:
         raise ValueError("INVALID_OUTPUT: 元数据结构无效")
-    if version in {"2", "3"} and (type(metadata.get("is_demo")) is not bool or not isinstance(metadata.get("source"), str)):
+    if version in {"2", "3", "4", "5"} and (type(metadata.get("is_demo")) is not bool or not isinstance(metadata.get("source"), str)):
         raise ValueError("INVALID_OUTPUT: 数据来源元数据无效")
-    if version == "3":
+    if version in {"3", "5"}:
         from quanto.framework import ResolvedConfiguration
         framework = ResolvedConfiguration.model_validate(metadata.get("framework"))
         if framework.operation != "fixed_backtest" or not isinstance(metadata.get("execution_provenance"), dict):

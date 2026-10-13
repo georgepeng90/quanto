@@ -303,7 +303,8 @@ def test_output_schema_and_hashes_must_both_validate(tmp_path):
     with pytest.raises(ValueError, match="INVALID_OUTPUT"):
         validate_backtest_output(root, hashes)
     hashes["equity.csv"] = hashlib.sha256((root / "equity.csv").read_bytes()).hexdigest()
-    manifest = {"schema_version": "2", "files": {name: value for name, value in hashes.items() if name != "manifest.json"}}
+    version = json.loads((root / "manifest.json").read_text(encoding="utf-8"))["schema_version"]
+    manifest = {"schema_version": version, "files": {name: value for name, value in hashes.items() if name != "manifest.json"}}
     (root / "manifest.json").write_text(json.dumps(manifest))
     hashes["manifest.json"] = hashlib.sha256((root / "manifest.json").read_bytes()).hexdigest()
     with pytest.raises(ValueError, match="INVALID_OUTPUT"):

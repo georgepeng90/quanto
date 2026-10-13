@@ -39,11 +39,11 @@
 - `ScreeningRequest`：名称、purpose、截至时间、基础范围描述/是否全市场、rules、evidence、candidates、Agent 模型和提示版本、幂等键。
 - `screen(request: ScreeningRequest) -> ScreeningResult`：不联网、不写文件；输出完整入选/排除记录、有序身份和输入摘要，不输出上涨概率。
 
-- [ ] **Step 1: Add failing tests.** 同一输入同一结果；Agent 排第一但流动性不达标仍排除；按顺序应用行业上限；未知行业、未知状态、未来证据、重复证券、同代码不同身份均正确处理；目标不足和零入选保留结果。
-- [ ] **Step 2: Verify RED.** Run `.venv/Scripts/python.exe -m pytest tests/unit/test_stock_screening.py -q`。
-- [ ] **Step 3: Implement contracts and rules.** 日线只使用截止前已完成交易日，计算历史长度/平均成交额；披露只有日期按下一交易日收盘保守可用，缺所需日历不能猜。Agent 提供的数值有来源引用不等于独立核实，结果明确其证据级别。未被推荐但在输入范围的公司仍保留排除/未研究原因。
-- [ ] **Step 4: Verify GREEN.** 补测试：修改截止之后的材料不改变可用事实；摘录不宣称完整原文；缺风险说明或证据引用不能作为完整研究入选。校验能引用证据内容中的具体摘录，不能以虚构引用通过结构验证。
-- [ ] **Step 5: Inspect diff and commit.** `feat: add evidence-based stock screening rules`。
+- [x] **Step 1: Add failing tests.** 同一输入同一结果；Agent 排第一但流动性不达标仍排除；按顺序应用行业上限；未知行业、未知状态、未来证据、重复证券、同代码不同身份均正确处理；目标不足和零入选保留结果。
+- [x] **Step 2: Verify RED.** Run `.venv/Scripts/python.exe -m pytest tests/unit/test_stock_screening.py -q`。
+- [x] **Step 3: Implement contracts and rules.** 日线只使用截止前已完成交易日，计算历史长度/平均成交额；披露只有日期按下一交易日收盘保守可用，缺所需日历不能猜。Agent 提供的数值有来源引用不等于独立核实，结果明确其证据级别。未被推荐但在输入范围的公司仍保留排除/未研究原因。
+- [x] **Step 4: Verify GREEN.** 补测试：修改截止之后的材料不改变可用事实；摘录不宣称完整原文；缺风险说明或证据引用不能作为完整研究入选。校验能引用证据内容中的具体摘录，不能以虚构引用通过结构验证。
+- [x] **Step 5: Inspect diff and commit.** `feat: add evidence-based stock screening rules`。
 
 ### S2：不可变筛选记录与 Agent API/CLI
 
@@ -55,11 +55,11 @@
 - 路由 `POST/GET /api/screenings`、`GET /api/screenings/{id}`、`GET /api/screenings/{id}/export`；沿用现有同源本机鉴权。
 - CLI `quanto screening submit --json request.json`、`list`、`show <id>`、`export <id> --output result.json`，使用同一 API。
 
-- [ ] **Step 1: Add failing tests.** 提交/读取/导出一致，同键同内容复用、异内容 409；未授权调用失败；文本中的指令只原样作为证据；损坏文件不能读取成成功结果；数据库升级可重复且不改历史数据。
-- [ ] **Step 2: Verify RED.** Run `.venv/Scripts/python.exe -m pytest tests/integration/test_screening_api.py -q`。
-- [ ] **Step 3: Implement persistence and routes.** 先计算完整结果再原子发布索引；失败不暴露半条 ready 记录。禁止用请求中的路径读取任意本地文件。分页 limit 1–100，确定排序。
-- [ ] **Step 4: Verify GREEN.** API/CLI 等价测试覆盖一次完整往返及并发幂等；输出文件只写用户指定的新目标或明确覆盖操作。
-- [ ] **Step 5: Inspect diff and commit.** `feat: persist stock screening records and agent API`。
+- [x] **Step 1: Add failing tests.** 提交/读取/导出一致，同键同内容复用、异内容 409；未授权调用失败；文本中的指令只原样作为证据；损坏文件不能读取成成功结果；数据库升级可重复且不改历史数据。
+- [x] **Step 2: Verify RED.** Run `.venv/Scripts/python.exe -m pytest tests/integration/test_screening_api.py -q`。
+- [x] **Step 3: Implement persistence and routes.** 先计算完整结果再原子发布索引；失败不暴露半条 ready 记录。禁止用请求中的路径读取任意本地文件。分页 limit 1–100，确定排序。
+- [x] **Step 4: Verify GREEN.** API/CLI 等价测试覆盖一次完整往返及并发幂等；输出文件只写用户指定的新目标或明确覆盖操作。
+- [x] **Step 5: Inspect diff and commit.** `feat: persist stock screening records and agent API`。
 
 ### S3：股票组合、模型和离线结果来源交接
 
@@ -72,21 +72,21 @@
 - BasketStore 的创建逻辑允许复用现有事务；组合与筛选关联原子发布。
 - 模型/作业冻结时将对应筛选记录和证据归档到运行产物并核对 hash；离线重解析使用这份归档，不能依赖当前网页或工作区数据库。
 
-- [ ] **Step 1: Add failing tests.** 创建成员顺序一致；零入选拒绝创建；篡改源引用、替换成员、损坏结果失败；重复交接不产生重复组合。旧 ETF 无来源字段时内容哈希和模型身份不变。
-- [ ] **Step 2: Verify RED.** Run `.venv/Scripts/python.exe -m pytest tests/integration/test_screening_handoff.py -q`。
-- [ ] **Step 3: Implement atomic handoff and provenance.** 模型创建校验筛选引用及最终成员；具体训练配置仍走现有 capability check。缺行情时保留筛选和组合，返回可理解的阻塞原因。
-- [ ] **Step 4: Verify GREEN.** 从筛选记录建股票模型、冻结作业、脱离数据库核验来源；开发回测报告包含筛选时点，并标记不能验证选股的历史区间。创建/查看/导出不启动训练；更换股票池不能续训原模型。
-- [ ] **Step 5: Inspect diff and commit.** `feat: carry screening evidence into stock models`。
+- [x] **Step 1: Add failing tests.** 创建成员顺序一致；零入选拒绝创建；篡改源引用、替换成员、损坏结果失败；重复交接不产生重复组合。旧 ETF 无来源字段时内容哈希和模型身份不变。
+- [x] **Step 2: Verify RED.** Run `.venv/Scripts/python.exe -m pytest tests/integration/test_screening_handoff.py -q`。
+- [x] **Step 3: Implement atomic handoff and provenance.** 模型创建校验筛选引用及最终成员；具体训练配置仍走现有 capability check。缺行情时保留筛选和组合，返回可理解的阻塞原因。
+- [x] **Step 4: Verify GREEN.** 从筛选记录建股票模型、冻结作业、脱离数据库核验来源；开发回测报告包含筛选时点，并标记不能验证选股的历史区间。创建/查看/导出不启动训练；更换股票池不能续训原模型。
+- [x] **Step 5: Inspect diff and commit.** `feat: carry screening evidence into stock models`。
 
 ### S4：网页与真实资料试运行
 
 **Files:** Create `web/src/pages/ScreeningsPage.tsx`, `web/src/pages/ScreeningDetailPage.tsx`, `web/tests/screening.test.tsx`, `examples/screening/README.md`, `docs/research/stock-screening-acceptance.md`；modify `web/src/App.tsx`, `web/src/api.ts`, `web/src/types.ts`, `web/src/pages/ModelsPage.tsx`, `src/quanto/api/app.py`, `README.md`。
 
-- [ ] **Step 1: Add failing UI tests.** 列表显示名称、时间、入选数量；详情可比较入选/排除原因、打开来源、看到缺口；“用于创建个股模型”保留组合选择。空结果和请求失败清楚呈现，不出现主操作用的修订/哈希字段。
-- [ ] **Step 2: Verify RED and implement pages.** 使用现有布局/表单/API，添加 `/screenings` 和 `/screenings/:id`，同步服务器 SPA 路由白名单。Agent 提交结果后刷新即可显示，网页不重复实现筛选算法。
-- [ ] **Step 3: Verify GREEN.** 相关 Vitest、typecheck、build，以及浏览器筛选详情→组合→模型创建流程；未就绪数据应停在明确缺口，不能产生训练任务。
-- [ ] **Step 4: Run one real public-information trial.** 归档少量真实公司资料和基础事实、调用 Agent API 生成结果，检查来源/时间/入选原因。只在独立验收工作区保存，不进行真实交易或长时训练。原文不可得、权限不足或关键状态缺失时明确记录失败/不足，禁止填假数据过验收。
-- [ ] **Step 5: Run applicable full checks, record evidence and commit.** 后端测试、Web 测试/类型/构建、相关浏览器测试；文档区分软件功能与尚未完成的投资效果研究。`feat: expose stock screening and training handoff`。
+- [x] **Step 1: Add failing UI tests.** 列表显示名称、时间、入选数量；详情可比较入选/排除原因、打开来源、看到缺口；“用于创建个股模型”保留组合选择。空结果和请求失败清楚呈现，不出现主操作用的修订/哈希字段。
+- [x] **Step 2: Verify RED and implement pages.** 使用现有布局/表单/API，添加 `/screenings` 和 `/screenings/:id`，同步服务器 SPA 路由白名单。Agent 提交结果后刷新即可显示，网页不重复实现筛选算法。
+- [x] **Step 3: Verify GREEN.** 相关 Vitest、typecheck、build，以及浏览器筛选详情→组合→模型创建流程；未就绪数据应停在明确缺口，不能产生训练任务。
+- [x] **Step 4: Run one real public-information trial.** 归档少量真实公司资料和基础事实、调用 Agent API 生成结果，检查来源/时间/入选原因。只在独立验收工作区保存，不进行真实交易或长时训练。原文不可得、权限不足或关键状态缺失时明确记录失败/不足，禁止填假数据过验收。
+- [x] **Step 5: Run applicable full checks, record evidence and commit.** 后端测试、Web 测试/类型/构建、相关浏览器测试；文档区分软件功能与尚未完成的投资效果研究。`feat: expose stock screening and training handoff`。
 
 ## 最终交付
 

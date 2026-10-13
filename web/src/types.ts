@@ -1,4 +1,12 @@
 export type Page<T> = { items: T[]; next_cursor: string | null }
+export type ScreeningSummary = { id: string; name: string; as_of: string; selected_count: number; candidate_count: number; shortfall: number }
+export type ScreeningRecord = {
+  id: string; result_hash: string
+  request: { name: string; purpose: string; as_of: string; universe_description: string; universe_kind: string; agent_model: string; prompt_version: string
+    candidates: { instrument_id: import('./frameworkTypes').InstrumentId; name: string; business_summary: string; reasons: string[]; risks: string[]; counter_evidence: string[]; unknowns: string[]; citations: Record<string, { evidence_id: string; quote: string }[]> }[]
+    evidence: { id: string; source_name: string; source_locator: string; text: string; published_at: string | null; retrieved_at: string; archive_level: 'original' | 'excerpt' }[] }
+  result: { members: import('./frameworkTypes').InstrumentId[]; shortfall: number; candidates: { instrument_id: import('./frameworkTypes').InstrumentId; decision: 'selected' | 'excluded' | 'not_researched'; reasons: string[] }[] }
+}
 export type ParameterSchema = { type: string; title?: string; description?: string; default?: unknown; enum?: unknown[]; properties?: Record<string, ParameterSchema>; items?: ParameterSchema; required?: string[]; minimum?: number; maximum?: number }
 export type DatasetManifest = {
   source: string; is_demo: boolean; price_mode: 'raw_cash' | 'adjusted_research'; currency?: string

@@ -4,7 +4,9 @@
 
 本机网页回测工作台已实现：用户和 Agent 共用数据版本、策略修订、实验、队列、结果与导出服务。首版验证平台为 Windows，采用本机单用户、ETF 日线研究。第一次了解项目，先看[工作台入门与完整讲解](docs/00_工作台入门与完整讲解.md)，其中说明页面用途、一次回测的过程、结果解读和研究边界。具体操作见[使用指南](docs/05_回测工作台使用指南.md)，设计见[工作台架构](docs/planning-artifacts/architecture.md)，逐阶段验证与取舍见[实施计划](docs/superpowers/plans/2026-09-29-web-backtest-workbench.md)。
 
-工作台主导航为“数据、固定策略、强化学习模型、回测”。固定策略和强化学习引用同一份有序组合、数据身份绑定及明确版本的定义，复用日线账户与风险执行。已注册 ETF 与沪深主板个股量价 PPO；股票需要可信原始价格、开盘权限、历史税费和公司行动证据，见[个股训练示例](examples/stock/README.md)。公司资讯用于上游选股，不进入量价观察。模型创建不启动训练；成功会话分别保存末次训练状态和验证最优权重，回测明确选择保存版本及评价用途。旧分钟模型和报告保持只读；已知 ETF 日线 PPO 组合通过原产物审核并关联后，可以续训和按原局部键回测。框架边界见[设计细则](docs/superpowers/specs/2026-10-08-multi-asset-framework-design.md)，个股研究交付要求见[接入清单](docs/research/stock-definition-onboarding.md)。
+工作台主导航为“数据、个股筛选、固定策略、强化学习模型、回测”。固定策略和强化学习引用同一份有序组合、数据身份绑定及明确版本的定义，复用日线账户与风险执行。已注册 ETF 与沪深主板个股量价 PPO；股票需要可信原始价格、开盘权限、历史税费和公司行动证据，见[个股训练示例](examples/stock/README.md)。公司资讯用于上游选股，不进入量价观察。模型创建不启动训练；成功会话分别保存末次训练状态和验证最优权重，回测明确选择保存版本及评价用途。旧分钟模型和报告保持只读；已知 ETF 日线 PPO 组合通过原产物审核并关联后，可以续训和按原局部键回测。框架边界见[设计细则](docs/superpowers/specs/2026-10-08-multi-asset-framework-design.md)，个股研究交付要求见[接入清单](docs/research/stock-definition-onboarding.md)。
+
+Agent 可通过 API/CLI 提交公司研究和来源摘录，后端执行硬条件筛选并保存完整排除理由。网页可从筛选结果创建股票组合并带入模型；零入选或训练数据不足时会明确阻止下一步。见[选股接口与真实资料示例](examples/screening/README.md)及[验收边界](docs/research/stock-screening-acceptance.md)。当前资料选择股票后的历史回测仅用于开发研究，不证明选股有效。
 
 历史分钟深度学习流程见[原使用指南](docs/06_深度学习工作台使用指南.md)和[原验收记录](docs/research/2026-10-03-deeplearning/acceptance.md)。其中的旧分钟训练、数据准备和独立 PPO 提交入口现返回 `MIGRATION_REQUIRED`；历史报告和导出继续读取原产物。现有在线来源仍只提供已声明能力的日线数据。
 

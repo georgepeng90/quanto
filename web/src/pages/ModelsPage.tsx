@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api, describeError } from '../api'
 import { ModelCreation } from '../components/ModelCreation'
 import { taskTime } from '../components/timePresentation'
@@ -7,9 +7,12 @@ import type { InvestingModel, InvestingOverview } from '../investingTypes'
 
 export function ModelsPage() {
   const navigate = useNavigate()
+  const [search] = useSearchParams()
+  const incomingBasket = search.get('basket'), incomingRevision = Number(search.get('revision'))
+  const initialBasket = incomingBasket && Number.isSafeInteger(incomingRevision) && incomingRevision > 0 ? { basket_id: incomingBasket, revision: incomingRevision } : null
   const [models, setModels] = useState<InvestingModel[]>([]), [cursor, setCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState('')
-  const [creating, setCreating] = useState(false), [overview, setOverview] = useState<InvestingOverview | null>(null)
+  const [creating, setCreating] = useState(!!initialBasket), [overview, setOverview] = useState<InvestingOverview | null>(null)
   const [assetType, setAssetType] = useState(''), [basketId, setBasketId] = useState('')
   const [basketNames, setBasketNames] = useState<Record<string, string>>({})
   const [refresh, setRefresh] = useState(0)
@@ -54,6 +57,6 @@ export function ModelsPage() {
       <div className="record-list">{shown.map(model => <article key={model.id} className="record"><div className="record-head"><Link to={`/models/${encodeURIComponent(model.id)}`}>{model.name}</Link><span className="badge">{model.active_job_id ? '训练进行中' : model.version_count ? '可回测' : '待训练'}</span></div>
         <p>{model.framework_binding?.ordered_pairs.map(pair => `${pair.instrument_id.exchange}:${pair.instrument_id.code}`).join(' → ')} · {model.spec.frequency === 'weekly' ? '周度' : '月度'}决策</p>
         <p className="muted">已训练 {model.total_timesteps.toLocaleString('zh-CN')} 步 · {model.session_count} 次训练 · {model.version_count} 个保存轮次 · 创建 {taskTime(model.created_at)}</p></article>)}</div>{cursor && <button disabled={busy} onClick={() => void more()}>加载更多模型</button>}</section>
-    {creating && (overview ? overview.datasets.length ? <ModelCreation overview={overview} onCreated={model => navigate(`/models/${encodeURIComponent(model.id)}`)} /> : <section className="panel"><p>暂无日线数据版本。请到 <Link to="/datasets">行情数据</Link> 准备数据。</p></section> : <p>加载日线数据与设备信息…</p>)}
+    {creating && (overview ? overview.datasets.length ? <ModelCreation initialBasket={initialBasket} overview={overview} onCreated={model => navigate(`/models/${encodeURIComponent(model.id)}`)} /> : <section className="panel"><p>暂无日线数据版本。请到 <Link to="/datasets">行情数据</Link> 准备数据。</p></section> : <p>加载日线数据与设备信息…</p>)}
   </div>
 }

@@ -42,7 +42,7 @@ print(json.dumps({'dataset_id': dataset.id, 'basket_id': basket.basket_id, 'spec
   expect(trading).toBeTruthy()
   const refKey = (ref: { kind: string; id: string; version: string }) => JSON.stringify([ref.kind, ref.id, ref.version])
   await page.goto('/models')
-  await expect(page.getByRole('navigation', { name: '主导航' }).getByRole('link')).toHaveText(['数据', '固定策略', '强化学习模型', '回测'])
+  await expect(page.getByRole('navigation', { name: '主导航' }).getByRole('link')).toHaveText(['数据', '个股筛选', '固定策略', '强化学习模型', '回测'])
   await page.getByRole('button', { name: '新建模型', exact: true }).click()
   await page.getByRole('combobox', { name: '日线数据版本', exact: true }).selectOption(fixture.dataset_id)
   await page.getByRole('combobox', { name: '标的组合' }).selectOption(fixture.basket_id)

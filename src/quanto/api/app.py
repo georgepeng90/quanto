@@ -24,7 +24,7 @@ class FrontendFiles(StaticFiles):
         if path == "api" or path.startswith("api/"):
             raise StarletteHTTPException(404)
         # Only known client routes fall back; missing assets/private paths stay 404.
-        is_page = path in {".", "", "datasets", "experiments", "runs", "compare", "learning", "investing", "models"} or (path.startswith(("runs/", "models/")) and len(path.split("/")) == 2)
+        is_page = path in {".", "", "datasets", "experiments", "runs", "compare", "learning", "investing", "models", "screenings"} or (path.startswith(("runs/", "models/", "screenings/")) and len(path.split("/")) == 2)
         if is_page and scope["method"] in {"GET", "HEAD"}:
             return FileResponse(Path(self.directory) / "index.html", headers={"Cache-Control": "no-cache"})
         return await super().get_response(path, scope)

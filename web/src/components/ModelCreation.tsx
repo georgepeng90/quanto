@@ -42,9 +42,9 @@ function serverReport(error: unknown): CapabilityReport | null {
   return value && typeof value === 'object' && 'status' in value ? value as CapabilityReport : null
 }
 
-export function ModelCreation({ overview, onCreated }: { overview: InvestingOverview; onCreated: (model: InvestingModel) => void }) {
+export function ModelCreation({ overview, onCreated, initialBasket = null }: { overview: InvestingOverview; onCreated: (model: InvestingModel) => void; initialBasket?: BasketRevisionRef | null }) {
   const [definitions, setDefinitions] = useState<Definition[]>([])
-  const [datasetId, setDatasetId] = useState(''), [basket, setBasket] = useState<BasketRevisionRef | null>(null)
+  const [datasetId, setDatasetId] = useState(''), [basket, setBasket] = useState<BasketRevisionRef | null>(initialBasket)
   const [basketRevision, setBasketRevision] = useState<FrozenBasketRevision | null>(null)
   const [learningId, setLearningId] = useState(''), [tradingId, setTradingId] = useState('')
   const [spec, setSpec] = useState(initialSpec), [learningParams, setLearningParams] = useState<Record<string, unknown>>({})

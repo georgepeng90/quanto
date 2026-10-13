@@ -1,6 +1,7 @@
 import type { InvestingModel, InvestingModelDetail, InvestingModelSummary, TrainingHistoryPage, TrainingHistoryQuery, InvestingArtifact, InvestingChart, InvestingOverview, InvestingTablePage } from './investingTypes'
 import type { BacktestCatalogRow, ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
 import type { LearningArtifact, LearningChart, LearningOverview, LearningTablePage } from './learningTypes'
+import type { ScreeningRecord, ScreeningSummary } from './types'
 import type { BasketCreateRequest, BasketDetail, BasketRevisionRequest, BasketSummary, CapabilityCheckRequest, CapabilityReport, Definition, FrozenBasketRevision, FetchJobRequest, ModelCreateRequest, ResumeRequest, PolicyBacktestRequest } from './frameworkTypes'
 
 export class ApiError extends Error {
@@ -64,6 +65,10 @@ const json = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'Cont
 const list = <T>(name: string, cursor?: string) => request<Page<T>>(`/${name}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)
 
 export const api = {
+  screenings: (cursor?: string, signal?: AbortSignal) => request<Page<ScreeningSummary>>(`/screenings${queryString({ cursor })}`, { signal }),
+  screening: (id: string, signal?: AbortSignal) => request<ScreeningRecord>(`/screenings/${encodeURIComponent(id)}`, { signal }),
+  useScreening: (id: string, name: string, key: string) => request<FrozenBasketRevision>(`/screenings/${encodeURIComponent(id)}/basket`, json({ name, idempotency_key: key })),
+  exportScreening: (id: string) => download(`/screenings/${encodeURIComponent(id)}/export`),
   listBaskets: (cursor?: string) => list<BasketSummary>('baskets', cursor),
   getBasket: (id: string) => request<BasketDetail>(`/baskets/${encodeURIComponent(id)}`),
   createBasket: (body: BasketCreateRequest) => request<FrozenBasketRevision>('/baskets', json(body)),

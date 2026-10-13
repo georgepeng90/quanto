@@ -25,8 +25,8 @@ beforeEach(() => {
 
 test('four domains and stock basket revision preserve canonical ordered members and CAS', async () => {
   renderBaskets()
-  expect(screen.getByRole('navigation', { name: '主导航' }).querySelectorAll('a')).toHaveLength(4)
-  expect([...screen.getByRole('navigation', { name: '主导航' }).querySelectorAll('a')].map(item => item.textContent)).toEqual(['数据', '固定策略', '强化学习模型', '回测'])
+  expect(screen.getByRole('navigation', { name: '主导航' }).querySelectorAll('a')).toHaveLength(5)
+  expect([...screen.getByRole('navigation', { name: '主导航' }).querySelectorAll('a')].map(item => item.textContent)).toEqual(['数据', '个股筛选', '固定策略', '强化学习模型', '回测'])
   await userEvent.click(await screen.findByRole('button', { name: '股票选择' }))
   expect(screen.getByText(/没有股票运行方案/)).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '添加成员' }))

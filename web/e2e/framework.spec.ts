@@ -7,7 +7,7 @@ test('stock portfolios preserve edits and explain unavailable execution in the f
   const { token } = await (await page.request.get('/api/session')).json()
   const headers = { Authorization: `Bearer ${token}` }
   await page.goto('/datasets?tab=baskets')
-  await expect(page.getByRole('navigation', { name: '主导航' }).getByRole('link')).toHaveText(['数据', '固定策略', '强化学习模型', '回测'])
+  await expect(page.getByRole('navigation', { name: '主导航' }).getByRole('link')).toHaveText(['数据', '个股筛选', '固定策略', '强化学习模型', '回测'])
   await page.getByLabel('篮子名称', { exact: true }).fill('E2E 公司选择')
   await page.getByLabel('交易所', { exact: true }).fill('SZSE')
   await page.getByRole('combobox', { name: '类型', exact: true }).selectOption('stock')

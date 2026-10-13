@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-10-14",
+  "status": "training_not_started_data_incomplete",
+  "request": {
+    "screening_id": "18309d3c-1fe7-4a3b-ae02-7c6db8cb3be9",
+    "basket_revision_ref": {
+      "basket_id": "98b3d781-c416-4b64-af88-9f4512550994",
+      "revision": 1
+    },
+    "basket_content_hash": "3a6bc97a107da95f4f4c10c3ac8de6312fd9990e71c9e0d3ab2481c62e501475",
+    "selected_stocks": 34,
+    "successful_sessions_per_method": 600,
+    "decision_steps_per_session": 1024,
+    "decision_steps_per_method": 614400,
+    "methods": [
+      {
+        "definition": "stock-ppo-cash-state-log@1",
+        "reward": "net-log-return-with-state-v1",
+        "completed_sessions": 0
+      },
+      {
+        "definition": "stock-ppo-cash-dsr@1",
+        "reward": "differential-sharpe-v1",
+        "completed_sessions": 0
+      }
+    ],
+    "training_jobs_submitted": 0
+  },
+  "checked_workspace": {
+    "url": "http://127.0.0.1:8770",
+    "path": "data/research-20261001",
+    "registered_datasets": 6,
+    "registered_stock_datasets": 0,
+    "note": "All six registered datasets use adjusted_research ETF data. No source tables were synthesized or validation rules relaxed."
+  },
+  "local_price_archive": {
+    "directory": ".superpowers/screening-round2-20261014/raw",
+    "price_request": "fqt=0 (unadjusted)",
+    "source": "Eastmoney public daily bar responses",
+    "start": "2024-01-02",
+    "end": "2026-10-13",
+    "stocks": 34,
+    "rows": 22771,
+    "observed_dates": 670,
+    "sha256_verified": true,
+    "coverage_note": "Observed-date union is not an independent completeness certificate for the exchange calendar. This is source coverage, not a frozen train/validation split.",
+    "absent_quotes": {
+      "SZSE:stock:002128": [
+        "2025-05-06",
+        "2025-05-07",
+        "2025-05-08",
+        "2025-05-09",
+        "2025-05-12",
+        "2025-05-13",
+        "2025-05-14",
+        "2025-05-15",
+        "2025-05-16"
+      ]
+    }
+  },
+  "public_source_probes": {
+    "corporate_actions": {
+      "directory": "outputs/stock-round3-training-20261014/corporate-action-probe",
+      "stocks_returned": 34,
+      "ex_date_records_in_interval": 147,
+      "report": "RPT_SHAREBONUS_DET",
+      "status": "candidate_records_not_complete_execution_ledger",
+      "missing": [
+        "cash dividend payment date",
+        "bonus share credit/listing dates where relevant",
+        "independently checked complete coverage of action types"
+      ],
+      "cninfo_api_result": "HTTP 200 with application resultcode 401 (unauthorized); access restrictions were not bypassed.",
+      "official_example": {
+        "url": "https://static.cninfo.com.cn/finalpage/2025-06-18/1223899382.PDF",
+        "sha256": "af0830aaf4ae6f311c8e8cce469faac5b22326149b50787319ad12ae699acf26",
+        "note": "One implementation notice demonstrates that payment dates can be obtained from original announcements; it does not establish coverage for the other events."
+      }
+    },
+    "opening_status": {
+      "directory": "outputs/stock-round3-training-20261014/open-status-probe",
+      "status": "incomplete",
+      "required_rows_for_observed_interval": 22780,
+      "known_suspension": "Official SZSE notices corroborate 002128's May 6 halt and May 19 resumption.",
+      "historical_feed_probe": "Eastmoney suspension queries for 2025-05-06 and 2025-05-12 returned success=false/code9501; 2026-10-13 succeeded.",
+      "timestamp_issue": "26/27 SZSE announcement metadata timestamps were exactly midnight; date precision and HTTP Last-Modified are not proof of first public availability before opening.",
+      "primary_reference": "https://www.szse.cn/marketServices/technicalservice/interface/P020240809675798875168.pdf",
+      "conclusion": "No complete public historical premarket reference archive and side-permission series was found in these bounded probes. This does not claim that no such source exists."
+    },
+    "fees": {
+      "directory": "outputs/stock-round3-training-20261014/fee-source-probe",
+      "status": "sources_archived_rules_not_imported",
+      "scope_note": "Dated official tax sources and ChinaClear fee schedules archived. Historical transfer-fee notice original was not obtained; contemporaneous reproduction is marked secondary. No exhaustive amendment-history assertion.",
+      "source_index": "outputs/stock-round3-training-20261014/fee-source-probe/source-index.json"
+    }
+  },
+  "blocking_requirement": "A source-backed stock raw_cash dataset must pass capabilities/check before either model can be created and trained.",
+  "remaining_work": [
+    "Obtain complete historical opening status and buy/sell permissions from timestamped exchange reference archives or equivalent verifiable sources; do not infer permissions from daily closes/volume.",
+    "Complete corporate-action ledger, payment/credit dates and coverage evidence; validate historical fees and units.",
+    "Register the validated stock dataset, freeze identical time partitions and non-reward parameters for both methods, and submit exactly 600 successful 1024-step sessions per method with continuation receipts."
+  ],
+  "limitations": [
+    "Current-information screening followed by historical-price training is development research; it does not validate the historical effectiveness of the stock selection.",
+    "Synthetic software train/resume/backtest tests are not runs on these 34 real stocks."
+  ],
+  "local_evidence": "outputs/stock-round3-training-20261014/readiness.json",
+  "software": {
+    "commit": "bf91f56",
+    "status": "registered_and_loaded_in_workbench",
+    "verification": {
+      "focused_backend_unit_tests": 22,
+      "synthetic_stock_integration_tests": 4,
+      "stock_model_ui_tests": 2,
+      "typescript_typecheck": "passed",
+      "production_web_build": "passed",
+      "independent_review": "no_P1_or_P2_findings",
+      "all_11_previous_definition_hashes": "unchanged",
+      "live_definitions_after_reload": 13,
+      "existing_model_and_job_counts": "unchanged"
+    },
+    "note": "Integration tests use isolated synthetic data; they do not count toward either 600-session research chain."
+  },
+  "evidence_index": {
+    "path": "outputs/stock-round3-training-20261014/evidence-index.json",
+    "files": 121,
+    "sha256": "d22a246385aceedb319a55e78d1fcce144f7ed68a1f2c2513ec7777b5fbe7fd1"
+  }
+}

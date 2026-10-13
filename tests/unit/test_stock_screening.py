@@ -104,3 +104,33 @@ def test_future_bars_do_not_supply_liquidity_or_history():
     result = run(payload)
     assert not result.members
     assert "insufficient_history" in result.candidates[0].reasons
+
+
+def test_old_calendar_cannot_make_stale_status_and_liquidity_current():
+    payload = screening_request()
+    payload["as_of"] = "2026-12-31T16:00:00+08:00"
+    payload["trading_days"] = payload["trading_days"][:2]
+    result = run(payload)
+    assert not result.members
+    assert "incomplete_calendar" in result.candidates[0].reasons
+
+
+@pytest.mark.parametrize("problem", ["future", "superseded"])
+def test_universe_citations_obey_the_same_time_and_revision_rules(problem):
+    payload = screening_request()
+    universe = deepcopy(payload["evidence"][0])
+    universe.update(id="universe", text="complete universe list")
+    payload["evidence"].append(universe)
+    payload.update(universe_kind="claimed_full_market", universe_citation={"evidence_id": "universe", "quote": "complete universe list"})
+    assert run(payload).members
+    if problem == "future":
+        universe["published_at"] = "2026-10-15T08:00:00+08:00"
+        reason = "unavailable_evidence:universe"
+    else:
+        revision = deepcopy(universe)
+        revision.update(id="revised-universe", revises="universe")
+        payload["evidence"].append(revision)
+        reason = "superseded_evidence:universe"
+    result = run(payload)
+    assert not result.members
+    assert reason in result.candidates[0].reasons

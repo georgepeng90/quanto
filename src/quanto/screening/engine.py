@@ -36,8 +36,11 @@ def screen(request: ScreeningRequest) -> ScreeningResult:
 
     outcomes = []
     eligible = []
+    scope_reasons = citation_reasons((request.universe_citation,), "universe") if request.universe_citation else []
+    if request.trading_days and request.trading_days[-1] < request.as_of.astimezone(SHANGHAI).date():
+        scope_reasons.append("incomplete_calendar")
     for index, candidate in enumerate(request.candidates):
-        reasons = []
+        reasons = list(scope_reasons)
         identity = candidate.instrument_id
         if identity.instrument_type != "stock" or identity.exchange not in {"SSE", "SZSE"}:
             reasons.append("unsupported_instrument")

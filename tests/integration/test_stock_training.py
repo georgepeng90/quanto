@@ -6,13 +6,14 @@ import pytest
 
 from quanto.api.app import create_app
 from quanto.backtest.stock_trading import STOCK_TRADING_DEFINITION
-from quanto.investing.stock_definitions import STOCK_PPO_DEFINITION
+from quanto.investing.stock_definitions import (STOCK_PPO_DEFINITION, STOCK_PPO_DSR_DEFINITION,
+    STOCK_PPO_STATE_LOG_DEFINITION)
 from quanto.workbench.baskets import BasketStore
 from quanto.workbench.bindings import BindingStore
 from tests.fixtures.stock_training_cases import stock_case, stock_identity_evidence
 
 
-def stock_workspace(tmp_path, monkeypatch, *, missing_rules=False):
+def stock_workspace(tmp_path, monkeypatch, *, missing_rules=False, learning_definition=STOCK_PPO_DEFINITION):
     market = tmp_path / "market.json"
     market.write_text(json.dumps({"root": str(tmp_path / "market")}))
     monkeypatch.setenv("QUANTO_MARKET_CONFIG", str(market))
@@ -40,7 +41,7 @@ def stock_workspace(tmp_path, monkeypatch, *, missing_rules=False):
     basket = BasketStore(store).create("Stock research", tuple(a.instrument_id for a in binding.assets), "synthetic", "stock")
     del spec["backtest"]["symbols"]
     request = dict(dataset_id=dataset.id, spec=spec, framework_contract_version="multi-asset-v1",
-        basket_revision_ref=basket.ref.model_dump(mode="json"), learning_definition_ref=STOCK_PPO_DEFINITION.ref.model_dump(mode="json"),
+        basket_revision_ref=basket.ref.model_dump(mode="json"), learning_definition_ref=learning_definition.ref.model_dump(mode="json"),
         trading_definition_ref=STOCK_TRADING_DEFINITION.ref.model_dump(mode="json"))
     client = TestClient(app, base_url="http://127.0.0.1")
     headers = {"Authorization": f"Bearer {client.get('/api/session').json()['token']}"}
@@ -55,8 +56,13 @@ def test_stock_capability_blocks_missing_evidence_without_queueing(tmp_path, mon
     assert app.state.service.store.list_jobs() == []
 
 
-def test_stock_model_trains_resumes_and_backtests_registered_versions(tmp_path, monkeypatch):
-    app, client, headers, request = stock_workspace(tmp_path, monkeypatch)
+@pytest.mark.parametrize("learning_definition", [
+    STOCK_PPO_DEFINITION, STOCK_PPO_STATE_LOG_DEFINITION, STOCK_PPO_DSR_DEFINITION,
+], ids=["net-log", "state-log", "dsr"])
+def test_stock_model_trains_resumes_and_backtests_registered_versions(tmp_path, monkeypatch, learning_definition):
+    app, client, headers, request = stock_workspace(
+        tmp_path, monkeypatch, learning_definition=learning_definition)
+    request["spec"]["reward_version"] = learning_definition.reward_version
     from quanto.screening.contracts import ScreeningRequest
     from quanto.screening.store import ScreeningStore
     from tests.fixtures.screening_cases import screening_request

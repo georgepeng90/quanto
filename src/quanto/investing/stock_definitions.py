@@ -4,10 +4,11 @@ import inspect
 
 from quanto.backtest import engine, ledger, models, orders, metrics
 from quanto.backtest.stock_trading import STOCK_TRADING_DEFINITION
-from quanto.framework import DefinitionRef, RequirementField, RequirementItem, canonical_hash
+from quanto.framework import DefinitionRef, RequirementField, RequirementItem, canonical_hash, thaw_json
 from quanto.investing.definitions import (ETF_MARKET_FEATURES, LearningDefinition, _etf_feature_params,
     _etf_market_features, _etf_sources, _etf_encode, _etf_decode, _etf_reward, _etf_schedule, _etf_environment_factory)
 from quanto.investing.environment import DailyETFEnv, etf_market_values
+from quanto.investing.rewards import DSR_REWARD_VERSION, STATE_LOG_REWARD_VERSION, DifferentialSharpeState, reward_parameters
 
 
 def _stock_feature_requirements(params, basket, interval):
@@ -52,3 +53,23 @@ STOCK_PPO_DEFINITION = LearningDefinition(
     feature_params_hook=_etf_feature_params, requirements_hook=_stock_feature_requirements,
     observation_encoder=_etf_encode, action_decoder=_etf_decode, reward_hook=_etf_reward,
     schedule_hook=_etf_schedule, environment_factory=_etf_environment_factory)
+
+
+def _stock_reward_definition(definition_id: str, reward_version: str) -> LearningDefinition:
+    schema = thaw_json(STOCK_PPO_DEFINITION.parameter_schema)
+    schema["properties"]["reward_version"]["const"] = reward_version
+    return replace(STOCK_PPO_DEFINITION,
+        ref=DefinitionRef(kind="learning", id=definition_id, version="1"),
+        implementation_hash=canonical_hash({
+            "base": STOCK_PPO_DEFINITION.implementation_hash,
+            "reward_version": reward_version,
+            "reward_state": inspect.getsource(DifferentialSharpeState),
+            "reward_parameters": inspect.getsource(reward_parameters),
+        }),
+        parameter_schema=schema, reward_version=reward_version)
+
+
+STOCK_PPO_STATE_LOG_DEFINITION = _stock_reward_definition(
+    "stock-ppo-cash-state-log", STATE_LOG_REWARD_VERSION)
+STOCK_PPO_DSR_DEFINITION = _stock_reward_definition(
+    "stock-ppo-cash-dsr", DSR_REWARD_VERSION)

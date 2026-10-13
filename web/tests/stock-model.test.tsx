@@ -22,6 +22,8 @@ test.each([true, false])('stock model shows matching plans and creation remains 
     }
     if (path === '/api/definitions') return Response.json({ items: [
       { ref: stockRef, supported_instrument_types: ['stock'], parameter_schema: schema, allowed_trading_refs: [tradingRef], action_version: 'hold-target-cash-quartiles-v2', reward_version: 'net-log-return-v1' },
+      { ref: { ...stockRef, id: 'stock-ppo-cash-state-log' }, supported_instrument_types: ['stock'], parameter_schema: schema, allowed_trading_refs: [tradingRef], action_version: 'hold-target-cash-quartiles-v2', reward_version: 'net-log-return-with-state-v1' },
+      { ref: { ...stockRef, id: 'stock-ppo-cash-dsr' }, supported_instrument_types: ['stock'], parameter_schema: schema, allowed_trading_refs: [tradingRef], action_version: 'hold-target-cash-quartiles-v2', reward_version: 'differential-sharpe-v1' },
       { ref: tradingRef, supported_instrument_types: ['stock'], parameter_schema: { type: 'object', properties: {} } },
       { ref: { ...stockRef, id: 'etf-ppo-cash-log' }, supported_instrument_types: ['etf'], parameter_schema: schema },
     ] })
@@ -36,6 +38,9 @@ test.each([true, false])('stock model shows matching plans and creation remains 
   await userEvent.selectOptions(await screen.findByLabelText('标的组合'), 'stock')
   await screen.findByText(/组合成员/)
   expect(screen.queryByRole('option', { name: 'etf-ppo-cash-log' })).not.toBeInTheDocument()
+  expect(await screen.findByRole('option', { name: '个股量价 PPO' })).toBeVisible()
+  expect(screen.getByRole('option', { name: '个股净对数收益 PPO（带状态）' })).toBeVisible()
+  expect(screen.getByRole('option', { name: '个股 DSR PPO（差分夏普）' })).toBeVisible()
   await userEvent.selectOptions(screen.getByLabelText('日线数据版本'), 'd1')
   await userEvent.selectOptions(screen.getByLabelText('学习定义'), JSON.stringify(['learning', stockRef.id, '1']))
   expect(screen.getByRole('option', { name: '个股量价 PPO' })).toBeVisible()

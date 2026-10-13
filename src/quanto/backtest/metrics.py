@@ -46,9 +46,9 @@ def match_trades(result: BacktestResult) -> tuple[pd.DataFrame, pd.DataFrame, in
             continue
         quantity = int(row.quantity)
         price = float(row.price)
-        commission = float(row.commission)
+        fees = float(row.commission + row.stamp_duty + row.transfer_fee)
         if row.side == "buy":
-            queue.append({"entry_date": day, "quantity": quantity, "basis": money(quantity * price + commission)})
+            queue.append({"entry_date": day, "quantity": quantity, "basis": money(quantity * price + fees)})
             continue
         remaining = quantity
         while remaining:
@@ -57,7 +57,7 @@ def match_trades(result: BacktestResult) -> tuple[pd.DataFrame, pd.DataFrame, in
             lot = queue[0]
             take = min(remaining, lot["quantity"])
             basis = lot["basis"] if take == lot["quantity"] else money(lot["basis"] * take / lot["quantity"])
-            proceeds = money(take * price - commission * take / quantity)
+            proceeds = money(take * price - fees * take / quantity)
             matched.append(dict(symbol=symbol, entry_date=lot["entry_date"], exit_date=day,
                 quantity=take, cost_basis=basis, proceeds=proceeds, realized_pnl=money(proceeds - basis),
                 holding_sessions=sessions[day] - sessions[lot["entry_date"]]))
@@ -99,6 +99,8 @@ def compute_metrics(result: BacktestResult, spec: BacktestSpec) -> dict[str, flo
     fills = result.fills
     traded_notional = float((fills.quantity.astype(float) * fills.price.astype(float)).sum()) if not fills.empty else 0.0
     commission_paid = float(fills.commission.astype(float).sum()) if not fills.empty else 0.0
+    stamp_duty_paid = float(fills.stamp_duty.astype(float).sum()) if not fills.empty else 0.0
+    transfer_fee_paid = float(fills.transfer_fee.astype(float).sum()) if not fills.empty else 0.0
     slippage_cost = float(fills.slippage_cost.astype(float).sum()) if not fills.empty else 0.0
     final_positions = result.positions.loc[pd.to_datetime(result.positions.date) == pd.Timestamp(result.equity.date.iloc[-1])]
     metrics = dict(total_return=total_return, annual_return=annual_return, volatility=volatility,
@@ -108,7 +110,8 @@ def compute_metrics(result: BacktestResult, spec: BacktestSpec) -> dict[str, flo
         unrealized_pnl=float(final_positions.unrealized_pnl.astype(float).sum()),
         turnover=traded_notional / float(equity.mean()),
         commission_paid=commission_paid, slippage_cost=slippage_cost,
-        execution_cost=commission_paid + slippage_cost,
+        stamp_duty_paid=stamp_duty_paid, transfer_fee_paid=transfer_fee_paid,
+        execution_cost=commission_paid + stamp_duty_paid + transfer_fee_paid + slippage_cost,
         average_invested_ratio=float((result.equity.market_value.astype(float).reset_index(drop=True) / equity).mean()),
         average_holding_sessions=float(weighted_days) if weighted_days is not None else None,
         dividend_income=income("dividend_payment"), interest_income=income("interest"))

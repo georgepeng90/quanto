@@ -33,6 +33,12 @@ class Fill:
     commission: float
     slippage_cost: float
     sellable_date: pd.Timestamp | None = None
+    stamp_duty: float = 0.0
+    transfer_fee: float = 0.0
+
+    @property
+    def total_fees(self) -> float:
+        return money(self.commission + self.stamp_duty + self.transfer_fee)
 
 
 TABLE_COLUMNS = {

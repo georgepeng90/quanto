@@ -62,7 +62,9 @@ def _definitions(spec: BacktestSpec, bundle: DatasetBundle) -> dict[str, dict]:
         "turnover": {"description": "观察区间内买卖成交额之和除以日均权益；没有成交为零", "period": "all observed sessions", "denominator": "arithmetic mean of daily equity", "formula": "sum(fill.quantity * fill.price) / mean(daily_equity)"},
         "commission_paid": {"description": "观察区间内所有成交佣金之和；无成交为零", "period": "all observed sessions", "unit": bundle.manifest.currency},
         "slippage_cost": {"description": "观察区间内成交记录的滑点成本之和；已包含在成交价和权益中，不再扣减", "period": "all observed sessions", "unit": bundle.manifest.currency},
-        "execution_cost": {"description": "佣金加记录的滑点成本，仅展示执行代价；不从已含成本的净收益再次扣减", "period": "all observed sessions", "formula": "commission_paid + slippage_cost", "unit": bundle.manifest.currency},
+        "stamp_duty_paid": {"description": "成交印花税合计", "period": "all observed sessions", "unit": bundle.manifest.currency},
+        "transfer_fee_paid": {"description": "成交过户费合计", "period": "all observed sessions", "unit": bundle.manifest.currency},
+        "execution_cost": {"description": "佣金、印花税、过户费加记录的滑点成本；不从已含成本的净收益再次扣减", "period": "all observed sessions", "formula": "commission_paid + stamp_duty_paid + transfer_fee_paid + slippage_cost", "unit": bundle.manifest.currency},
         "average_invested_ratio": {"description": "观察期每天持仓市值除当天权益，再对所有绩效日做算术平均；空仓日计零", "period": "all observed sessions", "denominator": "observed session count", "formula": "mean(daily_market_value / daily_equity)"},
         "average_holding_sessions": {"description": "FIFO 已平仓匹配行按平仓数量加权的持有交易日；没有平仓匹配时为空，未平仓批次单列", "denominator": "matched closed quantity"},
         "dividend_income": {"description": "现金分红支付事件之和，与交易价差分开"},
@@ -101,6 +103,10 @@ def build_report(result: BacktestResult, bundle: DatasetBundle, spec: BacktestSp
         "benchmark_return": benchmark_return})
     matched, open_lots, _ = match_trades(result)
     warnings = list(bundle.manifest.limitations)
+    if "stock_sources" in bundle.auxiliary:
+        from quanto.backtest.stock_data import STOCK_DIVIDEND_LIMITATION
+        if STOCK_DIVIDEND_LIMITATION not in warnings:
+            warnings.append(STOCK_DIVIDEND_LIMITATION)
     if bundle.manifest.is_demo:
         warnings.insert(0, "演示数据：合成绩效，不代表真实市场表现")
     if bundle.manifest.benchmark_type != "total_return":

@@ -15,7 +15,7 @@ from quanto.config import BacktestSpec
 from quanto.backtest.dataset_schemas import DatasetBundle
 from quanto.data.point_in_time import CORE_TABLES, TableSemantics, _bind_point_in_time
 from quanto.factors.features import FeatureCache, FeatureSetDefinition, FrozenTransform
-from quanto.framework import AssetBinding
+from quanto.framework import AssetBinding, ResearchInterval
 from quanto.risk.policy import RiskPolicy
 from quanto.strategies.base import Hold, Strategy, StrategyContext, TargetPortfolio, is_week_end, validate_intent, validate_warmup_window
 from .ledger import PortfolioLedger
@@ -78,6 +78,14 @@ class SessionRunner:
                 raise ValueError("DEFINITION_UNAVAILABLE: feature definition does not support basket")
         elif feature_definition is not None:
             raise ValueError("IDENTITY_UNRESOLVED: shared features require an asset binding")
+        from .stock_trading import StockTradingDefinition
+        from .stock_data import validate_stock_data
+        self.stock_context = None
+        if isinstance(trading_definition, StockTradingDefinition):
+            if asset_binding is None:
+                raise ValueError("IDENTITY_UNRESOLVED: stock execution requires an asset binding")
+            self.stock_context = validate_stock_data(bundle, asset_binding, tuple(spec.symbols),
+                ResearchInterval(start=spec.start, end=spec.end, warmup_start=spec.start))
         self.bundle, self.spec = bundle, spec
         self.trading_definition, self.asset_binding = trading_definition, asset_binding
         self.feature_definition, self.feature_params = feature_definition, dict(feature_params or {})
@@ -198,7 +206,8 @@ class SessionRunner:
             ledger.reserve_cash(max(0, -interest))
             opens, closes = prepared.quotes(asof)
             scheduled = [order for order in orders if order.status == "pending" and order.execution_date == asof]
-            fills = execute_open(scheduled, opens, status, ledger, spec.execution, trading_definition=self.trading_definition)
+            fills = execute_open(scheduled, opens, status, ledger, spec.execution, trading_definition=self.trading_definition,
+                                 stock_context=self.stock_context)
             tables["fills"].extend(asdict(fill) for fill in fills)
             ledger.apply_event(dict(event_type="interest", amount=interest))
             account("interest", amount=interest, opening_cash=interest_base, annual_rate=spec.metrics.cash_rate, annual_sessions=spec.metrics.annual_sessions)

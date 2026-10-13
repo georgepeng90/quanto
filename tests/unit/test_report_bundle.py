@@ -64,10 +64,10 @@ def test_overflowed_benchmark_return_is_rejected_before_export():
 def test_split_adjusts_fifo_matching_and_round_trip_counts_episodes():
     result, bundle, spec = _case(days=5)
     fills = pd.DataFrame([
-        dict(order_id="b1", trade_date="2024-01-02", symbol="A", side="buy", quantity=100, price=10, commission=10, slippage_cost=0, sellable_date="2024-01-03"),
-        dict(order_id="b2", trade_date="2024-01-03", symbol="A", side="buy", quantity=100, price=10, commission=0, slippage_cost=0, sellable_date="2024-01-04"),
-        dict(order_id="s1", trade_date="2024-01-04", symbol="A", side="sell", quantity=100, price=8, commission=5, slippage_cost=0, sellable_date=None),
-        dict(order_id="s2", trade_date="2024-01-05", symbol="A", side="sell", quantity=300, price=8, commission=0, slippage_cost=0, sellable_date=None),
+        dict(order_id="b1", trade_date="2024-01-02", symbol="A", side="buy", quantity=100, price=10, commission=10, slippage_cost=0, stamp_duty=0., transfer_fee=0., sellable_date="2024-01-03"),
+        dict(order_id="b2", trade_date="2024-01-03", symbol="A", side="buy", quantity=100, price=10, commission=0, slippage_cost=0, stamp_duty=0., transfer_fee=0., sellable_date="2024-01-04"),
+        dict(order_id="s1", trade_date="2024-01-04", symbol="A", side="sell", quantity=100, price=8, commission=5, slippage_cost=0, stamp_duty=0., transfer_fee=0., sellable_date=None),
+        dict(order_id="s2", trade_date="2024-01-05", symbol="A", side="sell", quantity=300, price=8, commission=0, slippage_cost=0, stamp_duty=0., transfer_fee=0., sellable_date=None),
     ])
     events = pd.DataFrame([dict(date="2024-01-04", event_type="split", symbol="A", amount=0, details={"split_ratio": 2})])
     report = build_report(replace(result, fills=fills, account_events=events), bundle, spec)
@@ -119,7 +119,7 @@ def test_canonical_csv_hash_ignores_order_table_row_and_column_order(tmp_path):
 def test_nullable_fill_date_is_blank_in_csv(tmp_path):
     result, bundle, spec = _case()
     fill = pd.DataFrame([dict(order_id="s1", trade_date=pd.Timestamp("2024-01-02"), symbol="A", side="sell",
-        quantity=1, price=10, commission=0, slippage_cost=0, sellable_date=pd.NaT)])
+        quantity=1, price=10, commission=0, slippage_cost=0, stamp_duty=0., transfer_fee=0., sellable_date=pd.NaT)])
     report = build_report(result, bundle, spec)
     write_backtest_outputs(tmp_path / "run", replace(result, fills=fill), report)
     assert "NaT" not in (tmp_path / "run" / "fills.csv").read_text(encoding="utf-8")

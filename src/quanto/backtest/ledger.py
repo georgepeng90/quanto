@@ -62,7 +62,7 @@ class PortfolioLedger:
         notional = money(fill.quantity * fill.price)
         lots = self.lots.setdefault(fill.symbol, [])
         if fill.side == "buy":
-            cost = money(notional + fill.commission)
+            cost = money(notional + fill.total_fees)
             if cost > self.available_cash + 1e-8:
                 raise ValueError("INSUFFICIENT_CASH: 可用现金不足")
             self.cash = money(self.cash - cost)
@@ -83,7 +83,7 @@ class PortfolioLedger:
                 if remaining == 0:
                     break
             self.lots[fill.symbol] = [lot for lot in lots if lot.quantity]
-            proceeds = money(notional - fill.commission)
+            proceeds = money(notional - fill.total_fees)
             self.cash = money(self.cash + proceeds)
             self.realized[fill.symbol] = money(self.realized.get(fill.symbol, 0) + proceeds - basis)
         self.marks[fill.symbol] = fill.price

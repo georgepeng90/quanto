@@ -1,5 +1,6 @@
 """Protect existing ETF behavior while the shared framework is introduced."""
 import json
+from copy import deepcopy
 
 import numpy as np
 import pytest
@@ -40,6 +41,15 @@ def test_etf_observations_actions_rewards_and_account_match_pre_framework_refere
     np.testing.assert_array_equal(actual["initial"]["observation"], expected["initial"]["observation"])
     for step, old_step in zip(actual["trace"], expected["trace"], strict=True):
         np.testing.assert_array_equal(step["observation"], old_step["observation"])
+    # New explicit fee columns are zero for ETFs; all original economic results remain frozen.
+    actual = deepcopy(actual)
+    fills = actual["tables"]["fills"]
+    for name in ("stamp_duty", "transfer_fee"):
+        index = fills["columns"].index(name)
+        assert all(row[index] == 0 for row in fills["rows"])
+        fills["columns"].pop(index)
+        for row in fills["rows"]:
+            row.pop(index)
     assert_equivalent(actual, expected, case_id)
 
 

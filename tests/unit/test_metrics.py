@@ -81,7 +81,7 @@ def test_turnover_fees_exposure_and_final_unrealized_pnl():
     equity = result.equity.copy()
     equity["market_value"] = [0, 100, 200]
     fills = pd.DataFrame([dict(order_id="b1", trade_date="2024-01-02", symbol="A", side="buy",
-        quantity=10, price=10, commission=1, slippage_cost=2, sellable_date="2024-01-03")])
+        quantity=10, price=10, commission=1, slippage_cost=2, stamp_duty=0., transfer_fee=0., sellable_date="2024-01-03")])
     positions = pd.DataFrame([dict(date="2024-01-02", symbol="A", shares=10, sellable_shares=10,
         market_value=100, weight=0.1, cost_basis=101, unrealized_pnl=999, realized_pnl=0),
         dict(date="2024-01-03", symbol="A", shares=10, sellable_shares=10,

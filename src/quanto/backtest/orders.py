@@ -39,21 +39,34 @@ def create_orders(intent, portfolio, reference_prices, signal_date, execution_da
     return result
 
 
-def execute_open(orders, open_quotes, status, ledger, execution_spec, *, trading_definition=ETF_TRADING_DEFINITION) -> list[Fill]:
+def execute_open(orders, open_quotes, status, ledger, execution_spec, *, trading_definition=ETF_TRADING_DEFINITION, stock_context=None) -> list[Fill]:
+    from .stock_trading import StockTradingDefinition
+    is_stock = isinstance(trading_definition, StockTradingDefinition)
+    if is_stock and stock_context is None:
+        raise ValueError("EXECUTION_CAPABILITY_MISSING: stock execution requires stock context")
     fills = []
 
-    def commission(quantity, price):
-        return trading_definition.fees(dict(quantity=int(quantity), price=float(price),
-            commission_rate=execution_spec.commission_rate, minimum_commission=execution_spec.minimum_commission))["commission"] if quantity else 0
+    def fees(order, quantity, price):
+        if not quantity:
+            return dict(commission=0., stamp_duty=0., transfer_fee=0.)
+        values = dict(quantity=int(quantity), price=float(price), commission_rate=execution_spec.commission_rate,
+                      minimum_commission=execution_spec.minimum_commission)
+        if is_stock:
+            day = pd.Timestamp(order.execution_date).date()
+            instrument = stock_context.instruments[order.symbol]
+            values.update(trade_date=day, instrument_id=instrument["instrument_id"], board=instrument["board"], side=order.side,
+                          fee_rule=stock_context.fee_rule(order.symbol, day, order.side))
+        return dict(stamp_duty=0., transfer_fee=0., **trading_definition.fees(values)) if not is_stock else trading_definition.fees(values)
 
     def cost(order, quantity, price):
-        return money(quantity * price + commission(quantity, price))
+        return money(quantity * price + sum(fees(order, quantity, price).values()))
 
     def complete(order, quantity, price, *, rejection_reason=None):
         if quantity:
             fill = Fill(order.id, order.execution_date, order.symbol, order.side, quantity, price,
-                commission(quantity, price), money(quantity * abs(price - open_quotes[order.symbol])),
-                ledger.settlement_date(order.execution_date, order.settlement_sessions) if order.side == "buy" else None)
+                slippage_cost=money(quantity * abs(price - open_quotes[order.symbol])),
+                sellable_date=ledger.settlement_date(order.execution_date, order.settlement_sessions) if order.side == "buy" else None,
+                **fees(order, quantity, price))
             ledger.apply_fill(fill)
             fills.append(fill)
         order.filled_quantity = quantity
@@ -69,6 +82,8 @@ def execute_open(orders, open_quotes, status, ledger, execution_spec, *, trading
         if order.status != "pending":
             continue
         state = status.get(order.symbol, {})
+        if is_stock:
+            state = stock_context.open_status[order.symbol, pd.Timestamp(order.execution_date).date()]
         allowed = trading_definition.eligibility({**state, "order_side": order.side})
         raw = open_quotes.get(order.symbol)
         if not allowed[f"can_{order.side}"]:
@@ -84,7 +99,7 @@ def execute_open(orders, open_quotes, status, ledger, execution_spec, *, trading
             quantity = min(order.quantity, available)
             if not (order.full_exit and quantity == ledger.snapshot(order.execution_date).shares.get(order.symbol, 0)):
                 quantity = quantity // order.lot_size * order.lot_size
-            if commission(quantity, price) > quantity * price + ledger.available_cash:
+            if sum(fees(order, quantity, price).values()) > quantity * price + ledger.available_cash:
                 quantity = 0
                 order.reason = "insufficient_fee_cash"
             complete(order, quantity, price)

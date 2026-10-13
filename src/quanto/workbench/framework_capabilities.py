@@ -10,7 +10,7 @@ from quanto.backtest.dataset_schemas import DatasetBundle
 from quanto.backtest.trading import TradingDefinition
 from quanto.config import BacktestSpec
 from quanto.data.point_in_time import CORE_TABLES, TableSemantics, _visible, session_cutoff
-from quanto.framework import AssetBinding, AssetMapping, CapabilityCheck, RequirementItem
+from quanto.framework import AssetBinding, AssetMapping, CapabilityCheck, RequirementItem, ResearchInterval
 
 
 def _check(name: str, ok: bool, path: str, code: str, message: str) -> CapabilityCheck:
@@ -114,6 +114,13 @@ def check_requirements(
     checks.append(_check("run_symbols", tuple(backtest_spec.symbols) == symbols, "backtest_spec.symbols",
                          "BINDING_MISMATCH", "Run symbols must equal selected local symbols in order."))
     types = {pair.instrument_id.instrument_type for pair in ordered_pairs}
+    if types == {"stock"}:
+        from quanto.backtest.stock_data import validate_stock_data
+        try:
+            validate_stock_data(bundle, binding, symbols, ResearchInterval(
+                start=backtest_spec.start, end=backtest_spec.end, warmup_start=backtest_spec.start))
+        except ValueError as exc:
+            checks.append(_check("stock_execution_evidence", False, "dataset.auxiliary", "DATA_REQUIREMENT_UNSATISFIED", str(exc)))
     checks.append(_check("basket_type", len(types) == 1, "ordered_pairs", "MIXED_BASKET_UNSUPPORTED",
                          "The execution definition needs one instrument type per run."))
     checks.append(_check("trading_assets", types.issubset(trading_definition.supported_instrument_types),

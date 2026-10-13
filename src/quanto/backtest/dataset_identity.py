@@ -96,6 +96,8 @@ def standard_table_semantics(bundle: DatasetBundle, evidence_ref: str) -> tuple[
         "status": {"date": day, "symbol": symbol, "status": {"dtype": "string", "unit": "category"}, **{name: {"dtype": "bool", "unit": "flag"} for name in ("can_buy", "can_sell")}},
         "events": {"symbol": symbol, "event_type": {"dtype": "string", "unit": "category"}, **{name: day for name in ("record_date", "ex_date", "pay_date")}, "cash_per_share": price("cash_per_share"), "split_ratio": {"dtype": "float", "unit": "ratio"}},
     }
+    if "board" in bundle.instruments:
+        schemas["instruments"]["board"] = {"dtype": "string", "unit": "category"}
     rules = {
         "prices": {"availability_rule": "session_close", "date_column": "date", "assumption": "daily OHLCV complete at close; next open execution only"},
         "benchmark": {"availability_rule": "session_close", "date_column": "date"},

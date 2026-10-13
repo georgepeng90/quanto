@@ -96,9 +96,10 @@ class TableSemantics(FrozenContract):
 
     @classmethod
     def from_binding(cls, binding: TableSemanticBinding, *, supported_versions: Collection[tuple[str, str]] = ()) -> TableSemantics:
+        from quanto.backtest.stock_data import STOCK_TABLE_VERSIONS
         # Non-builtins are enabled only by a trusted, explicitly registered definition.
         builtin = binding.table in CORE_TABLES and (binding.semantic_id, binding.version) == (f"daily-{binding.table}", "1")
-        if not builtin and (binding.semantic_id, binding.version) not in supported_versions:
+        if not builtin and (binding.semantic_id, binding.version) not in (*supported_versions, *STOCK_TABLE_VERSIONS):
             raise ValueError(f"DEFINITION_UNAVAILABLE: no reader for {binding.semantic_id}@{binding.version}")
         return cls(binding=binding, rules=cls.declared_rules(binding))
 

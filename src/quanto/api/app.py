@@ -105,6 +105,8 @@ def create_app(root: Path, frontend_dir: Path | None = None, *, templates_dir: P
         return JSONResponse({"code": code, "message": message, "details": {}}, status_code=exc.status_code)
 
     app.include_router(framework_router, prefix="/api")
+    from quanto.api.screening import router as screening_router
+    app.include_router(screening_router, prefix="/api")
     from quanto.learning.api import router as learning_router
     app.include_router(learning_router, prefix="/api")
     from quanto.investing.api import router as investing_router

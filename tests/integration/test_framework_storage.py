@@ -11,6 +11,7 @@ from quanto.framework import AssetBinding, BasketRevisionRef
 from quanto.workbench.baskets import BasketStore
 from quanto.workbench.bindings import BindingStore
 from quanto.workbench.store import WorkbenchStore
+from quanto.workbench.migrations import SCHEMA_VERSION
 from tests.fixtures.framework_cases import binding_values, instrument_values
 
 
@@ -47,7 +48,7 @@ def test_new_and_repeated_initialization(tmp_path):
     root = tmp_path / "workspace"
     store = WorkbenchStore(root)
     with store.transaction() as db:
-        assert db.execute("SELECT version FROM schema_version").fetchall()[0][0] == 3
+        assert db.execute("SELECT version FROM schema_version").fetchall()[0][0] == SCHEMA_VERSION
         assert db.execute("PRAGMA foreign_keys").fetchone()[0] == 1
         assert not db.execute("PRAGMA foreign_key_check").fetchall()
     before = dump(store.db_path)
@@ -64,7 +65,7 @@ def test_v1_upgrade_keeps_existing_data_and_is_repeatable(tmp_path):
     assert store.get_dataset("dataset-1").content_hash == "a" * 64
     with store.transaction() as db:
         assert json.loads(db.execute("SELECT spec_json FROM investing_models").fetchone()[0]) == {"name": "historical"}
-        assert db.execute("SELECT version FROM schema_version").fetchone()[0] == 3
+        assert db.execute("SELECT version FROM schema_version").fetchone()[0] == SCHEMA_VERSION
     migrated = dump(store.db_path)
     WorkbenchStore(root)
     assert dump(store.db_path) == migrated
@@ -83,7 +84,7 @@ def test_v2_upgrade_keeps_framework_records_and_is_repeatable(tmp_path):
     upgraded = WorkbenchStore(root)
     assert BasketStore(upgraded).get(basket.ref) == basket
     with upgraded.transaction() as db:
-        assert db.execute("SELECT version FROM schema_version").fetchone()[0] == 3
+        assert db.execute("SELECT version FROM schema_version").fetchone()[0] == SCHEMA_VERSION
         assert db.execute("SELECT name FROM sqlite_master WHERE name='run_contexts'").fetchone()
         assert db.execute("SELECT name FROM sqlite_master WHERE name='policy_version_contexts'").fetchone()
     before = dump(upgraded.db_path)
@@ -114,7 +115,7 @@ def test_failed_migration_rolls_back_ddl_rows_and_version(tmp_path, monkeypatch,
     WorkbenchStore(root)
 
 
-@pytest.mark.parametrize("versions", [[], [1, 1], [4]])
+@pytest.mark.parametrize("versions", [[], [1, 1], [SCHEMA_VERSION + 1]])
 def test_invalid_existing_version_is_rejected_without_changes(tmp_path, versions):
     root = legacy_workspace(tmp_path / "legacy")
     with sqlite3.connect(root / "workbench.sqlite3") as db:

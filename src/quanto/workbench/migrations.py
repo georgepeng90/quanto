@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 BASE_TABLES = (
     'CREATE TABLE IF NOT EXISTS datasets (id TEXT PRIMARY KEY, path TEXT NOT NULL, content_hash TEXT NOT NULL, manifest_json TEXT NOT NULL)',
 
@@ -56,6 +56,14 @@ CONTEXT_TABLES = (
         context_json TEXT NOT NULL, context_hash TEXT NOT NULL,
         artifact_content_hash TEXT NOT NULL)""",
 )
+SCREENING_TABLES = (
+    """CREATE TABLE IF NOT EXISTS screening_records (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, as_of TEXT NOT NULL, result_hash TEXT NOT NULL,
+        artifact_path TEXT NOT NULL, created_at TEXT NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS screening_idempotency (
+        key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL,
+        record_id TEXT NOT NULL REFERENCES screening_records(id))""",
+)
 
 
 def migrate_schema(db: sqlite3.Connection) -> None:
@@ -65,7 +73,7 @@ def migrate_schema(db: sqlite3.Connection) -> None:
     existing = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='schema_version'").fetchone()
     if existing:
         versions = [row[0] for row in db.execute("SELECT version FROM schema_version")]
-        if len(versions) != 1 or versions[0] not in (1, 2, SCHEMA_VERSION):
+        if len(versions) != 1 or versions[0] not in (1, 2, 3, SCHEMA_VERSION):
             raise ValueError("unsupported workbench schema version")
         version = versions[0]
         if version == SCHEMA_VERSION:
@@ -86,5 +94,7 @@ def migrate_schema(db: sqlite3.Connection) -> None:
         for statement in FRAMEWORK_TABLES:
             db.execute(statement)
     for statement in CONTEXT_TABLES:
+        db.execute(statement)
+    for statement in SCREENING_TABLES:
         db.execute(statement)
     db.execute("UPDATE schema_version SET version=?", (SCHEMA_VERSION,))

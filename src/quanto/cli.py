@@ -67,6 +67,18 @@ def build_parser() -> argparse.ArgumentParser:
                 if action == "rerun":
                     entry.add_argument("--json", required=True)
     baskets = commands.add_parser("baskets", help="Manage versioned baskets")
+    screening = commands.add_parser("screening", help="提交公司研究、查看和导出选股结果")
+    screening_actions = screening.add_subparsers(dest="action", required=True)
+    listing = screening_actions.add_parser("list")
+    listing.add_argument("--limit", type=int, default=50)
+    listing.add_argument("--cursor", default="0")
+    submit = screening_actions.add_parser("submit")
+    submit.add_argument("--json", required=True)
+    screening_actions.add_parser("show").add_argument("identity")
+    export = screening_actions.add_parser("export")
+    export.add_argument("identity")
+    export.add_argument("--output", type=Path, required=True)
+    export.add_argument("--overwrite", action="store_true")
     basket_actions = baskets.add_subparsers(dest="action", required=True)
     basket_actions.add_parser("list")
     create = basket_actions.add_parser("create")
@@ -150,7 +162,19 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     client = WorkbenchClient(args.url, token)
     try:
-        if args.command == "baskets":
+        if args.command == "screening":
+            if args.action == "submit":
+                result = client.post("/screenings", json.loads(Path(args.json).read_text(encoding="utf-8")))
+            elif args.action == "list":
+                from urllib.parse import urlencode
+                result = client.get("/screenings?" + urlencode({"limit": args.limit, "cursor": args.cursor}))
+            elif args.action == "show":
+                result = client.get(f"/screenings/{args.identity}")
+            else:
+                result = client.get(f"/screenings/{args.identity}/export")
+                with args.output.open("w" if args.overwrite else "x", encoding="utf-8") as output:
+                    json.dump(result, output, ensure_ascii=False, allow_nan=False)
+        elif args.command == "baskets":
             if args.action == "list":
                 result = client.get("/baskets")
             elif args.action == "show":

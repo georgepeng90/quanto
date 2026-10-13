@@ -193,6 +193,10 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
     for name in scalable_costs:
         values["execution"][name] *= request.cost_multiplier
     backtest = BacktestSpec.model_validate(values).validate_for_dataset(bundle)
+    from dataclasses import replace
+    from quanto.backtest.stock_trading import StockTradingDefinition
+    if learning_runtime is not None and isinstance(learning_runtime.trading, StockTradingDefinition):
+        learning_runtime = replace(learning_runtime, trading=learning_runtime.trading.with_cost_multiplier(request.cost_multiplier))
     if output_dir.exists() and any(output_dir.iterdir()):
         raise ValueError("policy backtest output directory must be empty")
     if any(output_dir.resolve().is_relative_to(Path(source).resolve()) for source in (policy_dir, dataset_dir)):

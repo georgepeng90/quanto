@@ -9,6 +9,8 @@ from quanto.config import validate_parameters
 from quanto.factors.features import FeatureSetDefinition
 from quanto.framework import DefinitionRef, ResolvedDefinition, freeze_json, thaw_json
 from quanto.investing.definitions import ETF_MARKET_FEATURES, LearningDefinition, etf_learning_definitions
+from quanto.investing.stock_definitions import STOCK_MARKET_FEATURES, STOCK_PPO_DEFINITION
+from quanto.backtest.stock_trading import STOCK_TRADING_DEFINITION
 
 
 Definition = FeatureSetDefinition | LearningDefinition | TradingDefinition
@@ -40,7 +42,8 @@ def _declaration(definition: Definition) -> Mapping[str, object]:
 
 class DefinitionRegistry:
     def __init__(self, definitions: Iterable[Definition] | None = None):
-        definitions = ((ETF_MARKET_FEATURES, *etf_learning_definitions(), ETF_TRADING_DEFINITION)
+        definitions = ((ETF_MARKET_FEATURES, *etf_learning_definitions(), ETF_TRADING_DEFINITION,
+                        STOCK_MARKET_FEATURES, STOCK_PPO_DEFINITION, STOCK_TRADING_DEFINITION)
                        if definitions is None else tuple(definitions))
         registered = {}
         for definition in definitions:

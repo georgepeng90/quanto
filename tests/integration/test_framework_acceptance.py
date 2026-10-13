@@ -36,21 +36,21 @@ def test_migration_rehearsal_on_copy_preserves_source_files_and_historical_rows(
                                                      "repeat_upgrade_unchanged": True}))
 
 
-def test_stock_selection_is_saved_without_exposing_or_running_a_synthetic_definition(tmp_path):
+def test_stock_selection_with_etf_execution_and_data_is_blocked(tmp_path):
     store, draft, _, _ = _ready(tmp_path)
     app = create_app(store.root)
     # No lifespan worker is needed: checks and draft saves are read/metadata operations.
     client = TestClient(app, base_url="http://127.0.0.1")
     headers = {"Authorization": f"Bearer {client.get('/api/session').json()['token']}"}
     response = client.post("/api/baskets", headers=headers, json={
-        "name": "Companies to research", "selection_note": "Selection only; no stock definition installed",
+        "name": "Companies to research", "selection_note": "Selection only; stock data not supplied",
         "members": [{"exchange": "SZSE", "instrument_type": "stock", "code": "000001"}],
         "idempotency_key": "stock-selection"})
     assert response.status_code == 200, response.text
     basket = response.json()
     assert basket["members"][0]["instrument_type"] == "stock"
     definitions = client.get("/api/definitions", headers=headers).json()["items"]
-    assert all(item["supported_instrument_types"] == ["etf"] for item in definitions)
+    assert sum(item["supported_instrument_types"] == ["stock"] for item in definitions) == 3
     payload = {**draft.payload, "basket_revision_ref": {"basket_id": basket["basket_id"], "revision": basket["revision"]}}
     saved = client.post("/api/experiments", headers=headers, json={"payload": payload})
     assert saved.status_code == 200, saved.text

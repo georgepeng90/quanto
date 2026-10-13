@@ -6,14 +6,14 @@ from quanto.framework import DefinitionRef
 from quanto.investing.definitions import ETF_MARKET_FEATURES
 
 
-def test_registry_exposes_only_implemented_versioned_etf_definitions():
+def test_registry_exposes_only_implemented_versioned_definitions():
     from quanto.workbench.definitions import DefinitionRegistry
 
     registry = DefinitionRegistry()
     items = registry.list()
-    assert len(items) == 8
-    assert sorted(item["ref"]["kind"] for item in items) == ["feature", *(["learning"] * 6), "trading"]
-    assert all(item["supported_instrument_types"] == ("etf",) for item in items)
+    assert len(items) == 11
+    assert sorted(item["ref"]["kind"] for item in items) == ["feature", "feature", *(["learning"] * 7), "trading", "trading"]
+    assert sum(item["supported_instrument_types"] == ("stock",) for item in items) == 3
     assert registry.get(ETF_MARKET_FEATURES.ref) is ETF_MARKET_FEATURES
     with pytest.raises(KeyError):
         registry.get(DefinitionRef(kind="feature", id=ETF_MARKET_FEATURES.ref.id, version="missing"))

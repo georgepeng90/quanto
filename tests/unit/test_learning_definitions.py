@@ -96,7 +96,11 @@ def test_bound_etf_factory_replays_original_observations_rewards_and_ledger(case
             assert (terminated, truncated) == (step["terminal"], step["truncated"])
         result = env.result()
         for name, expected in frozen["tables"].items():
-            assert _table(getattr(result, name)) == expected
+            frame = getattr(result, name)
+            if name == "fills":
+                assert (frame[["stamp_duty", "transfer_fee"]] == 0).all().all()
+                frame = frame.drop(columns=["stamp_duty", "transfer_fee"])
+            assert _table(frame) == expected
     finally:
         env.close()
 

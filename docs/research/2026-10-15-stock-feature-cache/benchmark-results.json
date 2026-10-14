@@ -1,0 +1,1054 @@
+{
+  "scope": "Environment simulation only; no model training or PPO end-to-end measurement.",
+  "methodology": "One sequential wall-clock run per implementation, three 126-session episodes, seed 42 then None, fixed Hold/target/reduce/cash actions, state-log reward, collect=True.",
+  "limitations": [
+    "Cold episode timing differs although it has no reusable feature frames; system load can affect these single wall-clock samples.",
+    "The frozen baseline already reuses prepared market views, so repeated-date baseline timing is faster than cold timing.",
+    "Feature hashes cover reset and step decision contexts, not every daily frame.",
+    "Episode elapsed_seconds includes reset and step trace/feature hashing but excludes ledger extraction/hashing. Total elapsed_seconds includes ledger extraction/hashing and per-episode printing.",
+    "Reward diagnostics are cumulative across episodes, matching the environment lifecycle."
+  ],
+  "equivalence": {
+    "passed": true,
+    "top_level_equal_fields": [
+      "collect",
+      "dataset_path",
+      "episode_sessions",
+      "identity",
+      "price_rows",
+      "reward",
+      "seed",
+      "symbols"
+    ],
+    "episode_equal_fields": [
+      "completed_through",
+      "date_coverage",
+      "decision_features_sha256",
+      "decision_steps",
+      "episode",
+      "episode_end",
+      "episode_start",
+      "reward_diagnostics",
+      "tables",
+      "trace_sha256"
+    ],
+    "ignored_top_level_fields": [
+      "elapsed_seconds",
+      "source_files_sha256",
+      "source_root"
+    ],
+    "ignored_episode_fields": [
+      "elapsed_seconds",
+      "reset_seconds"
+    ]
+  },
+  "performance": {
+    "total_baseline_seconds": 585.539634300003,
+    "total_optimized_seconds": 484.5269307999988,
+    "overall_speedup": 1.208476963980563,
+    "fully_repeated_episode": 3,
+    "fully_repeated_episode_speedup": 24.768517496299253
+  },
+  "episode_comparisons": [
+    {
+      "episode": 1,
+      "equivalent": true,
+      "date_coverage": {
+        "sessions": 126,
+        "first_visit_sessions": 126,
+        "repeated_sessions": 0
+      },
+      "baseline_seconds": 270.132843600004,
+      "optimized_seconds": 230.0949394000054,
+      "speedup": 1.1740060181436465,
+      "baseline_reset_seconds": 3.572269199998118,
+      "optimized_reset_seconds": 2.9108333000040147
+    },
+    {
+      "episode": 2,
+      "equivalent": true,
+      "date_coverage": {
+        "sessions": 126,
+        "first_visit_sessions": 108,
+        "repeated_sessions": 18
+      },
+      "baseline_seconds": 250.75056349999795,
+      "optimized_seconds": 251.51366099998995,
+      "speedup": 0.9969659799115562,
+      "baseline_reset_seconds": 4.113823299994692,
+      "optimized_reset_seconds": 1.7775838999950793
+    },
+    {
+      "episode": 3,
+      "equivalent": true,
+      "date_coverage": {
+        "sessions": 126,
+        "first_visit_sessions": 0,
+        "repeated_sessions": 126
+      },
+      "baseline_seconds": 64.54204810000374,
+      "optimized_seconds": 2.6058098999928916,
+      "speedup": 24.768517496299253,
+      "baseline_reset_seconds": 3.650409000008949,
+      "optimized_reset_seconds": 1.755727299998398
+    }
+  ],
+  "baseline": {
+    "source_root": "D:\\Projects\\quanto\\data\\research-20261001\\job-inputs\\8f421bb4-42ad-479b-894c-b80b363fcec5",
+    "reward": "state-log",
+    "collect": true,
+    "seed": 42,
+    "symbols": 34,
+    "episode_sessions": 126,
+    "dataset_path": "D:\\Projects\\quanto\\data\\research-20261001\\dataset_objects\\49ba538bc717445521023e69f1a9eb42340ca7d9a5217eb60d611162a8f1e280",
+    "price_rows": 22771,
+    "identity": {
+      "learning_ref": {
+        "kind": "learning",
+        "id": "stock-ppo-cash-state-log",
+        "version": "1"
+      },
+      "learning_definition_hash": "ec3b0e299048d146dd5b329117d9ae6c7dc1ce6d8c2cce72d5dc660db209469c",
+      "learning_params": {
+        "lookback": 120,
+        "frequency": "weekly",
+        "action_version": "hold-target-cash-quartiles-v2",
+        "reward_version": "net-log-return-with-state-v1"
+      },
+      "feature_ref": {
+        "kind": "feature",
+        "id": "stock-market-observation",
+        "version": "1"
+      },
+      "feature_definition_hash": "4a4429c4b6ae68b49732d021f56b5e6bb683056501e618eb605876af81fec63d",
+      "feature_params": {
+        "lookback": 120
+      },
+      "trading_ref": {
+        "kind": "trading",
+        "id": "stock-daily",
+        "version": "1"
+      },
+      "trading_definition_hash": "2788c1c666d0051c653787ad712d5cf7982397a6b356b348276ce0aeeed60a64",
+      "dataset_version_id": "2203260f-0ee0-4871-8af0-c31ad7bb2822",
+      "dataset_content_hash": "49ba538bc717445521023e69f1a9eb42340ca7d9a5217eb60d611162a8f1e280",
+      "binding_hash": "808053b8912e48bb8f0ec35f2082be4c20484b6da1f3ac5c466c42cfe537bc6a",
+      "ordered_assets": [
+        {
+          "local_symbol": "SSE:stock:600867",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600867"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600196",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600196"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:603939",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "603939"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600845",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600845"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002138",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002138"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002315",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002315"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:603444",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "603444"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002517",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002517"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002966",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002966"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601838",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601838"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601128",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601128"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601108",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601108"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600109",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600109"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601168",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601168"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002532",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002532"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:000975",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "000975"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002128",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002128"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:000690",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "000690"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600483",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600483"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600312",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600312"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002028",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002028"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:603298",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "603298"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600872",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600872"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:603345",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "603345"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:605499",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "605499"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600600",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600600"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002648",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002648"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600426",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600426"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002001",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002001"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600486",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600486"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600428",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600428"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600377",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600377"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601333",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601333"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600009",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600009"
+          }
+        }
+      ]
+    },
+    "elapsed_seconds": 585.539634300003,
+    "episodes": [
+      {
+        "episode": 1,
+        "elapsed_seconds": 270.132843600004,
+        "reset_seconds": 3.572269199998118,
+        "decision_steps": 28,
+        "episode_start": "2024-08-23",
+        "episode_end": "2025-03-06",
+        "completed_through": "2025-03-06",
+        "trace_sha256": "86dd1371a4599718cb6450177a9577ceceb0232790908adcd6601d394317a5b7",
+        "decision_features_sha256": "1520d7688dd2cade53352d68288d3d2694f7a4fcf0f02a9c24eb06d3fa898dfc",
+        "tables": {
+          "equity": {
+            "rows": 126,
+            "sha256": "62bccff79b0f6c472a9c914d24a75827d04d52f94abd8d4d289239754901e06e"
+          },
+          "orders": {
+            "rows": 86,
+            "sha256": "040cddf8a2afa41c71f35097bd96fcef1ea4d0d49dcdce00791f546701e1f5af"
+          },
+          "fills": {
+            "rows": 86,
+            "sha256": "ff31819832476eb61ad4a8c8465838e03f60f07e418467a99fa03c2fd420453e"
+          },
+          "positions": {
+            "rows": 4284,
+            "sha256": "a4a74c1d4229cf41905a75cb719a98f1cf912aae3c1a853359fc0c5df56b799c"
+          },
+          "signals": {
+            "rows": 126,
+            "sha256": "4b58e74dea2c21e3328ca89c1a3c265b4806a4c14be03b7e533dbafc70acc560"
+          },
+          "account_events": {
+            "rows": 178,
+            "sha256": "fa0feb7367ef23b68d392b32fcd2248c19aa36b0489506bffd0fbe5fb055cf77"
+          },
+          "risk_events": {
+            "rows": 15,
+            "sha256": "22dfa90aaf74d19f1186b1a4e1dbd4e7bc502d1a2013764006590f933b1ea1a1"
+          }
+        },
+        "reward_diagnostics": {
+          "reward_daily_count": 126,
+          "reward_variance_floor_count": 0,
+          "reward_dsr_max_abs": 8.145655212148004,
+          "reward_sum": -0.0980940688681553
+        },
+        "date_coverage": {
+          "sessions": 126,
+          "first_visit_sessions": 126,
+          "repeated_sessions": 0
+        }
+      },
+      {
+        "episode": 2,
+        "elapsed_seconds": 250.75056349999795,
+        "reset_seconds": 4.113823299994692,
+        "decision_steps": 26,
+        "episode_start": "2025-02-11",
+        "episode_end": "2025-08-12",
+        "completed_through": "2025-08-12",
+        "trace_sha256": "47fc330141fdb0c237bac87604adff150c1c534eee7314dfa9bae2e3742dd5f0",
+        "decision_features_sha256": "3c1ff6d1ed7d0345a428cd33f9eaceede84d5546da0f4ec49f924daef36a33ce",
+        "tables": {
+          "equity": {
+            "rows": 126,
+            "sha256": "1cfc4724370f5974fa39f1e457dadc72d05105becd18ea92b7e89bceb045bda3"
+          },
+          "orders": {
+            "rows": 80,
+            "sha256": "13b4846a9437bd562ab7adf8929818c65c2820a93d3bd64289315cb95cbe48dc"
+          },
+          "fills": {
+            "rows": 80,
+            "sha256": "1d1ca1912a6a4c99e6465d51d12c7b71fecd535c0b4146079b3d317a9e6f7a95"
+          },
+          "positions": {
+            "rows": 4284,
+            "sha256": "ab0e347420cb5303a3a1d34bf244f731544188b9547e1e3feb701a29f5efb7f1"
+          },
+          "signals": {
+            "rows": 126,
+            "sha256": "27a99fbec18d418a7e35d9d32fccf251f56dceac52c4b5892528da1643bbdd0d"
+          },
+          "account_events": {
+            "rows": 223,
+            "sha256": "4ef5f9e9d151b2c6aa50964d9695e6b99a6a23d2bceaa82926bd31d0869e1167"
+          },
+          "risk_events": {
+            "rows": 23,
+            "sha256": "713a3a75692a239b85d53f77c2dd0924dca1410f8a1e1c72365d61b56a639d3a"
+          }
+        },
+        "reward_diagnostics": {
+          "reward_daily_count": 252,
+          "reward_variance_floor_count": 0,
+          "reward_dsr_max_abs": 8.145655212148004,
+          "reward_sum": -0.15672889316926586
+        },
+        "date_coverage": {
+          "sessions": 126,
+          "first_visit_sessions": 108,
+          "repeated_sessions": 18
+        }
+      },
+      {
+        "episode": 3,
+        "elapsed_seconds": 64.54204810000374,
+        "reset_seconds": 3.650409000008949,
+        "decision_steps": 27,
+        "episode_start": "2025-01-07",
+        "episode_end": "2025-07-16",
+        "completed_through": "2025-07-16",
+        "trace_sha256": "73906e24b7f60edc5aad3b97ad0b8123e3e546cc74c0fa455d138cb3e65222bd",
+        "decision_features_sha256": "064bdae381f0e8254a6d6be64f9cc0dfbc828c27c4325ab86aa66d55a007d9c0",
+        "tables": {
+          "equity": {
+            "rows": 126,
+            "sha256": "d1dd9b18031602752171e7a95a633ff0fc0a2146ea9d4fe1be04ef5a099f37b6"
+          },
+          "orders": {
+            "rows": 91,
+            "sha256": "fe2192029f660c3058579c0150f1c2b850d4bcf4216f2982111c7e9d82877bf2"
+          },
+          "fills": {
+            "rows": 89,
+            "sha256": "5981672655f6dac67c365f496b09e411e2de758c3a8cf555d60e7f75d96e21b1"
+          },
+          "positions": {
+            "rows": 4284,
+            "sha256": "4c12ba346a03f75cf0776df2409a3508e7cea56d136d891eddbcb0e2468434a6"
+          },
+          "signals": {
+            "rows": 126,
+            "sha256": "42d6b8aec4e4fb77c8d90233fdab94065c5478a156820c1822c88bbefecb7440"
+          },
+          "account_events": {
+            "rows": 214,
+            "sha256": "c050267fa17f00a8045c2f81d3f8fbe5042d03606784191cc969ef9bf374740b"
+          },
+          "risk_events": {
+            "rows": 23,
+            "sha256": "3a435b8c0dddad4b3ee79efe604c6b30798ab8b7803d59a31727e48f5dfe3de2"
+          }
+        },
+        "reward_diagnostics": {
+          "reward_daily_count": 378,
+          "reward_variance_floor_count": 0,
+          "reward_dsr_max_abs": 8.145655212148004,
+          "reward_sum": -0.24645390018735824
+        },
+        "date_coverage": {
+          "sessions": 126,
+          "first_visit_sessions": 0,
+          "repeated_sessions": 126
+        }
+      }
+    ],
+    "source_files_sha256": {
+      "src/quanto/data/point_in_time.py": "aab4d5a3b4fcd0cab14e50e4bbffe30cb52107d5b18185550cf3605d07a17a4c",
+      "src/quanto/factors/features.py": "d6cedd2c97e41f0ae6550541085bf7fd29beb005705929972dae45590ae13942"
+    }
+  },
+  "optimized": {
+    "source_root": "D:\\Projects\\quanto",
+    "reward": "state-log",
+    "collect": true,
+    "seed": 42,
+    "symbols": 34,
+    "episode_sessions": 126,
+    "dataset_path": "D:\\Projects\\quanto\\data\\research-20261001\\dataset_objects\\49ba538bc717445521023e69f1a9eb42340ca7d9a5217eb60d611162a8f1e280",
+    "price_rows": 22771,
+    "identity": {
+      "learning_ref": {
+        "kind": "learning",
+        "id": "stock-ppo-cash-state-log",
+        "version": "1"
+      },
+      "learning_definition_hash": "ec3b0e299048d146dd5b329117d9ae6c7dc1ce6d8c2cce72d5dc660db209469c",
+      "learning_params": {
+        "lookback": 120,
+        "frequency": "weekly",
+        "action_version": "hold-target-cash-quartiles-v2",
+        "reward_version": "net-log-return-with-state-v1"
+      },
+      "feature_ref": {
+        "kind": "feature",
+        "id": "stock-market-observation",
+        "version": "1"
+      },
+      "feature_definition_hash": "4a4429c4b6ae68b49732d021f56b5e6bb683056501e618eb605876af81fec63d",
+      "feature_params": {
+        "lookback": 120
+      },
+      "trading_ref": {
+        "kind": "trading",
+        "id": "stock-daily",
+        "version": "1"
+      },
+      "trading_definition_hash": "2788c1c666d0051c653787ad712d5cf7982397a6b356b348276ce0aeeed60a64",
+      "dataset_version_id": "2203260f-0ee0-4871-8af0-c31ad7bb2822",
+      "dataset_content_hash": "49ba538bc717445521023e69f1a9eb42340ca7d9a5217eb60d611162a8f1e280",
+      "binding_hash": "808053b8912e48bb8f0ec35f2082be4c20484b6da1f3ac5c466c42cfe537bc6a",
+      "ordered_assets": [
+        {
+          "local_symbol": "SSE:stock:600867",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600867"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600196",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600196"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:603939",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "603939"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600845",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600845"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002138",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002138"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002315",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002315"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:603444",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "603444"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002517",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002517"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002966",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002966"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601838",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601838"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601128",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601128"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601108",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601108"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600109",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600109"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601168",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601168"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002532",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002532"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:000975",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "000975"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002128",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002128"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:000690",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "000690"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600483",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600483"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600312",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600312"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002028",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002028"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:603298",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "603298"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600872",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600872"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:603345",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "603345"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:605499",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "605499"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600600",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600600"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002648",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002648"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600426",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600426"
+          }
+        },
+        {
+          "local_symbol": "SZSE:stock:002001",
+          "instrument_id": {
+            "exchange": "SZSE",
+            "instrument_type": "stock",
+            "code": "002001"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600486",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600486"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600428",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600428"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600377",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600377"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:601333",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "601333"
+          }
+        },
+        {
+          "local_symbol": "SSE:stock:600009",
+          "instrument_id": {
+            "exchange": "SSE",
+            "instrument_type": "stock",
+            "code": "600009"
+          }
+        }
+      ]
+    },
+    "elapsed_seconds": 484.5269307999988,
+    "episodes": [
+      {
+        "episode": 1,
+        "elapsed_seconds": 230.0949394000054,
+        "reset_seconds": 2.9108333000040147,
+        "decision_steps": 28,
+        "episode_start": "2024-08-23",
+        "episode_end": "2025-03-06",
+        "completed_through": "2025-03-06",
+        "trace_sha256": "86dd1371a4599718cb6450177a9577ceceb0232790908adcd6601d394317a5b7",
+        "decision_features_sha256": "1520d7688dd2cade53352d68288d3d2694f7a4fcf0f02a9c24eb06d3fa898dfc",
+        "tables": {
+          "equity": {
+            "rows": 126,
+            "sha256": "62bccff79b0f6c472a9c914d24a75827d04d52f94abd8d4d289239754901e06e"
+          },
+          "orders": {
+            "rows": 86,
+            "sha256": "040cddf8a2afa41c71f35097bd96fcef1ea4d0d49dcdce00791f546701e1f5af"
+          },
+          "fills": {
+            "rows": 86,
+            "sha256": "ff31819832476eb61ad4a8c8465838e03f60f07e418467a99fa03c2fd420453e"
+          },
+          "positions": {
+            "rows": 4284,
+            "sha256": "a4a74c1d4229cf41905a75cb719a98f1cf912aae3c1a853359fc0c5df56b799c"
+          },
+          "signals": {
+            "rows": 126,
+            "sha256": "4b58e74dea2c21e3328ca89c1a3c265b4806a4c14be03b7e533dbafc70acc560"
+          },
+          "account_events": {
+            "rows": 178,
+            "sha256": "fa0feb7367ef23b68d392b32fcd2248c19aa36b0489506bffd0fbe5fb055cf77"
+          },
+          "risk_events": {
+            "rows": 15,
+            "sha256": "22dfa90aaf74d19f1186b1a4e1dbd4e7bc502d1a2013764006590f933b1ea1a1"
+          }
+        },
+        "reward_diagnostics": {
+          "reward_daily_count": 126,
+          "reward_variance_floor_count": 0,
+          "reward_dsr_max_abs": 8.145655212148004,
+          "reward_sum": -0.0980940688681553
+        },
+        "date_coverage": {
+          "sessions": 126,
+          "first_visit_sessions": 126,
+          "repeated_sessions": 0
+        }
+      },
+      {
+        "episode": 2,
+        "elapsed_seconds": 251.51366099998995,
+        "reset_seconds": 1.7775838999950793,
+        "decision_steps": 26,
+        "episode_start": "2025-02-11",
+        "episode_end": "2025-08-12",
+        "completed_through": "2025-08-12",
+        "trace_sha256": "47fc330141fdb0c237bac87604adff150c1c534eee7314dfa9bae2e3742dd5f0",
+        "decision_features_sha256": "3c1ff6d1ed7d0345a428cd33f9eaceede84d5546da0f4ec49f924daef36a33ce",
+        "tables": {
+          "equity": {
+            "rows": 126,
+            "sha256": "1cfc4724370f5974fa39f1e457dadc72d05105becd18ea92b7e89bceb045bda3"
+          },
+          "orders": {
+            "rows": 80,
+            "sha256": "13b4846a9437bd562ab7adf8929818c65c2820a93d3bd64289315cb95cbe48dc"
+          },
+          "fills": {
+            "rows": 80,
+            "sha256": "1d1ca1912a6a4c99e6465d51d12c7b71fecd535c0b4146079b3d317a9e6f7a95"
+          },
+          "positions": {
+            "rows": 4284,
+            "sha256": "ab0e347420cb5303a3a1d34bf244f731544188b9547e1e3feb701a29f5efb7f1"
+          },
+          "signals": {
+            "rows": 126,
+            "sha256": "27a99fbec18d418a7e35d9d32fccf251f56dceac52c4b5892528da1643bbdd0d"
+          },
+          "account_events": {
+            "rows": 223,
+            "sha256": "4ef5f9e9d151b2c6aa50964d9695e6b99a6a23d2bceaa82926bd31d0869e1167"
+          },
+          "risk_events": {
+            "rows": 23,
+            "sha256": "713a3a75692a239b85d53f77c2dd0924dca1410f8a1e1c72365d61b56a639d3a"
+          }
+        },
+        "reward_diagnostics": {
+          "reward_daily_count": 252,
+          "reward_variance_floor_count": 0,
+          "reward_dsr_max_abs": 8.145655212148004,
+          "reward_sum": -0.15672889316926586
+        },
+        "date_coverage": {
+          "sessions": 126,
+          "first_visit_sessions": 108,
+          "repeated_sessions": 18
+        }
+      },
+      {
+        "episode": 3,
+        "elapsed_seconds": 2.6058098999928916,
+        "reset_seconds": 1.755727299998398,
+        "decision_steps": 27,
+        "episode_start": "2025-01-07",
+        "episode_end": "2025-07-16",
+        "completed_through": "2025-07-16",
+        "trace_sha256": "73906e24b7f60edc5aad3b97ad0b8123e3e546cc74c0fa455d138cb3e65222bd",
+        "decision_features_sha256": "064bdae381f0e8254a6d6be64f9cc0dfbc828c27c4325ab86aa66d55a007d9c0",
+        "tables": {
+          "equity": {
+            "rows": 126,
+            "sha256": "d1dd9b18031602752171e7a95a633ff0fc0a2146ea9d4fe1be04ef5a099f37b6"
+          },
+          "orders": {
+            "rows": 91,
+            "sha256": "fe2192029f660c3058579c0150f1c2b850d4bcf4216f2982111c7e9d82877bf2"
+          },
+          "fills": {
+            "rows": 89,
+            "sha256": "5981672655f6dac67c365f496b09e411e2de758c3a8cf555d60e7f75d96e21b1"
+          },
+          "positions": {
+            "rows": 4284,
+            "sha256": "4c12ba346a03f75cf0776df2409a3508e7cea56d136d891eddbcb0e2468434a6"
+          },
+          "signals": {
+            "rows": 126,
+            "sha256": "42d6b8aec4e4fb77c8d90233fdab94065c5478a156820c1822c88bbefecb7440"
+          },
+          "account_events": {
+            "rows": 214,
+            "sha256": "c050267fa17f00a8045c2f81d3f8fbe5042d03606784191cc969ef9bf374740b"
+          },
+          "risk_events": {
+            "rows": 23,
+            "sha256": "3a435b8c0dddad4b3ee79efe604c6b30798ab8b7803d59a31727e48f5dfe3de2"
+          }
+        },
+        "reward_diagnostics": {
+          "reward_daily_count": 378,
+          "reward_variance_floor_count": 0,
+          "reward_dsr_max_abs": 8.145655212148004,
+          "reward_sum": -0.24645390018735824
+        },
+        "date_coverage": {
+          "sessions": 126,
+          "first_visit_sessions": 0,
+          "repeated_sessions": 126
+        }
+      }
+    ],
+    "source_files_sha256": {
+      "src/quanto/data/point_in_time.py": "dbf6ee316aa363b0b8b50bad5491afc8bf4ab7530bc59ffb7655060f5588ff4b",
+      "src/quanto/factors/features.py": "45b7fc0c957f30aa44a1919510e97666220ccbfa43cd867fb14d5c6c72d26b26"
+    }
+  }
+}

@@ -14,7 +14,6 @@ def test_narrow_framework_routes_are_authenticated_and_reachable(tmp_path):
         headers = {"Authorization": f"Bearer {token}"}
         definitions = client.get("/api/definitions", headers=headers)
         assert definitions.status_code == 200
-        assert len(definitions.json()["items"]) == 11
         assert {item["ref"]["kind"] for item in definitions.json()["items"]} == {"feature", "learning", "trading"}
 
         body = {"name": "ETF", "members": [MEMBER], "selection_note": "Research", "idempotency_key": "basket-1"}

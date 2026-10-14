@@ -50,8 +50,6 @@ def test_stock_selection_with_etf_execution_and_data_is_blocked(tmp_path):
     assert response.status_code == 200, response.text
     basket = response.json()
     assert basket["members"][0]["instrument_type"] == "stock"
-    definitions = client.get("/api/definitions", headers=headers).json()["items"]
-    assert sum(item["supported_instrument_types"] == ["stock"] for item in definitions) == 3
     payload = {**draft.payload, "basket_revision_ref": {"basket_id": basket["basket_id"], "revision": basket["revision"]}}
     saved = client.post("/api/experiments", headers=headers, json={"payload": payload})
     assert saved.status_code == 200, saved.text

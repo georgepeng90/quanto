@@ -89,22 +89,19 @@ def test_new_coverage_requires_exact_canonical_and_local_order(frozen_model):
                                  _operation(binding, "policy_backtest", pairs=(changed_canonical, *binding.ordered_pairs[1:])))
 
 
-def test_backtest_purpose_and_cost_scaling_are_explicit(frozen_model):
+def test_backtest_metadata_does_not_block_declared_cost_scaling(frozen_model):
     binding, spec = frozen_model
     request = PolicyBacktestRequest(version_id="version", dataset_id="coverage",
                                     spec={"start": spec.validation_end, "end": spec.backtest.end,
                                           "evaluation_purpose": "post_selection_backtest", "cost_multiplier": 2})
-    with pytest.raises(ValueError, match="development_replay"):
-        validate_model_operation(binding, request, _operation(binding, "policy_backtest"))
-    replay = request.model_copy(update={"spec": request.spec.model_copy(update={"evaluation_purpose": "development_replay"})})
     values = spec.backtest.model_dump(mode="json")
     trading = next(item for item in binding.training_configuration.definitions if item.ref.kind == "trading")
     for name in trading.declaration["scalable_costs"]:
         values["execution"][name] *= 2
-    validate_model_operation(binding, replay, _operation(binding, "policy_backtest", backtest=values))
+    validate_model_operation(binding, request, _operation(binding, "policy_backtest", backtest=values))
     values["execution"]["max_stale_sessions"] += 1
     with pytest.raises(ValueError, match="execution condition"):
-        validate_model_operation(binding, replay, _operation(binding, "policy_backtest", backtest=values))
+        validate_model_operation(binding, request, _operation(binding, "policy_backtest", backtest=values))
 
 
 def test_first_model_session_resolves_without_parent_version(tmp_path, monkeypatch):
@@ -195,7 +192,13 @@ def test_policy_version_rejects_registry_hash_that_disagrees_with_file_list(tmp_
             {item.ref.kind: resolver.registry.get(item.ref) for item in training.definitions})
 
 
-def test_policy_backtest_checks_new_dataset_without_requiring_train_dates(tmp_path, monkeypatch):
+@pytest.mark.parametrize("purpose", [None, "development_replay", "post_selection_backtest"])
+@pytest.mark.parametrize("start_boundary, expected", [
+    ("validation_end", "development_replay"),
+    ("test_start", "post_selection_backtest"),
+])
+def test_policy_backtest_checks_new_dataset_and_normalizes_purpose(
+        tmp_path, monkeypatch, purpose, start_boundary, expected):
     store, create, _ = _training_case(tmp_path)
     resolver = FrameworkResolver(store)
     training = resolver.resolve(create)
@@ -211,12 +214,17 @@ def test_policy_backtest_checks_new_dataset_without_requiring_train_dates(tmp_pa
                                         "price_mode": load_dataset(store.get_dataset(create.dataset_id).path).price_mode},
                                        {"content_hash": "b" * 64}))
     request = PolicyBacktestRequest(version_id="version", dataset_id=create.dataset_id,
-                                    spec={"start": spec.validation_end, "end": spec.backtest.end,
-                                          "evaluation_purpose": "development_replay"})
+                                    spec={"start": getattr(spec, start_boundary), "end": spec.backtest.end,
+                                          "evaluation_purpose": purpose})
     resolved, report = resolver._resolve_policy_backtest(
         request, binding, spec, {kind: resolver.registry.get(item.ref)
                                  for item in training.definitions for kind in (item.ref.kind,)})
     assert report.status == "ready", report.checks
+    assert resolved.request["spec"]["evaluation_purpose"] == expected
+    normalized = PolicyBacktestRequest.model_validate(resolved.request)
+    normalized_result, _ = resolver._resolve_policy_backtest(
+        normalized, binding, spec, {item.ref.kind: resolver.registry.get(item.ref) for item in training.definitions})
+    assert normalized_result.request_hash == resolved.request_hash
     assert tuple(resolved.internal_backtest_spec["symbols"]) == tuple(spec.backtest.symbols)
 
 

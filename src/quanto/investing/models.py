@@ -260,7 +260,7 @@ class InvestingModels(InvestingService):
         from quanto.investing.policy_versions import PolicyVersionStore
 
         return self._submit('policy_backtest', {'dataset_id': request.dataset_id, 'policy_id': request.version_id,
-            'model_id': identity, 'spec': request.spec.model_dump(mode='json')},
+            'model_id': identity, 'spec': thaw_json(resolved.request)['spec']},
             {'dataset_ref': dataset, 'policy_ref': self.reference(request.version_id, 'policy'),
              'policy_context': PolicyVersionStore(self.store).get(request.version_id),
              'training_dataset_ref': self._dataset(binding.dataset_version_id, original.backtest),

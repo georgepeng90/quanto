@@ -32,22 +32,31 @@ def test_backtest_spec_requires_explicit_purpose():
     assert PolicyBacktestSpec.model_validate(values | {"evaluation_purpose": "model_selection"}).evaluation_purpose == "model_selection"
 
 
-def test_public_backtest_rejects_model_selection_and_mislabeled_history(tmp_path, monkeypatch):
-    _, config, request = _case(tmp_path, monkeypatch)
-    for invalid in (request | {"evaluation_purpose": "model_selection"},
-                    request | {"start": config.validation_end.isoformat()}):
-        with pytest.raises(ValueError, match="evaluation_purpose|development_replay"):
-            evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", invalid,
-                                       tmp_path / "result", lambda _: None, lambda: False)
+def test_public_backtest_rejects_internal_model_selection(tmp_path, monkeypatch):
+    _, _, request = _case(tmp_path, monkeypatch)
+    with pytest.raises(ValueError, match="evaluation_purpose"):
+        evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data",
+                                   request | {"evaluation_purpose": "model_selection"},
+                                   tmp_path / "result", lambda _: None, lambda: False)
     assert not (tmp_path / "result").exists()
 
 
-def test_public_replay_reports_requested_purpose_and_boundary(tmp_path, monkeypatch):
+@pytest.mark.parametrize("purpose", [None, "development_replay", "post_selection_backtest"])
+@pytest.mark.parametrize("start_boundary, expected", [
+    ("validation_start", "development_replay"),
+    ("validation_end", "development_replay"),
+    ("test_start", "post_selection_backtest"),
+])
+def test_public_backtest_derives_purpose_from_dates(tmp_path, monkeypatch, purpose, start_boundary, expected):
     _, config, request = _case(tmp_path, monkeypatch)
-    request.update(start=config.validation_start.isoformat(), evaluation_purpose="development_replay")
+    request["start"] = getattr(config, start_boundary).isoformat()
+    if purpose is None:
+        del request["evaluation_purpose"]
+    else:
+        request["evaluation_purpose"] = purpose
     summary = evaluation.backtest_policy(tmp_path / "policy", tmp_path / "data", request,
                                          tmp_path / "result", lambda _: None, lambda: False)
-    assert summary["evaluation_purpose"] == "development_replay"
+    assert summary["evaluation_purpose"] == expected
     assert summary["metadata"]["validation_end"] == config.validation_end.isoformat()
 
 

@@ -228,13 +228,14 @@ def test_model_continues_and_backtests_explicit_immutable_version(model_workspac
         assert continued['sessions'][0]['base_version_id'] == second
         backtest = {'dataset_id': request['dataset_id'], 'version_id': first,
                     'spec': {'start': request['spec']['validation_start'], 'end': request['spec']['validation_end'],
-                             'baseline': 'policy', 'evaluation_purpose': 'development_replay'}}
+                             'baseline': 'policy', 'evaluation_purpose': 'post_selection_backtest'}}
         assert client.post(f'/api/investing/models/{other["id"]}/backtests', headers=headers, json=backtest).status_code == 422
         assert client.post(f'/api/investing/models/{model["id"]}/backtests', headers=headers,
                            json={key: value for key, value in backtest.items() if key != 'version_id'}).status_code == 422
         run = wait_job(client.post(f'/api/investing/models/{model["id"]}/backtests', headers=headers, json=backtest))
         backtest_detail = client.get(f'/api/investing/backtests/{run}', headers=headers).json()
         summary = backtest_detail['manifest']
+        assert summary['evaluation_purpose'] == 'development_replay'
         with app.state.service.store.transaction() as db:
             saved = db.execute('SELECT manifest_json FROM learning_artifacts WHERE id=?', (run,)).fetchone()[0]
         assert summary == json.loads(saved)

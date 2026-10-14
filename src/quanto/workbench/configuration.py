@@ -675,6 +675,10 @@ class FrameworkResolver:
         from quanto.config import BacktestSpec
         from quanto.workbench.framework_capabilities import check_requirements
 
+        purpose = ("development_replay" if request.spec.start <= original.validation_end
+                   else "post_selection_backtest")
+        request = request.model_copy(update={"spec": request.spec.model_copy(
+            update={"evaluation_purpose": purpose})})
         if policy_ref_override is None:
             manifest, artifact_ref = _db_call(self._verified_policy_version, binding, request.version_id,
                                              original, definitions, db=db)
@@ -766,9 +770,6 @@ class FrameworkResolver:
             if frozen_requirements.get(item.requirement_id) != _requirement_identity(item):
                 checks.append(_blocked("requirement_identity", f"requirements.{item.requirement_id}",
                                        "MODEL_IDENTITY_MISMATCH", "Required feature or execution contract differs"))
-        if request.spec.start <= original.validation_end and request.spec.evaluation_purpose != "development_replay":
-            checks.append(_blocked("evaluation_purpose", "spec.evaluation_purpose", "MODEL_IDENTITY_MISMATCH",
-                                   "Backtests starting by validation cutoff require development_replay"))
         if not any(item.code == "MODEL_IDENTITY_MISMATCH" for item in checks):
             checks.extend(check_requirements(bundle, new_binding, pairs, requirements,
                                              definitions["trading"], backtest,

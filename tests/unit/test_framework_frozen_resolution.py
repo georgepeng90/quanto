@@ -91,7 +91,8 @@ def test_frozen_first_resume_rechecks_training_without_live_database(tmp_path):
     assert_unchanged(resolved, verified)
 
 
-def test_frozen_policy_rechecks_successful_version_and_purpose(tmp_path):
+@pytest.mark.parametrize("purpose", [None, "post_selection_backtest"])
+def test_frozen_policy_rechecks_successful_version_and_automatic_purpose(tmp_path, purpose):
     store, create, _ = _training_case(tmp_path)
     _old_model(store, create)
     training = FrameworkResolver(store).resolve(create)
@@ -137,8 +138,9 @@ def test_frozen_policy_rechecks_successful_version_and_purpose(tmp_path):
                    (json_bytes(manifest).decode(),))
     request = PolicyBacktestRequest(version_id="version-one", dataset_id=dataset.id,
                                     spec={"start": spec.validation_end, "end": spec.backtest.end,
-                                          "evaluation_purpose": "development_replay"})
+                                          "evaluation_purpose": purpose})
     resolved = FrameworkResolver(store).resolve(request)
+    assert resolved.request["spec"]["evaluation_purpose"] == "development_replay"
     with store.transaction() as db:
         assert_unchanged(resolved, FrameworkResolver(store).resolve(request, db=db))
     dataset_ref = {"id": dataset.id, "path": str(dataset.path), "content_hash": dataset.content_hash,

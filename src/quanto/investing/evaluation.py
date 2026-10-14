@@ -146,13 +146,17 @@ def _evaluate_saved_policy(policy_dir, dataset_dir, spec, output_dir, emit, canc
             raise ValueError("validation dataset content hash must match training dataset identity")
         spec = dict(start=config.validation_start, end=config.validation_end,
                     evaluation_purpose="model_selection")
+    else:
+        spec = spec.model_dump() if isinstance(spec, PolicyBacktestSpec) else dict(spec)
+        if spec.get("evaluation_purpose") is None:
+            spec["evaluation_purpose"] = "post_selection_backtest"
     request = PolicyBacktestSpec.model_validate(spec)
     if not validation:
         if request.evaluation_purpose == "model_selection":
             raise ValueError("evaluation_purpose model_selection is reserved for internal validation")
-        if (request.start <= config.validation_end
-                and request.evaluation_purpose != "development_replay"):
-            raise ValueError("evaluation_purpose must be development_replay on or before validation_end")
+        purpose = ("development_replay" if request.start <= config.validation_end
+                   else "post_selection_backtest")
+        request = request.model_copy(update={"evaluation_purpose": purpose})
     expected = check_policy_identity(manifest, config)
     bundle = load_dataset(Path(dataset_dir))
     transform = None

@@ -71,10 +71,6 @@ def validate_model_operation(binding: ModelFrameworkBinding,
     else:
         _require_same(resolved.operation == "policy_backtest", "policy backtest operation differs")
         _require_same(run_training is None, "policy backtest cannot create a training configuration")
-        cutoff = original.validation_end
-        if request.spec.start <= cutoff:
-            _require_same(request.spec.evaluation_purpose == "development_replay",
-                          "backtest through validation cutoff requires development_replay")
         _require_same(tuple(resolved.internal_backtest_spec["symbols"]) ==
                       tuple(original.backtest.symbols), "policy action space differs")
         run = thaw_json(resolved.internal_backtest_spec)

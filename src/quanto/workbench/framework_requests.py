@@ -120,7 +120,7 @@ class ResumeRequest(ResumeBody):
 
 
 class PolicyBacktestInput(PolicyBacktestSpec):
-    evaluation_purpose: Literal["development_replay", "post_selection_backtest"]
+    evaluation_purpose: Literal["development_replay", "post_selection_backtest"] | None = None
 
 
 class PolicyBacktestRequest(StrictSpec):

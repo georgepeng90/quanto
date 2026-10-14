@@ -671,7 +671,7 @@ class FrameworkResolver:
 
     def _resolve_policy_backtest(self, request, binding, original, definitions, *, db=None,
                                  dataset_override=None, binding_override=None, policy_ref_override=None,
-                                 policy_context_override=None):
+                                 policy_context_override=None, bundle_override=None):
         from quanto.config import BacktestSpec
         from quanto.workbench.framework_capabilities import check_requirements
 
@@ -692,7 +692,8 @@ class FrameworkResolver:
                        else _db_call(self.store.get_dataset, request.dataset_id, db=db))
             new_binding = (binding_override if binding_override is not None
                            else _db_call(BindingStore(self.store).get_asset_binding, request.dataset_id, db=db))
-            bundle = load_dataset(verify_dataset_version(dataset))
+            bundle = (bundle_override if bundle_override is not None
+                      else load_dataset(verify_dataset_version(dataset)))
             new_binding.validate_symbols(tuple(bundle.instruments.symbol))
         except KeyError as exc:
             raise ValueError("IDENTITY_UNRESOLVED: backtest dataset or binding does not exist") from exc

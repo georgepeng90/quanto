@@ -55,6 +55,12 @@ def backtest_model(request: Request, identity: str, body: dict):
     return models(request).backtest_model(identity, body)
 
 
+@router.post('/models/{identity}/backtests/preview')
+def preview_model_backtest(request: Request, identity: str, body: dict):
+    from quanto.investing.backtest_preview import preview_backtest
+    return preview_backtest(models(request).store, identity, body)
+
+
 @router.get('/overview')
 def overview(request: Request):
     return service(request).overview()

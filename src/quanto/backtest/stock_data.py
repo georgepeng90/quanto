@@ -8,6 +8,7 @@ from datetime import date, datetime, time
 import hashlib
 import math
 from types import MappingProxyType
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -48,6 +49,18 @@ def _open(day):
     return pd.Timestamp(datetime.combine(day, time(9, 30), _SHANGHAI))
 
 
+def _source_url(value):
+    if not isinstance(value, str):
+        return False
+    try:
+        parsed = urlsplit(value)
+        return (parsed.scheme in {"https", "http", "tcp"} and bool(parsed.hostname)
+                and parsed.username is None and parsed.password is None
+                and (parsed.scheme != "tcp" or parsed.port is not None and 0 < parsed.port <= 65535))
+    except ValueError:
+        return False
+
+
 @dataclass(frozen=True)
 class StockExecutionContext:
     instruments: Mapping
@@ -83,7 +96,7 @@ def validate_stock_data(bundle, binding, symbols: tuple[str, ...], interval: Res
     for row in rows("stock_sources", "source_ref source_url payload_base64 payload_sha256 published_at retrieved_at available_at coverage_start coverage_end"):
         ref = row["source_ref"]
         _require(isinstance(ref, str) and bool(ref.strip()) and ref not in sources, "duplicate/empty stock source")
-        _require(isinstance(row["source_url"], str) and row["source_url"].startswith(("https://", "http://")), "source URL required")
+        _require(_source_url(row["source_url"]), "source URL required")
         try:
             payload = base64.b64decode(row["payload_base64"], validate=True)
         except (ValueError, TypeError) as exc:

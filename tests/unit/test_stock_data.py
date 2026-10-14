@@ -31,6 +31,25 @@ def test_stock_evidence_readers_are_registered(case):
         assert TableSemantics.from_binding(declaration).binding == declaration
 
 
+def test_stock_evidence_accepts_archived_tcp_market_source(case):
+    bundle, *args = case
+    bundle.auxiliary["stock_sources"].loc[0, "source_url"] = "tcp://market.example.org:7709"
+    assert validate_stock_data(bundle, *args).open_status
+    bundle.auxiliary["stock_sources"].loc[0, "payload_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="stock source digest mismatch"):
+        validate_stock_data(bundle, *args)
+
+
+@pytest.mark.parametrize("source_url", ["tcp://", "tcp://market.example.org", "tcp://market.example.org:0",
+    "tcp://market.example.org:65536", "tcp://market.example.org:invalid", "tcp://user:password@market.example.org:7709",
+    "file:///market.bin", "https://"])
+def test_stock_evidence_requires_identifiable_public_source_endpoint(case, source_url):
+    bundle, *args = case
+    bundle.auxiliary["stock_sources"].loc[0, "source_url"] = source_url
+    with pytest.raises(ValueError, match="source URL required"):
+        validate_stock_data(bundle, *args)
+
+
 def test_capability_checks_reject_missing_stock_evidence(case):
     from quanto.backtest.trading import ETF_TRADING_DEFINITION
     from quanto.workbench.framework_capabilities import check_requirements

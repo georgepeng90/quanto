@@ -1,7 +1,7 @@
 {
-  "schema_version": 1,
-  "checked_on": "2026-10-14",
-  "status": "training_not_started_data_incomplete",
+  "schema_version": 2,
+  "checked_at": "2026-10-14T03:39:28.685100+00:00",
+  "status": "dataset_validated_ready_to_train",
   "request": {
     "screening_id": "18309d3c-1fe7-4a3b-ae02-7c6db8cb3be9",
     "basket_revision_ref": {
@@ -27,104 +27,150 @@
     ],
     "training_jobs_submitted": 0
   },
-  "checked_workspace": {
+  "workspace": {
     "url": "http://127.0.0.1:8770",
-    "path": "data/research-20261001",
-    "registered_datasets": 6,
-    "registered_stock_datasets": 0,
-    "note": "All six registered datasets use adjusted_research ETF data. No source tables were synthesized or validation rules relaxed."
+    "path": "D:/Projects/quanto/data/research-20261001",
+    "registered_dataset": {
+      "id": "2203260f-0ee0-4871-8af0-c31ad7bb2822",
+      "path": "D:\\Projects\\quanto\\data\\research-20261001\\datasets\\2203260f-0ee0-4871-8af0-c31ad7bb2822",
+      "content_hash": "49ba538bc717445521023e69f1a9eb42340ca7d9a5217eb60d611162a8f1e280",
+      "import_method": "WorkbenchStore.register_dataset; native local import validates all input digests and canonical bindings; original archive exceeds 100MB HTTP upload transport cap"
+    }
   },
-  "local_price_archive": {
-    "directory": ".superpowers/screening-round2-20261014/raw",
-    "price_request": "fqt=0 (unadjusted)",
-    "source": "Eastmoney public daily bar responses",
-    "start": "2024-01-02",
-    "end": "2026-10-13",
+  "protocol": {
+    "path": "docs/research/2026-10-14-stock-round3-protocol.json",
+    "sha256": "e3b44e64411e275298958c225a5e14b24ac7b181eef293fde90813a8637fe6e1",
+    "device": "cuda",
+    "gpu": "NVIDIA GeForce RTX 5070 Ti",
+    "torch": "2.11.0+cu128",
+    "shared_parameters": "All non-reward parameters identical; only model name and reward_version differ",
+    "resume": "Continue each chain from last.zip; preserve validation-selected policy.zip; exactly 600 successful sessions per method"
+  },
+  "partitions": {
+    "warmup": [
+      "2024-01-02",
+      "2024-08-02"
+    ],
+    "train": [
+      "2024-08-05",
+      "2025-09-30"
+    ],
+    "validation": [
+      "2025-10-09",
+      "2026-03-31"
+    ],
+    "test": [
+      "2026-04-01",
+      "2026-10-13"
+    ],
+    "test_evaluation_during_training": false,
+    "start_change_reason": "July8 candidate rejected because July31 603444 first print has only09:30 minute precision and cannot prove availability by09:30:00. Final start is the following Monday; no realized returns used to choose it."
+  },
+  "validation": {
+    "status": "local_validation_passed",
+    "execution_start": "2024-08-05",
+    "data_start": "2024-01-02",
+    "data_end": "2026-10-13",
+    "execution_sessions": 528,
+    "warmup_sessions": 142,
+    "prices": 22771,
     "stocks": 34,
-    "rows": 22771,
-    "observed_dates": 670,
-    "sha256_verified": true,
-    "coverage_note": "Observed-date union is not an independent completeness certificate for the exchange calendar. This is source coverage, not a frozen train/validation split.",
-    "absent_quotes": {
-      "SZSE:stock:002128": [
-        "2025-05-06",
-        "2025-05-07",
-        "2025-05-08",
-        "2025-05-09",
-        "2025-05-12",
-        "2025-05-13",
-        "2025-05-14",
-        "2025-05-15",
-        "2025-05-16"
-      ]
-    }
-  },
-  "public_source_probes": {
-    "corporate_actions": {
-      "directory": "outputs/stock-round3-training-20261014/corporate-action-probe",
-      "stocks_returned": 34,
-      "ex_date_records_in_interval": 147,
-      "report": "RPT_SHAREBONUS_DET",
-      "status": "candidate_records_not_complete_execution_ledger",
-      "missing": [
-        "cash dividend payment date",
-        "bonus share credit/listing dates where relevant",
-        "independently checked complete coverage of action types"
+    "events": 158,
+    "opening_rows": 17952,
+    "source_rows": 18674,
+    "opening_counts": {
+      "09:25": 17941,
+      "trading": 17943,
+      "blocked_buy": 18,
+      "blocked_sell": 5,
+      "09:26": 2,
+      "suspended": 9
+    },
+    "unknown_warmup": [
+      [
+        "2024-01-09",
+        "SSE:stock:605499",
+        "09:30"
       ],
-      "cninfo_api_result": "HTTP 200 with application resultcode 401 (unauthorized); access restrictions were not bypassed.",
-      "official_example": {
-        "url": "https://static.cninfo.com.cn/finalpage/2025-06-18/1223899382.PDF",
-        "sha256": "af0830aaf4ae6f311c8e8cce469faac5b22326149b50787319ad12ae699acf26",
-        "note": "One implementation notice demonstrates that payment dates can be obtained from original announcements; it does not establish coverage for the other events."
-      }
+      [
+        "2024-01-10",
+        "SSE:stock:600486",
+        "09:30"
+      ],
+      [
+        "2024-01-17",
+        "SSE:stock:600486",
+        "09:30"
+      ],
+      [
+        "2024-01-24",
+        "SSE:stock:600486",
+        "09:30"
+      ],
+      [
+        "2024-07-31",
+        "SSE:stock:603444",
+        "09:30"
+      ]
+    ],
+    "fee_keys": 35904,
+    "files": {
+      "benchmark.parquet": "63e51ea8420a7d9f0387e8b7c88eee1ddaf852797f63717854a097f5e891d615",
+      "calendar.parquet": "ee39c42c5acdc997ed5cc9665b23861c1fd1d45e6f17da25d39ee01f9b358730",
+      "events.parquet": "d0f1e088b54121061d1c4d655422fb28c475f42004c31c612b1959f6129f6c00",
+      "fee_rules.parquet": "413e9596361010dbed9f6146f42b00fb3ffdd17d29f58140add03697a4924255",
+      "instruments.parquet": "e771b4727cc7111c78ff6171b87aebe1f73391c38763eabe983d9ebcb9a3db54",
+      "manifest.json": "b9f05a925e2f1f909f5a5b941b32dd11a9028f191a912063cf0d725f2c301731",
+      "prices.parquet": "b8402397d6bf56ab47d7a78e456c8b87f2cc0a5d374629576ffa592be52ecd2a",
+      "status.parquet": "2a0a7e6c0573cd1ba0eead4f775e861a5265c28d57da04c312d7166df798120c",
+      "stock_open_status.parquet": "958c2424b84024ecfce55fb13b73b26df08ddc14cd089721b2a8372531be3e81",
+      "stock_sources.parquet": "47e79618ec3340b5b9dc8824ce922ec5e85564f589aaf15941a8e4f6292bf889"
     },
-    "opening_status": {
-      "directory": "outputs/stock-round3-training-20261014/open-status-probe",
-      "status": "incomplete",
-      "required_rows_for_observed_interval": 22780,
-      "known_suspension": "Official SZSE notices corroborate 002128's May 6 halt and May 19 resumption.",
-      "historical_feed_probe": "Eastmoney suspension queries for 2025-05-06 and 2025-05-12 returned success=false/code9501; 2026-10-13 succeeded.",
-      "timestamp_issue": "26/27 SZSE announcement metadata timestamps were exactly midnight; date precision and HTTP Last-Modified are not proof of first public availability before opening.",
-      "primary_reference": "https://www.szse.cn/marketServices/technicalservice/interface/P020240809675798875168.pdf",
-      "conclusion": "No complete public historical premarket reference archive and side-permission series was found in these bounded probes. This does not claim that no such source exists."
-    },
-    "fees": {
-      "directory": "outputs/stock-round3-training-20261014/fee-source-probe",
-      "status": "sources_archived_rules_not_imported",
-      "scope_note": "Dated official tax sources and ChinaClear fee schedules archived. Historical transfer-fee notice original was not obtained; contemporaneous reproduction is marked secondary. No exhaustive amendment-history assertion.",
-      "source_index": "outputs/stock-round3-training-20261014/fee-source-probe/source-index.json"
+    "coverage_audit": "Finite audit of all 11,898 archived 2024-01-01..2026-10-13 announcement titles across 34 symbols, five additional action categories, 86 share-capital-change notices and targeted PDFs. No ordinary-holder rights offer, tender, redemption, security-code change, merger conversion, delisting, reverse split, or risk-warning notice was identified in that scope. A 2024 sponsor summary refers to 601108's rights offering completed in 2022. The 000975 short name changed on 2024-07-25 but the security code remained 000975. This is a source-backed finite-scope finding, not proof against omissions in the source catalog or unpublished actions.",
+    "limitations": [
+      "Stock dividends are recorded before personal dividend tax; after-tax dividend returns are not modeled.",
+      "Contemporary October2026 stock selection and current industry labels followed by historical training are development research, not historical stock-selection validation.",
+      "Opening permissions are conservative rule-derived gates from real pre-09:30 trade prints, public halt notices and mainboard limit rules. They do not establish queue priority, spread, depth or guaranteed fills.",
+      "TDX event times have minute precision. The selected event is bounded by the end of its minute; actual retrieval is October2026. No claim of vendor archive publication at event time is made.",
+      "Training/execution starts 2024-08-05. Earlier data are price-feature warmup only. Five earlier missing or 09:30-only opening records have both warmup flags conservatively false; they are not certified historical permissions.",
+      "The initial July8 candidate start was rejected solely for a July31 opening record lacking second precision; final start is the next Monday after that evidence gap.",
+      "Corporate-action coverage is a finite audit of 11898 archived public announcement titles and supporting notices, subject to omissions in the public catalog.",
+      "Transfer fee history uses a contemporaneous secondary reproduction attributed to ChinaClear; rates are .00001 bilateral and stamp duty .0005 sell-only. Broker commission .0003 minimum5 and slippage .0005 are protocol assumptions.",
+      "CSI300 turnover is the index constituent aggregate series from Eastmoney, not total exchange turnover.",
+      "Calendar includes one following session 2026-10-14 derived from weekday and the archived 2026 official annual closure schedules."
+    ],
+    "independent_review": "no P1/P2 findings",
+    "capabilities_check": {
+      "control": "ready",
+      "dsr": "ready",
+      "command_exit_code": 0
     }
   },
-  "blocking_requirement": "A source-backed stock raw_cash dataset must pass capabilities/check before either model can be created and trained.",
-  "remaining_work": [
-    "Obtain complete historical opening status and buy/sell permissions from timestamped exchange reference archives or equivalent verifiable sources; do not infer permissions from daily closes/volume.",
-    "Complete corporate-action ledger, payment/credit dates and coverage evidence; validate historical fees and units.",
-    "Register the validated stock dataset, freeze identical time partitions and non-reward parameters for both methods, and submit exactly 600 successful 1024-step sessions per method with continuation receipts."
-  ],
-  "limitations": [
-    "Current-information screening followed by historical-price training is development research; it does not validate the historical effectiveness of the stock selection.",
-    "Synthetic software train/resume/backtest tests are not runs on these 34 real stocks."
-  ],
-  "local_evidence": "outputs/stock-round3-training-20261014/readiness.json",
-  "software": {
-    "commit": "bf91f56",
-    "status": "registered_and_loaded_in_workbench",
-    "verification": {
-      "focused_backend_unit_tests": 22,
-      "synthetic_stock_integration_tests": 4,
-      "stock_model_ui_tests": 2,
-      "typescript_typecheck": "passed",
-      "production_web_build": "passed",
-      "independent_review": "no_P1_or_P2_findings",
-      "all_11_previous_definition_hashes": "unchanged",
-      "live_definitions_after_reload": 13,
-      "existing_model_and_job_counts": "unchanged"
-    },
-    "note": "Integration tests use isolated synthetic data; they do not count toward either 600-session research chain."
+  "evidence": {
+    "index": "outputs/stock-round3-training-20261014/public-evidence-index.json",
+    "files": 2302,
+    "sha256": "7dece031c05378aa7f24fd19427956a482114af405d5127111205b9e255a1ac2",
+    "raw_opening_page_files": 686,
+    "corporate_action_source_files": 601,
+    "announcement_titles_audited": 11898,
+    "dividends": 148,
+    "splits": 10,
+    "cash_amounts_payment_dates_and_listing_dates": "verified against implementation PDFs",
+    "raw_quote_crosscheck": "22771 OHLC rows identical across BaoStock and Eastmoney; exact BaoStock share/amount units used",
+    "publication_semantics": "Selected real market event times are minute intervals; end-of-minute availability bound precedes09:30. Actual retrieval timestamp remains2026. This is market event-time inference, not historical vendor archive publication proof."
   },
-  "evidence_index": {
-    "path": "outputs/stock-round3-training-20261014/evidence-index.json",
-    "files": 121,
-    "sha256": "d22a246385aceedb319a55e78d1fcce144f7ed68a1f2c2513ec7777b5fbe7fd1"
-  }
+  "software": {
+    "reward_definitions_commit": "bf91f56",
+    "TCP_evidence_commit": "ae4f824",
+    "durable_controller_commit": "3551a3d",
+    "verification": {
+      "stock_backend_and_integration": 55,
+      "controller_tests": 7,
+      "controller_independent_review": "no P1/P2 findings"
+    }
+  },
+  "progress_file": "outputs/stock-round3-training-20261014/trial/state.json",
+  "remaining_work": [
+    "Start durable paired controller and verify successful GPU checkpoint receipts from both actual stock models."
+  ]
 }

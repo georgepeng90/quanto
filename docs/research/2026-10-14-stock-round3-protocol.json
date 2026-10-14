@@ -1,0 +1,148 @@
+{
+  "dataset_id": "2203260f-0ee0-4871-8af0-c31ad7bb2822",
+  "dataset_content_hash": "49ba538bc717445521023e69f1a9eb42340ca7d9a5217eb60d611162a8f1e280",
+  "workspace_path": "D:/Projects/quanto/data/research-20261001",
+  "basket_revision_ref": {
+    "basket_id": "98b3d781-c416-4b64-af88-9f4512550994",
+    "revision": 1
+  },
+  "framework_contract_version": "multi-asset-v1",
+  "trading_definition_ref": {
+    "kind": "trading",
+    "id": "stock-daily",
+    "version": "1"
+  },
+  "models": {
+    "control": {
+      "learning_definition_ref": {
+        "kind": "learning",
+        "id": "stock-ppo-cash-state-log",
+        "version": "1"
+      },
+      "spec": {
+        "backtest": {
+          "start": "2024-08-05",
+          "end": "2026-10-13",
+          "initial_cash": 1000000.0,
+          "seed": 42,
+          "execution": {
+            "commission_rate": 0.0003,
+            "minimum_commission": 5.0,
+            "slippage_rate": 0.0005,
+            "max_stale_sessions": 9,
+            "model": "next_open"
+          },
+          "risk": {
+            "max_total_weight": 0.9,
+            "max_symbol_weight": 0.25,
+            "group_caps": {},
+            "stress_scenarios": [],
+            "max_stress_loss": null,
+            "drawdown_pause": null,
+            "pause_action": "block_new",
+            "pause_target_weight": null,
+            "recovery_mode": "never"
+          },
+          "metrics": {
+            "annual_sessions": 252,
+            "risk_free_rate": 0.0,
+            "cash_rate": 0.0,
+            "definition_version": "v1"
+          }
+        },
+        "frequency": "weekly",
+        "lookback": 120,
+        "action_version": "hold-target-cash-quartiles-v2",
+        "train_start": "2024-08-05",
+        "train_end": "2025-09-30",
+        "validation_start": "2025-10-09",
+        "validation_end": "2026-03-31",
+        "test_start": "2026-04-01",
+        "test_end": "2026-10-13",
+        "episode_sessions": 126,
+        "total_timesteps": 1024,
+        "n_steps": 128,
+        "batch_size": 64,
+        "n_epochs": 10,
+        "learning_rate": 0.0003,
+        "gamma": 1.0,
+        "gae_lambda": 0.95,
+        "ent_coef": 0.01,
+        "hidden_size": 64,
+        "seed": 42,
+        "device": "cuda",
+        "eval_every_timesteps": 1024,
+        "selection_metric": "validation_sharpe",
+        "name": "Round3 34-stock PPO control 600x1024 20261014",
+        "reward_version": "net-log-return-with-state-v1"
+      }
+    },
+    "dsr": {
+      "learning_definition_ref": {
+        "kind": "learning",
+        "id": "stock-ppo-cash-dsr",
+        "version": "1"
+      },
+      "spec": {
+        "backtest": {
+          "start": "2024-08-05",
+          "end": "2026-10-13",
+          "initial_cash": 1000000.0,
+          "seed": 42,
+          "execution": {
+            "commission_rate": 0.0003,
+            "minimum_commission": 5.0,
+            "slippage_rate": 0.0005,
+            "max_stale_sessions": 9,
+            "model": "next_open"
+          },
+          "risk": {
+            "max_total_weight": 0.9,
+            "max_symbol_weight": 0.25,
+            "group_caps": {},
+            "stress_scenarios": [],
+            "max_stress_loss": null,
+            "drawdown_pause": null,
+            "pause_action": "block_new",
+            "pause_target_weight": null,
+            "recovery_mode": "never"
+          },
+          "metrics": {
+            "annual_sessions": 252,
+            "risk_free_rate": 0.0,
+            "cash_rate": 0.0,
+            "definition_version": "v1"
+          }
+        },
+        "frequency": "weekly",
+        "lookback": 120,
+        "action_version": "hold-target-cash-quartiles-v2",
+        "train_start": "2024-08-05",
+        "train_end": "2025-09-30",
+        "validation_start": "2025-10-09",
+        "validation_end": "2026-03-31",
+        "test_start": "2026-04-01",
+        "test_end": "2026-10-13",
+        "episode_sessions": 126,
+        "total_timesteps": 1024,
+        "n_steps": 128,
+        "batch_size": 64,
+        "n_epochs": 10,
+        "learning_rate": 0.0003,
+        "gamma": 1.0,
+        "gae_lambda": 0.95,
+        "ent_coef": 0.01,
+        "hidden_size": 64,
+        "seed": 42,
+        "device": "cuda",
+        "eval_every_timesteps": 1024,
+        "selection_metric": "validation_sharpe",
+        "name": "Round3 34-stock PPO dsr 600x1024 20261014",
+        "reward_version": "differential-sharpe-v1"
+      }
+    }
+  },
+  "rounds": 600,
+  "timesteps_per_round": 1024,
+  "device": "cuda"
+}

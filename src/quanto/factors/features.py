@@ -391,7 +391,7 @@ def fit_transform(
 
 
 class FeatureCache:
-    """Explicit, caller-owned cache of market-only feature frames."""
+    """Caller cache backed by immutable market views shared across episodes."""
 
     def __init__(self) -> None:
         self._frames: dict[str, FeatureFrame] = {}
@@ -409,5 +409,8 @@ class FeatureCache:
             "symbols": tuple(view.ordered_symbols),
         })
         if key not in self._frames:
-            self._frames[key] = compute_features(definition, view, params, transform)
+            # The view outlives episode accounts; its frames contain no account state.
+            if key not in view._feature_frames:
+                view._feature_frames[key] = compute_features(definition, view, params, transform)
+            self._frames[key] = view._feature_frames[key]
         return self._frames[key]

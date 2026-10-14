@@ -31,6 +31,7 @@ class View:
         self.ordered_symbols = symbols
         self.binding_hash = binding
         self.dataset_content_hash = dataset
+        self._feature_frames = {}
 
     def bars(self, symbols, start):
         raise AssertionError("This definition does not need bars")
@@ -194,6 +195,54 @@ def test_cache_separates_binding_transform_cutoff_order_and_params():
     for item in variants:
         assert cache.get_or_compute(*item) is not first
     assert len(calls) == 7
+
+
+def test_feature_frames_are_reused_by_new_caches_for_the_same_view():
+    calls = []
+
+    def raw(view, params):
+        calls.append(params["shift"])
+        return {"A": {"price": make_cell(12 + params["shift"], ((T1, "bar:A"),))}}, {}
+
+    contract, view = definition(raw), View()
+    first = FeatureCache().get_or_compute(contract, view, {}, None)
+    repeated = FeatureCache().get_or_compute(contract, view, {}, None)
+    shifted = FeatureCache().get_or_compute(contract, view, {"shift": 1}, None)
+    assert repeated is first
+    assert shifted.per_symbol["A"]["price"].value == 13
+    assert calls == [0, 1]
+
+
+def test_view_feature_memo_does_not_share_results_between_distinct_views():
+    calls = []
+
+    def raw(view, params):
+        calls.append(view)
+        return {}, {}
+
+    contract = definition(raw)
+    left, right = View(), View()
+    first = FeatureCache().get_or_compute(contract, left, {}, None)
+    second = FeatureCache().get_or_compute(contract, right, {}, None)
+    assert second is not first
+    assert len(calls) == 2
+    assert first == second
+
+
+def test_view_feature_memo_only_keeps_successfully_validated_frames():
+    calls = []
+
+    def raw(view, params):
+        calls.append(1)
+        moment = T3 if len(calls) == 1 else T1
+        return {"A": {"price": make_cell(12, ((moment, "bar:A"),))}}, {}
+
+    contract, view = definition(raw), View()
+    with pytest.raises(ValueError, match="cutoff"):
+        FeatureCache().get_or_compute(contract, view, {}, None)
+    valid = FeatureCache().get_or_compute(contract, view, {}, None)
+    assert FeatureCache().get_or_compute(contract, view, {}, None) is valid
+    assert len(calls) == 2
 
 
 def test_compute_never_fits_and_frozen_transform_is_stable():

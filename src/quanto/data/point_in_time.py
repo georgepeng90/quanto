@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from collections.abc import Collection, Mapping
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, time, timezone
 import re
 from types import MappingProxyType
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -15,6 +15,9 @@ from pydantic import model_validator
 
 from quanto.data.contracts import utc
 from quanto.framework import AssetBinding, FrozenContract, Name, TableSemanticBinding, canonical_hash, thaw_json
+
+if TYPE_CHECKING:
+    from quanto.factors.features import FeatureFrame
 
 
 SHANGHAI = ZoneInfo("Asia/Shanghai")
@@ -222,6 +225,7 @@ class PointInTimeView:
     _semantics: Mapping[str, TableSemantics]
     _realized_splits: pd.DataFrame
     _split_semantics_valid: bool
+    _feature_frames: dict[str, FeatureFrame] = field(compare=False, repr=False)
 
     def __init__(self, token, *, cutoff, symbols, binding, tables, semantics, realized_splits, split_semantics_valid):
         if token is not _ENGINE_VIEW_TOKEN:
@@ -230,7 +234,8 @@ class PointInTimeView:
                                 dataset_content_hash=binding.dataset_content_hash, binding_hash=binding.binding_hash,
                                 price_mode=semantics["prices"].rules.price_mode,
                                 _tables=MappingProxyType(tables), _semantics=MappingProxyType(semantics),
-                                _realized_splits=realized_splits, _split_semantics_valid=split_semantics_valid).items():
+                                _realized_splits=realized_splits, _split_semantics_valid=split_semantics_valid,
+                                _feature_frames={}).items():
             object.__setattr__(self, name, value)
 
     def table(self, name: str, symbols: tuple[str, ...]) -> pd.DataFrame:

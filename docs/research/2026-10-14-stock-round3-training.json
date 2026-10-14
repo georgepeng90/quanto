@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "checked_at": "2026-10-14T03:39:28.685100+00:00",
-  "status": "dataset_validated_ready_to_train",
+  "checked_at": "2026-10-14T03:54:59.402228+00:00",
+  "status": "training_started_in_progress",
   "request": {
     "screening_id": "18309d3c-1fe7-4a3b-ae02-7c6db8cb3be9",
     "basket_revision_ref": {
@@ -17,15 +17,17 @@
       {
         "definition": "stock-ppo-cash-state-log@1",
         "reward": "net-log-return-with-state-v1",
-        "completed_sessions": 0
+        "completed_sessions": 0,
+        "model_id": "179deb34-69a4-40fd-b370-78dfef51ec7c"
       },
       {
         "definition": "stock-ppo-cash-dsr@1",
         "reward": "differential-sharpe-v1",
-        "completed_sessions": 0
+        "completed_sessions": 0,
+        "model_id": "e5670477-96d5-4c59-8557-4d792c00260e"
       }
     ],
-    "training_jobs_submitted": 0
+    "training_jobs_submitted": 1
   },
   "workspace": {
     "url": "http://127.0.0.1:8770",
@@ -171,6 +173,43 @@
   },
   "progress_file": "outputs/stock-round3-training-20261014/trial/state.json",
   "remaining_work": [
-    "Start durable paired controller and verify successful GPU checkpoint receipts from both actual stock models."
-  ]
+    "The persistent controller is running. It must finish and verify 600 successful sessions for each model. Current partial sampling is not a completed 1024-step session."
+  ],
+  "launch": {
+    "checked_at": "2026-10-14T03:54:59.402228+00:00",
+    "controller_status": "training",
+    "models": {
+      "control": {
+        "id": "179deb34-69a4-40fd-b370-78dfef51ec7c",
+        "name": "Round3 34-stock PPO control 600x1024 20261014",
+        "dataset_id": "2203260f-0ee0-4871-8af0-c31ad7bb2822",
+        "state": "running",
+        "session_count": 1,
+        "version_count": 0,
+        "total_timesteps": 0,
+        "latest_version_id": null,
+        "active_job_id": "ebf8cc4b-a825-46b7-b2cf-be0cf089d013",
+        "cuda_started": true,
+        "completed_sampling_rollouts": 1,
+        "sampling_steps_before_final_session_receipt": 128
+      },
+      "dsr": {
+        "id": "e5670477-96d5-4c59-8557-4d792c00260e",
+        "name": "Round3 34-stock PPO dsr 600x1024 20261014",
+        "dataset_id": "2203260f-0ee0-4871-8af0-c31ad7bb2822",
+        "state": "untrained",
+        "session_count": 0,
+        "version_count": 0,
+        "total_timesteps": 0,
+        "latest_version_id": null,
+        "active_job_id": null
+      }
+    },
+    "successful_sessions_from_verified_receipts": {
+      "control": 0,
+      "dsr": 0
+    },
+    "execution": "controlled exec session48515; persistent alternating runner; no hidden Start-Process launcher",
+    "resume_command": ".venv\\Scripts\\python.exe scripts/run_stock_reward_trial.py --protocol docs/research/2026-10-14-stock-round3-protocol.json --output outputs/stock-round3-training-20261014/trial --url http://127.0.0.1:8770"
+  }
 }

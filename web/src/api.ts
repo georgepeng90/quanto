@@ -2,7 +2,7 @@ import type { InvestingModel, InvestingModelDetail, InvestingModelSummary, Train
 import type { BacktestCatalogRow, ChartData, ChartName, ChartQuery, ComparisonResult, DatasetVersion, ExperimentDraft, ExperimentPayload, JobRecord, LogPage, Page, Preflight, RunRecord, RunResult, StrategyManifest, StrategyRevision, TableName, TablePage, TableQuery } from './types'
 import type { LearningArtifact, LearningChart, LearningOverview, LearningTablePage } from './learningTypes'
 import type { ScreeningRecord, ScreeningSummary } from './types'
-import type { BasketCreateRequest, BasketDetail, BasketRevisionRequest, BasketSummary, CapabilityCheckRequest, CapabilityReport, Definition, FrozenBasketRevision, FetchJobRequest, ModelCreateRequest, ResumeRequest, PolicyBacktestRequest } from './frameworkTypes'
+import type { BasketCreateRequest, BasketDetail, BasketRevisionRequest, BasketSummary, CapabilityCheckRequest, CapabilityReport, Definition, FrozenBasketRevision, FetchJobRequest, ModelCreateRequest, ResumeRequest, PolicyBacktestRequest, PolicyBacktestPreview } from './frameworkTypes'
 
 export class ApiError extends Error {
   constructor(public code: string, message: string, public details: Record<string, unknown> = {}, public status = 0) { super(message) }
@@ -82,7 +82,8 @@ export const api = {
   investingModelHistory: (id: string, query: TrainingHistoryQuery, signal?: AbortSignal) => request<TrainingHistoryPage>(`/investing/models/${encodeURIComponent(id)}/history${queryString(query)}`, { signal }),
   createInvestingModel: (body: ModelCreateRequest) => request<InvestingModel>('/investing/models', json(body)),
   trainInvestingModel: (id: string, body: Omit<ResumeRequest, 'model_id'>) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/train`, json(body)),
-  backtestInvestingModel: (id: string, body: PolicyBacktestRequest) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/backtests`, json(body)),
+  previewInvestingModelBacktest: (id: string, body: PolicyBacktestRequest, signal?: AbortSignal) => request<PolicyBacktestPreview>(`/investing/models/${encodeURIComponent(id)}/backtests/preview`, { ...json(body), signal }),
+  backtestInvestingModel: (id: string, body: PolicyBacktestRequest, signal?: AbortSignal) => request<JobRecord>(`/investing/models/${encodeURIComponent(id)}/backtests`, { ...json(body), signal }),
   backtestCatalog: (cursor?: string, signal?: AbortSignal) => request<Page<BacktestCatalogRow>>(`/backtests/catalog${queryString({ cursor, limit: 50 })}`, { signal }),
   investingOverview: (signal?: AbortSignal) => request<InvestingOverview>('/investing/overview', { signal }),
   investingArtifact: (resource: 'policies' | 'backtests', id: string, signal?: AbortSignal) => request<InvestingArtifact>(`/investing/${resource}/${encodeURIComponent(id)}`, { signal }),

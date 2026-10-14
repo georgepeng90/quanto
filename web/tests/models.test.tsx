@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { App } from '../src/App'
+import { ModelBacktestForm } from '../src/components/ModelBacktestForm'
 
 const asset = { exchange: 'SZSE', instrument_type: 'etf', code: '000001' }
 const pair = { instrument_id: asset, local_symbol: 'LOCAL1', evidence_ref: 'e1' }
@@ -30,16 +31,23 @@ let definitionItems: TestDefinition[] = [
 const definitions = definitionItems
 const refKey = (ref: typeof learningRef | typeof tradingRef) => JSON.stringify([ref.kind, ref.id, ref.version])
 const posts: { path: string; body: any }[] = []
+const backtestReport = { operation: 'policy_backtest', status: 'ready', request_hash: 'hash', dataset_version_id: 'd1', input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null }
+let preview: (body: any) => Response | Promise<Response>
+const adjustedPreview = () => Response.json({ requested_interval: { start: '2023-01-01', end: '2023-12-31' }, available_interval: { start: '2023-02-01', end: '2023-11-30', trading_sessions: 200 }, requires_confirmation: true, report: backtestReport, reasons: ['可用数据仅覆盖部分日期'] })
 const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
 
 beforeEach(() => {
   posts.length = 0
+  preview = body => Response.json({ requested_interval: { start: body.spec.start, end: body.spec.end }, available_interval: { start: body.spec.start, end: body.spec.end, trading_sessions: 240 }, requires_confirmation: false, report: backtestReport, reasons: [] })
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
   definitionItems = definitions
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     if (path === '/api/session') return Response.json({ token: 'token', api_base: '/api' })
     if (init?.method === 'POST') {
       const body = JSON.parse(String(init.body)); posts.push({ path, body })
+      if (path.endsWith('/backtests/preview')) return preview(body)
       if (path === '/api/capabilities/check') return Response.json({ operation: body.operation, status: 'ready', request_hash: 'hash',
         dataset_version_id: 'd1', input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null })
       return Response.json(path === '/api/investing/models' ? { ...model, id: 'm2' } : { id: 'job-2', state: 'queued' })
@@ -147,23 +155,140 @@ test('model detail shows binding evidence and gates training on a ready capabili
   expect(posts.find(post => post.path.endsWith('/train'))?.body).toEqual({ additional_timesteps: 8192, device: 'cpu' })
 })
 
-test('backtest requires an explicit saved version and evaluation purpose', async () => {
+test('backtest requires a saved version and submits compatible entered dates without a purpose selection', async () => {
   app('/runs?model=m1')
   await screen.findByRole('option', { name: /第 1 轮/ })
   expect(screen.getByLabelText('训练轮次')).toHaveValue('')
+  expect(screen.queryByLabelText('评估用途')).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('已保存版本')
+  expect(posts).toHaveLength(0)
   await userEvent.selectOptions(screen.getByLabelText('训练轮次'), 'v1')
   fireEvent.change(screen.getByLabelText('回测开始'), { target: { value: '2023-01-01' } })
   fireEvent.change(screen.getByLabelText('回测结束'), { target: { value: '2023-12-31' } })
-  await userEvent.selectOptions(screen.getByLabelText('评估用途'), 'development_replay')
-  await userEvent.click(screen.getByRole('button', { name: '检查运行能力' }))
-  await waitFor(() => expect(screen.getByRole('button', { name: '提交模型回测' })).toBeEnabled())
-  await userEvent.selectOptions(screen.getByLabelText('评估用途'), 'post_selection_backtest')
-  expect(screen.getByRole('button', { name: '提交模型回测' })).toBeDisabled()
-  await userEvent.selectOptions(screen.getByLabelText('评估用途'), 'development_replay')
-  await userEvent.click(screen.getByRole('button', { name: '检查运行能力' }))
-  await waitFor(() => expect(screen.getByRole('button', { name: '提交模型回测' })).toBeEnabled())
-  await userEvent.click(screen.getByRole('button', { name: '提交模型回测' }))
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  await screen.findByText('模型回测已提交。')
+  expect(posts.map(post => post.path)).toEqual(['/api/investing/models/m1/backtests/preview', '/api/investing/models/m1/backtests'])
   expect(posts.find(post => post.path.endsWith('/backtests'))?.body).toEqual({ dataset_id: 'd1', version_id: 'v1',
-    spec: { start: '2023-01-01', end: '2023-12-31', baseline: 'policy', cost_multiplier: 1,
-      evaluation_purpose: 'development_replay' } })
+    spec: { start: '2023-01-01', end: '2023-12-31', baseline: 'policy', cost_multiplier: 1 } })
+})
+
+const enterBacktestDates = async () => {
+  await screen.findByRole('option', { name: /第 1 轮/ })
+  await userEvent.selectOptions(screen.getByLabelText('训练轮次'), 'v1')
+  fireEvent.change(screen.getByLabelText('回测开始'), { target: { value: '2023-01-01' } })
+  fireEvent.change(screen.getByLabelText('回测结束'), { target: { value: '2023-12-31' } })
+}
+
+test.each(['cancel button', 'Escape'])('adjusted dates require confirmation and %s preserves inputs without submitting', async action => {
+  preview = adjustedPreview
+  app('/runs?model=m1')
+  await enterBacktestDates()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  const dialog = await screen.findByRole('dialog', { name: '确认回测区间' })
+  expect(dialog).toHaveTextContent('2023-01-01—2023-12-31')
+  expect(dialog).toHaveTextContent('2023-02-01—2023-11-30')
+  expect(dialog).toHaveTextContent('可用数据仅覆盖部分日期')
+  expect(posts.some(post => post.path.endsWith('/backtests'))).toBe(false)
+  if (action === 'Escape') fireEvent(dialog, new Event('cancel', { cancelable: true }))
+  else await userEvent.click(within(dialog).getByRole('button', { name: '取消' }))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.getByLabelText('回测开始')).toHaveValue('2023-01-01')
+  expect(screen.getByLabelText('回测结束')).toHaveValue('2023-12-31')
+  expect(posts.some(post => post.path.endsWith('/backtests'))).toBe(false)
+  expect(screen.getByRole('button', { name: '开始回测' })).toHaveFocus()
+})
+
+test('confirmation updates inputs and submits exactly the suggested interval', async () => {
+  preview = adjustedPreview
+  app('/runs?model=m1')
+  await enterBacktestDates()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  await userEvent.click(await screen.findByRole('button', { name: '确认并回测' }))
+  await screen.findByText('模型回测已提交。')
+  expect(screen.getByLabelText('回测开始')).toHaveValue('2023-02-01')
+  expect(screen.getByLabelText('回测结束')).toHaveValue('2023-11-30')
+  expect(posts.filter(post => post.path.endsWith('/backtests')).map(post => post.body)).toEqual([
+    { dataset_id: 'd1', version_id: 'v1', spec: { start: '2023-02-01', end: '2023-11-30', baseline: 'policy', cost_multiplier: 1 } },
+  ])
+})
+
+test.each([null, { start: '2023-02-01', end: '2023-11-30', trading_sessions: 200 }])('a blocked report prevents submission even with available interval %j', async availableInterval => {
+  preview = () => Response.json({ requested_interval: { start: '2023-01-01', end: '2023-12-31' }, available_interval: availableInterval, requires_confirmation: !!availableInterval, report: { ...backtestReport, status: 'blocked' }, reasons: ['区间内没有连续可回测数据'] })
+  app('/runs?model=m1')
+  await enterBacktestDates()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('区间内没有连续可回测数据')
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(posts.some(post => post.path.endsWith('/backtests'))).toBe(false)
+})
+
+test('a validation failure from an unmounted model cannot overwrite the current form', async () => {
+  let fail!: (value: Error) => void
+  preview = () => new Promise<Response>((_, reject) => { fail = reject })
+  const oldView = render(<ModelBacktestForm initialModel="m1" initialVersion="v1" onSubmitted={vi.fn()} />)
+  await enterBacktestDates()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  oldView.unmount()
+  render(<ModelBacktestForm initialModel="m1" initialVersion="v1" onSubmitted={vi.fn()} />)
+  await screen.findByRole('option', { name: /第 1 轮/ })
+  await act(async () => fail(new Error('旧模型检查失败')))
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '开始回测' })).toBeEnabled()
+  expect(posts.some(post => post.path.endsWith('/backtests'))).toBe(false)
+})
+
+test('pending validation disables repeated starts and ignores results after unmount', async () => {
+  let release!: (value: Response) => void
+  preview = () => new Promise<Response>(resolve => { release = resolve })
+  const submitted = vi.fn()
+  const view = render(<ModelBacktestForm initialModel="m1" initialVersion="v1" onSubmitted={submitted} />)
+  await enterBacktestDates()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  expect(screen.getByRole('button', { name: '检查日期中…' })).toBeDisabled()
+  expect(screen.getByLabelText('强化学习模型')).toBeDisabled()
+  await userEvent.click(screen.getByRole('button', { name: '检查日期中…' }))
+  expect(posts).toHaveLength(1)
+  view.unmount()
+  await act(async () => release(Response.json({ available_interval: { start: '2023-01-01', end: '2023-12-31', trading_sessions: 240 }, requires_confirmation: false, report: backtestReport, reasons: [] })))
+  expect(posts.some(post => post.path.endsWith('/backtests'))).toBe(false)
+  expect(submitted).not.toHaveBeenCalled()
+})
+
+test('submission stays disabled until completion and does not enqueue a second backtest', async () => {
+  let release!: (value: Response) => void
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input).endsWith('/backtests') && init?.method === 'POST') {
+      posts.push({ path: String(input), body: JSON.parse(String(init.body)) })
+      return new Promise<Response>(resolve => { release = resolve })
+    }
+    return prior(input, init)
+  }))
+  const submitted = vi.fn()
+  render(<ModelBacktestForm initialModel="m1" initialVersion="v1" onSubmitted={submitted} />)
+  await enterBacktestDates()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  expect(await screen.findByRole('button', { name: '提交中…' })).toBeDisabled()
+  await userEvent.click(screen.getByRole('button', { name: '提交中…' }))
+  expect(posts.filter(post => post.path.endsWith('/backtests'))).toHaveLength(1)
+  expect(submitted).not.toHaveBeenCalled()
+  await act(async () => release(Response.json({ id: 'job-2', state: 'queued' })))
+  expect(screen.getByRole('status')).toHaveTextContent('模型回测已提交。')
+  expect(submitted).toHaveBeenCalledTimes(1)
+  expect(screen.getByRole('button', { name: '开始回测' })).toBeEnabled()
+})
+
+test('submission errors display the latest server blocking report', async () => {
+  const prior = globalThis.fetch
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input).endsWith('/backtests') && init?.method === 'POST') return Response.json({ code: 'FRAMEWORK_CONFLICT', message: '日期数据已发生变化', details: { report: { ...backtestReport, status: 'blocked', checks: [{ name: 'data', status: 'blocked', field_path: 'spec.start', code: 'DATA_REQUIREMENT_UNSATISFIED', message: '数据已不可用' }] } } }, { status: 409 })
+    return prior(input, init)
+  }))
+  app('/runs?model=m1')
+  await enterBacktestDates()
+  await userEvent.click(screen.getByRole('button', { name: '开始回测' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('日期数据已发生变化')
+  expect(within(screen.getByRole('region', { name: '能力检查报告' })).getByRole('listitem')).toHaveTextContent('数据已不可用')
+  expect(screen.getByRole('button', { name: '开始回测' })).toBeEnabled()
 })

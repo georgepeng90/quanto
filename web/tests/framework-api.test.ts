@@ -35,11 +35,11 @@ test('framework API uses authenticated narrow routes and exact body shapes', asy
 })
 
 test('policy backtest submission body excludes URL model ID while capability check includes it', async () => {
-  const submission: PolicyBacktestRequest = { version_id: 'saved-version', dataset_id: 'dataset-1', spec: { start: '2025-01-01', end: '2025-01-31', evaluation_purpose: 'post_selection_backtest' } }
+  const submission: PolicyBacktestRequest = { version_id: 'saved-version', dataset_id: 'dataset-1', spec: { start: '2025-01-01', end: '2025-01-31' } }
   const check: CapabilityCheckRequest = { operation: 'policy_backtest', model_id: 'model-1', ...submission }
   await api.checkCapabilities(check)
   const [, init] = vi.mocked(fetch).mock.calls.find(([url]) => url === '/api/capabilities/check')!
-  expect(JSON.parse(init!.body as string)).toEqual({ operation: 'policy_backtest', model_id: 'model-1', version_id: 'saved-version', dataset_id: 'dataset-1', spec: { start: '2025-01-01', end: '2025-01-31', evaluation_purpose: 'post_selection_backtest' } })
+  expect(JSON.parse(init!.body as string)).toEqual({ operation: 'policy_backtest', model_id: 'model-1', version_id: 'saved-version', dataset_id: 'dataset-1', spec: { start: '2025-01-01', end: '2025-01-31' } })
   expect(submission).not.toHaveProperty('model_id')
 })
 

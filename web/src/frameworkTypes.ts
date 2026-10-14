@@ -33,8 +33,9 @@ type TrainingRequired = 'name' | 'train_start' | 'train_end' | 'validation_start
 export type TrainingInput = Pick<PolicyTrainingSpec, TrainingRequired> & Partial<Omit<PolicyTrainingSpec, TrainingRequired | 'backtest'>> & { backtest: BacktestInput }
 export type ModelCreateRequest = { framework_contract_version: 'multi-asset-v1'; basket_revision_ref: BasketRevisionRef; dataset_id: string; learning_definition_ref: LearningDefinitionRef; trading_definition_ref: TradingDefinitionRef; spec: TrainingInput }
 export type ResumeRequest = { model_id: string; additional_timesteps?: number | null; device?: 'cpu' | 'cuda' | null }
-export type PolicyBacktestInput = Pick<PolicyBacktestSpec, 'start' | 'end'> & { evaluation_purpose: 'development_replay' | 'post_selection_backtest'; baseline?: PolicyBacktestSpec['baseline']; cost_multiplier?: number }
+export type PolicyBacktestInput = Pick<PolicyBacktestSpec, 'start' | 'end'> & { baseline?: PolicyBacktestSpec['baseline']; cost_multiplier?: number }
 export type PolicyBacktestRequest = { version_id: string; dataset_id: string; spec: PolicyBacktestInput }
+export type PolicyBacktestPreview = { requested_interval: { start: string; end: string }; available_interval: { start: string; end: string; trading_sessions: number } | null; requires_confirmation: boolean; report: CapabilityReport; reasons: string[] }
 export type CapabilityCheckRequest =
   | ({ operation: 'fetch' } & FetchRequest)
   | ({ operation: 'fixed_backtest' } & FixedRequest)

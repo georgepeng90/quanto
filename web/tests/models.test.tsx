@@ -33,7 +33,7 @@ const refKey = (ref: typeof learningRef | typeof tradingRef) => JSON.stringify([
 const posts: { path: string; body: any }[] = []
 const backtestReport = { operation: 'policy_backtest', status: 'ready', request_hash: 'hash', dataset_version_id: 'd1', input_hashes: {}, checks: [], assumptions: [], limitations: [], checker_version: 'v1', generated_at: null }
 let preview: (body: any) => Response | Promise<Response>
-const adjustedPreview = () => Response.json({ requested_interval: { start: '2023-01-01', end: '2023-12-31' }, available_interval: { start: '2023-02-01', end: '2023-11-30', trading_sessions: 200 }, requires_confirmation: true, report: backtestReport, reasons: ['可用数据仅覆盖部分日期'] })
+const adjustedPreview = () => Response.json({ requested_interval: { start: '2023-01-01', end: '2023-12-31' }, available_interval: { start: '2023-02-01', end: '2023-11-30', trading_sessions: 200 }, requires_confirmation: true, report: backtestReport, reasons: ['可用数据仅覆盖部分日期', 'DATA_REQUIREMENT_UNSATISFIED: missing prices'] })
 const app = (path: string) => render(<RouterProvider router={createMemoryRouter([{ path: '*', element: <App /> }], { initialEntries: [path] })} />)
 
 beforeEach(() => {
@@ -189,10 +189,14 @@ test.each(['cancel button', 'Escape'])('adjusted dates require confirmation and 
   expect(dialog).toHaveTextContent('2023-01-01—2023-12-31')
   expect(dialog).toHaveTextContent('2023-02-01—2023-11-30')
   expect(dialog).toHaveTextContent('可用数据仅覆盖部分日期')
+  expect(within(dialog).getByText('DATA_REQUIREMENT_UNSATISFIED: missing prices')).not.toBeVisible()
+  await userEvent.click(within(dialog).getByText('查看校验详情'))
+  expect(within(dialog).getByText('DATA_REQUIREMENT_UNSATISFIED: missing prices')).toBeVisible()
   expect(posts.some(post => post.path.endsWith('/backtests'))).toBe(false)
   if (action === 'Escape') fireEvent(dialog, new Event('cancel', { cancelable: true }))
   else await userEvent.click(within(dialog).getByRole('button', { name: '取消' }))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: '能力检查报告' })).not.toBeInTheDocument()
   expect(screen.getByLabelText('回测开始')).toHaveValue('2023-01-01')
   expect(screen.getByLabelText('回测结束')).toHaveValue('2023-12-31')
   expect(posts.some(post => post.path.endsWith('/backtests'))).toBe(false)

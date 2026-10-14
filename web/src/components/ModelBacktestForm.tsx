@@ -119,6 +119,7 @@ export function ModelBacktestForm({ initialModel, initialVersion, onSubmitted }:
     setSpec(nextSpec); setConfirmation(null)
     void run(payload)
   }
+  const cancelConfirmation = () => { setConfirmation(null); setReport(null); setCheckedKey('') }
   const currentBest = versions[0]?.selection_valid ? versions[0].best_source_version_id : null
 
   return <section className="panel"><h2>保存版本回测</h2>
@@ -135,13 +136,14 @@ export function ModelBacktestForm({ initialModel, initialVersion, onSubmitted }:
       <p className="muted">开始回测时将检查日期；如需调整，会先请你确认可用区间。</p>
       <div className="inline-actions"><button ref={startButton} type="button" onClick={() => void run()}>{busy === 'checking' ? '检查日期中…' : busy === 'submitting' ? '提交中…' : '开始回测'}</button></div>
     </fieldset>{visibleReport && <CapabilityReportView report={visibleReport} />}
-    <dialog ref={dialog} className="backtest-confirmation" aria-labelledby={dialogTitle} aria-describedby={dialogDescription} onCancel={event => { event.preventDefault(); setConfirmation(null) }}>
+    <dialog ref={dialog} className="backtest-confirmation" aria-labelledby={dialogTitle} aria-describedby={dialogDescription} onCancel={event => { event.preventDefault(); cancelConfirmation() }}>
       {visibleConfirmation && <><h2 id={dialogTitle}>确认回测区间</h2><div id={dialogDescription}>
         <p>输入区间：{visibleConfirmation.preview.requested_interval.start}—{visibleConfirmation.preview.requested_interval.end}</p>
         <p>输入范围内最大可回测区间：{visibleConfirmation.preview.available_interval?.start}—{visibleConfirmation.preview.available_interval?.end}（{visibleConfirmation.preview.available_interval?.trading_sessions} 个交易日）</p>
-        {visibleConfirmation.preview.reasons.map((reason, index) => <p key={index}>{reason}</p>)}
+        {visibleConfirmation.preview.reasons[0] && <p>{visibleConfirmation.preview.reasons[0]}</p>}
+        {visibleConfirmation.preview.reasons.length > 1 && <details><summary>查看校验详情</summary>{visibleConfirmation.preview.reasons.slice(1).map((reason, index) => <p key={index}>{reason}</p>)}</details>}
         <p>是否使用此区间开始回测？</p>
-      </div><div className="inline-actions"><button type="button" onClick={confirm}>确认并回测</button><button type="button" autoFocus onClick={() => setConfirmation(null)}>取消</button></div></>}
+      </div><div className="inline-actions"><button type="button" onClick={confirm}>确认并回测</button><button type="button" autoFocus onClick={cancelConfirmation}>取消</button></div></>}
     </dialog>
   </section>
 }
